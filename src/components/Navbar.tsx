@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaBars, FaTimes, FaDog } from 'react-icons/fa';
+import { FaBars, FaTimes } from 'react-icons/fa';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useBooking } from './BookingContext';
+import dogLogo from '../assets/images/logos/Logo.png';
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
@@ -18,35 +19,44 @@ const Navbar: React.FC = () => {
       <div className="container flex items-center justify-between py-4">
         {/* Logo */}
         <div className="flex items-center space-x-2">
-          <FaDog className="text-3xl text-primary" />
-          <span className="text-xl font-bold">Clever Dog</span>
+          <img 
+            src={dogLogo} 
+            alt="Clever Dog Logo" 
+            className="h-10 w-auto"
+          />
+          <span className="text-xl font-bold text-orange-500">Clever Dog</span>
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex md:items-center md:space-x-8">
-          <a href="#about" className="font-medium hover:text-primary">
+        <div className="hidden lg:flex lg:items-center lg:justify-end lg:flex-1 lg:space-x-5">
+          <a href="#about" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('about.title')}
           </a>
-          <a href="#social-walks" className="font-medium hover:text-primary">
+          <a href="#social-walks" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('socialWalks.title')}
           </a>
-          <a href="#pricing" className="font-medium hover:text-primary">
+          <a href="#pricing" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('pricing.title')}
           </a>
-          <a href="#contact" className="font-medium hover:text-primary">
+          <a href="#sustainability" className="font-medium hover:text-primary text-sm whitespace-nowrap">
+            {t('sustainability.title')}
+          </a>
+          <a href="#contact" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('contact.title')}
           </a>
           <button 
             onClick={openBookingForm} 
-            className="btn btn-primary"
+            className="btn btn-primary ml-2 text-sm whitespace-nowrap"
           >
             {t('bookCta')}
           </button>
-          <LanguageSwitcher />
+          <div className="ml-2">
+            <LanguageSwitcher />
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="flex items-center md:hidden">
+        <div className="flex items-center lg:hidden">
           <LanguageSwitcher />
           <button onClick={toggleMenu} className="p-2 ml-4 text-gray-600">
             {isMenuOpen ? <FaTimes className="text-2xl" /> : <FaBars className="text-2xl" />}
@@ -56,7 +66,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="container pb-4 md:hidden">
+        <div className="container pb-4 lg:hidden">
           <div className="flex flex-col space-y-4">
             <a href="#about" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('about.title')}
@@ -66,6 +76,9 @@ const Navbar: React.FC = () => {
             </a>
             <a href="#pricing" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('pricing.title')}
+            </a>
+            <a href="#sustainability" className="font-medium hover:text-primary" onClick={toggleMenu}>
+              {t('sustainability.title')}
             </a>
             <a href="#contact" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('contact.title')}

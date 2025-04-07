@@ -59,14 +59,32 @@
     "booking": {
       "title": "Boka Plats",
       "form": {
-        "yourName": "Ditt Namn",
+        "yourName": "För- Efternamn",
+        "yourNamePlaceholder": "Ditt fullständiga namn",
         "email": "E-post",
         "phone": "Telefon",
         "dogName": "Hundens Namn",
         "dogBreed": "Hundras",
-        "message": "Meddelande",
-        "submit": "Skicka Bokningsförfrågan"
+        "dogGender": "Kön",
+        "dogHeight": "Mankhöjd",
+        "isNeutered": "Är hunden kastrerad?",
+        "additionalInfo": "Övrig information",
+        "additionalInfoPlaceholder": "Exempelvis, allergier eller andra särskilda behov",
+        "submitDefault": "Skicka bokningsförfrågan",
+        "submitGmail": "Skicka med Gmail",
+        "submitOutlook": "Skicka med Outlook",
+        "select": "Välj",
+        "selectGender": "Välj kön",
+        "male": "Hane",
+        "female": "Tik",
+        "yes": "Ja",
+        "no": "Nej"
       }
+    },
+    "sustainability": {
+      "title": "Vårt bidrag till hållbar utveckling",
+      "goal": "Clever Dog stödjer FN:s globala mål #8: Anständiga arbetsvillkor och ekonomisk tillväxt.",
+      "description": "Vi tror på rättvisa arbetsvillkor, lokal sysselsättning och att bidra till ett hållbart samhälle. Genom att erbjuda kvalitativ hundomsorg och framtida tjänster inom hundtrimning vill vi skapa trygga och meningsfulla arbetsplatser – och samtidigt växa tillsammans med vår lokala community."
     }
   }
 } 

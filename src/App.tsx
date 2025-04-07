@@ -5,6 +5,7 @@ import HeroSection from './components/HeroSection'
 import AboutSection from './components/AboutSection'
 import SocialWalksSection from './components/SocialWalksSection'
 import PricingSection from './components/PricingSection'
+import SustainabilitySection from './components/SustainabilitySection'
 import SocialMediaSection from './components/SocialMediaSection'
 import ContactSection from './components/ContactSection'
 import Footer from './components/Footer'
@@ -44,6 +45,7 @@ function App() {
           <AboutSection />
           <SocialWalksSection />
           <PricingSection />
+          <SustainabilitySection />
           <SocialMediaSection />
           <ContactSection />
         </main>

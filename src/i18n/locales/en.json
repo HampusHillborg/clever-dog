@@ -59,14 +59,32 @@
     "booking": {
       "title": "Book a Spot",
       "form": {
-        "yourName": "Your Name",
+        "yourName": "First and Last Name",
+        "yourNamePlaceholder": "Your full name",
         "email": "Email",
         "phone": "Phone",
         "dogName": "Dog's Name",
-        "dogBreed": "Dog's Breed",
-        "message": "Message",
-        "submit": "Send Booking Request"
+        "dogBreed": "Dog Breed",
+        "dogGender": "Gender",
+        "dogHeight": "Shoulder Height",
+        "isNeutered": "Is the dog neutered/spayed?",
+        "additionalInfo": "Additional Information",
+        "additionalInfoPlaceholder": "For example, allergies or other special needs",
+        "submitDefault": "Send Booking Request",
+        "submitGmail": "Send with Gmail",
+        "submitOutlook": "Send with Outlook",
+        "select": "Select",
+        "selectGender": "Select gender",
+        "male": "Male",
+        "female": "Female",
+        "yes": "Yes",
+        "no": "No"
       }
+    },
+    "sustainability": {
+      "title": "Sustainability",
+      "goal": "Clever Dog supports UN Global Goal #8: Decent Work and Economic Growth.",
+      "description": "We believe in fair working conditions, local employment, and contributing to a sustainable society. By offering quality dog care and future dog grooming services, we aim to create safe and meaningful workplaces – while growing together with our local community."
     }
   }
 } 
