@@ -49,6 +49,7 @@ const AboutSection: React.FC = () => {
           <motion.div variants={itemVariants} className="space-y-6">
             <p className="text-lg">{t('about.bio')}</p>
             <p className="text-lg">{t('about.bio2')}</p>
+            <p className="text-lg font-medium">{t('about.permission')}</p>
           </motion.div>
 
           {/* Contact Info */}

@@ -7,6 +7,7 @@
       "title": "Om Mig",
       "bio": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Staffanstorp på Malmövägen 7, där trygghet och glädje står i centrum för varje hund.",
       "bio2": "Tillsammans med min 3-åriga shiba inu skapar jag en lugn och kärleksfull miljö för hundar att utvecklas i. Senare i år kommer jag även att erbjuda hundtrimning som en del av verksamheten.",
+      "permission": "Verksamheten är godkänd av Länsstyrelsen och jag har alla nödvändiga tillstånd för hunddagis och pensionatverksamhet.",
       "address": "Adress",
       "email": "E-post",
       "instagram": "Instagram",
@@ -56,7 +57,10 @@
     },
     "social": {
       "title": "Sociala Medier",
-      "followUs": "Följ oss på sociala medier"
+      "followUs": "Följ oss på Instagram",
+      "followText": "Håll dig uppdaterad med våra senaste hunddagisaktiviteter, evenemang och söta hundfoton. Följ oss på Instagram för dagliga uppdateringar.",
+      "viewProfile": "Klicka för att se vår profil",
+      "visitInstagram": "Besök Instagram"
     },
     "contact": {
       "title": "Kontakt",

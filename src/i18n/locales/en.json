@@ -7,6 +7,7 @@
       "title": "About Me",
       "bio": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Staffanstorp at Malmövägen 7, where safety and joy are at the center for every dog.",
       "bio2": "Together with my 3-year-old Shiba Inu, I create a calm and loving environment for dogs to develop in. Later this year, I will also offer dog grooming as part of the business.",
+      "permission": "The business is approved by the County Administrative Board (Länsstyrelsen) and I have all necessary permits for dog daycare and boarding operations.",
       "address": "Address",
       "email": "Email",
       "instagram": "Instagram",
@@ -56,7 +57,10 @@
     },
     "social": {
       "title": "Social Media",
-      "followUs": "Follow us on social media"
+      "followUs": "Follow us on Instagram",
+      "followText": "Stay updated with our latest dog daycare activities, events, and cute dog photos. Follow us on Instagram for daily updates.",
+      "viewProfile": "Click to view our profile",
+      "visitInstagram": "Visit Instagram"
     },
     "contact": {
       "title": "Contact",
