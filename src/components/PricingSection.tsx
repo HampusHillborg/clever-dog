@@ -1,38 +1,59 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { FaDog, FaClock, FaWalking } from 'react-icons/fa';
+import { FaDog, FaWalking, FaCalendarAlt, FaBed, FaCalendarWeek } from 'react-icons/fa';
 
 const PricingSection: React.FC = () => {
   const { t } = useTranslation();
 
-  // Placeholder pricing data
+  // Updated pricing data
   const pricingData = [
     {
-      title: t('pricing.fullDay'),
-      icon: <FaDog />,
-      price: '300',
-      description: '08:00 - 17:00',
-      discount: '4500',
-      discountPeriod: t('pricing.perMonth')
+      title: t('pricing.fullMonth'),
+      icon: <FaCalendarAlt />,
+      price: '3500',
+      description: t('pricing.fiveDaysWeek'),
+      details: '07:00 - 18:00 (Fre 07:00 - 17:00)',
+      type: 'monthly'
     },
     {
-      title: t('pricing.halfDay'),
-      icon: <FaClock />,
-      price: '200',
-      description: '08:00 - 13:00 / 12:00 - 17:00',
-      discount: '3000',
-      discountPeriod: t('pricing.perMonth')
+      title: t('pricing.partTime'),
+      icon: <FaCalendarWeek />,
+      price: '2500',
+      description: t('pricing.twoDaysWeek'),
+      details: '07:00 - 18:00 (Fre 07:00 - 17:00)',
+      type: 'monthly'
+    },
+    {
+      title: t('pricing.singleDay'),
+      icon: <FaDog />,
+      price: '350',
+      description: t('pricing.oneDay'),
+      details: '07:00 - 18:00 (Fre 07:00 - 17:00)',
+      type: 'single'
     },
     {
       title: t('pricing.walkOnly'),
       icon: <FaWalking />,
-      price: '150',
-      description: '30-60 min',
-      discount: '2200',
-      discountPeriod: t('pricing.perMonth')
+      price: '200',
+      description: '45 min',
+      details: t('pricing.walk'),
+      type: 'single'
+    },
+    {
+      title: t('pricing.boarding'),
+      icon: <FaBed />,
+      price: '350',
+      description: t('pricing.overnight'),
+      details: t('pricing.per24h'),
+      type: 'single',
+      holidayPrice: '700'
     }
   ];
+
+  // Group pricing by type for layout
+  const monthlyPlans = pricingData.filter(item => item.type === 'monthly');
+  const singleServices = pricingData.filter(item => item.type === 'single');
 
   return (
     <section id="pricing" className="section bg-light">
@@ -46,40 +67,76 @@ const PricingSection: React.FC = () => {
         >
           {t('pricing.title')}
         </motion.h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {pricingData.map((item, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="bg-white rounded-lg shadow-md overflow-hidden"
-            >
-              <div className="p-6 text-center">
-                <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
-                  <span className="text-primary text-2xl">{item.icon}</span>
-                </div>
-                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                <p className="text-gray-600 mb-4">{item.description}</p>
-                <div className="text-3xl font-bold text-primary mb-1">
-                  {item.price} {t('pricing.currency')}
-                </div>
-                <p className="text-sm text-gray-600 mb-4">{t('pricing.perDay')}</p>
-                
-                <div className="pt-4 mt-4 border-t border-gray-100">
-                  <p className="text-gray-700 font-medium mb-1">
-                    {t('pricing.discount')}:
-                  </p>
-                  <div className="text-xl font-bold text-secondary">
-                    {item.discount} {t('pricing.currency')}
+        
+        <div className="mb-8">
+          <h3 className="text-xl font-bold text-center mb-6">{t('pricing.monthlyTitle')}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {monthlyPlans.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="bg-white rounded-lg shadow-md overflow-hidden"
+              >
+                <div className="p-6 text-center">
+                  <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
+                    <span className="text-primary text-2xl">{item.icon}</span>
                   </div>
-                  <p className="text-sm text-gray-600">{item.discountPeriod}</p>
+                  <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                  <p className="text-gray-600 mb-2">{item.description}</p>
+                  <p className="text-gray-500 text-sm mb-4">{item.details}</p>
+                  <div className="text-3xl font-bold text-primary mb-1">
+                    {item.price} {t('pricing.currency')}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{t('pricing.perMonth')}</p>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-center mb-6">{t('pricing.singleTitle')}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {singleServices.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="bg-white rounded-lg shadow-md overflow-hidden"
+              >
+                <div className="p-6 text-center">
+                  <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
+                    <span className="text-primary text-2xl">{item.icon}</span>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                  <p className="text-gray-600 mb-2">{item.description}</p>
+                  <p className="text-gray-500 text-sm mb-4">{item.details}</p>
+                  <div className="text-3xl font-bold text-primary mb-1">
+                    {item.price} {t('pricing.currency')}
+                  </div>
+                  {item.title === t('pricing.boarding') ? (
+                    <>
+                      <p className="text-sm text-gray-600 mb-1">{t('pricing.per24h')}</p>
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <p className="text-sm font-medium text-gray-700">{t('pricing.holidayRate')}</p>
+                        <div className="text-lg font-bold text-secondary">
+                          {item.holidayPrice} {t('pricing.currency')}
+                        </div>
+                        <p className="text-xs text-gray-500">{t('pricing.holidayDescription')}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-600 mb-4">{t('pricing.perOccasion')}</p>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         <motion.div 

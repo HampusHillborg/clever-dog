@@ -18,6 +18,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     dogGender: '',
     dogHeight: '',
     isNeutered: '',
+    inquiryType: '',
     additionalInfo: '',
   });
 
@@ -39,6 +40,7 @@ ${t('booking.form.dogBreed')}: ${formData.dogBreed}
 ${t('booking.form.dogGender')}: ${formData.dogGender}
 ${t('booking.form.dogHeight')}: ${formData.dogHeight}
 ${t('booking.form.isNeutered')}: ${formData.isNeutered}
+${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : ''}
 ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
     `;
     
@@ -59,6 +61,7 @@ ${t('booking.form.dogBreed')}: ${formData.dogBreed}
 ${t('booking.form.dogGender')}: ${formData.dogGender}
 ${t('booking.form.dogHeight')}: ${formData.dogHeight}
 ${t('booking.form.isNeutered')}: ${formData.isNeutered}
+${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : ''}
 ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
     `;
     
@@ -80,6 +83,7 @@ ${t('booking.form.dogBreed')}: ${formData.dogBreed}
 ${t('booking.form.dogGender')}: ${formData.dogGender}
 ${t('booking.form.dogHeight')}: ${formData.dogHeight}
 ${t('booking.form.isNeutered')}: ${formData.isNeutered}
+${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : ''}
 ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
     `;
     
@@ -213,6 +217,26 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
                 <option value="">{t('booking.form.select')}</option>
                 <option value="yes">{t('booking.form.yes')}</option>
                 <option value="no">{t('booking.form.no')}</option>
+              </select>
+            </div>
+            
+            <div>
+              <label htmlFor="inquiryType" className="block text-sm font-medium text-gray-700">{t('booking.form.inquiryType')}</label>
+              <select
+                id="inquiryType"
+                name="inquiryType"
+                value={formData.inquiryType}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              >
+                <option value="">{t('booking.form.selectInquiry')}</option>
+                <option value="daycare">{t('booking.form.inquiryOptions.daycare')}</option>
+                <option value="partTime">{t('booking.form.inquiryOptions.partTime')}</option>
+                <option value="singleDay">{t('booking.form.inquiryOptions.singleDay')}</option>
+                <option value="boarding">{t('booking.form.inquiryOptions.boarding')}</option>
+                <option value="walking">{t('booking.form.inquiryOptions.walking')}</option>
+                <option value="question">{t('booking.form.inquiryOptions.question')}</option>
+                <option value="other">{t('booking.form.inquiryOptions.other')}</option>
               </select>
             </div>
             
