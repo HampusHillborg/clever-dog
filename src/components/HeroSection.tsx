@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useBooking } from './BookingContext';
 
 // Placeholder background - replace with actual image later
-const heroBackground = 'https://images.unsplash.com/photo-1590507621108-433608c97823?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80';
+const heroBackground = 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80';
 
 const HeroSection: React.FC = () => {
   const { t } = useTranslation();
