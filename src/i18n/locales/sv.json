@@ -1,0 +1,72 @@
+{
+  "translation": {
+    "welcome": "Välkommen till Clever Dog",
+    "cta": "Läs mer",
+    "bookCta": "Boka plats",
+    "about": {
+      "title": "Om Mig",
+      "bio": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Staffanstorp på Malmövägen 7, där trygghet och glädje står i centrum för varje hund.",
+      "bio2": "Tillsammans med min 3-åriga shiba inu skapar jag en lugn och kärleksfull miljö för hundar att utvecklas i. Senare i år kommer jag även att erbjuda hundtrimning som en del av verksamheten.",
+      "address": "Adress",
+      "email": "E-post",
+      "instagram": "Instagram",
+      "facebook": "Facebook"
+    },
+    "socialWalks": {
+      "title": "Social Walks",
+      "description": "Vi anordnar även Social Walks – gemensamma promenader där hundar och ägare får träna på att umgås med andra hundar i lugna och kontrollerade former. Ett utmärkt sätt att främja socialt beteende och stärka banden mellan hund och ägare.",
+      "benefits": {
+        "structuredWalks": {
+          "title": "Strukturerade promenader",
+          "description": "Våra promenader är noga planerade för att skapa en lugn och trygg miljö."
+        },
+        "socialization": {
+          "title": "Socialisering",
+          "description": "Hundar får träffa andra hundar i en kontrollerad miljö med professionell vägledning."
+        },
+        "strengthenedBonds": {
+          "title": "Stärkta band",
+          "description": "Bygger ett starkare band mellan hund och ägare genom delade positiva upplevelser."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Prislista",
+      "daycare": "Hunddagis",
+      "fullDay": "Heldag",
+      "halfDay": "Halvdag",
+      "walkOnly": "Promenad",
+      "discount": "Rabatt vid fler dagar",
+      "perMonth": "per månad",
+      "perDay": "per dag",
+      "currency": "kr",
+      "notes": "Alla priser är inklusive moms. Specialpriser för flera hundar från samma familj.",
+      "contactNote": "Kontakta oss för mer information och för att diskutera dina specifika behov."
+    },
+    "social": {
+      "title": "Sociala Medier",
+      "followUs": "Följ oss på sociala medier"
+    },
+    "contact": {
+      "title": "Kontakt",
+      "getInTouch": "Kontakta oss",
+      "location": "Vår plats"
+    },
+    "footer": {
+      "copyright": "© 2025 Clever Dog. Alla rättigheter förbehållna."
+    },
+    "language": "Svenska",
+    "booking": {
+      "title": "Boka Plats",
+      "form": {
+        "yourName": "Ditt Namn",
+        "email": "E-post",
+        "phone": "Telefon",
+        "dogName": "Hundens Namn",
+        "dogBreed": "Hundras",
+        "message": "Meddelande",
+        "submit": "Skicka Bokningsförfrågan"
+      }
+    }
+  }
+} 

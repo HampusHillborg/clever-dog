@@ -1,0 +1,72 @@
+{
+  "translation": {
+    "welcome": "Welcome to Clever Dog",
+    "cta": "Learn more",
+    "bookCta": "Book a spot",
+    "about": {
+      "title": "About Me",
+      "bio": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Staffanstorp at Malmövägen 7, where safety and joy are at the center for every dog.",
+      "bio2": "Together with my 3-year-old Shiba Inu, I create a calm and loving environment for dogs to develop in. Later this year, I will also offer dog grooming as part of the business.",
+      "address": "Address",
+      "email": "Email",
+      "instagram": "Instagram",
+      "facebook": "Facebook"
+    },
+    "socialWalks": {
+      "title": "Social Walks",
+      "description": "We also organize Social Walks – group walks where dogs and owners can practice socializing with other dogs in calm and controlled forms. An excellent way to promote social behavior and strengthen the bonds between dog and owner.",
+      "benefits": {
+        "structuredWalks": {
+          "title": "Structured Walks",
+          "description": "Our walks are carefully planned to create a calm and safe environment."
+        },
+        "socialization": {
+          "title": "Socialization",
+          "description": "Dogs get to meet other dogs in a controlled environment with professional guidance."
+        },
+        "strengthenedBonds": {
+          "title": "Strengthened Bonds",
+          "description": "Builds a stronger bond between dog and owner through shared positive experiences."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Pricing",
+      "daycare": "Dog Daycare",
+      "fullDay": "Full day",
+      "halfDay": "Half day",
+      "walkOnly": "Walk only",
+      "discount": "Discount for multiple days",
+      "perMonth": "per month",
+      "perDay": "per day",
+      "currency": "SEK",
+      "notes": "All prices include VAT. Special prices for multiple dogs from the same family.",
+      "contactNote": "Contact us for more information and to discuss your specific needs."
+    },
+    "social": {
+      "title": "Social Media",
+      "followUs": "Follow us on social media"
+    },
+    "contact": {
+      "title": "Contact",
+      "getInTouch": "Get in touch",
+      "location": "Our location"
+    },
+    "footer": {
+      "copyright": "© 2025 Clever Dog. All rights reserved."
+    },
+    "language": "English",
+    "booking": {
+      "title": "Book a Spot",
+      "form": {
+        "yourName": "Your Name",
+        "email": "Email",
+        "phone": "Phone",
+        "dogName": "Dog's Name",
+        "dogBreed": "Dog's Breed",
+        "message": "Message",
+        "submit": "Send Booking Request"
+      }
+    }
+  }
+} 
