@@ -1,0 +1,6 @@
+# All robots allowed
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://cleverdog.se/sitemap.xml 
