@@ -27,9 +27,15 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const getEmailService = (email: string): 'gmail' | 'outlook' | 'default' => {
+    const domain = email.split('@')[1]?.toLowerCase();
+    if (domain?.includes('gmail.com')) return 'gmail';
+    if (domain?.includes('outlook.com') || domain?.includes('hotmail.com') || domain?.includes('live.com')) return 'outlook';
+    return 'default';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Construct body content for email
     const subject = `Booking request from ${formData.name}`;
     const body = `
 ${t('booking.form.yourName')}: ${formData.name}
@@ -44,52 +50,21 @@ ${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inqui
 ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
     `;
     
-    // Use default email client
-    window.location.href = `mailto:cleverdog.aw@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    onClose();
-  };
-
-  const openGmailCompose = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const subject = `Booking request from ${formData.name}`;
-    const body = `
-${t('booking.form.yourName')}: ${formData.name}
-${t('booking.form.email')}: ${formData.email}
-${t('booking.form.phone')}: ${formData.phone}
-${t('booking.form.dogName')}: ${formData.dogName}
-${t('booking.form.dogBreed')}: ${formData.dogBreed}
-${t('booking.form.dogGender')}: ${formData.dogGender}
-${t('booking.form.dogHeight')}: ${formData.dogHeight}
-${t('booking.form.isNeutered')}: ${formData.isNeutered}
-${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : ''}
-${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
-    `;
+    const emailService = getEmailService(formData.email);
     
-    // Open Gmail compose window
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=cleverdog.aw@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, '_blank');
-    onClose();
-  };
-
-  const openOutlookCompose = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const subject = `Booking request from ${formData.name}`;
-    const body = `
-${t('booking.form.yourName')}: ${formData.name}
-${t('booking.form.email')}: ${formData.email}
-${t('booking.form.phone')}: ${formData.phone}
-${t('booking.form.dogName')}: ${formData.dogName}
-${t('booking.form.dogBreed')}: ${formData.dogBreed}
-${t('booking.form.dogGender')}: ${formData.dogGender}
-${t('booking.form.dogHeight')}: ${formData.dogHeight}
-${t('booking.form.isNeutered')}: ${formData.isNeutered}
-${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : ''}
-${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
-    `;
+    switch (emailService) {
+      case 'gmail':
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=cleverdog.aw@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.open(gmailUrl, '_blank');
+        break;
+      case 'outlook':
+        const outlookUrl = `https://outlook.live.com/owa/?path=/mail/action/compose&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&to=cleverdog.aw@gmail.com`;
+        window.open(outlookUrl, '_blank');
+        break;
+      default:
+        window.location.href = `mailto:cleverdog.aw@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
     
-    // Open Outlook.com compose window
-    const outlookUrl = `https://outlook.live.com/owa/?path=/mail/action/compose&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&to=cleverdog.aw@gmail.com`;
-    window.open(outlookUrl, '_blank');
     onClose();
   };
 
@@ -125,31 +100,29 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('booking.form.phone')}</label>
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('booking.form.email')}</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                />
-              </div>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('booking.form.email')}</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('booking.form.phone')}</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+              />
             </div>
             
             {/* Dog Information */}
@@ -254,30 +227,12 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
             </div>
           </div>
           
-          <div className="mt-6 space-y-3">
+          <div className="mt-6">
             <button
               type="submit"
               className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               {t('booking.form.submitDefault')}
-            </button>
-            
-            <button
-              type="button"
-              onClick={openGmailCompose}
-              className="w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary flex items-center justify-center"
-            >
-              <img src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Gmail_icon_%282020%29.svg" alt="Gmail" className="w-5 h-5 mr-2" />
-              {t('booking.form.submitGmail')}
-            </button>
-            
-            <button
-              type="button"
-              onClick={openOutlookCompose}
-              className="w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary flex items-center justify-center"
-            >
-              <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" alt="Outlook" className="w-5 h-5 mr-2" />
-              {t('booking.form.submitOutlook')}
             </button>
           </div>
         </form>
