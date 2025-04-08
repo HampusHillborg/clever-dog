@@ -9,9 +9,9 @@ const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-white py-12">
-      <div className="container">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <footer className="bg-gray-900 text-white py-8 md:py-12">
+      <div className="container px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           {/* Logo and Info */}
           <div>
             <div className="flex flex-col items-center md:items-start">
@@ -19,11 +19,11 @@ const Footer: React.FC = () => {
                 <img 
                   src={dogLogo} 
                   alt="Clever Dog Logo" 
-                  className="h-12 w-auto"
+                  className="h-10 md:h-12 w-auto"
                 />
-                <span className="text-xl font-bold text-orange-500">Clever Dog</span>
+                <span className="text-lg md:text-xl font-bold text-orange-500">Clever Dog</span>
               </div>
-              <p className="text-gray-400 text-center md:text-left mb-4">
+              <p className="text-gray-400 text-center md:text-left mb-4 text-sm md:text-base">
                 Hunddagis i Staffanstorp med fokus på trygghet, glädje och utveckling
               </p>
               <div className="flex space-x-4">
@@ -32,16 +32,18 @@ const Footer: React.FC = () => {
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
+                  aria-label="Instagram"
                 >
-                  <FaInstagram className="text-xl" />
+                  <FaInstagram className="text-lg md:text-xl" />
                 </a>
                 <a 
                   href="https://www.facebook.com/profile.php?id=61555454325558" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
+                  aria-label="Facebook"
                 >
-                  <FaFacebookF className="text-xl" />
+                  <FaFacebookF className="text-lg md:text-xl" />
                 </a>
               </div>
             </div>
@@ -49,30 +51,30 @@ const Footer: React.FC = () => {
 
           {/* Links */}
           <div className="flex flex-col items-center">
-            <h3 className="text-lg font-bold mb-4">Quick Links</h3>
+            <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">Quick Links</h3>
             <ul className="space-y-2 text-center md:text-left">
               <li>
-                <a href="#about" className="text-gray-400 hover:text-primary">
+                <a href="#about" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('about.title')}
                 </a>
               </li>
               <li>
-                <a href="#social-walks" className="text-gray-400 hover:text-primary">
+                <a href="#social-walks" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('socialWalks.title')}
                 </a>
               </li>
               <li>
-                <a href="#pricing" className="text-gray-400 hover:text-primary">
+                <a href="#pricing" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('pricing.title')}
                 </a>
               </li>
               <li>
-                <a href="#sustainability" className="text-gray-400 hover:text-primary">
+                <a href="#sustainability" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('sustainability.title')}
                 </a>
               </li>
               <li>
-                <a href="#contact" className="text-gray-400 hover:text-primary">
+                <a href="#contact" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('contact.title')}
                 </a>
               </li>
@@ -81,8 +83,8 @@ const Footer: React.FC = () => {
 
           {/* Contact and Language */}
           <div className="flex flex-col items-center md:items-end">
-            <h3 className="text-lg font-bold mb-4">{t('contact.title')}</h3>
-            <address className="text-gray-400 mb-6 text-center md:text-right not-italic">
+            <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">{t('contact.title')}</h3>
+            <address className="text-gray-400 mb-4 md:mb-6 text-center md:text-right not-italic text-sm md:text-base">
               Malmövägen 7<br />
               Staffanstorp<br />
               <a href="mailto:cleverdog.aw@gmail.com" className="hover:text-primary">
@@ -93,7 +95,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
+        <div className="border-t border-gray-800 mt-6 md:mt-8 pt-6 md:pt-8 text-center text-gray-500 text-xs md:text-sm">
           <p>{t('footer.copyright').replace('2025', currentYear.toString())}</p>
         </div>
       </div>
