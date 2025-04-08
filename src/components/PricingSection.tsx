@@ -45,7 +45,7 @@ const PricingSection: React.FC = () => {
       icon: <FaBed />,
       price: '350',
       description: t('pricing.overnight'),
-      details: t('pricing.per24h'),
+      details: '',
       type: 'single',
       holidayPrice: '700'
     }
@@ -90,7 +90,7 @@ const PricingSection: React.FC = () => {
                   <div className="text-3xl font-bold text-primary mb-1">
                     {item.price} {t('pricing.currency')}
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">{t('pricing.perMonth')}</p>
+                  <p className="text-sm text-gray-600">{t('pricing.perMonth')}</p>
                 </div>
               </motion.div>
             ))}
@@ -119,9 +119,9 @@ const PricingSection: React.FC = () => {
                   <div className="text-3xl font-bold text-primary mb-1">
                     {item.price} {t('pricing.currency')}
                   </div>
-                  {item.title === t('pricing.boarding') ? (
+                  {item.holidayPrice ? (
                     <>
-                      <p className="text-sm text-gray-600 mb-1">{t('pricing.per24h')}</p>
+                      <p className="text-sm text-gray-600 mb-4">{t('pricing.per24h')}</p>
                       <div className="mt-3 pt-3 border-t border-gray-100">
                         <p className="text-sm font-medium text-gray-700">{t('pricing.holidayRate')}</p>
                         <div className="text-lg font-bold text-secondary">
@@ -131,7 +131,7 @@ const PricingSection: React.FC = () => {
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-gray-600 mb-4">{t('pricing.perOccasion')}</p>
+                    <p className="text-sm text-gray-600">{t('pricing.perOccasion')}</p>
                   )}
                 </div>
               </motion.div>
