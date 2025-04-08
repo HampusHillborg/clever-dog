@@ -14,18 +14,28 @@ const Navbar: React.FC = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-md">
       <div className="container flex items-center justify-between py-4">
         {/* Logo */}
-        <div className="flex items-center space-x-2">
+        <button 
+          onClick={scrollToTop}
+          className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+        >
           <img 
             src={dogLogo} 
             alt="Clever Dog Logo" 
             className="h-10 w-auto"
           />
           <span className="text-xl font-bold text-orange-500">Clever Dog</span>
-        </div>
+        </button>
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex lg:items-center lg:justify-end lg:flex-1 lg:space-x-5">
