@@ -5,6 +5,13 @@ import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebookF } from 'react-icon
 
 const ContactSection: React.FC = () => {
   const { t } = useTranslation();
+  
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+  
+  // Always use mailto protocol for email links
+  const emailLink = "mailto:cleverdog.aw@gmail.com";
 
   return (
     <section id="contact" className="section bg-light">
@@ -47,7 +54,7 @@ const ContactSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="font-medium">{t('about.email')}</h4>
-                  <a href="mailto:cleverdog.aw@gmail.com" className="hover:text-primary">
+                  <a href={emailLink} className="hover:text-primary">
                     cleverdog.aw@gmail.com
                   </a>
                 </div>

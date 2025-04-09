@@ -34,6 +34,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     return 'default';
   };
 
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const subject = `Booking request from ${formData.name}`;
@@ -50,19 +54,25 @@ ${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inqui
 ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
     `;
     
-    const emailService = getEmailService(formData.email);
-    
-    switch (emailService) {
-      case 'gmail':
-        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=cleverdog.aw@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.open(gmailUrl, '_blank');
-        break;
-      case 'outlook':
-        const outlookUrl = `https://outlook.live.com/owa/?path=/mail/action/compose&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&to=cleverdog.aw@gmail.com`;
-        window.open(outlookUrl, '_blank');
-        break;
-      default:
-        window.location.href = `mailto:cleverdog.aw@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // For mobile devices, always use mailto: protocol to open native mail app
+    if (isMobileDevice()) {
+      window.location.href = `mailto:cleverdog.aw@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    } else {
+      // For desktop, continue with the existing email service detection
+      const emailService = getEmailService(formData.email);
+      
+      switch (emailService) {
+        case 'gmail':
+          const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=cleverdog.aw@gmail.com&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+          window.open(gmailUrl, '_blank');
+          break;
+        case 'outlook':
+          const outlookUrl = `https://outlook.live.com/owa/?path=/mail/action/compose&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}&to=cleverdog.aw@gmail.com`;
+          window.open(outlookUrl, '_blank');
+          break;
+        default:
+          window.location.href = `mailto:cleverdog.aw@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      }
     }
     
     onClose();
