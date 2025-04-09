@@ -6,11 +6,6 @@ import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebookF } from 'react-icon
 const ContactSection: React.FC = () => {
   const { t } = useTranslation();
   
-  const isMobileDevice = () => {
-    return typeof window !== 'undefined' && 
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  };
-  
   // Always use mailto protocol for email links
   const emailLink = "mailto:cleverdog.aw@gmail.com";
 
