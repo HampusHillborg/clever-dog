@@ -90,18 +90,20 @@ const ContactSection: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="h-full"
           >
-            <h3 className="text-2xl font-bold mb-6">{t('contact.location')}</h3>
-            <div className="h-[400px] rounded-lg overflow-hidden shadow-md">
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2241.611005496342!2d13.204780177205092!3d55.64265047373066!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4653a2fd38b9b54f%3A0x4019b1eef694a1eb!2sMalm%C3%B6v%C3%A4gen%207%2C%20245%2038%20Staffanstorp!5e0!3m2!1ssv!2sse!4v1689775458050!5m2!1ssv!2sse" 
-                width="100%" 
-                height="100%" 
-                style={{ border: 0 }} 
-                allowFullScreen 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Clever Dog Map Location"
-              ></iframe>
+            <div className="bg-white p-6 rounded-lg shadow-md h-full">
+              <h3 className="text-2xl font-bold mb-6">{t('contact.location')}</h3>
+              <div className="h-[350px] rounded-lg overflow-hidden">
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2241.611005496342!2d13.204780177205092!3d55.64265047373066!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4653a2fd38b9b54f%3A0x4019b1eef694a1eb!2sMalm%C3%B6v%C3%A4gen%207%2C%20245%2038%20Staffanstorp!5e0!3m2!1ssv!2sse!4v1689775458050!5m2!1ssv!2sse" 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0 }} 
+                  allowFullScreen 
+                  loading="lazy" 
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Clever Dog Map Location"
+                ></iframe>
+              </div>
             </div>
           </motion.div>
         </div>
