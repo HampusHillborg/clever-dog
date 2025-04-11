@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useBooking } from './BookingContext';
 
 // Import the hero image from assets
-import heroBackground from '../assets/images/hero/hero.jpg';
+import heroBackground from '../assets/images/hero/hero8.jpg';
 
 const HeroSection: React.FC = () => {
   const { t } = useTranslation();
