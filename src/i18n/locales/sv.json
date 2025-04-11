@@ -38,12 +38,13 @@
       "fullMonth": "Månadsplats",
       "partTime": "Deltidsplats",
       "singleDay": "Dagisvistelse",
-      "walkOnly": "Promenad",
+      "walkOnly": "Social Promenad",
       "boarding": "Pensionat",
       "fiveDaysWeek": "5 dagar i veckan",
       "twoDaysWeek": "2 dagar i veckan",
       "oneDay": "Enstaka dag",
       "walk": "Rastning av hund",
+      "socialWalk": "Promenad i grupp med socialisering",
       "overnight": "Övernattning",
       "monthlyTitle": "Månadsplatser",
       "singleTitle": "Enstaka tillfällen",
@@ -54,7 +55,8 @@
       "holidayDescription": "Julafton, juldagen, annandag jul, nyårsafton, påsk m.m.",
       "currency": "kr",
       "notes": "Alla priser är inklusive moms. Specialpriser för flera hundar från samma familj.",
-      "contactNote": "Kontakta oss för mer information och för att diskutera dina specifika behov."
+      "contactNote": "Kontakta oss för mer information och för att diskutera dina specifika behov.",
+      "walkNote": "Social Promenad grupper har maximalt 5 hundar per grupp."
     },
     "social": {
       "title": "Sociala Medier",

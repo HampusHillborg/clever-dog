@@ -38,12 +38,13 @@
       "fullMonth": "Monthly Pass",
       "partTime": "Part-time Pass",
       "singleDay": "Day Visit",
-      "walkOnly": "Walk",
+      "walkOnly": "Social Walk",
       "boarding": "Boarding",
       "fiveDaysWeek": "5 days per week",
       "twoDaysWeek": "2 days per week",
       "oneDay": "Single day",
       "walk": "Dog walking service",
+      "socialWalk": "Group walk with socialization",
       "overnight": "Overnight stay",
       "monthlyTitle": "Monthly Plans",
       "singleTitle": "Individual Services",
@@ -54,7 +55,8 @@
       "holidayDescription": "Christmas, New Year's Eve, Easter and other major holidays",
       "currency": "SEK",
       "notes": "All prices include VAT. Special prices for multiple dogs from the same family.",
-      "contactNote": "Contact us for more information and to discuss your specific needs."
+      "contactNote": "Contact us for more information and to discuss your specific needs.",
+      "walkNote": "Social Walk groups have a maximum of 5 dogs per group."
     },
     "social": {
       "title": "Social Media",

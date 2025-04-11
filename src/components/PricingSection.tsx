@@ -35,10 +35,11 @@ const PricingSection: React.FC = () => {
     {
       title: t('pricing.walkOnly'),
       icon: <FaWalking />,
-      price: '200',
-      description: '45 min',
-      details: t('pricing.walk'),
-      type: 'single'
+      price: '300',
+      description: '1-1,5 h',
+      details: t('pricing.socialWalk'),
+      type: 'single',
+      isGroupWalk: true
     },
     {
       title: t('pricing.boarding'),
@@ -131,7 +132,12 @@ const PricingSection: React.FC = () => {
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-gray-600">{t('pricing.perOccasion')}</p>
+                    <>
+                      <p className="text-sm text-gray-600">{t('pricing.perOccasion')}</p>
+                      {item.isGroupWalk && (
+                        <p className="text-xs text-gray-500 mt-2">* {t('pricing.walkNote')}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </motion.div>
