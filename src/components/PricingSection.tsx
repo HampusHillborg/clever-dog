@@ -27,7 +27,7 @@ const PricingSection: React.FC = () => {
     {
       title: t('pricing.singleDay'),
       icon: <FaDog />,
-      price: '350',
+      price: '300',
       description: t('pricing.oneDay'),
       details: '07:00 - 18:00 (Fre 07:00 - 17:00)',
       type: 'single'
