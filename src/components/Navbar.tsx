@@ -28,13 +28,14 @@ const Navbar: React.FC = () => {
         <button 
           onClick={scrollToTop}
           className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          aria-label="Go to homepage"
         >
           <img 
             src={dogLogo} 
             alt="Clever Dog Logo" 
             className="h-10 w-auto"
           />
-          <span className="text-xl font-bold text-orange-500">Clever Dog</span>
+          <span className="text-xl font-bold text-orange-700">Clever Dog</span>
         </button>
 
         {/* Desktop Navigation */}
@@ -57,6 +58,7 @@ const Navbar: React.FC = () => {
           <button 
             onClick={openBookingForm} 
             className="btn btn-primary ml-2 text-sm whitespace-nowrap"
+            aria-label={t('bookCta')}
           >
             {t('bookCta')}
           </button>
@@ -68,7 +70,12 @@ const Navbar: React.FC = () => {
         {/* Mobile Menu Button */}
         <div className="flex items-center lg:hidden">
           <LanguageSwitcher />
-          <button onClick={toggleMenu} className="p-2 ml-4 text-gray-600">
+          <button 
+            onClick={toggleMenu} 
+            className="p-2 ml-4 text-gray-600"
+            aria-label={isMenuOpen ? t('closeMenu', 'Close menu') : t('openMenu', 'Open menu')}
+            aria-expanded={isMenuOpen}
+          >
             {isMenuOpen ? <FaTimes className="text-2xl" /> : <FaBars className="text-2xl" />}
           </button>
         </div>
@@ -99,6 +106,7 @@ const Navbar: React.FC = () => {
                 openBookingForm();
               }}
               className="w-full btn btn-primary text-center"
+              aria-label={t('bookCta')}
             >
               {t('bookCta')}
             </button>

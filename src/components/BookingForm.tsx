@@ -82,13 +82,19 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      role="dialog" 
+      aria-modal="true"
+      aria-labelledby="booking-form-title"
+    >
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white">
-          <h3 className="text-xl font-bold text-gray-900">{t('booking.title')}</h3>
+          <h3 id="booking-form-title" className="text-xl font-bold text-gray-900">{t('booking.title')}</h3>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500"
+            className="text-gray-700 hover:text-gray-900 p-2 rounded-full hover:bg-gray-100"
+            aria-label={t('close')}
           >
             <FaTimes />
           </button>
@@ -98,7 +104,7 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
           <div className="space-y-4">
             {/* Owner Information */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('booking.form.yourName')}</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-800">{t('booking.form.yourName')}</label>
               <input
                 type="text"
                 id="name"
@@ -108,11 +114,12 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
                 onChange={handleChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                 placeholder={t('booking.form.yourNamePlaceholder')}
+                aria-required="true"
               />
             </div>
             
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('booking.form.email')}</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-800">{t('booking.form.email')}</label>
               <input
                 type="email"
                 id="email"
@@ -121,11 +128,12 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
                 value={formData.email}
                 onChange={handleChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                aria-required="true"
               />
             </div>
             
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('booking.form.phone')}</label>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-800">{t('booking.form.phone')}</label>
               <input
                 type="tel"
                 id="phone"
@@ -138,7 +146,7 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
             
             {/* Dog Information */}
             <div>
-              <label htmlFor="dogName" className="block text-sm font-medium text-gray-700">{t('booking.form.dogName')}</label>
+              <label htmlFor="dogName" className="block text-sm font-medium text-gray-800">{t('booking.form.dogName')}</label>
               <input
                 type="text"
                 id="dogName"
@@ -147,11 +155,12 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
                 value={formData.dogName}
                 onChange={handleChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                aria-required="true"
               />
             </div>
             
             <div>
-              <label htmlFor="dogBreed" className="block text-sm font-medium text-gray-700">{t('booking.form.dogBreed')}</label>
+              <label htmlFor="dogBreed" className="block text-sm font-medium text-gray-800">{t('booking.form.dogBreed')}</label>
               <input
                 type="text"
                 id="dogBreed"
@@ -163,22 +172,24 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
             </div>
             
             <div>
-              <label htmlFor="dogGender" className="block text-sm font-medium text-gray-700">{t('booking.form.dogGender')}</label>
+              <label htmlFor="dogGender" className="block text-sm font-medium text-gray-800">{t('booking.form.dogGender')}</label>
               <select
                 id="dogGender"
                 name="dogGender"
                 value={formData.dogGender}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-gray-900"
+                aria-describedby="gender-description"
               >
                 <option value="">{t('booking.form.selectGender')}</option>
                 <option value="male">{t('booking.form.male')}</option>
                 <option value="female">{t('booking.form.female')}</option>
               </select>
+              <div id="gender-description" className="sr-only">{t('booking.form.genderDescription')}</div>
             </div>
             
             <div>
-              <label htmlFor="dogHeight" className="block text-sm font-medium text-gray-700">{t('booking.form.dogHeight')}</label>
+              <label htmlFor="dogHeight" className="block text-sm font-medium text-gray-800">{t('booking.form.dogHeight')}</label>
               <input
                 type="text"
                 id="dogHeight"
@@ -190,13 +201,13 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
             </div>
             
             <div>
-              <label htmlFor="isNeutered" className="block text-sm font-medium text-gray-700">{t('booking.form.isNeutered')}</label>
+              <label htmlFor="isNeutered" className="block text-sm font-medium text-gray-800">{t('booking.form.isNeutered')}</label>
               <select
                 id="isNeutered"
                 name="isNeutered"
                 value={formData.isNeutered}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-gray-900"
               >
                 <option value="">{t('booking.form.select')}</option>
                 <option value="yes">{t('booking.form.yes')}</option>
@@ -205,13 +216,13 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
             </div>
             
             <div>
-              <label htmlFor="inquiryType" className="block text-sm font-medium text-gray-700">{t('booking.form.inquiryType')}</label>
+              <label htmlFor="inquiryType" className="block text-sm font-medium text-gray-800">{t('booking.form.inquiryType')}</label>
               <select
                 id="inquiryType"
                 name="inquiryType"
                 value={formData.inquiryType}
                 onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-gray-900"
               >
                 <option value="">{t('booking.form.selectInquiry')}</option>
                 <option value="daycare">{t('booking.form.inquiryOptions.daycare')}</option>
@@ -225,7 +236,7 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
             </div>
             
             <div>
-              <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-700">{t('booking.form.additionalInfo')}</label>
+              <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-800">{t('booking.form.additionalInfo')}</label>
               <textarea
                 id="additionalInfo"
                 name="additionalInfo"
@@ -241,7 +252,8 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
           <div className="mt-6">
             <button
               type="submit"
-              className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              className="w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary font-bold"
+              aria-label={t('booking.form.submit')}
             >
               {t('booking.form.submitDefault')}
             </button>

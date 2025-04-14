@@ -7,10 +7,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#F97316',
-        secondary: '#10B981',
+        primary: '#E05A00',
+        secondary: '#0A8F61',
         light: '#F9FAFB',
         dark: '#111827',
+        orange: {
+          500: '#F97316',
+          700: '#C2410C',
+        },
+        gray: {
+          200: '#E5E7EB',
+          400: '#9CA3AF',
+          600: '#4B5563',
+          800: '#1F2937',
+        }
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
