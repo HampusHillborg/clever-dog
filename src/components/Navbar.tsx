@@ -27,7 +27,7 @@ const Navbar: React.FC = () => {
         {/* Logo */}
         <button 
           onClick={scrollToTop}
-          className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+          className="flex items-center space-x-2 hover:opacity-80 transition-opacity logo-button"
           aria-label="Go to homepage"
         >
           <img 
@@ -35,7 +35,7 @@ const Navbar: React.FC = () => {
             alt="Clever Dog Logo" 
             className="h-10 w-auto"
           />
-          <span className="text-xl font-bold text-orange-700">Clever Dog</span>
+          <span className="text-xl font-bold text-orange-500">Clever Dog</span>
         </button>
 
         {/* Desktop Navigation */}

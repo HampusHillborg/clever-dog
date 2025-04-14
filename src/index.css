@@ -15,9 +15,14 @@
     @apply font-bold;
   }
   
-  /* Enhanced focus styles for accessibility */
+  /* Enhanced focus styles for accessibility - excluding logo */
   a:focus, button:focus, input:focus, select:focus, textarea:focus {
     @apply outline-none ring-2 ring-primary ring-offset-2;
+  }
+
+  /* Remove focus styles from logo button */
+  .logo-button:focus {
+    @apply ring-0 ring-offset-0 outline-none;
   }
 }
 
