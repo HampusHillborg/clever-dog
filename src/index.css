@@ -5,10 +5,14 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden; /* Prevent horizontal scroll */
   }
   
   body {
     @apply font-sans text-dark bg-light;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    width: 100%;
+    position: relative;
   }
 
   h1, h2, h3, h4, h5, h6 {

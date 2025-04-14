@@ -9,9 +9,9 @@ const LanguageSwitcher: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center space-x-2" role="group" aria-label="Language switcher">
+    <div className="flex items-center space-x-1" role="group" aria-label="Language switcher">
       <button
-        className={`px-2 py-1 text-sm rounded ${
+        className={`px-1.5 py-0.5 text-xs md:text-sm rounded ${
           i18n.language === 'sv' 
             ? 'bg-primary text-white' 
             : 'bg-gray-200 text-gray-800'
@@ -20,11 +20,11 @@ const LanguageSwitcher: React.FC = () => {
         aria-label="Switch to Swedish"
         aria-pressed={i18n.language === 'sv'}
       >
-        Svenska
+        SE
       </button>
-      <span className="text-gray-600" aria-hidden="true">|</span>
+      <span className="text-gray-600 text-xs" aria-hidden="true">|</span>
       <button
-        className={`px-2 py-1 text-sm rounded ${
+        className={`px-1.5 py-0.5 text-xs md:text-sm rounded ${
           i18n.language === 'en' 
             ? 'bg-primary text-white' 
             : 'bg-gray-200 text-gray-800'
@@ -33,11 +33,11 @@ const LanguageSwitcher: React.FC = () => {
         aria-label="Switch to English"
         aria-pressed={i18n.language === 'en'}
       >
-        English
+        EN
       </button>
-      <span className="text-gray-600" aria-hidden="true">|</span>
+      <span className="text-gray-600 text-xs" aria-hidden="true">|</span>
       <button
-        className={`px-2 py-1 text-sm rounded ${
+        className={`px-1.5 py-0.5 text-xs md:text-sm rounded ${
           i18n.language === 'pl' 
             ? 'bg-primary text-white' 
             : 'bg-gray-200 text-gray-800'
@@ -46,7 +46,7 @@ const LanguageSwitcher: React.FC = () => {
         aria-label="Switch to Polish"
         aria-pressed={i18n.language === 'pl'}
       >
-        Polski
+        PL
       </button>
     </div>
   );

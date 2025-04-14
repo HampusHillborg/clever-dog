@@ -22,7 +22,7 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white shadow-md">
+    <nav className="sticky top-0 z-50 bg-white shadow-md w-full">
       <div className="container flex items-center justify-between py-4">
         {/* Logo */}
         <button 
@@ -33,9 +33,9 @@ const Navbar: React.FC = () => {
           <img 
             src={dogLogo} 
             alt="Clever Dog Logo" 
-            className="h-10 w-auto"
+            className="h-8 w-auto sm:h-10"
           />
-          <span className="text-xl font-bold text-orange-500">Clever Dog</span>
+          <span className="text-lg sm:text-xl font-bold text-orange-500">Clever Dog</span>
         </button>
 
         {/* Desktop Navigation */}
@@ -68,15 +68,15 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile Menu Button */}
-        <div className="flex items-center lg:hidden">
+        <div className="flex items-center space-x-2 lg:hidden">
           <LanguageSwitcher />
           <button 
             onClick={toggleMenu} 
-            className="p-2 ml-4 text-gray-600"
+            className="p-1.5 text-gray-600"
             aria-label={isMenuOpen ? t('closeMenu', 'Close menu') : t('openMenu', 'Open menu')}
             aria-expanded={isMenuOpen}
           >
-            {isMenuOpen ? <FaTimes className="text-2xl" /> : <FaBars className="text-2xl" />}
+            {isMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
           </button>
         </div>
       </div>
