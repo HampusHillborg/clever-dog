@@ -16,7 +16,9 @@
     <title>Clever Dog | Hunddagis i Staffanstorp</title>
     
     <!-- Preload critical assets -->
-    <link rel="preload" href="/src/assets/images/hero/heroweb.webp" as="image" type="image/webp" />
+    <link rel="preload" href="/src/assets/images/hero/heroweb-small.webp" as="image" type="image/webp" media="(max-width: 480px)" />
+    <link rel="preload" href="/src/assets/images/hero/heroweb-medium.webp" as="image" type="image/webp" media="(min-width: 481px) and (max-width: 1024px)" />
+    <link rel="preload" href="/src/assets/images/hero/heroweb.webp" as="image" type="image/webp" media="(min-width: 1025px)" />
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

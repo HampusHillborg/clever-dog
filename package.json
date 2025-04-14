@@ -32,9 +32,12 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "sharp": "^0.34.1",
+    "terser": "^5.39.0",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
     "vite": "^6.2.0",
+    "vite-imagetools": "^7.0.5",
     "vite-plugin-compression2": "^1.3.3"
   }
 }

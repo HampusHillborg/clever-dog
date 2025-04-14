@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { compression } from 'vite-plugin-compression2'
+import { imagetools } from 'vite-imagetools'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    imagetools(),
     compression({
       algorithm: 'gzip',
       exclude: [/\.(br)$/, /\.(gz)$/],
@@ -21,6 +23,7 @@ export default defineConfig({
     cssCodeSplit: true,
     reportCompressedSize: true,
     sourcemap: false,
+    assetsInlineLimit: 0, // Don't inline any assets as base64
     rollupOptions: {
       output: {
         manualChunks: {
@@ -42,6 +45,14 @@ export default defineConfig({
           return `assets/${extType}/[name]-[hash][extname]`
         }
       }
+    },
+    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
     },
   },
   server: {
