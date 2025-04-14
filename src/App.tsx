@@ -1,14 +1,15 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import './i18n'  // Import i18n configuration
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
-import AboutSection from './components/AboutSection'
-import SocialWalksSection from './components/SocialWalksSection'
-import PricingSection from './components/PricingSection'
-import SustainabilitySection from './components/SustainabilitySection'
-import SocialMediaSection from './components/SocialMediaSection'
-import ContactSection from './components/ContactSection'
-import Footer from './components/Footer'
+// Lazy load components not needed for initial render
+const AboutSection = lazy(() => import('./components/AboutSection'))
+const SocialWalksSection = lazy(() => import('./components/SocialWalksSection'))
+const PricingSection = lazy(() => import('./components/PricingSection'))
+const SustainabilitySection = lazy(() => import('./components/SustainabilitySection'))
+const SocialMediaSection = lazy(() => import('./components/SocialMediaSection'))
+const ContactSection = lazy(() => import('./components/ContactSection'))
+const Footer = lazy(() => import('./components/Footer'))
 import { BookingProvider } from './components/BookingContext'
 import './App.css'
 
@@ -42,14 +43,18 @@ function App() {
         <Navbar />
         <main>
           <HeroSection />
-          <AboutSection />
-          <SocialWalksSection />
-          <PricingSection />
-          <SustainabilitySection />
-          <SocialMediaSection />
-          <ContactSection />
+          <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+            <AboutSection />
+            <SocialWalksSection />
+            <PricingSection />
+            <SustainabilitySection />
+            <SocialMediaSection />
+            <ContactSection />
+          </Suspense>
         </main>
-        <Footer />
+        <Suspense fallback={<div className="h-16">Loading...</div>}>
+          <Footer />
+        </Suspense>
       </div>
     </BookingProvider>
   )

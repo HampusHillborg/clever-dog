@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useBooking } from './BookingContext';
 
 // Import the hero image from assets
-import heroBackground from '../assets/images/hero/hero.jpg';
+import heroBackground from '../assets/images/hero/heroweb.webp';
 
 const HeroSection: React.FC = () => {
   const { t } = useTranslation();
@@ -13,13 +13,17 @@ const HeroSection: React.FC = () => {
   return (
     <div className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
+      <img
+        src={heroBackground}
+        alt={t('heroImageAlt', 'Dog walking scenery')}
+        width="1920"
+        height="1080"
+        loading="eager"
+        fetchPriority="high"
+        className="absolute inset-0 z-0 w-full h-full object-cover"
+      />
       <div 
-        className="absolute inset-0 z-0" 
-        style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${heroBackground})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        className="absolute inset-0 z-0 bg-black bg-opacity-50" 
       />
 
       {/* Content */}

@@ -1,13 +1,37 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { FaInstagram } from 'react-icons/fa';
 
 const SocialMediaSection: React.FC = () => {
   const { t } = useTranslation();
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Load Instagram embed script
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const sectionElement = document.getElementById('social-media');
+    if (sectionElement) {
+      observer.observe(sectionElement);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Only load Instagram embed script when section becomes visible
+    if (!isVisible) return;
+    
     if (document.getElementById('instagram-embed-script')) return;
     
     const script = document.createElement('script');
@@ -30,7 +54,7 @@ const SocialMediaSection: React.FC = () => {
       const scriptElem = document.getElementById('instagram-embed-script');
       if (scriptElem) document.body.removeChild(scriptElem);
     };
-  }, []);
+  }, [isVisible]);
 
   return (
     <section id="social-media" className="section bg-white">
@@ -76,23 +100,26 @@ const SocialMediaSection: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="flex justify-center"
           >
-            <iframe
-              title="Instagram Profile"
-              src="https://www.instagram.com/cleverdog_/embed"
-              width="540"
-              height="680"
-              frameBorder="0"
-              scrolling="no"
-              allowTransparency={true}
-              className="instagram-profile-embed"
-              style={{
-                background: '#FFF',
-                border: '1px solid #e6e6e6',
-                borderRadius: '3px',
-                boxShadow: '0 0 1px 0 rgba(0,0,0,0.5), 0 1px 10px 0 rgba(0,0,0,0.15)',
-                maxWidth: '100%',
-              }}
-            ></iframe>
+            {isVisible && (
+              <iframe
+                title="Instagram Profile"
+                src="https://www.instagram.com/cleverdog_/embed"
+                width="540"
+                height="680"
+                loading="lazy"
+                frameBorder="0"
+                scrolling="no"
+                allowTransparency={true}
+                className="instagram-profile-embed"
+                style={{
+                  background: '#FFF',
+                  border: '1px solid #e6e6e6',
+                  borderRadius: '3px',
+                  boxShadow: '0 0 1px 0 rgba(0,0,0,0.5), 0 1px 10px 0 rgba(0,0,0,0.15)',
+                  maxWidth: '100%',
+                }}
+              ></iframe>
+            )}
           </motion.div>
           
           <motion.div
