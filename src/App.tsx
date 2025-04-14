@@ -2,6 +2,7 @@ import { useEffect, lazy, Suspense } from 'react'
 import './i18n'  // Import i18n configuration
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
+import InfoSection from './components/InfoSection'  // Import the InfoSection component
 // Lazy load components not needed for initial render
 const AboutSection = lazy(() => import('./components/AboutSection'))
 const SocialWalksSection = lazy(() => import('./components/SocialWalksSection'))
@@ -57,6 +58,7 @@ function App() {
     <BookingProvider>
       <div className="min-h-screen bg-light">
         <Navbar />
+        <InfoSection />  {/* Add the InfoSection component */}
         <main>
           <HeroSection />
           <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
