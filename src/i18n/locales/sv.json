@@ -8,6 +8,7 @@
       "title": "Om Mig",
       "bio": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Staffanstorp på Malmövägen 7, där trygghet och glädje står i centrum för varje hund.",
       "bio2": "Tillsammans med min 3-åriga shiba inu skapar jag en lugn och kärleksfull miljö för hundar att utvecklas i. Senare i år kommer jag även att erbjuda hundtrimning som en del av verksamheten.",
+      "bio3": "Med vårt strategiska läge bara 10 minuter från Lund och 15 minuter från Malmö, erbjuder vi hundägare i hela regionen en bekväm och tillgänglig hundomsorg av högsta kvalitet.",
       "permission": "Verksamheten är godkänd av Länsstyrelsen och jag har alla nödvändiga tillstånd för hunddagis och pensionatverksamhet.",
       "address": "Adress",
       "email": "E-post",
@@ -71,7 +72,17 @@
       "location": "Vår plats"
     },
     "footer": {
-      "copyright": "© 2025 Clever Dog. Alla rättigheter förbehållna."
+      "copyright": "© 2025 Clever Dog. Alla rättigheter förbehållna.",
+      "quickLinks": "Snabblänkar",
+      "locationTitle": "Perfekt läge för hundägare i hela regionen",
+      "strategicLocation": "Med vårt strategiska läge i Staffanstorp är vi lättillgängliga för hundägare från hela sydvästra Skåne:",
+      "travelTimes": {
+        "lund": "Endast 10 minuters bilresa",
+        "malmo": "Bara 15 minuter med bil",
+        "staffanstorp": "Centralt läge på Malmövägen"
+      },
+      "welcomeDogs": "Vi välkomnar hundar från hela regionen inklusive:",
+      "areasList": "Dalby, Södra Sandby, Veberöd, Genarp, Hjärup, Lomma, Bjärred, Åkarp, Arlöv, Burlöv samt hela Malmö med områden som Limhamn, Hyllie, Oxie och Husie."
     },
     "language": "Svenska",
     "cancel": "Avbryt",
@@ -100,6 +111,8 @@
           "question": "Allmän fråga",
           "other": "Annat"
         },
+        "startDate": "Startdatum",
+        "endDate": "Slutdatum",
         "selectInquiry": "Välj ärende",
         "additionalInfo": "Övrig information",
         "additionalInfoPlaceholder": "Exempelvis, allergier eller andra särskilda behov",

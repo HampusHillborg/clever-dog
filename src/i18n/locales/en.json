@@ -8,6 +8,7 @@
       "title": "About Me",
       "bio": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Staffanstorp at Malmövägen 7, where safety and joy are at the center for every dog.",
       "bio2": "Together with my 3-year-old Shiba Inu, I create a calm and loving environment for dogs to develop in. Later this year, I will also offer dog grooming as part of the business.",
+      "bio3": "With our strategic location just 10 minutes from Lund and 15 minutes from Malmö, we offer dog owners throughout the region convenient and accessible high-quality dog care.",
       "permission": "The business is approved by the County Administrative Board (Länsstyrelsen) and I have all necessary permits for dog daycare and boarding operations.",
       "address": "Address",
       "email": "Email",
@@ -71,7 +72,17 @@
       "location": "Our location"
     },
     "footer": {
-      "copyright": "© 2025 Clever Dog. All rights reserved."
+      "copyright": "© 2025 Clever Dog. All rights reserved.",
+      "quickLinks": "Quick Links",
+      "locationTitle": "Perfect location for dog owners in the region",
+      "strategicLocation": "With our strategic location in Staffanstorp, we are easily accessible for dog owners from all of southwestern Skåne:",
+      "travelTimes": {
+        "lund": "Only a 10-minute drive",
+        "malmo": "Just 15 minutes by car",
+        "staffanstorp": "Central location on Malmövägen"
+      },
+      "welcomeDogs": "We welcome dogs from the entire region including:",
+      "areasList": "Dalby, Södra Sandby, Veberöd, Genarp, Hjärup, Lomma, Bjärred, Åkarp, Arlöv, Burlöv, and all of Malmö including areas such as Limhamn, Hyllie, Oxie, and Husie."
     },
     "language": "English",
     "cancel": "Cancel",

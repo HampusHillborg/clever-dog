@@ -76,6 +76,7 @@ const AboutSection: React.FC = () => {
           <motion.div variants={itemVariants} className="space-y-6">
             <p className="text-lg">{t('about.bio')}</p>
             <p className="text-lg">{t('about.bio2')}</p>
+            <p className="text-lg highlight-text">{t('about.bio3')}</p>
             <p className="text-lg font-medium">{t('about.permission')}</p>
           </motion.div>
 
@@ -88,6 +89,7 @@ const AboutSection: React.FC = () => {
               <div>
                 <h3 className="font-medium text-gray-700">{t('about.address')}</h3>
                 <p>Malmövägen 7, Staffanstorp</p>
+                <p className="text-sm text-gray-600">10 min från Lund | 15 min från Malmö</p>
               </div>
             </div>
 

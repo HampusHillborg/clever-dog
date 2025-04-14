@@ -69,6 +69,8 @@ export default defineConfig({
     },
   },
   server: {
+    port: 3000,
+    strictPort: true, // Fail if port is already in use
     headers: {
       'Cache-Control': 'public, max-age=31536000',
     },

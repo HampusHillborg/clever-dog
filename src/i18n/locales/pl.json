@@ -8,6 +8,7 @@
       "title": "O Mnie",
       "bio": "Nazywam się Alicja i jestem certyfikowanym behawiorystą psów z wielkim sercem dla naszych czworonożnych przyjaciół. Prowadzę Clever Dog w Staffanstorp przy Malmövägen 7, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
       "bio2": "Razem z moim 3-letnim Shiba Inu tworzę spokojne i pełne miłości środowisko dla rozwoju psów. Jeszcze w tym roku oferować będę również usługi pielęgnacji psów jako część działalności.",
+      "bio3": "Z naszą strategiczną lokalizacją tylko 10 minut od Lund i 15 minut od Malmö, oferujemy właścicielom psów w całym regionie wygodną i dostępną opiekę nad psami najwyższej jakości.",
       "permission": "Działalność jest zatwierdzona przez Urząd Wojewódzki (Länsstyrelsen) i posiadam wszystkie niezbędne pozwolenia na prowadzenie przedszkola i hotelu dla psów.",
       "address": "Adres",
       "email": "Email",
@@ -71,7 +72,17 @@
       "location": "Nasza lokalizacja"
     },
     "footer": {
-      "copyright": "© 2025 Clever Dog. Wszelkie prawa zastrzeżone."
+      "copyright": "© 2025 Clever Dog. Wszelkie prawa zastrzeżone.",
+      "quickLinks": "Szybkie Linki",
+      "locationTitle": "Doskonała lokalizacja dla właścicieli psów w regionie",
+      "strategicLocation": "Dzięki naszej strategicznej lokalizacji w Staffanstorp, jesteśmy łatwo dostępni dla właścicieli psów z całej południowo-zachodniej Skanii:",
+      "travelTimes": {
+        "lund": "Tylko 10 minut jazdy samochodem",
+        "malmo": "Zaledwie 15 minut samochodem",
+        "staffanstorp": "Centralna lokalizacja przy Malmövägen"
+      },
+      "welcomeDogs": "Witamy psy z całego regionu, w tym z:",
+      "areasList": "Dalby, Södra Sandby, Veberöd, Genarp, Hjärup, Lomma, Bjärred, Åkarp, Arlöv, Burlöv oraz całego Malmö, w tym obszarów takich jak Limhamn, Hyllie, Oxie i Husie."
     },
     "language": "Polski",
     "cancel": "Anuluj",
@@ -100,6 +111,8 @@
           "question": "Ogólne pytanie",
           "other": "Inne"
         },
+        "startDate": "Data rozpoczęcia",
+        "endDate": "Data zakończenia",
         "selectInquiry": "Wybierz rodzaj zapytania",
         "additionalInfo": "Dodatkowe Informacje",
         "additionalInfoPlaceholder": "Na przykład, alergie lub inne specjalne potrzeby",
