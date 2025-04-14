@@ -107,3 +107,28 @@ zip -r ../clever-dog-website.zip .
 ## License
 
 This project is licensed under the MIT License.
+
+## Google Reviews Integration
+
+This project includes Google Reviews integration using the Google Places API. To set it up:
+
+1. Create a `.env.local` file in the root of your project with the following variables:
+   ```
+   VITE_GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY
+   VITE_GOOGLE_PLACE_ID=YOUR_GOOGLE_PLACE_ID
+   ```
+
+2. In your Netlify dashboard, add the following environment variables:
+   - `GOOGLE_API_KEY`: Your Google API key
+   - `GOOGLE_PLACE_ID`: Your Google Place ID for your business
+
+3. To test locally with the Netlify Functions:
+   ```
+   npm run netlify-dev
+   ```
+
+4. To deploy to Netlify, make sure your environment variables are set in the Netlify dashboard.
+
+## Running the project
+
+// ... existing running instructions ...

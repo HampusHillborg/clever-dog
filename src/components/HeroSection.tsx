@@ -2,6 +2,7 @@ import React, { useEffect, useState, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useBooking } from './BookingContext';
+import TrustBanner from './TrustBanner';
 
 // Import the hero images in different sizes
 import heroBackgroundLarge from '../assets/images/hero/heroweb-large.webp';
@@ -99,10 +100,33 @@ const HeroSection: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             <ContentSection t={t} openBookingForm={openBookingForm} />
+            
+            {/* Trust Banner - Add with animation */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1, duration: 0.8 }}
+              className="mt-8 flex justify-center"
+            >
+              <TrustBanner 
+                variant="dark" 
+                displayReview={!isMobile} 
+                className="max-w-md"
+              />
+            </motion.div>
           </motion.div>
         ) : (
           <div>
             <ContentSection t={t} openBookingForm={openBookingForm} />
+            
+            {/* Trust Banner - No animation for mobile */}
+            <div className="mt-6 flex justify-center">
+              <TrustBanner 
+                variant="dark" 
+                compact={isMobile} 
+                className="max-w-md"
+              />
+            </div>
           </div>
         )}
       </div>

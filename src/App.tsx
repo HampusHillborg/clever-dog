@@ -8,6 +8,7 @@ const SocialWalksSection = lazy(() => import('./components/SocialWalksSection'))
 const PricingSection = lazy(() => import('./components/PricingSection'))
 const SustainabilitySection = lazy(() => import('./components/SustainabilitySection'))
 const SocialMediaSection = lazy(() => import('./components/SocialMediaSection'))
+const GoogleReviewsSection = lazy(() => import('./components/GoogleReviewsSection'))
 const ContactSection = lazy(() => import('./components/ContactSection'))
 const Footer = lazy(() => import('./components/Footer'))
 import { BookingProvider } from './components/BookingContext'
@@ -64,6 +65,7 @@ function App() {
             <PricingSection />
             <SustainabilitySection />
             <SocialMediaSection />
+            <GoogleReviewsSection />
             <ContactSection />
           </Suspense>
         </main>

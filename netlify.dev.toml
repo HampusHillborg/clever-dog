@@ -1,0 +1,9 @@
+# Development-specific Netlify configuration
+[build]
+  functions = "netlify/functions"
+
+[dev]
+  framework = "vite"
+  targetPort = 5173
+  port = 8888
+  autoLaunch = true 
