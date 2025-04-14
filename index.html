@@ -15,14 +15,42 @@
     <meta name="twitter:card" content="summary_large_image" />
     <title>Clever Dog | Hunddagis i Staffanstorp</title>
     
+    <!-- Inline critical CSS to reduce render blocking -->
+    <style>
+      /* Critical styles for initial render */
+      :root { --primary: #4A90E2; }
+      body { margin: 0; font-family: 'Inter', sans-serif; }
+      .absolute { position: absolute; }
+      .relative { position: relative; }
+      .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+      .h-screen { height: 100vh; }
+      .w-full { width: 100%; }
+      .h-full { height: 100%; }
+      .object-cover { object-fit: cover; }
+      .z-0 { z-index: 0; }
+      .z-10 { z-index: 10; }
+      .overflow-hidden { overflow: hidden; }
+      .bg-black { background-color: #000; }
+      .bg-opacity-50 { background-color: rgba(0, 0, 0, 0.5); }
+      .flex { display: flex; }
+      .items-center { align-items: center; }
+      .justify-center { justify-center: center; }
+      .text-white { color: white; }
+    </style>
+    
+    <!-- DNS Preconnect for critical third-party resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
     <!-- Preload critical assets -->
     <link rel="preload" href="/src/assets/images/hero/heroweb-small.webp" as="image" type="image/webp" media="(max-width: 480px)" fetchpriority="high" />
     <link rel="preload" href="/src/assets/images/hero/heroweb-medium.webp" as="image" type="image/webp" media="(min-width: 481px) and (max-width: 1024px)" fetchpriority="high" />
     <link rel="preload" href="/src/assets/images/hero/heroweb-large.webp" as="image" type="image/webp" media="(min-width: 1025px)" fetchpriority="high" />
     
+    <!-- Preload main JavaScript bundle -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    
     <!-- Google Fonts preload for critical fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" media="print" onload="this.media='all'" />
     <!-- Fallback for JS disabled -->

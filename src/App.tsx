@@ -13,7 +13,22 @@ const Footer = lazy(() => import('./components/Footer'))
 import { BookingProvider } from './components/BookingContext'
 import './App.css'
 
+// Preload hero images - critical for FCP
+const preloadHeroImages = () => {
+  const sizes = ['small', 'medium', 'large'];
+  sizes.forEach(size => {
+    const img = new Image();
+    img.src = `/src/assets/images/hero/heroweb-${size}.webp`;
+    img.fetchPriority = 'high';
+  });
+};
+
 function App() {
+  // Preload hero images immediately
+  useEffect(() => {
+    preloadHeroImages();
+  }, []);
+
   // Add effect to handle anchor links smooth scrolling
   useEffect(() => {
     const handleAnchorClick = (e: MouseEvent) => {
