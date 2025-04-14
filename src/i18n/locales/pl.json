@@ -1,0 +1,132 @@
+{
+  "translation": {
+    "welcome": "Witamy w Clever Dog",
+    "heroDescription": "Przedszkole dla psów w Staffanstorp, koncentrujące się na bezpieczeństwie, radości i rozwoju",
+    "cta": "Dowiedz się więcej",
+    "bookCta": "Zarezerwuj miejsce",
+    "about": {
+      "title": "O Mnie",
+      "bio": "Nazywam się Alicja i jestem certyfikowanym behawiorystą psów z wielkim sercem dla naszych czworonożnych przyjaciół. Prowadzę Clever Dog w Staffanstorp przy Malmövägen 7, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
+      "bio2": "Razem z moim 3-letnim Shiba Inu tworzę spokojne i pełne miłości środowisko dla rozwoju psów. Jeszcze w tym roku oferować będę również usługi pielęgnacji psów jako część działalności.",
+      "permission": "Działalność jest zatwierdzona przez Urząd Wojewódzki (Länsstyrelsen) i posiadam wszystkie niezbędne pozwolenia na prowadzenie przedszkola i hotelu dla psów.",
+      "address": "Adres",
+      "email": "Email",
+      "instagram": "Instagram",
+      "facebook": "Facebook"
+    },
+    "socialWalks": {
+      "title": "Spacery Socjalizacyjne",
+      "description": "Organizujemy również Spacery Socjalizacyjne – grupowe spacery, podczas których psy i właściciele mogą ćwiczyć socjalizację z innymi psami w spokojnej i kontrolowanej formie. Doskonały sposób na promowanie zachowań społecznych i wzmacnianie więzi między psem a właścicielem.",
+      "benefits": {
+        "structuredWalks": {
+          "title": "Ustrukturyzowane Spacery",
+          "description": "Nasze spacery są starannie zaplanowane, aby stworzyć spokojne i bezpieczne środowisko."
+        },
+        "socialization": {
+          "title": "Socjalizacja",
+          "description": "Psy spotykają inne psy w kontrolowanym środowisku z profesjonalnym przewodnictwem."
+        },
+        "strengthenedBonds": {
+          "title": "Wzmocnione Więzi",
+          "description": "Buduje silniejszą więź między psem a właścicielem poprzez wspólne pozytywne doświadczenia."
+        }
+      }
+    },
+    "pricing": {
+      "title": "Cennik",
+      "daycare": "Przedszkole dla Psów",
+      "fullMonth": "Karnet Miesięczny",
+      "partTime": "Karnet Częściowy",
+      "singleDay": "Wizyta Dzienna",
+      "walkOnly": "Spacer Socjalizacyjny",
+      "boarding": "Hotel dla Psów",
+      "fiveDaysWeek": "5 dni w tygodniu",
+      "twoDaysWeek": "2 dni w tygodniu",
+      "oneDay": "Pojedynczy dzień",
+      "walk": "Usługa spacerowania z psem",
+      "socialWalk": "Spacer grupowy z socjalizacją",
+      "overnight": "Nocleg",
+      "monthlyTitle": "Plany Miesięczne",
+      "singleTitle": "Usługi Indywidualne",
+      "perMonth": "miesięcznie",
+      "perOccasion": "za okazję",
+      "per24h": "za 24 godziny",
+      "holidayRate": "Stawka Świąteczna",
+      "holidayDescription": "Boże Narodzenie, Sylwester, Wielkanoc i inne główne święta",
+      "currency": "SEK",
+      "notes": "Wszystkie ceny zawierają VAT. Specjalne ceny dla wielu psów z tej samej rodziny.",
+      "contactNote": "Skontaktuj się z nami, aby uzyskać więcej informacji i omówić swoje konkretne potrzeby.",
+      "walkNote": "Grupy Spacerów Socjalizacyjnych liczą maksymalnie 5 psów na grupę."
+    },
+    "social": {
+      "title": "Media Społecznościowe",
+      "followUs": "Obserwuj nas na Instagramie",
+      "followText": "Bądź na bieżąco z naszymi najnowszymi aktywnościami przedszkola dla psów, wydarzeniami i uroczymi zdjęciami psów. Obserwuj nas na Instagramie, aby otrzymywać codzienne aktualizacje.",
+      "viewProfile": "Kliknij, aby zobaczyć nasz profil",
+      "visitInstagram": "Odwiedź Instagram"
+    },
+    "contact": {
+      "title": "Kontakt",
+      "getInTouch": "Skontaktuj się",
+      "location": "Nasza lokalizacja"
+    },
+    "footer": {
+      "copyright": "© 2025 Clever Dog. Wszelkie prawa zastrzeżone."
+    },
+    "language": "Polski",
+    "cancel": "Anuluj",
+    "booking": {
+      "title": "Zarezerwuj Miejsce",
+      "form": {
+        "ownerInfo": "Informacje o Właścicielu",
+        "dogInfo": "Informacje o Psie",
+        "serviceInfo": "Informacje o Usłudze",
+        "yourName": "Imię i Nazwisko",
+        "yourNamePlaceholder": "Twoje pełne imię i nazwisko",
+        "email": "Email",
+        "phone": "Telefon",
+        "dogName": "Imię Psa",
+        "dogBreed": "Rasa Psa",
+        "dogGender": "Płeć",
+        "dogHeight": "Wysokość w Kłębie",
+        "isNeutered": "Czy pies jest wykastrowany/wysterylizowany?",
+        "inquiryType": "Czego dotyczy Twoje zapytanie?",
+        "inquiryOptions": {
+          "daycare": "Przedszkole dla psów (miesięcznie)",
+          "partTime": "Przedszkole dla psów (niepełny wymiar)",
+          "singleDay": "Wizyta jednodniowa", 
+          "boarding": "Hotel dla psów",
+          "walking": "Spacery z psem",
+          "question": "Ogólne pytanie",
+          "other": "Inne"
+        },
+        "selectInquiry": "Wybierz rodzaj zapytania",
+        "additionalInfo": "Dodatkowe Informacje",
+        "additionalInfoPlaceholder": "Na przykład, alergie lub inne specjalne potrzeby",
+        "submitDefault": "Wyślij prośbę o rezerwację",
+        "submitGmail": "Wyślij przez Gmail",
+        "submitOutlook": "Wyślij przez Outlook",
+        "select": "Wybierz",
+        "selectGender": "Wybierz płeć",
+        "male": "Samiec",
+        "female": "Samica",
+        "yes": "Tak",
+        "no": "Nie"
+      },
+      "testimonial": "Wspaniała usługa spacerów z psem! Mój pies uwielbia swoje spacery i zawsze wraca do domu szczęśliwy i zmęczony.",
+      "testimonialAuthor": "Sarah M."
+    },
+    "sustainability": {
+      "title": "Zrównoważony Rozwój",
+      "goal": "Clever Dog wspiera Cel Globalny ONZ #8: Godna praca i wzrost gospodarczy.",
+      "description": "Wierzymy w uczciwe warunki pracy, lokalne zatrudnienie i przyczynianie się do zrównoważonego społeczeństwa. Oferując wysokiej jakości opiekę nad psami i przyszłe usługi pielęgnacji psów, dążymy do tworzenia bezpiecznych i sensownych miejsc pracy – jednocześnie rozwijając się razem z naszą lokalną społecznością."
+    },
+    "reviews": {
+      "title": "Co Mówią Nasi Klienci",
+      "subtitle": "Przeczytaj, co nasi klienci mówią o swoich doświadczeniach z naszymi usługami.",
+      "noReviews": "Brak dostępnych recenzji w tej chwili.",
+      "viewAllReviews": "Zobacz wszystkie recenzje w Google",
+      "reviewsCount": "{{count}} recenzji"
+    }
+  }
+} 

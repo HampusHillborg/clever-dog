@@ -4,6 +4,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import svTranslations from './locales/sv.json';
 import enTranslations from './locales/en.json';
+import plTranslations from './locales/pl.json';
 
 i18n
   .use(LanguageDetector)
@@ -12,6 +13,7 @@ i18n
     resources: {
       sv: svTranslations,
       en: enTranslations,
+      pl: plTranslations,
     },
     fallbackLng: 'sv',
     detection: {

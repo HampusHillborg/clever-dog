@@ -35,6 +35,19 @@ const LanguageSwitcher: React.FC = () => {
       >
         English
       </button>
+      <span className="text-gray-600" aria-hidden="true">|</span>
+      <button
+        className={`px-2 py-1 text-sm rounded ${
+          i18n.language === 'pl' 
+            ? 'bg-primary text-white' 
+            : 'bg-gray-200 text-gray-800'
+        }`}
+        onClick={() => changeLanguage('pl')}
+        aria-label="Switch to Polish"
+        aria-pressed={i18n.language === 'pl'}
+      >
+        Polski
+      </button>
     </div>
   );
 };
