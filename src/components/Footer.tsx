@@ -125,7 +125,7 @@ const Footer: React.FC = () => {
               </p>
               <p>
                 {/* Alltid på svenska för SEO */}
-                Dalby, Södra Sandby, Veberöd, Genarp, Hjärup, Lomma, Bjärred, Åkarp, Arlöv, Burlöv samt hela Malmö med områden som Limhamn, Hyllie, Oxie och Husie.
+                Lund, Dalby, Södra Sandby, Veberöd, Genarp, Hjärup, Lomma, Bjärred, Åkarp, Arlöv, Burlöv samt hela Malmö med områden som Limhamn, Hyllie, Oxie och Husie.
               </p>
             </div>
           </div>
