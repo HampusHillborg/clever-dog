@@ -12,7 +12,7 @@
 
 # Aggressive caching for images - they're hashed so can be cached forever
 [[headers]]
-  for = "/assets/images/*"
+  for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
     # Enable CORS for images to be loaded from CDNs
@@ -20,7 +20,7 @@
 
 # Specific image formats - webp
 [[headers]]
-  for = "*.webp"
+  for = "/images/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
     Content-Type = "image/webp"

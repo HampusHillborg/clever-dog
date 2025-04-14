@@ -1,27 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { FaWalking, FaUsers, FaHeart } from 'react-icons/fa';
+// Import the image directly
+import socialWalkImport from '../assets/images/gallery/social_walk.jpeg';
 
 const SocialWalksSection: React.FC = () => {
   const { t } = useTranslation();
-  // Use state to hold the image path
-  const [imagePath, setImagePath] = useState('');
+  const [imageError, setImageError] = useState(false);
 
-  // Dynamically import the image on component mount
-  useEffect(() => {
-    // Add a cache-busting query parameter
-    const timestamp = new Date().getTime();
-    import(`../assets/images/gallery/social_walk.jpeg?t=${timestamp}`)
-      .then(module => {
-        setImagePath(module.default);
-      })
-      .catch(error => {
-        console.error('Failed to load image:', error);
-        // Fallback to a direct path if dynamic import fails
-        setImagePath('/src/assets/images/gallery/social_walk.jpeg');
-      });
-  }, []);
+  // Use the imported image first, but fallback to the public directory if it fails
+  const socialWalkImage = imageError ? '/images/social_walk.jpeg' : socialWalkImport;
 
   return (
     <section id="social-walks" className="section bg-white">
@@ -45,16 +34,15 @@ const SocialWalksSection: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="order-2 md:order-1"
           >
-            {imagePath && (
-              <img 
-                src={imagePath} 
-                alt="Dogs on a social walk" 
-                className="rounded-lg shadow-lg object-cover w-full h-80 md:h-96"
-                loading="lazy"
-                width="1200"
-                height="800"
-              />
-            )}
+            <img 
+              src={socialWalkImage} 
+              alt="Dogs on a social walk" 
+              className="rounded-lg shadow-lg object-cover w-full h-80 md:h-96"
+              loading="lazy"
+              width="1200"
+              height="800"
+              onError={() => setImageError(true)}
+            />
           </motion.div>
 
           {/* Text Content */}
