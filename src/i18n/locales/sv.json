@@ -74,9 +74,13 @@
       "copyright": "© 2025 Clever Dog. Alla rättigheter förbehållna."
     },
     "language": "Svenska",
+    "cancel": "Avbryt",
     "booking": {
       "title": "Boka Plats",
       "form": {
+        "ownerInfo": "Ägarinformation",
+        "dogInfo": "Hundinformation",
+        "serviceInfo": "Tjänstinformation",
         "yourName": "För- Efternamn",
         "yourNamePlaceholder": "Ditt fullständiga namn",
         "email": "E-post",
@@ -108,12 +112,21 @@
         "female": "Tik",
         "yes": "Ja",
         "no": "Nej"
-      }
+      },
+      "testimonial": "Fantastisk hundpromenadservice! Min hund älskar sina promenader och kommer alltid hem glad och trött.",
+      "testimonialAuthor": "Sarah M."
     },
     "sustainability": {
-      "title": "Vårt bidrag till hållbar utveckling",
+      "title": "Hållbarhet",
       "goal": "Clever Dog stödjer FN:s globala mål #8: Anständiga arbetsvillkor och ekonomisk tillväxt.",
-      "description": "Vi tror på rättvisa arbetsvillkor, lokal sysselsättning och att bidra till ett hållbart samhälle. Genom att erbjuda kvalitativ hundomsorg och framtida tjänster inom hundtrimning vill vi skapa trygga och meningsfulla arbetsplatser – och samtidigt växa tillsammans med vår lokala community."
+      "description": "Vi tror på rättvisa arbetsvillkor, lokal sysselsättning och att bidra till ett hållbart samhälle. Genom att erbjuda kvalitativ hundomsorg och framtida hundtrimmartjänster strävar vi efter att skapa säkra och meningsfulla arbetsplatser – samtidigt som vi växer tillsammans med vårt lokala samhälle."
+    },
+    "reviews": {
+      "title": "Vad våra kunder säger",
+      "subtitle": "Läs vad våra kunder har att säga om sina upplevelser med våra tjänster.",
+      "noReviews": "Inga recensioner tillgängliga för tillfället.",
+      "viewAllReviews": "Se alla recensioner på Google",
+      "reviewsCount": "{{count}} recensioner"
     }
   }
 } 

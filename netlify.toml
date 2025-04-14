@@ -2,6 +2,13 @@
 [build]
   publish = "dist"
   command = "npm run build"
+  functions = "netlify/functions"
+
+[dev]
+  framework = "vite"
+  targetPort = 5173
+  port = 8888
+  autoLaunch = true
 
 # Aggressive caching for images - they're hashed so can be cached forever
 [[headers]]
@@ -56,7 +63,7 @@
 [build.processing.images]
   compress = true
 
-# Redirects 
+# Redirects - removing the problematic .netlify redirect 
 [[redirects]]
   from = "/*"
   to = "/index.html"

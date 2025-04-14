@@ -74,9 +74,13 @@
       "copyright": "© 2025 Clever Dog. All rights reserved."
     },
     "language": "English",
+    "cancel": "Cancel",
     "booking": {
       "title": "Book a Spot",
       "form": {
+        "ownerInfo": "Owner Information",
+        "dogInfo": "Dog Information",
+        "serviceInfo": "Service Information",
         "yourName": "First and Last Name",
         "yourNamePlaceholder": "Your full name",
         "email": "Email",
@@ -108,12 +112,21 @@
         "female": "Female",
         "yes": "Yes",
         "no": "No"
-      }
+      },
+      "testimonial": "Amazing dog walking service! My dog loves their walks and always comes home happy and tired.",
+      "testimonialAuthor": "Sarah M."
     },
     "sustainability": {
       "title": "Sustainability",
       "goal": "Clever Dog supports UN Global Goal #8: Decent Work and Economic Growth.",
       "description": "We believe in fair working conditions, local employment, and contributing to a sustainable society. By offering quality dog care and future dog grooming services, we aim to create safe and meaningful workplaces – while growing together with our local community."
+    },
+    "reviews": {
+      "title": "What Our Clients Say",
+      "subtitle": "Read what our clients have to say about their experiences with our services.",
+      "noReviews": "No reviews available at this time.",
+      "viewAllReviews": "View All Reviews on Google",
+      "reviewsCount": "{{count}} reviews"
     }
   }
 } 

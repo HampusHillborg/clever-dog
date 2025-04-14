@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
+    "netlify-dev": "netlify dev",
     "deploy": "npm run build && cd dist && powershell Compress-Archive -Path * -DestinationPath ../clever-dog-website.zip -Force"
   },
   "dependencies": {
@@ -15,6 +16,7 @@
     "framer-motion": "^12.6.3",
     "i18next": "^24.2.3",
     "i18next-browser-languagedetector": "^8.0.4",
+    "node-fetch": "^2.7.0",
     "postcss": "^8.4.29",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -33,6 +35,7 @@
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^15.15.0",
+    "netlify-cli": "^20.0.0",
     "sharp": "^0.34.1",
     "terser": "^5.39.0",
     "typescript": "~5.7.2",
