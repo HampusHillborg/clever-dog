@@ -16,14 +16,19 @@
     <title>Clever Dog | Hunddagis i Staffanstorp</title>
     
     <!-- Preload critical assets -->
-    <link rel="preload" href="/src/assets/images/hero/heroweb-small.webp" as="image" type="image/webp" media="(max-width: 480px)" />
-    <link rel="preload" href="/src/assets/images/hero/heroweb-medium.webp" as="image" type="image/webp" media="(min-width: 481px) and (max-width: 1024px)" />
-    <link rel="preload" href="/src/assets/images/hero/heroweb.webp" as="image" type="image/webp" media="(min-width: 1025px)" />
+    <link rel="preload" href="/src/assets/images/hero/heroweb-small.webp" as="image" type="image/webp" media="(max-width: 480px)" fetchpriority="high" />
+    <link rel="preload" href="/src/assets/images/hero/heroweb-medium.webp" as="image" type="image/webp" media="(min-width: 481px) and (max-width: 1024px)" fetchpriority="high" />
+    <link rel="preload" href="/src/assets/images/hero/heroweb-large.webp" as="image" type="image/webp" media="(min-width: 1025px)" fetchpriority="high" />
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Google Fonts preload for critical fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" media="print" onload="this.media='all'" />
+    <!-- Fallback for JS disabled -->
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

@@ -31,6 +31,13 @@ async function optimizeImages() {
       .toFile(path.join(outputDir, 'heroweb-medium.webp'));
     console.log('Created heroweb-medium.webp');
     
+    // Create optimized large version (1920px width, higher compression)
+    await sharp(heroImage)
+      .resize({ width: 1920 })
+      .webp({ quality: 90, effort: 6 }) // Higher effort = better compression
+      .toFile(path.join(outputDir, 'heroweb-large.webp'));
+    console.log('Created heroweb-large.webp');
+    
     console.log('Image optimization complete!');
   } catch (error) {
     console.error('Error optimizing images:', error);

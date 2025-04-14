@@ -6,7 +6,14 @@ import { imagetools } from 'vite-imagetools'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      // Optimize React bundle size
+      babel: {
+        plugins: [
+          ["@babel/plugin-transform-react-jsx", { runtime: "automatic" }]
+        ]
+      }
+    }),
     imagetools(),
     compression({
       algorithm: 'gzip',
@@ -27,8 +34,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'framer-motion'],
+          vendor: ['react', 'react-dom'],
+          framerMotion: ['framer-motion'],
           i18n: ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+          icons: ['react-icons']
         },
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
@@ -52,7 +61,11 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
+        pure_funcs: ['console.log', 'console.debug']
       },
+      format: {
+        comments: false
+      }
     },
   },
   server: {
