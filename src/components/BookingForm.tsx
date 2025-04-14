@@ -20,6 +20,12 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     isNeutered: '',
     inquiryType: '',
     additionalInfo: '',
+    dogSocialization: '',
+    problemBehaviors: '',
+    allergies: '',
+    startDate: '',
+    endDate: '',
+    partTimeDays: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -51,8 +57,8 @@ ${t('booking.form.dogBreed')}: ${formData.dogBreed}
 ${t('booking.form.dogGender')}: ${formData.dogGender}
 ${t('booking.form.dogHeight')}: ${formData.dogHeight}
 ${t('booking.form.isNeutered')}: ${formData.isNeutered}
-${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : ''}
-${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
+${formData.dogSocialization ? `${t('booking.form.dogSocialization')}: ${formData.dogSocialization}\n` : ''}${formData.problemBehaviors ? `${t('booking.form.problemBehaviors')}: ${formData.problemBehaviors}\n` : ''}${formData.allergies ? `${t('booking.form.allergies')}: ${formData.allergies}\n` : ''}${t('booking.form.inquiryType')}: ${formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : ''}
+${formData.startDate ? `${t('booking.form.startDate')}: ${formData.startDate}\n` : ''}${formData.endDate ? `${t('booking.form.endDate')}: ${formData.endDate}\n` : ''}${formData.partTimeDays ? `${t('booking.form.partTimeDays')}: ${formData.partTimeDays}\n` : ''}${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
     `;
     
     // For mobile devices, always use mailto: protocol to open native mail app
@@ -278,11 +284,135 @@ ${t('booking.form.additionalInfo')}: ${formData.additionalInfo}
                   <option value="partTime">{t('booking.form.inquiryOptions.partTime')}</option>
                   <option value="singleDay">{t('booking.form.inquiryOptions.singleDay')}</option>
                   <option value="boarding">{t('booking.form.inquiryOptions.boarding')}</option>
-                  <option value="walking">{t('booking.form.inquiryOptions.walking')}</option>
+                  <option value="socialWalk">{t('booking.form.inquiryOptions.socialWalk')}</option>
                   <option value="question">{t('booking.form.inquiryOptions.question')}</option>
                   <option value="other">{t('booking.form.inquiryOptions.other')}</option>
                 </select>
               </div>
+              
+              {/* Date inputs - show based on inquiry type */}
+              {formData.inquiryType && (
+                <div className="space-y-4 mt-4">
+                  {/* Single date services (single day, monthly, part-time) */}
+                  {['singleDay', 'daycare', 'partTime'].includes(formData.inquiryType) && (
+                    <div>
+                      <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+                        {t('booking.form.startDate')}
+                      </label>
+                      <input
+                        type="date"
+                        id="startDate"
+                        name="startDate"
+                        value={formData.startDate}
+                        onChange={handleChange}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Part-time days selection */}
+                  {formData.inquiryType === 'partTime' && (
+                    <div>
+                      <label htmlFor="partTimeDays" className="block text-sm font-medium text-gray-700">
+                        {t('booking.form.partTimeDays')}
+                      </label>
+                      <input
+                        type="text"
+                        id="partTimeDays"
+                        name="partTimeDays"
+                        value={formData.partTimeDays}
+                        onChange={handleChange}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                        placeholder={t('booking.form.partTimeDaysPlaceholder')}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Date range services (boarding only) */}
+                  {['boarding'].includes(formData.inquiryType) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+                          {t('booking.form.startDate')}
+                        </label>
+                        <input
+                          type="date"
+                          id="startDate"
+                          name="startDate"
+                          value={formData.startDate}
+                          onChange={handleChange}
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
+                          {t('booking.form.endDate')}
+                        </label>
+                        <input
+                          type="date"
+                          id="endDate"
+                          name="endDate"
+                          value={formData.endDate}
+                          onChange={handleChange}
+                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Display additional dog information fields except for "other" and "question" inquiry types */}
+              {formData.inquiryType && 
+               formData.inquiryType !== 'other' && 
+               formData.inquiryType !== 'question' && (
+                <div className="space-y-4 mt-4 border-t pt-4">
+                  <div>
+                    <label htmlFor="dogSocialization" className="block text-sm font-medium text-gray-700">
+                      {t('booking.form.dogSocialization')}
+                    </label>
+                    <textarea
+                      id="dogSocialization"
+                      name="dogSocialization"
+                      rows={2}
+                      value={formData.dogSocialization}
+                      onChange={handleChange}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                      placeholder={t('booking.form.dogSocializationPlaceholder')}
+                    ></textarea>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="problemBehaviors" className="block text-sm font-medium text-gray-700">
+                      {t('booking.form.problemBehaviors')}
+                    </label>
+                    <textarea
+                      id="problemBehaviors"
+                      name="problemBehaviors"
+                      rows={2}
+                      value={formData.problemBehaviors}
+                      onChange={handleChange}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                      placeholder={t('booking.form.problemBehaviorsPlaceholder')}
+                    ></textarea>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="allergies" className="block text-sm font-medium text-gray-700">
+                      {t('booking.form.allergies')}
+                    </label>
+                    <textarea
+                      id="allergies"
+                      name="allergies"
+                      rows={2}
+                      value={formData.allergies}
+                      onChange={handleChange}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                      placeholder={t('booking.form.allergiesPlaceholder')}
+                    ></textarea>
+                  </div>
+                </div>
+              )}
               
               <div>
                 <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-700">{t('booking.form.additionalInfo')}</label>

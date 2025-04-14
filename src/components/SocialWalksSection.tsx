@@ -2,10 +2,10 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { FaWalking, FaUsers, FaHeart } from 'react-icons/fa';
+// Import with vite-imagetools query parameters for optimization
+import socialWalkImage from '../assets/images/gallery/social_walk.jpeg?width=1200&webp&imagetools';
 
-// Placeholder image - replace with actual image later
-const walkImage = 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80';
-
+// Using the optimized local image
 const SocialWalksSection: React.FC = () => {
   const { t } = useTranslation();
 
@@ -22,7 +22,7 @@ const SocialWalksSection: React.FC = () => {
           {t('socialWalks.title')}
         </motion.h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
           {/* Image */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -32,9 +32,12 @@ const SocialWalksSection: React.FC = () => {
             className="order-2 md:order-1"
           >
             <img 
-              src={walkImage} 
+              src={socialWalkImage} 
               alt="Dogs on a social walk" 
               className="rounded-lg shadow-lg object-cover w-full h-80 md:h-96"
+              loading="lazy"
+              width="1200"
+              height="800"
             />
           </motion.div>
 
@@ -51,7 +54,7 @@ const SocialWalksSection: React.FC = () => {
             </p>
 
             {/* Benefits */}
-            <div className="space-y-4 mt-6">
+            <div className="space-y-4">
               <div className="flex items-start space-x-4">
                 <div className="p-3 bg-primary/10 rounded-full mt-1">
                   <FaWalking className="text-primary text-xl" />
