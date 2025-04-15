@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { FaSignOutAlt, FaFilePdf, FaLock } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
 
@@ -22,7 +21,6 @@ interface ContractData {
 }
 
 const AdminPage: React.FC = () => {
-  const { t } = useTranslation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
