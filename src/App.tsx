@@ -1,4 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react'
+import { Routes, Route, BrowserRouter } from 'react-router-dom'
 import './i18n'  // Import i18n configuration
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
@@ -12,6 +13,7 @@ const SocialMediaSection = lazy(() => import('./components/SocialMediaSection'))
 const GoogleReviewsSection = lazy(() => import('./components/GoogleReviewsSection'))
 const ContactSection = lazy(() => import('./components/ContactSection'))
 const Footer = lazy(() => import('./components/Footer'))
+const AdminPage = lazy(() => import('./components/AdminPage'))
 import { BookingProvider } from './components/BookingContext'
 import './App.css'
 
@@ -25,7 +27,7 @@ const preloadHeroImages = () => {
   });
 };
 
-function App() {
+function HomePage() {
   // Preload hero images immediately
   useEffect(() => {
     preloadHeroImages();
@@ -55,25 +57,42 @@ function App() {
   }, [])
 
   return (
+    <>
+      <Navbar />
+      <InfoSection />  {/* Add the InfoSection component */}
+      <main>
+        <HeroSection />
+        <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+          <AboutSection />
+          <SocialWalksSection />
+          <PricingSection />
+          <SustainabilitySection />
+          <SocialMediaSection />
+          <GoogleReviewsSection />
+          <ContactSection />
+        </Suspense>
+      </main>
+      <Suspense fallback={<div className="h-16">Loading...</div>}>
+        <Footer />
+      </Suspense>
+    </>
+  );
+}
+
+function App() {
+  return (
     <BookingProvider>
       <div className="min-h-screen bg-light">
-        <Navbar />
-        <InfoSection />  {/* Add the InfoSection component */}
-        <main>
-          <HeroSection />
-          <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
-            <AboutSection />
-            <SocialWalksSection />
-            <PricingSection />
-            <SustainabilitySection />
-            <SocialMediaSection />
-            <GoogleReviewsSection />
-            <ContactSection />
-          </Suspense>
-        </main>
-        <Suspense fallback={<div className="h-16">Loading...</div>}>
-          <Footer />
-        </Suspense>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/admin" element={
+              <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+                <AdminPage />
+              </Suspense>
+            } />
+          </Routes>
+        </BrowserRouter>
       </div>
     </BookingProvider>
   )
