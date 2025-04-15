@@ -27,6 +27,7 @@ const AdminPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [contractData, setContractData] = useState<ContractData>({
     customerName: '',
     customerAddress: '',
@@ -43,28 +44,69 @@ const AdminPage: React.FC = () => {
     daysPerWeek: ''
   });
 
-  // Check if user is already logged in from localStorage
+  // Check if user is already logged in from JWT token in localStorage
   useEffect(() => {
-    const adminLoggedIn = localStorage.getItem('adminLoggedIn');
-    if (adminLoggedIn === 'true') {
-      setIsLoggedIn(true);
-    }
+    const checkAuthToken = async () => {
+      const token = localStorage.getItem('adminAuthToken');
+      if (!token) return;
+      
+      try {
+        const response = await fetch('/.netlify/functions/verify-token', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          setIsLoggedIn(true);
+        } else {
+          // Token is invalid or expired, clean up localStorage
+          localStorage.removeItem('adminAuthToken');
+        }
+      } catch (err) {
+        console.error('Error verifying token:', err);
+        localStorage.removeItem('adminAuthToken');
+      }
+    };
+    
+    checkAuthToken();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'cleverdogAlicja') {
-      setIsLoggedIn(true);
-      localStorage.setItem('adminLoggedIn', 'true');
-      setError('');
-    } else {
-      setError('Invalid username or password');
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch('/.netlify/functions/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        localStorage.setItem('adminAuthToken', data.token);
+        setIsLoggedIn(true);
+      } else {
+        setError(data.error || 'Invalid username or password');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('adminAuthToken');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -122,12 +164,16 @@ const AdminPage: React.FC = () => {
             margin-bottom: 10px;
             border-bottom: 1px solid #000;
             padding-bottom: 3px;
+            color: #2a3f5f;
           }
           h2 {
             font-size: 10pt;
             font-weight: bold;
             margin-top: 10px;
             margin-bottom: 4px;
+            color: #2a3f5f;
+            border-bottom: 0.5px solid #ddd;
+            padding-bottom: 2px;
           }
           p {
             margin: 4px 0;
@@ -141,6 +187,8 @@ const AdminPage: React.FC = () => {
           }
           .section {
             margin-bottom: 8px;
+            border-left: 2px solid #f5f5f5;
+            padding-left: 6px;
           }
           .signatures {
             margin-top: 20px;
@@ -180,9 +228,38 @@ const AdminPage: React.FC = () => {
           * {
             box-sizing: border-box;
           }
+          .header {
+            text-align: center;
+            margin-bottom: 15px;
+          }
+          .company-name {
+            font-weight: bold;
+            font-size: 11pt;
+            color: #2a3f5f;
+          }
+          .contract-subtitle {
+            font-style: italic;
+            font-size: 9pt;
+            color: #555;
+            margin-top: 2px;
+          }
+          .signature-name {
+            font-size: 9pt;
+            font-weight: bold;
+          }
+          .signature-title {
+            font-size: 8pt;
+            color: #555;
+            margin-top: 1px;
+          }
         </style>
       </head>
       <body>
+        <div class="header">
+          <div class="company-name">CleverDog</div>
+          <div class="contract-subtitle">För hundens bästa</div>
+        </div>
+      
         <h1>AVTAL ${contractData.contractType === 'daycare' ? 'HUNDDAGIS' : 
                       contractData.contractType === 'boarding' ? 'HUNDPENSIONAT' : 
                       contractData.contractType === 'socialWalk' ? 'SOCIAL PROMENAD' : 
@@ -331,11 +408,13 @@ const AdminPage: React.FC = () => {
             <tr>
               <td>
                 <div class="signature-line"></div>
-                <p>CleverDog, Alicja Wekwert</p>
+                <p class="signature-name">CleverDog, Alicja Wekwert</p>
+                <p class="signature-title">Verksamhetsägare</p>
               </td>
               <td>
                 <div class="signature-line"></div>
-                <p>${contractData.customerName}</p>
+                <p class="signature-name">${contractData.customerName}</p>
+                <p class="signature-title">Hundägare</p>
               </td>
             </tr>
           </table>
@@ -407,6 +486,7 @@ const AdminPage: React.FC = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
                 required
+                disabled={isLoading}
               />
             </div>
             
@@ -419,14 +499,16 @@ const AdminPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
                 required
+                disabled={isLoading}
               />
             </div>
             
             <button
               type="submit"
               className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-colors"
+              disabled={isLoading}
             >
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
         </div>
