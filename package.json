@@ -12,6 +12,7 @@
     "deploy": "npm run build && cd dist && powershell Compress-Archive -Path * -DestinationPath ../clever-dog-website.zip -Force"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "autoprefixer": "^10.4.15",
     "framer-motion": "^12.6.3",
     "html2pdf.js": "^0.10.3",

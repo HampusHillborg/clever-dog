@@ -136,7 +136,12 @@
         "male": "Hane",
         "female": "Tik",
         "yes": "Ja",
-        "no": "Nej"
+        "no": "Nej",
+        "submit": "Skicka bokningsförfrågan",
+        "submitting": "Skickar...",
+        "successTitle": "Tack!",
+        "successMessage": "Tack för din bokningsförfrågan! Vi kommer att granska den och återkomma till dig så snart som möjligt.",
+        "errorMessage": "Ett fel uppstod när din bokningsförfrågan skulle skickas. Vänligen försök igen senare."
       },
       "testimonial": "Fantastisk hundpromenadservice! Min hund älskar sina promenader och kommer alltid hem glad och trött.",
       "testimonialAuthor": "Sarah M."
