@@ -136,7 +136,12 @@
         "male": "Samiec",
         "female": "Samica",
         "yes": "Tak",
-        "no": "Nie"
+        "no": "Nie",
+        "submit": "Wyślij prośbę o rezerwację",
+        "submitting": "Wysyłanie...",
+        "successTitle": "Dziękujemy!",
+        "successMessage": "Dziękujemy za Twoją prośbę o rezerwację! Przejrzymy ją i skontaktujemy się z Tobą wkrótce.",
+        "errorMessage": "Wystąpił błąd podczas wysyłania Twojej prośby o rezerwację. Prosimy spróbować ponownie później."
       },
       "testimonial": "Wspaniała usługa spacerów z psem! Mój pies uwielbia swoje spacery i zawsze wraca do domu szczęśliwy i zmęczony.",
       "testimonialAuthor": "Sarah M."

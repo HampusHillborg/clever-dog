@@ -136,7 +136,12 @@
         "startDate": "Start date",
         "endDate": "End date",
         "partTimeDays": "Which days of the week?",
-        "partTimeDaysPlaceholder": "E.g., Mondays and Wednesdays"
+        "partTimeDaysPlaceholder": "E.g., Mondays and Wednesdays",
+        "submit": "Send Booking Request",
+        "submitting": "Sending...",
+        "successTitle": "Thank You!",
+        "successMessage": "Thank you for your booking request! We will review it and get back to you shortly.",
+        "errorMessage": "An error occurred when sending your booking request. Please try again later."
       },
       "testimonial": "Amazing dog walking service! My dog loves their walks and always comes home happy and tired.",
       "testimonialAuthor": "Sarah M."
