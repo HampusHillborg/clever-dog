@@ -39,18 +39,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const getEmailService = (email: string): 'gmail' | 'outlook' | 'default' => {
-    const domain = email.split('@')[1]?.toLowerCase();
-    if (domain?.includes('gmail.com')) return 'gmail';
-    if (domain?.includes('outlook.com') || domain?.includes('hotmail.com') || domain?.includes('live.com')) return 'outlook';
-    return 'default';
-  };
-
-  const isMobileDevice = () => {
-    return typeof window !== 'undefined' && 
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -85,7 +73,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
       templateParams,
       import.meta.env.VITE_EMAILJS_PUBLIC_KEY
     )
-    .then((result) => {
+    .then((_result: any) => {
       // Send auto-reply to the customer
       const autoReplyParams = {
         from_name: formData.name,
@@ -103,7 +91,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
     })
-    .then((result) => {
+    .then((_result: any) => {
       setIsSubmitting(false);
       setFormSuccess(true);
       // Reset form after successful submission
@@ -132,7 +120,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         setFormSuccess(false);
       }, 3000);
     })
-    .catch((error) => {
+    .catch((error: unknown) => {
       console.error('EmailJS error:', error);
       setIsSubmitting(false);
       setFormError(t('booking.form.errorMessage') || 'An error occurred when sending your booking request. Please try again later.');
