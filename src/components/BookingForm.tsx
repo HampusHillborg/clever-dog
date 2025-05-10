@@ -32,6 +32,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     startDate: '',
     endDate: '',
     partTimeDays: '',
+    chipNumber: '',
+    address: '',
+    personnummer: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -60,22 +63,25 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     const templateParams = {
       from_name: formData.name,
       from_email: formData.email,
-      to_name: 'Clever Dog',
       phone: formData.phone,
       dog_name: formData.dogName,
       dog_breed: formData.dogBreed,
       dog_gender: formData.dogGender,
       dog_height: formData.dogHeight,
       is_neutered: formData.isNeutered,
+      inquiry_type: formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : '',
       dog_socialization: formData.dogSocialization,
       problem_behaviors: formData.problemBehaviors,
       allergies: formData.allergies,
-      inquiry_type: formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : '',
       start_date: formData.startDate,
       end_date: formData.endDate,
       part_time_days: formData.partTimeDays,
       additional_info: formData.additionalInfo,
+      chip_number: formData.chipNumber,
+      address: formData.address,
+      personnummer: formData.personnummer,
       reply_to: formData.email,
+      request_date: new Date().toLocaleDateString()
     };
 
     // Replace with your actual EmailJS Service ID, Template ID, and Public Key
@@ -124,6 +130,9 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         startDate: '',
         endDate: '',
         partTimeDays: '',
+        chipNumber: '',
+        address: '',
+        personnummer: '',
       });
       
       // Close the form after a short delay
@@ -228,6 +237,42 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                     />
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="chipNumber">{t('booking.form.chipNumber')}</label>
+                  <input
+                    type="text"
+                    id="chipNumber"
+                    name="chipNumber"
+                    value={formData.chipNumber}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="address">{t('booking.form.address')}</label>
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="personnummer">{t('booking.form.personnummer')}</label>
+                  <input
+                    type="text"
+                    id="personnummer"
+                    name="personnummer"
+                    value={formData.personnummer}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
               </div>
             </div>

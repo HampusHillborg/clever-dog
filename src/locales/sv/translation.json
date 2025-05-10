@@ -1,0 +1,8 @@
+"form": {
+  "name": "Namn",
+  "email": "E-post",
+  "phone": "Telefon",
+  "chipNumber": "Chipnummer",
+  "address": "Adress",
+  "personnummer": "Personnummer"
+} 
