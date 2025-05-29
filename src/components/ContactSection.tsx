@@ -62,8 +62,8 @@ const ContactSection: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="font-medium">{t('about.instagram')}</h4>
-                  <a href="https://www.instagram.com/CleverDog_" target="_blank" rel="noopener noreferrer" className="hover:text-primary">
-                    @CleverDog_
+                  <a href="https://www.instagram.com/cleverdog_hunddagis/" target="_blank" rel="noopener noreferrer" className="hover:text-primary">
+                    @cleverdog_hunddagis
                   </a>
                 </div>
               </div>

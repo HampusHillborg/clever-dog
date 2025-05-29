@@ -82,12 +82,12 @@ const SocialMediaSection: React.FC = () => {
             </h3>
             <p className="text-gray-600 mb-4">
               <a 
-                href="https://www.instagram.com/cleverdog_/" 
+                href="https://www.instagram.com/cleverdog_hunddagis/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
-                @cleverdog_
+                @cleverdog_hunddagis
               </a>
             </p>
           </motion.div>
@@ -103,7 +103,7 @@ const SocialMediaSection: React.FC = () => {
             {isVisible && (
               <iframe
                 title="Instagram Profile"
-                src="https://www.instagram.com/cleverdog_/embed"
+                src="https://www.instagram.com/cleverdog_hunddagis/embed"
                 width="540"
                 height="680"
                 loading="lazy"
@@ -130,7 +130,7 @@ const SocialMediaSection: React.FC = () => {
             className="flex justify-center mt-8"
           >
             <a 
-              href="https://www.instagram.com/cleverdog_/" 
+              href="https://www.instagram.com/cleverdog_hunddagis/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
