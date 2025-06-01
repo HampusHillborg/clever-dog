@@ -23,6 +23,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     dogBreed: '',
     dogGender: '',
     dogHeight: '',
+    dogAge: '',
     isNeutered: '',
     inquiryType: '',
     additionalInfo: '',
@@ -56,6 +57,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
       dog_breed: formData.dogBreed,
       dog_gender: formData.dogGender,
       dog_height: formData.dogHeight,
+      dog_age: formData.dogAge,
       is_neutered: formData.isNeutered,
       inquiry_type: formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : '',
       dog_socialization: formData.dogSocialization,
@@ -64,7 +66,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
       start_date: formData.startDate,
       end_date: formData.endDate,
       part_time_days: formData.partTimeDays,
-      additional_info: formData.additionalInfo,
       chip_number: formData.chipNumber,
       address: formData.address,
       personnummer: formData.personnummer,
@@ -109,6 +110,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         dogBreed: '',
         dogGender: '',
         dogHeight: '',
+        dogAge: '',
         isNeutered: '',
         inquiryType: '',
         additionalInfo: '',
@@ -329,6 +331,20 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                       value={formData.dogHeight}
                       onChange={handleChange}
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                      placeholder={t('booking.form.dogHeightPlaceholder')}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="dogAge" className="block text-sm font-medium text-gray-700">{t('booking.form.dogAge')}</label>
+                    <input
+                      type="text"
+                      id="dogAge"
+                      name="dogAge"
+                      value={formData.dogAge}
+                      onChange={handleChange}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                      placeholder={t('booking.form.dogAgePlaceholder')}
                     />
                   </div>
                 </div>

@@ -24,28 +24,237 @@
 4. Design your email template with the following content:
 
 ```html
-<h1>New Booking Request</h1>
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #f0a868;
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      text-align: center;
+    }
+    .content {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 0 0 8px 8px;
+      border: 1px solid #e0e0e0;
+      border-top: none;
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    h2 {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #f0a868;
+      border-bottom: 2px solid #f0a868;
+      padding-bottom: 5px;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    .field {
+      margin-bottom: 10px;
+    }
+    .field:empty {
+      display: none;
+    }
+    strong {
+      color: #333;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      text-align: center;
+      color: #888;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    td {
+      padding: 8px;
+      vertical-align: top;
+    }
+    .label {
+      font-weight: bold;
+      width: 40%;
+    }
+    .empty-value {
+      color: #999;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>New Booking Request: {{inquiry_type}}</h1>
+  </div>
+  
+  <div class="content">
+    <div class="section">
+      <h2>Owner Information</h2>
+      <table>
+        <tr>
+          <td class="label">Name:</td>
+          <td>{{from_name}}</td>
+        </tr>
+        <tr>
+          <td class="label">Email:</td>
+          <td>{{from_email}}</td>
+        </tr>
+        <tr>
+          <td class="label">Phone:</td>
+          <td>{{phone}}</td>
+        </tr>
+        <tr>
+          <td class="label">Address:</td>
+          <td>{{address}}</td>
+        </tr>
+        <tr>
+          <td class="label">Personal Number:</td>
+          <td>{{personnummer}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="section">
+      <h2>Dog Information</h2>
+      <table>
+        <tr>
+          <td class="label">Dog Name:</td>
+          <td>{{dog_name}}</td>
+        </tr>
+        <tr>
+          <td class="label">Breed:</td>
+          <td>{{dog_breed}}</td>
+        </tr>
+        <tr>
+          <td class="label">Gender:</td>
+          <td>{{dog_gender}}</td>
+        </tr>
+        <tr>
+          <td class="label">Age:</td>
+          <td>{{dog_age}}</td>
+        </tr>
+        <tr>
+          <td class="label">Height:</td>
+          <td>{{dog_height}}</td>
+        </tr>
+        <tr>
+          <td class="label">Neutered/Spayed:</td>
+          <td>{{is_neutered}}</td>
+        </tr>
+        <tr>
+          <td class="label">Chip Number:</td>
+          <td>{{chip_number}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- Dog Behavior Section (only displayed for service bookings) -->
+    <div class="section" id="behaviorSection">
+      <h2>Dog Behavior</h2>
+      <table>
+        <tr>
+          <td class="label">Socialization:</td>
+          <td>{{dog_socialization}}</td>
+        </tr>
+        <tr>
+          <td class="label">Problem Behaviors:</td>
+          <td>{{problem_behaviors}}</td>
+        </tr>
+        <tr>
+          <td class="label">Allergies:</td>
+          <td>{{allergies}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- Booking Details Section -->
+    <div class="section">
+      <h2>Booking Details</h2>
+      <table>
+        <tr>
+          <td class="label">Inquiry Type:</td>
+          <td>{{inquiry_type}}</td>
+        </tr>
+        
+        <!-- For monthly/part-time/single day options -->
+        <tr id="startDateRow">
+          <td class="label">Start Date:</td>
+          <td>{{start_date}}</td>
+        </tr>
+        
+        <!-- For part-time options -->
+        <tr id="partTimeDaysRow">
+          <td class="label">Selected Days:</td>
+          <td>{{part_time_days}}</td>
+        </tr>
+        
+        <!-- For boarding options -->
+        <tr id="endDateRow">
+          <td class="label">End Date:</td>
+          <td>{{end_date}}</td>
+        </tr>
+        
+        <!-- For all inquiries -->
+        <tr>
+          <td class="label">Additional Info:</td>
+          <td>{{additional_info}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="footer">
+      <p>This email was sent from the Clever Dog website booking form on {{request_date}}.</p>
+      <p>To respond, simply reply to this email or contact the customer directly.</p>
+    </div>
+  </div>
 
-<p><strong>Name:</strong> {{from_name}}</p>
-<p><strong>Email:</strong> {{from_email}}</p>
-<p><strong>Phone:</strong> {{phone}}</p>
-
-<h2>Dog Information</h2>
-<p><strong>Dog Name:</strong> {{dog_name}}</p>
-<p><strong>Breed:</strong> {{dog_breed}}</p>
-<p><strong>Gender:</strong> {{dog_gender}}</p>
-<p><strong>Height:</strong> {{dog_height}}</p>
-<p><strong>Neutered/Spayed:</strong> {{is_neutered}}</p>
-<p><strong>Socialization:</strong> {{dog_socialization}}</p>
-<p><strong>Problem Behaviors:</strong> {{problem_behaviors}}</p>
-<p><strong>Allergies:</strong> {{allergies}}</p>
-
-<h2>Booking Details</h2>
-<p><strong>Inquiry Type:</strong> {{inquiry_type}}</p>
-<p><strong>Start Date:</strong> {{start_date}}</p>
-<p><strong>End Date:</strong> {{end_date}}</p>
-<p><strong>Part-time Days:</strong> {{part_time_days}}</p>
-<p><strong>Additional Info:</strong> {{additional_info}}</p>
+  <script>
+    // Simple script to hide empty rows in the email
+    document.addEventListener('DOMContentLoaded', function() {
+      const cells = document.querySelectorAll('td');
+      cells.forEach(cell => {
+        if (!cell.textContent.trim()) {
+          const row = cell.parentElement;
+          if (row && row.cells.length > 1) {
+            if (!row.cells[1].textContent.trim()) {
+              row.style.display = 'none';
+            }
+          }
+        }
+      });
+      
+      // Check if behavior section is empty and hide if needed
+      const behaviorSection = document.getElementById('behaviorSection');
+      if (behaviorSection) {
+        let hasContent = false;
+        behaviorSection.querySelectorAll('td:nth-child(2)').forEach(cell => {
+          if (cell.textContent.trim()) {
+            hasContent = true;
+          }
+        });
+        if (!hasContent) {
+          behaviorSection.style.display = 'none';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
 ```
 
 5. Save the template and note the Template ID (format: "template_yyyyyyyyy")
