@@ -229,8 +229,10 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="chipNumber">{t('booking.form.chipNumber')}</label>
+                <div>
+                  <label htmlFor="chipNumber" className="block text-sm font-medium text-gray-700">
+                    {t('booking.form.chipNumber')}
+                  </label>
                   <input
                     type="text"
                     id="chipNumber"
@@ -238,11 +240,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                     value={formData.chipNumber}
                     onChange={handleChange}
                     required
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="address">{t('booking.form.address')}</label>
+                <div>
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                    {t('booking.form.address')}
+                  </label>
                   <input
                     type="text"
                     id="address"
@@ -250,11 +255,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                     value={formData.address}
                     onChange={handleChange}
                     required
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                   />
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="personnummer">{t('booking.form.personnummer')}</label>
+                <div>
+                  <label htmlFor="personnummer" className="block text-sm font-medium text-gray-700">
+                    {t('booking.form.personnummer')}
+                  </label>
                   <input
                     type="text"
                     id="personnummer"
@@ -262,6 +270,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                     value={formData.personnummer}
                     onChange={handleChange}
                     required
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                   />
                 </div>
               </div>
