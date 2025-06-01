@@ -92,7 +92,7 @@ const PricingSection: React.FC = () => {
                     {item.price} {t('pricing.currency')}
                   </div>
                   <p className="text-sm text-gray-600">{t('pricing.perMonth')}</p>
-                  <p className="text-sm text-gray-500 mt-2">{t('pricing.closedOnHolidays')}</p>
+                  <p className="text-sm text-red-600 mt-2 font-medium">{t('pricing.closedOnHolidays')}</p>
                 </div>
               </motion.div>
             ))}
