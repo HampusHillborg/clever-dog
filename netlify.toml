@@ -65,6 +65,18 @@
 
 # Redirects - removing the problematic .netlify redirect 
 [[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200 
+  status = 200
+  conditions = {Path = ["!/index.html"]}
