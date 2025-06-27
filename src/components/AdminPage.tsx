@@ -361,9 +361,11 @@ const AdminPage: React.FC = () => {
             ${contractData.contractType === 'daycare' ? `
             <li>Kostnaden för hunddagis är ${contractData.price}kr per månad och ska betalas senast den 27 varje månad.</li>
             <li>Vid frånvaro återbetalas inte avgiften.</li>
+            <li>Dagiset har rätt till 25 semesterdagar per år. Dessa dagar är inkluderade i det månatliga abonnemanget och ersätts inte ekonomiskt.</li>
             ` : contractData.contractType === 'partTime' ? `
             <li>Kostnaden för deltid hunddagis är ${contractData.price}kr per månad och ska betalas senast den 27 varje månad.</li>
             <li>Vid frånvaro återbetalas inte avgiften.</li>
+            <li>Dagiset har rätt till 25 semesterdagar per år. Dessa dagar är inkluderade i det månatliga abonnemanget och ersätts inte ekonomiskt.</li>
             ` : contractData.contractType === 'boarding' ? `
             <li>Kostnaden för hundpensionat är ${contractData.price}kr totalt för hela vistelsen och ska betalas i samband med lämning av hunden.</li>
             <li>Vid avbokning mindre än 7 dagar före vistelsen debiteras 50% av priset.</li>
