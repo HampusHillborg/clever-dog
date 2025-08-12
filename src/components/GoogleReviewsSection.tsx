@@ -38,8 +38,8 @@ const GoogleReviewsSection = () => {
     const fetchReviews = async () => {
       try {
         setLoading(true);
-        // Use Netlify function to fetch reviews
-        const response = await fetch('/.netlify/functions/get-google-reviews');
+        // Use Vercel API route to fetch reviews
+        const response = await fetch('/api/google-reviews');
         
         if (!response.ok) {
           throw new Error('Failed to fetch reviews');
