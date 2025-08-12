@@ -16,7 +16,7 @@ interface ContractData {
   endDate: string;
   price: string;
   // Specific fields for different contract types
-  contractType: 'daycare' | 'boarding' | 'socialWalk' | 'partTime';
+  contractType: 'daycare' | 'boarding' | 'socialWalk' | 'partTime' | 'singleDay';
   daysPerWeek?: string; // For part-time contracts
 }
 
@@ -261,7 +261,7 @@ const AdminPage: React.FC = () => {
         <h1>AVTAL ${contractData.contractType === 'daycare' ? 'HUNDDAGIS' : 
                       contractData.contractType === 'boarding' ? 'HUNDPENSIONAT' : 
                       contractData.contractType === 'socialWalk' ? 'SOCIAL PROMENAD' : 
-                      'DELTID HUNDDAGIS'}</h1>
+                      contractData.contractType === 'partTime' ? 'DELTID HUNDDAGIS' : 'ENKELDAGIS'}</h1>
         
         <p>Ingånget den ${today} mellan:</p>
         <ol>
@@ -317,6 +317,18 @@ const AdminPage: React.FC = () => {
               </ul>
             </li>
             <li>Ägaren åtar sig att lämna och hämta hunden enligt överenskomna tider.</li>
+            ` : contractData.contractType === 'singleDay' ? `
+            <li>Hunddagiset åtar sig att ta hand om Ägarens hund enstaka dag och tillhandahålla:
+              <ul>
+                <li>socialisering med andra hundar,</li>
+                <li>grundläggande lydnadsträning,</li>
+                <li>lek och fysisk aktivitet,</li>
+                <li>utfodring (enligt överenskommelse med Ägaren),</li>
+                <li>säkerhet och tillsyn.</li>
+              </ul>
+            </li>
+            <li>Omsorgen erbjuds på vardagar mellan kl. 7:00 och 18:00 (17* Fredag).</li>
+            <li>Ägaren åtar sig att lämna och hämta hunden i tid.</li>
             ` : `
             <li>Hunddagiset åtar sig att ta hand om Ägarens hund under sociala promenader och tillhandahålla:
               <ul>
@@ -361,12 +373,17 @@ const AdminPage: React.FC = () => {
             ${contractData.contractType === 'daycare' ? `
             <li>Kostnaden för hunddagis är ${contractData.price}kr per månad och ska betalas senast den 27 varje månad.</li>
             <li>Vid frånvaro återbetalas inte avgiften.</li>
+            <li>Dagiset har rätt till 25 semesterdagar per år. Dessa dagar är inkluderade i det månatliga abonnemanget och ersätts inte ekonomiskt.</li>
             ` : contractData.contractType === 'partTime' ? `
             <li>Kostnaden för deltid hunddagis är ${contractData.price}kr per månad och ska betalas senast den 27 varje månad.</li>
             <li>Vid frånvaro återbetalas inte avgiften.</li>
+            <li>Dagiset har rätt till 25 semesterdagar per år. Dessa dagar är inkluderade i det månatliga abonnemanget och ersätts inte ekonomiskt.</li>
             ` : contractData.contractType === 'boarding' ? `
             <li>Kostnaden för hundpensionat är ${contractData.price}kr totalt för hela vistelsen och ska betalas i samband med lämning av hunden.</li>
             <li>Vid avbokning mindre än 7 dagar före vistelsen debiteras 50% av priset.</li>
+            ` : contractData.contractType === 'singleDay' ? `
+            <li>Kostnaden för enstaka dag är ${contractData.price}kr per dag och ska betalas i förväg.</li>
+            <li>Vid avbokning mindre än 7 dagar före dagen återbetalas inte avgiften.</li>
             ` : `
             <li>Kostnaden för sociala promenader är ${contractData.price}kr per gång och ska betalas i förväg.</li>
             <li>Vid avbokning mindre än 24 timmar före promenaden återbetalas inte avgiften.</li>
@@ -385,8 +402,13 @@ const AdminPage: React.FC = () => {
         <div class="section avoid-break">
           <h2>§5 Avtalstid och uppsägning</h2>
           <ol>
+            ${contractData.contractType === 'singleDay' ? `
+            <li>Avtalet gäller för den ${formatDate(contractData.startDate)}.</li>
+            <li>Vid avbokning mindre än 7 dagar före dagen återbetalas inte avgiften.</li>
+            ` : `
             <li>Avtalet gäller från ${formatDate(contractData.startDate)} till ${formatDate(contractData.endDate)}.</li>
             <li>Vardera parten kan säga upp avtalet med en uppsägningstid på 7 dagar.</li>
+            `}
             <li>Hunddagiset har rätt att omedelbart säga upp avtalet vid aggressivt beteende hos hunden eller om Ägaren bryter mot reglerna.</li>
           </ol>
         </div>
@@ -545,6 +567,7 @@ const AdminPage: React.FC = () => {
                     <option value="partTime">Hunddagis (Part-time)</option>
                     <option value="boarding">Hundpensionat</option>
                     <option value="socialWalk">Social Promenad</option>
+                    <option value="singleDay">Enstaka Dag</option>
                   </select>
                 </div>
                 
