@@ -4,6 +4,10 @@
   command = "npm run build"
   functions = "netlify/functions"
 
+# Form handling
+[build.environment]
+  NETLIFY_FORMS = "true"
+
 [dev]
   framework = "vite"
   targetPort = 5173

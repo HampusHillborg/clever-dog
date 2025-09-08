@@ -22,8 +22,20 @@ const BookingButton = memo(({ onClick, text }: { onClick: () => void, text: stri
 
 BookingButton.displayName = 'BookingButton';
 
+// Malmö interest button
+const MalmoButton = memo(({ onClick, text }: { onClick: () => void, text: string }) => (
+  <button 
+    onClick={onClick}
+    className="btn bg-blue-600 text-white hover:bg-blue-700 text-sm md:text-base py-2 px-4 md:py-3 md:px-6"
+  >
+    {text}
+  </button>
+));
+
+MalmoButton.displayName = 'MalmoButton';
+
 // Content component separated for better performance
-const ContentSection = memo(({ t, openBookingForm }: { t: any, openBookingForm: () => void }) => (
+const ContentSection = memo(({ t, openBookingForm, openMalmoForm }: { t: any, openBookingForm: () => void, openMalmoForm: () => void }) => (
   <>
     <h1 className="text-3xl md:text-6xl font-bold text-white mb-4 md:mb-6">
       {t('welcome')}
@@ -36,6 +48,9 @@ const ContentSection = memo(({ t, openBookingForm }: { t: any, openBookingForm: 
         {t('cta')}
       </a>
       <BookingButton onClick={openBookingForm} text={t('bookCta')} />
+    </div>
+    <div className="mt-4 flex justify-center">
+      <MalmoButton onClick={openMalmoForm} text={t('malmoCta')} />
     </div>
   </>
 ));
@@ -64,7 +79,7 @@ HeroImage.displayName = 'HeroImage';
 
 const HeroSection: React.FC = () => {
   const { t } = useTranslation();
-  const { openBookingForm } = useBooking();
+  const { openBookingForm, openMalmoForm } = useBooking();
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -99,7 +114,7 @@ const HeroSection: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <ContentSection t={t} openBookingForm={openBookingForm} />
+            <ContentSection t={t} openBookingForm={openBookingForm} openMalmoForm={openMalmoForm} />
             
             {/* Trust Banner - Add with animation */}
             <motion.div
@@ -117,7 +132,7 @@ const HeroSection: React.FC = () => {
           </motion.div>
         ) : (
           <div>
-            <ContentSection t={t} openBookingForm={openBookingForm} />
+            <ContentSection t={t} openBookingForm={openBookingForm} openMalmoForm={openMalmoForm} />
             
             {/* Trust Banner - No animation for mobile */}
             <div className="mt-6 flex justify-center">

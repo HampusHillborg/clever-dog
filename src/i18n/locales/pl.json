@@ -4,6 +4,7 @@
     "heroDescription": "Przedszkole dla psów w Staffanstorp, koncentrujące się na bezpieczeństwie, radości i rozwoju",
     "cta": "Dowiedz się więcej",
     "bookCta": "Zarezerwuj miejsce",
+    "malmoCta": "Nowe Przedszkole dla Psów w Malmö Jägersro - Zarejestruj Zainteresowanie",
     "infoSection": {
       "title": "Informacja",
       "content": "Obecnie renowuję przedszkole dla psów, aby stworzyć jeszcze bezpieczniejsze i bardziej przytulne środowisko dla wszystkich psów. Między innymi, w środku będą prywatne boksy dla kążdego psiaka oraz wolna przestrzeń do zabawy, a w ogrodzie będzie ogrodzony plac zabaw, w którym psy będą mogły również się bawić. Szanuję osobowość każdego psa i pozwalam im nawiązać kontakt we własnym tempie. Zdjęcia wkrótce!"
@@ -149,6 +150,27 @@
         "successTitle": "Dziękujemy!",
         "successMessage": "Dziękujemy za Twoją prośbę o rezerwację! Przejrzymy ją i skontaktujemy się z Tobą wkrótce.",
         "errorMessage": "Wystąpił błąd podczas wysyłania Twojej prośby o rezerwację. Prosimy spróbować ponownie później."
+      },
+      "malmo": {
+        "title": "Rejestracja Zainteresowania - Malmö Jägersro",
+        "subtitle": "Nowe Przedszkole dla Psów w Malmö Jägersro",
+        "description": "Planujemy otwarcie nowego przedszkola dla psów w Malmö Jägersro! Zarejestruj swoje zainteresowanie, a skontaktujemy się z Tobą, gdy będziemy mieli więcej informacji do udostępnienia.",
+        "successTitle": "Dziękujemy za Twoje zainteresowanie!",
+        "successMessage": "Otrzymaliśmy Twoją rejestrację zainteresowania naszym nowym przedszkolem dla psów w Malmö Jägersro. Skontaktujemy się z Tobą, gdy będziemy mieli więcej informacji do udostępnienia.",
+        "ownerInfo": "Informacje o Właścicielu",
+        "dogInfo": "Informacje o Psie",
+        "dogBehaviorHealth": "Zachowanie i Zdrowie Psa",
+        "socialization": "Socjalizacja z innymi psami",
+        "socializationPlaceholder": "Jak Twój pies radzi sobie z innymi psami? Czy był wcześniej w przedszkolu?",
+        "problemBehaviors": "Problematyczne zachowania lub specjalne potrzeby",
+        "problemBehaviorsPlaceholder": "Czy są jakieś zachowania, o których powinniśmy wiedzieć? Np. boi się pewnych dźwięków, potrzebuje dodatkowej cierpliwości...",
+        "allergies": "Alergie lub problemy zdrowotne",
+        "allergiesPlaceholder": "Czy Twój pies ma jakieś alergie, leki lub problemy zdrowotne, o których powinniśmy wiedzieć?",
+        "additionalInfoPlaceholder": "Prosimy opowiedzieć nam o swoim psie, potrzebach lub pytaniach...",
+        "addressPlaceholder": "Twój adres w Malmö Jägersro",
+        "submit": "Zarejestruj Zainteresowanie Malmö Jägersro",
+        "submitting": "Wysyłanie...",
+        "close": "Zamknij"
       },
       "testimonial": "Wspaniała usługa spacerów z psem! Mój pies uwielbia swoje spacery i zawsze wraca do domu szczęśliwy i zmęczony.",
       "testimonialAuthor": "Sarah M."

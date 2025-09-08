@@ -285,6 +285,277 @@ Clever Dog Team</p>
 
 4. Save the template and note the Template ID (format: "template_zzzzzzzzz")
 
+### Malmö Interest Form Template
+
+1. Create another email template for Malmö interest
+2. Name it (e.g., "malmo-interest-form")
+3. Design your email template with the following content:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #2563eb;
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      text-align: center;
+    }
+    .content {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 0 0 8px 8px;
+      border: 1px solid #e0e0e0;
+      border-top: none;
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    h2 {
+      margin-top: 20px;
+      font-size: 20px;
+      color: #2563eb;
+      border-bottom: 2px solid #2563eb;
+      padding-bottom: 5px;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    .field {
+      margin-bottom: 10px;
+    }
+    .field:empty {
+      display: none;
+    }
+    strong {
+      color: #333;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      text-align: center;
+      color: #888;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    td {
+      padding: 8px;
+      vertical-align: top;
+    }
+    .label {
+      font-weight: bold;
+      width: 40%;
+    }
+    .empty-value {
+      color: #999;
+      font-style: italic;
+    }
+    .location-badge {
+      background-color: #dbeafe;
+      color: #1e40af;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Intresseanmälan för nytt hunddagis i {{location}}</h1>
+  </div>
+  
+  <div class="content">
+    <div class="location-badge">📍 {{location}}</div>
+    
+    <div class="section">
+      <h2>Ägarens information</h2>
+      <table>
+        <tr>
+          <td class="label">Namn:</td>
+          <td>{{from_name}}</td>
+        </tr>
+        <tr>
+          <td class="label">E-post:</td>
+          <td>{{from_email}}</td>
+        </tr>
+        <tr>
+          <td class="label">Telefon:</td>
+          <td>{{phone}}</td>
+        </tr>
+        <tr>
+          <td class="label">Adress:</td>
+          <td>{{address}}</td>
+        </tr>
+        <tr>
+          <td class="label">Personnummer:</td>
+          <td>{{personnummer}}</td>
+        </tr>
+        <tr>
+          <td class="label">Mikrochip-nummer:</td>
+          <td>{{chip_number}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="section">
+      <h2>Hundens information</h2>
+      <table>
+        <tr>
+          <td class="label">Hundens namn:</td>
+          <td>{{dog_name}}</td>
+        </tr>
+        <tr>
+          <td class="label">Ras:</td>
+          <td>{{dog_breed}}</td>
+        </tr>
+        <tr>
+          <td class="label">Kön:</td>
+          <td>{{dog_gender}}</td>
+        </tr>
+        <tr>
+          <td class="label">Höjd:</td>
+          <td>{{dog_height}}</td>
+        </tr>
+        <tr>
+          <td class="label">Ålder:</td>
+          <td>{{dog_age}}</td>
+        </tr>
+        <tr>
+          <td class="label">Kastrerad/steriliserad:</td>
+          <td>{{is_neutered}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="section">
+      <h2>Hundens beteende och hälsa</h2>
+      <table>
+        <tr>
+          <td class="label">Socialisering:</td>
+          <td>{{dog_socialization}}</td>
+        </tr>
+        <tr>
+          <td class="label">Problembeteenden:</td>
+          <td>{{problem_behaviors}}</td>
+        </tr>
+        <tr>
+          <td class="label">Allergier/hälsoproblem:</td>
+          <td>{{allergies}}</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="section">
+      <h2>Ytterligare information</h2>
+      <p>{{additional_info}}</p>
+    </div>
+    
+    <div class="footer">
+      <p>Denna e-post skickades från Clever Dog webbplats intresseanmälan den {{request_date}}.</p>
+      <p>För att svara, svara bara på detta e-postmeddelande eller kontakta kunden direkt.</p>
+    </div>
+  </div>
+</body>
+</html>
+```
+
+4. Save the template and note the Template ID (format: "template_malmo_xxxxx")
+
+### Malmö Auto-Reply Template
+
+1. Create another email template for Malmö auto-reply
+2. Name it (e.g., "malmo-interest-auto-reply")
+3. Design your auto-reply email with the following content:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #2563eb;
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      text-align: center;
+    }
+    .content {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 0 0 8px 8px;
+      border: 1px solid #e0e0e0;
+      border-top: none;
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .location-badge {
+      background-color: #dbeafe;
+      color: #1e40af;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Tack för din intresseanmälan!</h1>
+  </div>
+  
+  <div class="content">
+    <div class="location-badge">📍 {{location}}</div>
+    
+    <p>Hej {{from_name}},</p>
+    
+    <p>Tack för din intresseanmälan för vårt nya hunddagis i {{location}}! Vi är glada över ditt intresse och kommer att hålla dig informerad om vår utveckling.</p>
+    
+    <p>Vi planerar att öppna vårt nya hunddagis i {{location}} och kommer att kontakta dig när vi har mer information att dela, inklusive öppningsdatum, priser och tjänster.</p>
+    
+    <h2>Dina uppgifter</h2>
+    <p><strong>Hundens namn:</strong> {{dog_name}}</p>
+    <p><strong>Anmälningsdatum:</strong> {{request_date}}</p>
+    <p><strong>Plats:</strong> {{location}}</p>
+    
+    <p>Om du har några frågor eller vill veta mer om våra tjänster, tveka inte att kontakta oss.</p>
+    
+    <p>Med vänliga hälsningar,<br>
+    Clever Dog Team</p>
+  </div>
+</body>
+</html>
+```
+
+4. Save the template and note the Template ID (format: "template_malmo_autoreply_xxxxx")
+
 ## 4. Configure Environment Variables
 
 1. Find or create a `.env` file in the root of your project
@@ -294,6 +565,8 @@ Clever Dog Team</p>
 VITE_EMAILJS_SERVICE_ID=your_service_id_here
 VITE_EMAILJS_BOOKING_TEMPLATE_ID=your_booking_template_id_here
 VITE_EMAILJS_AUTOREPLY_TEMPLATE_ID=your_autoreply_template_id_here
+VITE_EMAILJS_MALMO_TEMPLATE_ID=your_malmo_template_id_here
+VITE_EMAILJS_MALMO_AUTOREPLY_TEMPLATE_ID=your_malmo_autoreply_template_id_here
 VITE_EMAILJS_PUBLIC_KEY=your_public_key_here
 ```
 

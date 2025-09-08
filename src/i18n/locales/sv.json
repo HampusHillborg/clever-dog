@@ -4,6 +4,7 @@
     "heroDescription": "Hunddagis i Staffanstorp med fokus på trygghet, glädje och utveckling",
     "cta": "Läs mer",
     "bookCta": "Boka plats",
+    "malmoCta": "Nytt hunddagis i Malmö Jägersro - Anmäl intresse",
     "infoSection": {
       "title": "Information",
       "content": "Just nu håller jag på att renovera hunddagiset för att skapa en ännu tryggare och mer hemtrevlig miljö för alla hundar. Det kommer bland annat att finnas en inhägnad lekyta i trädgården och privata boxar för varje hund anpassade efter deras behov. Jag respekterar varje hunds personlighet och låter dem ta kontakt i sin egen takt. Bilder kommer snart!"
@@ -149,6 +150,27 @@
         "successTitle": "Tack!",
         "successMessage": "Tack för din bokningsförfrågan! Vi kommer att granska den och återkomma till dig så snart som möjligt.",
         "errorMessage": "Ett fel uppstod när din bokningsförfrågan skulle skickas. Vänligen försök igen senare."
+      },
+      "malmo": {
+        "title": "Intresseanmälan - Malmö Jägersro",
+        "subtitle": "Nytt hunddagis i Malmö Jägersro",
+        "description": "Vi planerar att öppna ett nytt hunddagis i Malmö Jägersro! Anmäl ditt intresse så kontaktar vi dig när vi har mer information att dela.",
+        "successTitle": "Tack för din intresseanmälan!",
+        "successMessage": "Vi har mottagit din intresseanmälan för vårt nya hunddagis i Malmö Jägersro. Vi kommer att kontakta dig när vi har mer information att dela.",
+        "ownerInfo": "Ägarens information",
+        "dogInfo": "Hundens information",
+        "dogBehaviorHealth": "Hundens beteende och hälsa",
+        "socialization": "Socialisering med andra hundar",
+        "socializationPlaceholder": "Hur fungerar hunden med andra hundar? Har den varit på hunddagis tidigare?",
+        "problemBehaviors": "Problembeteenden eller särskilda behov",
+        "problemBehaviorsPlaceholder": "Finns det några beteenden vi bör känna till? T.ex. rädd för vissa ljud, behöver extra tålamod...",
+        "allergies": "Allergier eller hälsoproblem",
+        "allergiesPlaceholder": "Har hunden några allergier, mediciner eller hälsoproblem vi bör känna till?",
+        "additionalInfoPlaceholder": "Berätta gärna om din hund, dina behov eller frågor du har...",
+        "addressPlaceholder": "Din adress i Malmö Jägersro",
+        "submit": "Anmäl intresse för Malmö Jägersro",
+        "submitting": "Skickar...",
+        "close": "Stäng"
       },
       "testimonial": "Fantastisk hundpromenadservice! Min hund älskar sina promenader och kommer alltid hem glad och trött.",
       "testimonialAuthor": "Sarah M."
