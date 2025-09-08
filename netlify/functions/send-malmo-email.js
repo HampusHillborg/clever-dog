@@ -1,3 +1,9 @@
+const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
+
+const sesClient = new SESClient({
+  region: 'us-east-1', // Netlify's standard region
+});
+
 exports.handler = async (event, context) => {
   // Hantera CORS
   if (event.httpMethod === 'OPTIONS') {
@@ -241,7 +247,7 @@ exports.handler = async (event, context) => {
       html: htmlEmail,
     };
 
-    // Använd Netlify's inbyggda e-postfunktion
+    // Använd Netlify's inbyggda e-postfunktion istället för AWS SES
     const response = await fetch('https://api.netlify.com/api/v1/sites/YOUR_SITE_ID/forms/malmo-interest/submissions', {
       method: 'POST',
       headers: {

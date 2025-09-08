@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaUser, FaDog, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
-import emailjs from '@emailjs/browser';
 
 interface MalmoInterestFormProps {
   isOpen: boolean;
@@ -39,56 +38,14 @@ const MalmoInterestForm: React.FC<MalmoInterestFormProps> = ({ isOpen, onClose }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = () => {
+    // Låt Netlify hantera formuläret - ta bort preventDefault
     setIsSubmitting(true);
     setFormError('');
 
-    try {
-      // Skapa template parameters för EmailJS
-      const templateParams = {
-        location: 'Malmö Jägersro',
-        from_name: formData.name,
-        from_email: formData.email,
-        phone: formData.phone,
-        dog_name: formData.dogName,
-        dog_breed: formData.dogBreed,
-        dog_gender: formData.dogGender,
-        dog_height: formData.dogHeight,
-        dog_age: formData.dogAge,
-        is_neutered: formData.isNeutered,
-        dog_socialization: formData.dogSocialization,
-        problem_behaviors: formData.problemBehaviors,
-        allergies: formData.allergies,
-        chip_number: formData.chipNumber,
-        address: formData.address,
-        personnummer: formData.personnummer,
-        additional_info: formData.additionalInfo,
-      };
-
-      // Skicka e-post via EmailJS till dig (använd befintlig booking template)
-      await emailjs.send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_BOOKING_TEMPLATE_ID, // Använd befintlig booking template
-        templateParams,
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-      );
-
-      // Skicka automatsvar till kunden (använd befintlig autoreply template)
-      const autoReplyParams = {
-        to_name: formData.name,
-        to_email: formData.email,
-        location: 'Malmö Jägersro',
-        dog_name: formData.dogName,
-      };
-
-      await emailjs.send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_AUTOREPLY_TEMPLATE_ID, // Använd befintlig autoreply template
-        autoReplyParams,
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-      );
-
+    // Netlify Forms kommer att hantera formulärinsamling automatiskt
+    // Vi visar success-meddelande efter en kort fördröjning
+    setTimeout(() => {
       setIsSubmitting(false);
       setFormSuccess(true);
       
@@ -117,12 +74,7 @@ const MalmoInterestForm: React.FC<MalmoInterestFormProps> = ({ isOpen, onClose }
         onClose();
         setFormSuccess(false);
       }, 3000);
-
-    } catch (error) {
-      console.error('Error sending email:', error);
-      setIsSubmitting(false);
-      setFormError('Ett fel uppstod vid skickande av formuläret. Försök igen.');
-    }
+    }, 1000); // Kort fördröjning för att låta Netlify hantera formuläret
   };
 
   if (!isOpen) return null;
@@ -156,11 +108,23 @@ const MalmoInterestForm: React.FC<MalmoInterestFormProps> = ({ isOpen, onClose }
             <p>{t('booking.malmo.successMessage')}</p>
           </div>
         ) : (
-            <form 
-              ref={formRef} 
-              onSubmit={handleSubmit} 
-              className="p-6"
-            >
+          <form 
+            ref={formRef} 
+            onSubmit={handleSubmit} 
+            className="p-6"
+            name="malmo-interest"
+            method="POST"
+            data-netlify="true"
+            data-netlify-honeypot="bot-field"
+          >
+            {/* Dold honeypot för spam-skydd */}
+            <input type="hidden" name="form-name" value="malmo-interest" />
+            <div style={{ display: 'none' }}>
+              <label>
+                Don't fill this out if you're human: 
+                <input name="bot-field" />
+              </label>
+            </div>
             <div className="mb-6">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <div className="flex items-center mb-2">
