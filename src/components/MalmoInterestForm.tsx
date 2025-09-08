@@ -229,6 +229,21 @@ const MalmoInterestForm: React.FC<MalmoInterestFormProps> = ({ isOpen, onClose }
                     placeholder="YYYYMMDD-XXXX"
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="chipNumber" className="block text-sm font-medium text-gray-700">
+                    {t('booking.form.chipNumber')}
+                  </label>
+                  <input
+                    type="text"
+                    id="chipNumber"
+                    name="chipNumber"
+                    value={formData.chipNumber}
+                    onChange={handleChange}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                    placeholder="15-siffrigt chipnummer"
+                  />
+                </div>
               </div>
             </div>
             
