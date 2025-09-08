@@ -1,3 +1,4 @@
+
 exports.handler = async (event, context) => {
   // Hantera CORS
   if (event.httpMethod === 'OPTIONS') {
@@ -236,7 +237,7 @@ exports.handler = async (event, context) => {
     // Skicka e-post via Netlify's inbyggda e-postfunktion
     const emailParams = {
       to: 'cleverdog.aw@gmail.com',
-      from: 'noreply@cleverdog.se', // Använd din verifierade e-post
+      from: 'noreply@cleverdog.se',
       subject: `🐕 Intresseanmälan Malmö Jägersro - ${formData.name || 'Okänd person'}`,
       html: htmlEmail,
     };
