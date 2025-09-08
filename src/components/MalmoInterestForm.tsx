@@ -38,7 +38,7 @@ const MalmoInterestForm: React.FC<MalmoInterestFormProps> = ({ isOpen, onClose }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = () => {
     // Låt Netlify hantera formuläret - ta bort preventDefault
     setIsSubmitting(true);
     setFormError('');
