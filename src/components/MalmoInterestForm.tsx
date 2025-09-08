@@ -39,40 +39,42 @@ const MalmoInterestForm: React.FC<MalmoInterestFormProps> = ({ isOpen, onClose }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    // Låt Netlify hantera formuläret - ta bort preventDefault
     setIsSubmitting(true);
     setFormError('');
 
-    // Netlify Forms hanterar automatiskt formulärinsamling
-    // Vi behöver bara visa success-meddelande
-    setIsSubmitting(false);
-    setFormSuccess(true);
-    
-    // Reset form after successful submission
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      dogName: '',
-      dogBreed: '',
-      dogGender: '',
-      dogHeight: '',
-      dogAge: '',
-      isNeutered: '',
-      additionalInfo: '',
-      dogSocialization: '',
-      problemBehaviors: '',
-      allergies: '',
-      chipNumber: '',
-      address: '',
-      personnummer: '',
-    });
-    
-    // Close the form after a short delay
+    // Netlify Forms kommer att hantera formulärinsamling automatiskt
+    // Vi visar success-meddelande efter en kort fördröjning
     setTimeout(() => {
-      onClose();
-      setFormSuccess(false);
-    }, 3000);
+      setIsSubmitting(false);
+      setFormSuccess(true);
+      
+      // Reset form after successful submission
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        dogName: '',
+        dogBreed: '',
+        dogGender: '',
+        dogHeight: '',
+        dogAge: '',
+        isNeutered: '',
+        additionalInfo: '',
+        dogSocialization: '',
+        problemBehaviors: '',
+        allergies: '',
+        chipNumber: '',
+        address: '',
+        personnummer: '',
+      });
+      
+      // Close the form after a short delay
+      setTimeout(() => {
+        onClose();
+        setFormSuccess(false);
+      }, 3000);
+    }, 1000); // Kort fördröjning för att låta Netlify hantera formuläret
   };
 
   if (!isOpen) return null;
