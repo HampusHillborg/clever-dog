@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background-color: #f0a868;
+      color: white;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      text-align: center;
+    }
+    .content {
+      background-color: #f9f9f9;
+      padding: 30px;
+      border-radius: 0 0 8px 8px;
+      border: 1px solid #e0e0e0;
+      border-top: none;
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    h2 {
+      margin-top: 30px;
+      font-size: 20px;
+      color: #f0a868;
+      border-bottom: 2px solid #f0a868;
+      padding-bottom: 5px;
+    }
+    .greeting {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .info-box {
+      background-color: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+    }
+    tr {
+      border-bottom: 1px solid #eee;
+    }
+    tr:last-child {
+      border-bottom: none;
+    }
+    td {
+      padding: 10px 5px;
+    }
+    .label {
+      font-weight: bold;
+      width: 40%;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #666;
+    }
+    .social {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .social a {
+      display: inline-block;
+      margin: 0 10px;
+      color: #f0a868;
+      text-decoration: none;
+    }
+    .signature {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>{{#if location}}Tack för din intresseanmälan - {{location}}{{else}}Thank You for Contacting Clever Dog{{/if}}</h1>
+  </div>
+ 
+  <div class="content">
+    <p class="greeting">Dear {{to_name}},</p>
+   
+    <p>{{#if location}}Tack så mycket för att du har anmält intresse för vårt nya hunddagis i {{location}}!{{else}}Thank you for your request with Clever Dog. We have received your inquiry and will review it shortly.{{/if}}</p>
+   
+    <p>{{#if location}}Vi kommer att kontakta dig inom 2-3 arbetsdagar för att diskutera dina behov och svara på eventuella frågor du kan ha.{{else}}We typically respond within 24-48 hours. If you have any urgent matters, please feel free to contact us directly at <a href="mailto:cleverdog.aw@gmail.com">cleverdog.aw@gmail.com</a>.{{/if}}</p>
+   
+    <div class="info-box">
+      <h2>{{#if location}}Din intresseanmälan{{else}}Your Request Details{{/if}}</h2>
+      <table>
+        {{#if location}}
+        <tr>
+          <td class="label">Plats:</td>
+          <td>{{location}}</td>
+        </tr>
+        <tr>
+          <td class="label">Hundens namn:</td>
+          <td>{{dog_name}}</td>
+        </tr>
+        <tr>
+          <td class="label">Datum:</td>
+          <td>{{request_date}}</td>
+        </tr>
+        {{else}}
+        <tr>
+          <td class="label">Inquiry Type:</td>
+          <td>{{inquiry_type}}</td>
+        </tr>
+        <tr>
+          <td class="label">Request Date:</td>
+          <td>{{request_date}}</td>
+        </tr>
+        {{#dog_name}}
+        <tr>
+          <td class="label">Dog Name:</td>
+          <td>{{dog_name}}</td>
+        </tr>
+        {{/dog_name}}
+        {{#start_date}}
+        <tr>
+          <td class="label">Start Date:</td>
+          <td>{{start_date}}</td>
+        </tr>
+        {{/start_date}}
+        {{#end_date}}
+        <tr>
+          <td class="label">End Date:</td>
+          <td>{{end_date}}</td>
+        </tr>
+        {{/end_date}}
+        {{/if}}
+      </table>
+    </div>
+   
+    <div class="signature">
+      <p>{{#if location}}Med vänliga hälsningar,{{else}}Best regards,{{/if}}<br>
+      <strong>Clever Dog Team</strong><br>
+      {{#if location}}{{location}} Hunddagis{{else}}Staffanstorp Hunddagis{{/if}}</p>
+    </div>
+   
+    <div class="social">
+      <p>Follow us for updates:</p>
+      <a href="https://www.instagram.com/CleverDog_">Instagram</a> |
+      <a href="https://www.facebook.com/profile.php?id=61555454325558">Facebook</a>
+    </div>
+   
+    <div class="footer">
+      <p>© 2025 Clever Dog. All rights reserved.<br>
+      {{#if location}}{{location}}{{else}}Malmövägen 7, Staffanstorp{{/if}}</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -66,11 +66,26 @@ const MalmoInterestForm: React.FC<MalmoInterestFormProps> = ({ isOpen, onClose }
         additional_info: formData.additionalInfo,
       };
 
-      // Skicka e-post via EmailJS
+      // Skicka e-post via EmailJS till dig (använd befintlig booking template)
       await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        'malmo-interest-form', // Template ID för Malmö intresseanmälan
+        import.meta.env.VITE_EMAILJS_BOOKING_TEMPLATE_ID, // Använd befintlig booking template
         templateParams,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
+      // Skicka automatsvar till kunden (använd befintlig autoreply template)
+      const autoReplyParams = {
+        to_name: formData.name,
+        to_email: formData.email,
+        location: 'Malmö Jägersro',
+        dog_name: formData.dogName,
+      };
+
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_AUTOREPLY_TEMPLATE_ID, // Använd befintlig autoreply template
+        autoReplyParams,
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
 

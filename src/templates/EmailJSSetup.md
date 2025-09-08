@@ -410,7 +410,8 @@ Clever Dog Team</p>
           <td class="label">Mikrochip-nummer:</td>
           <td>{{chip_number}}</td>
         </tr>
-      </table>
+
+</table>
     </div>
     
     <div class="section">
@@ -577,11 +578,58 @@ VITE_EMAILJS_PUBLIC_KEY=your_public_key_here
 
 4. Make sure the `.env` file is included in your `.gitignore` to keep your credentials secure
 
-## 5. Testing Your Setup
+## 5. Malmö Intresseanmälan - Använd Befintliga Templates
+
+### Anpassa Befintliga Templates
+
+Eftersom du har nått gränsen för gratis EmailJS templates, använder vi dina befintliga templates:
+
+1. **Booking Template** - för notifikation till dig
+2. **Auto-reply Template** - för bekräftelse till kunden
+
+### Anpassa Booking Template för Malmö
+
+1. Gå till EmailJS Dashboard → Email Templates
+2. Hitta din befintliga **Booking Template**
+3. Lägg till följande i början av e-postmeddelandet:
+
+```html
+<div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+  <strong>🎉 INTRESSEANMÄLAN MALMÖ JÄGERSRO</strong><br>
+  Detta är en intresseanmälan för det nya hunddagiset i Malmö Jägersro.
+</div>
+```
+
+### Anpassa Auto-reply Template för Malmö
+
+1. Hitta din befintliga **Auto-reply Template**
+2. Lägg till följande information:
+
+```html
+<div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; margin: 20px 0;">
+  <strong>🐕 Malmö Jägersro Hunddagis</strong><br>
+  Vi kommer att kontakta dig inom 2-3 arbetsdagar för att diskutera dina behov.
+</div>
+```
+
+### Variabler som används:
+
+**För Booking Template (till dig):**
+- Alla befintliga variabler från bokningsformuläret
+- `{{location}}` - "Malmö Jägersro"
+
+**För Auto-reply Template (till kunden):**
+- `{{to_name}}` - Kundens namn
+- `{{to_email}}` - Kundens e-postadress
+- `{{location}}` - "Malmö Jägersro"
+- `{{dog_name}}` - Hundens namn
+
+## 6. Testing Your Setup
 
 1. Make sure EmailJS is installed: `npm install @emailjs/browser`
 2. Fill out the booking form and submit it
 3. Check both your email and the customer's email to verify the emails are being sent correctly
+4. Test the Malmö interest form to ensure both notification and auto-reply are sent
 
 ## 6. Troubleshooting
 
