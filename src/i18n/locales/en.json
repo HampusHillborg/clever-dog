@@ -186,6 +186,62 @@
       "noReviews": "No reviews available at this time.",
       "viewAllReviews": "View All Reviews on Google",
       "reviewsCount": "{{count}} reviews"
+    },
+    "locationSelector": {
+      "tagline": "Professional dog care in Skåne",
+      "hero": {
+        "title": "Welcome to Clever Dog",
+        "subtitle": "Choose your nearest location for professional dog care focusing on safety, joy, and development",
+        "locations": "Two locations to choose from"
+      },
+      "staffanstorp": {
+        "subtitle": "Established daycare & boarding",
+        "description": "Our headquarters in Staffanstorp offers full-service dog care including daycare, boarding, and social walks. With our strategic location just 10 minutes from Lund and 15 minutes from Malmö.",
+        "services": {
+          "daycare": "Dog Daycare",
+          "boarding": "Dog Boarding", 
+          "grooming": "Dog Grooming",
+          "socialWalks": "Social Walks"
+        },
+        "status": "Open Now"
+      },
+      "malmo": {
+        "subtitle": "Modern dog daycare in Malmö",
+        "description": "Our new dog daycare in Malmö Jägersro offers modern dog care focused on daycare services and social training. Perfectly located for dog owners in the Malmö area.",
+        "services": {
+          "daycare": "Dog Daycare",
+          "socialWalks": "Social Walks",
+          "training": "Dog Training"
+        },
+        "status": "Open Now"
+      },
+      "services": "Our Services",
+      "buttons": {
+        "visit": "Visit This Location",
+        "interest": "Register Interest"
+      },
+      "about": {
+        "title": "About Clever Dog",
+        "description": "Clever Dog was founded with a passion for giving dogs the best possible care. We believe in creating a safe, loving environment where every dog can develop and be themselves.",
+        "features": {
+          "locations": {
+            "title": "Two Convenient Locations",
+            "description": "Strategically placed to serve all of southwestern Skåne"
+          },
+          "experience": {
+            "title": "Professional Expertise", 
+            "description": "Certified dog behaviorist with deep understanding of dogs"
+          },
+          "support": {
+            "title": "Personal Service",
+            "description": "Individual care adapted to each dog's needs"
+          }
+        }
+      },
+      "footer": {
+        "tagline": "Professional dog care with heart",
+        "rights": "All rights reserved"
+      }
     }
   }
 } 

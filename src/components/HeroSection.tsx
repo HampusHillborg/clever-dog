@@ -77,7 +77,11 @@ const HeroImage = memo(({ alt }: { alt: string }) => (
 
 HeroImage.displayName = 'HeroImage';
 
-const HeroSection: React.FC = () => {
+interface HeroSectionProps {
+  location?: string;
+}
+
+const HeroSection: React.FC<HeroSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
   const { openBookingForm, openMalmoForm } = useBooking();
   const prefersReducedMotion = useReducedMotion();

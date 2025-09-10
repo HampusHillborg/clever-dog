@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebookF } from 'react-icons/fa';
 import { motion, useReducedMotion } from 'framer-motion';
 
-const AboutSection: React.FC = () => {
+interface AboutSectionProps {
+  location?: string;
+}
+
+const AboutSection: React.FC<AboutSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
   const prefersReducedMotion = useReducedMotion();
   const [isMobile, setIsMobile] = useState(false);

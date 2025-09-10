@@ -186,6 +186,62 @@
       "noReviews": "Inga recensioner tillgängliga för tillfället.",
       "viewAllReviews": "Se alla recensioner på Google",
       "reviewsCount": "{{count}} recensioner"
+    },
+    "locationSelector": {
+      "tagline": "Professionell hundomsorg i Skåne",
+      "hero": {
+        "title": "Välkommen till Clever Dog",
+        "subtitle": "Välj din närmaste plats för professionell hundomsorg med trygghet, glädje och utveckling i fokus",
+        "locations": "Två platser att välja mellan"
+      },
+      "staffanstorp": {
+        "subtitle": "Etablerat hunddagis & pensionat",
+        "description": "Vårt huvudkontor i Staffanstorp erbjuder fullservice hundomsorg inklusive dagis, pensionat och social promenader. Med vår strategiska plats bara 10 minuter från Lund och 15 minuter från Malmö.",
+        "services": {
+          "daycare": "Hunddagis",
+          "boarding": "Hundpensionat", 
+          "grooming": "Hundtrimning",
+          "socialWalks": "Social Promenader"
+        },
+        "status": "Öppet nu"
+      },
+      "malmo": {
+        "subtitle": "Modernt hunddagis i Malmö",
+        "description": "Vårt nya hunddagis i Malmö Jägersro erbjuder modern hundomsorg med fokus på dagisverksamhet och social träning. Perfekt beläget för hundägare i Malmöområdet.",
+        "services": {
+          "daycare": "Hunddagis",
+          "socialWalks": "Social Promenader",
+          "training": "Hundträning"
+        },
+        "status": "Öppet nu"
+      },
+      "services": "Våra tjänster",
+      "buttons": {
+        "visit": "Besök denna plats",
+        "interest": "Anmäl intresse"
+      },
+      "about": {
+        "title": "Om Clever Dog",
+        "description": "Clever Dog grundades med passionen för att ge hundar den bästa möjliga omsorgen. Vi tror på att skapa en trygg, kärleksfull miljö där varje hund kan utvecklas och vara sig själv.",
+        "features": {
+          "locations": {
+            "title": "Två bekväma platser",
+            "description": "Strategiskt placerade för att tjäna hela sydvästra Skåne"
+          },
+          "experience": {
+            "title": "Professionell expertis",
+            "description": "Certifierad hundbeteendevetare med djup förståelse för hundar"
+          },
+          "support": {
+            "title": "Personlig service",
+            "description": "Individuell omsorg anpassad efter varje hunds behov"
+          }
+        }
+      },
+      "footer": {
+        "tagline": "Professionell hundomsorg med hjärta",
+        "rights": "Alla rättigheter förbehållna"
+      }
     }
   }
 } 

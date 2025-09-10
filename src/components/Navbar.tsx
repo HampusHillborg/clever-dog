@@ -5,7 +5,11 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { useBooking } from './BookingContext';
 import dogLogo from '../assets/images/logos/Logo.png';
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  location?: string;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
   const { t } = useTranslation();
   const { openBookingForm } = useBooking();
   const [isMenuOpen, setIsMenuOpen] = useState(false);

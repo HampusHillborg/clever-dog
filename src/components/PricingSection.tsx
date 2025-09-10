@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { FaDog, FaWalking, FaCalendarAlt, FaBed, FaCalendarWeek } from 'react-icons/fa';
 
-const PricingSection: React.FC = () => {
+interface PricingSectionProps {
+  location?: string;
+}
+
+const PricingSection: React.FC<PricingSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
 
   // Updated pricing data

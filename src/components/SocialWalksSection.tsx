@@ -5,7 +5,11 @@ import { FaWalking, FaUsers, FaHeart } from 'react-icons/fa';
 // Import the image directly
 import socialWalkImport from '../assets/images/gallery/social_walk.jpeg';
 
-const SocialWalksSection: React.FC = () => {
+interface SocialWalksSectionProps {
+  location?: string;
+}
+
+const SocialWalksSection: React.FC<SocialWalksSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
   const [imageError, setImageError] = useState(false);
 

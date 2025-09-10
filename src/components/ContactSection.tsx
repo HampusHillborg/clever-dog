@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebookF } from 'react-icons/fa';
 
-const ContactSection: React.FC = () => {
+interface ContactSectionProps {
+  location?: string;
+}
+
+const ContactSection: React.FC<ContactSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
   
   // Always use mailto protocol for email links

@@ -186,6 +186,62 @@
       "noReviews": "Brak dostępnych recenzji w tej chwili.",
       "viewAllReviews": "Zobacz wszystkie recenzje w Google",
       "reviewsCount": "{{count}} recenzji"
+    },
+    "locationSelector": {
+      "tagline": "Profesjonalna opieka nad psami w Skåne",
+      "hero": {
+        "title": "Witamy w Clever Dog",
+        "subtitle": "Wybierz najbliższą lokalizację dla profesjonalnej opieki nad psami koncentrującej się na bezpieczeństwie, radości i rozwoju",
+        "locations": "Dwie lokalizacje do wyboru"
+      },
+      "staffanstorp": {
+        "subtitle": "Istniejący hotel i pensjonat dla psów",
+        "description": "Nasza główna siedziba w Staffanstorp oferuje kompleksową opiekę nad psami, w tym hotel dzienny, pensjonat i spacery towarzyskie. Dzięki strategicznemu położeniu zaledwie 10 minut od Lund i 15 minut od Malmö.",
+        "services": {
+          "daycare": "Hotel dzienny dla psów",
+          "boarding": "Pensjonat dla psów", 
+          "grooming": "Pielęgnacja psów",
+          "socialWalks": "Spacery towarzyskie"
+        },
+        "status": "Otwarte teraz"
+      },
+      "malmo": {
+        "subtitle": "Nowoczesny hotel dzienny w Malmö",
+        "description": "Nasz nowy hotel dzienny dla psów w Malmö Jägersro oferuje nowoczesną opiekę nad psami skupioną na usługach hotelowych i treningu towarzyskim. Doskonale położony dla właścicieli psów w obszarze Malmö.",
+        "services": {
+          "daycare": "Hotel dzienny dla psów",
+          "socialWalks": "Spacery towarzyskie",
+          "training": "Trening psów"
+        },
+        "status": "Otwarte teraz"
+      },
+      "services": "Nasze usługi",
+      "buttons": {
+        "visit": "Odwiedź tę lokalizację",
+        "interest": "Zarejestruj zainteresowanie"
+      },
+      "about": {
+        "title": "O Clever Dog",
+        "description": "Clever Dog zostało założone z pasją do zapewnienia psom najlepszej możliwej opieki. Wierzymy w tworzenie bezpiecznego, kochającego środowiska, gdzie każdy pies może się rozwijać i być sobą.",
+        "features": {
+          "locations": {
+            "title": "Dwie wygodne lokalizacje",
+            "description": "Strategicznie umieszczone, aby obsługiwać całą południowo-zachodnią Skåne"
+          },
+          "experience": {
+            "title": "Profesjonalna ekspertyza", 
+            "description": "Certyfikowany behawiorzysta psów z głębokim zrozumieniem psów"
+          },
+          "support": {
+            "title": "Personalna obsługa",
+            "description": "Indywidualna opieka dostosowana do potrzeb każdego psa"
+          }
+        }
+      },
+      "footer": {
+        "tagline": "Profesjonalna opieka nad psami z sercem",
+        "rights": "Wszystkie prawa zastrzeżone"
+      }
     }
   }
 } 
