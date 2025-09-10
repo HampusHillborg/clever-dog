@@ -15,6 +15,9 @@
       "bio2": "Together with my 3-year-old Shiba Inu, I create a calm and loving environment for dogs to develop in. Later this year, I will also offer dog grooming as part of the business.",
       "bio3": "With our strategic location just 10 minutes from Lund and 15 minutes from Malmö, we offer dog owners throughout the region convenient and accessible high-quality dog care.",
       "permission": "The business is approved by the County Administrative Board (Länsstyrelsen) and I have all necessary permits for dog daycare and boarding operations.",
+      "bioMalmo": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Malmö at Sadelgatan 6, where safety and joy are at the center for every dog.",
+      "bio2Malmo": "Together with my 3-year-old Shiba Inu, I create a calm and loving environment for dogs to develop in. Our new location in Malmö focuses on daycare services and social training.",
+      "bio3Malmo": "With our central location in Malmö, we offer dog owners in the Malmö area convenient and accessible high-quality dog care.",
       "address": "Address",
       "email": "Email",
       "instagram": "Instagram",
@@ -209,7 +212,7 @@
       },
       "malmo": {
         "subtitle": "Modern dog daycare in Malmö",
-        "description": "Our new dog daycare in Malmö Jägersro offers modern dog care focused on daycare services and social training. Perfectly located for dog owners in the Malmö area.",
+        "description": "Our new dog daycare in Malmö offers modern dog care focused on daycare services and social training. Perfectly located at Sadelgatan 6 for dog owners in the Malmö area.",
         "services": {
           "daycare": "Dog Daycare",
           "socialWalks": "Social Walks",

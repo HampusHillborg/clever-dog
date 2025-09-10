@@ -7,7 +7,7 @@ interface ContactSectionProps {
   location?: string;
 }
 
-const ContactSection: React.FC<ContactSectionProps> = ({ location: _location }) => {
+const ContactSection: React.FC<ContactSectionProps> = ({ location }) => {
   const { t } = useTranslation();
   
   // Always use mailto protocol for email links
@@ -44,7 +44,7 @@ const ContactSection: React.FC<ContactSectionProps> = ({ location: _location }) 
                 </div>
                 <div>
                   <h4 className="font-medium">{t('about.address')}</h4>
-                  <p>Malmövägen 7, Staffanstorp</p>
+                  <p>{location === 'malmo' ? 'Sadelgatan 6, Malmö' : 'Malmövägen 7, Staffanstorp'}</p>
                 </div>
               </div>
 
@@ -54,9 +54,9 @@ const ContactSection: React.FC<ContactSectionProps> = ({ location: _location }) 
                 </div>
                 <div>
                   <h4 className="font-medium">{t('about.email')}</h4>
-                  <a href={emailLink} className="hover:text-primary">
-                    cleverdog.aw@gmail.com
-                  </a>
+                   <a href={emailLink} className="hover:text-primary">
+                     cleverdog.aw@gmail.com
+                   </a>
                 </div>
               </div>
 

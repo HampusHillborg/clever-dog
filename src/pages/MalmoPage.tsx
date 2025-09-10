@@ -23,7 +23,7 @@ const preloadHeroImages = () => {
   });
 };
 
-const StaffanstorpPage: React.FC = () => {
+const MalmoPage: React.FC = () => {
   // Preload hero images immediately
   useEffect(() => {
     preloadHeroImages();
@@ -54,26 +54,26 @@ const StaffanstorpPage: React.FC = () => {
 
   return (
     <>
-      <Navbar location="staffanstorp" />
+      <Navbar location="malmo" />
       <main>
-        <HeroSection location="staffanstorp" />
+        <HeroSection location="malmo" />
         {/* PricingSection direct - no lazy loading */}
-        <PricingSection location="staffanstorp" />
+        <PricingSection location="malmo" />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
-          <AboutSection location="staffanstorp" />
-          <SocialWalksSection location="staffanstorp" />
+          <AboutSection location="malmo" />
+          <SocialWalksSection location="malmo" />
           <SustainabilitySection />
           <SocialMediaSection />
           <GoogleReviewsSection />
-          <ContactSection location="staffanstorp" />
+          <ContactSection location="malmo" />
         </Suspense>
       </main>
           <Suspense fallback={<div className="h-16">Loading...</div>}>
-            <Footer location="staffanstorp" />
+            <Footer location="malmo" />
           </Suspense>
     </>
   );
 };
 
-export default StaffanstorpPage;
+export default MalmoPage;

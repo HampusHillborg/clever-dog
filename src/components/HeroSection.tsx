@@ -24,13 +24,13 @@ BookingButton.displayName = 'BookingButton';
 
 
 // Content component separated for better performance
-const ContentSection = memo(({ t, openBookingForm }: { t: any, openBookingForm: () => void }) => (
+const ContentSection = memo(({ t, openBookingForm, location }: { t: any, openBookingForm: () => void, location?: string }) => (
   <>
     <h1 className="text-3xl md:text-6xl font-bold text-white mb-4 md:mb-6">
-      {t('welcome')}
+      {location === 'malmo' ? t('welcome') + ' - Malmö' : location === 'staffanstorp' ? t('welcome') + ' - Staffanstorp' : t('welcome')}
     </h1>
     <p className="text-lg md:text-xl text-white mb-6 md:mb-8 max-w-2xl mx-auto">
-      {t('heroDescription')}
+      {location === 'malmo' ? t('locationSelector.malmo.description') : location === 'staffanstorp' ? t('locationSelector.staffanstorp.description') : t('heroDescription')}
     </p>
     <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
       <a href="#about" className="btn btn-primary text-sm md:text-base py-2 px-4 md:py-3 md:px-6">
@@ -67,7 +67,7 @@ interface HeroSectionProps {
   location?: string;
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ location: _location }) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ location }) => {
   const { t } = useTranslation();
   const { openBookingForm } = useBooking();
   const prefersReducedMotion = useReducedMotion();
@@ -104,7 +104,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ location: _location }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <ContentSection t={t} openBookingForm={openBookingForm} />
+            <ContentSection t={t} openBookingForm={openBookingForm} location={location} />
             
             {/* Trust Banner - Add with animation */}
             <motion.div
@@ -122,7 +122,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ location: _location }) => {
           </motion.div>
         ) : (
           <div>
-            <ContentSection t={t} openBookingForm={openBookingForm} />
+            <ContentSection t={t} openBookingForm={openBookingForm} location={location} />
             
             {/* Trust Banner - No animation for mobile */}
             <div className="mt-6 flex justify-center">

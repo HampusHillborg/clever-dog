@@ -26,7 +26,7 @@ const LocationSelector: React.FC = () => {
       status: 'open',
       statusText: t('locationSelector.staffanstorp.status'),
       phone: '+46 xxx xxx xxx',
-      email: 'staffanstorp@cleverdog.se',
+        email: 'cleverdog.aw@gmail.com',
       gradient: 'from-orange-400 to-orange-600',
       hoverGradient: 'from-orange-500 to-orange-700',
       iconBg: 'bg-orange-100',
@@ -50,7 +50,7 @@ const LocationSelector: React.FC = () => {
       status: 'open',
       statusText: t('locationSelector.malmo.status'),
       phone: '+46 xxx xxx xxx',
-      email: 'malmo@cleverdog.se',
+        email: 'cleverdog.aw@gmail.com',
       gradient: 'from-blue-400 to-blue-600',
       hoverGradient: 'from-blue-500 to-blue-700',
       iconBg: 'bg-blue-100',
@@ -165,50 +165,64 @@ const LocationSelector: React.FC = () => {
                 <div className="w-16 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600 mx-auto rounded-full"></div>
               </div>
               
-                  <div className="flex justify-center max-w-lg mx-auto">
-                    {/* Only show Staffanstorp for now */}
-                    <motion.button
-                      onClick={() => handleLocationSelect('staffanstorp')}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="group relative w-full"
-                    >
-                      {/* Simple Card */}
-                      <div className="relative bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 p-6">
-                        {/* Location Icon */}
-                        <div className="flex items-center justify-center mb-4">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg">
-                            <FaMapMarkerAlt className="text-white text-xl" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    {locations.map((location, index) => (
+                      <motion.button
+                        key={location.id}
+                        onClick={() => handleLocationSelect(location.id)}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        whileHover={{ scale: 1.05, y: -5 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="group relative w-full"
+                      >
+                        {/* Location Card */}
+                        <div className={`relative bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 p-6 ${location.bgImage}`}>
+                          {/* Location Icon */}
+                          <div className="flex items-center justify-center mb-4">
+                            <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${location.gradient} flex items-center justify-center shadow-lg`}>
+                              <FaMapMarkerAlt className="text-white text-xl" />
+                            </div>
+                          </div>
+                          
+                          {/* Location Info */}
+                          <div className="text-center">
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">
+                              {location.name}
+                            </h3>
+                            
+                            <p className="text-gray-600 text-sm mb-4">
+                              {location.address}
+                            </p>
+                            
+                            {/* Status */}
+                            <div className="inline-flex items-center space-x-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium mb-4">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span>{location.statusText}</span>
+                            </div>
+                            
+                            {/* Services */}
+                            <div className="mb-4">
+                              <div className="text-xs text-gray-500 mb-2">Tjänster:</div>
+                              <div className="flex flex-wrap justify-center gap-1">
+                                {location.services.map((service, idx) => (
+                                  <span key={idx} className={`text-xs px-2 py-1 rounded-full ${location.iconBg} ${location.iconColor}`}>
+                                    {service}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            {/* Action Text */}
+                            <div className={`text-sm font-medium bg-gradient-to-r ${location.gradient} bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300`}>
+                              Klicka för att besöka →
+                            </div>
                           </div>
                         </div>
-                        
-                        {/* Location Info */}
-                        <div className="text-center">
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">
-                            Staffanstorp
-                          </h3>
-                          
-                          <p className="text-gray-600 text-sm mb-4">
-                            Malmövägen 7, 245 32 Staffanstorp
-                          </p>
-                          
-                          {/* Status */}
-                          <div className="inline-flex items-center space-x-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium mb-4">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                            <span>Öppet nu</span>
-                          </div>
-                          
-                          {/* Action Text */}
-                          <div className="text-sm font-medium bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
-                            Klicka för att besöka →
-                          </div>
-                        </div>
-                      </div>
-                    </motion.button>
-              </div>
+                      </motion.button>
+                    ))}
+                  </div>
               
               <motion.p 
                 initial={{ opacity: 0 }}

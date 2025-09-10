@@ -4,7 +4,11 @@ import { FaInstagram, FaFacebookF, FaMapMarkerAlt } from 'react-icons/fa';
 import LanguageSwitcher from './LanguageSwitcher';
 import dogLogo from '../assets/images/logos/Logo.png';
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  location?: string;
+}
+
+const Footer: React.FC<FooterProps> = ({ location }) => {
   const { t, i18n } = useTranslation();
   const currentYear = new Date().getFullYear();
   const isSwedish = i18n.language === 'sv';
@@ -25,10 +29,14 @@ const Footer: React.FC = () => {
                 <span className="text-lg md:text-xl font-bold text-orange-500">Clever Dog</span>
               </div>
               <p className="text-gray-400 text-center md:text-left mb-2 text-sm md:text-base">
-                {isSwedish ? 'Hunddagis i Staffanstorp med fokus på trygghet, glädje och utveckling' : t('heroDescription')}
+                {location === 'malmo' 
+                  ? (isSwedish ? 'Hunddagis i Malmö med fokus på trygghet, glädje och utveckling' : 'Dog daycare in Malmö focusing on safety, joy and development')
+                  : (isSwedish ? 'Hunddagis i Staffanstorp med fokus på trygghet, glädje och utveckling' : t('heroDescription'))
+                }
               </p>
               <p className="text-gray-400 text-center md:text-left mb-4 text-sm">
-                <FaMapMarkerAlt className="inline mr-1" /> 10 min från Lund | 15 min från Malmö
+                <FaMapMarkerAlt className="inline mr-1" /> 
+                {location === 'malmo' ? 'Centralt beläget i Malmö' : '10 min från Lund | 15 min från Malmö'}
               </p>
               <div className="flex space-x-4">
                 <a 

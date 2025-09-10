@@ -15,6 +15,9 @@
       "bio2": "Razem z moim 3-letnim Shiba Inu tworzę spokojne i pełne miłości środowisko dla rozwoju psów. Jeszcze w tym roku oferować będę również usługi pielęgnacji psów jako część działalności.",
       "bio3": "Z naszą strategiczną lokalizacją tylko 10 minut od Lund i 15 minut od Malmö, oferujemy właścicielom psów w całym regionie wygodną i dostępną opiekę nad psami najwyższej jakości.",
       "permission": "Działalność jest zatwierdzona przez Urząd Wojewódzki (Länsstyrelsen) i posiadam wszystkie niezbędne pozwolenia na prowadzenie przedszkola i hotelu dla psów.",
+      "bioMalmo": "Nazywam się Alicja i jestem certyfikowanym behawiorystą psów z wielkim sercem dla naszych czworonożnych przyjaciół. Prowadzę Clever Dog w Malmö przy Sadelgatan 6, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
+      "bio2Malmo": "Razem z moim 3-letnim Shiba Inu tworzę spokojne i pełne miłości środowisko dla rozwoju psów. Nasza nowa lokalizacja w Malmö skupia się na usługach hotelowych i treningu towarzyskim.",
+      "bio3Malmo": "Z naszą centralną lokalizacją w Malmö oferujemy właścicielom psów w obszarze Malmö wygodną i dostępną opiekę nad psami najwyższej jakości.",
       "address": "Adres",
       "email": "Email",
       "instagram": "Instagram",
@@ -209,7 +212,7 @@
       },
       "malmo": {
         "subtitle": "Nowoczesny hotel dzienny w Malmö",
-        "description": "Nasz nowy hotel dzienny dla psów w Malmö Jägersro oferuje nowoczesną opiekę nad psami skupioną na usługach hotelowych i treningu towarzyskim. Doskonale położony dla właścicieli psów w obszarze Malmö.",
+        "description": "Nasz nowy hotel dzienny dla psów w Malmö oferuje nowoczesną opiekę nad psami skupioną na usługach hotelowych i treningu towarzyskim. Doskonale położony przy Sadelgatan 6 dla właścicieli psów w obszarze Malmö.",
         "services": {
           "daycare": "Hotel dzienny dla psów",
           "socialWalks": "Spacery towarzyskie",

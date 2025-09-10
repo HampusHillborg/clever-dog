@@ -19,10 +19,10 @@ interface PricingItem {
   extraInfo?: string;
 }
 
-const PricingSection: React.FC<PricingSectionProps> = ({ location: _location }) => {
+const PricingSection: React.FC<PricingSectionProps> = ({ location }) => {
   const { t } = useTranslation();
 
-  // Updated pricing data - show all services for Staffanstorp
+  // Updated pricing data - show all services for Staffanstorp, exclude boarding for Malmö
   const pricingData: PricingItem[] = [
     {
       title: t('pricing.fullMonth'),
@@ -69,9 +69,18 @@ const PricingSection: React.FC<PricingSectionProps> = ({ location: _location }) 
     }
   ];
 
-  // Filter by type for layout
+  // Filter by type for layout and location
   const monthlyPlans = pricingData.filter(item => item.type === 'monthly');
-  const singleServices = pricingData.filter(item => item.type === 'single');
+  const singleServices = pricingData.filter(item => {
+    if (item.type === 'single') {
+      // For Malmö, exclude boarding service
+      if (location === 'malmo' && item.title === t('pricing.boarding')) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  });
   
 
   return (
@@ -119,7 +128,7 @@ const PricingSection: React.FC<PricingSectionProps> = ({ location: _location }) 
 
         <div className="mb-8">
           <h3 className="text-xl font-bold text-center mb-6">{t('pricing.singleTitle')}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className={`grid grid-cols-1 gap-6 ${singleServices.length === 2 ? 'md:grid-cols-2 max-w-4xl mx-auto' : 'md:grid-cols-3'}`}>
             {singleServices.map((item, index) => (
               <motion.div
                 key={index}
