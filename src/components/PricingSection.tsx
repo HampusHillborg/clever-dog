@@ -7,11 +7,23 @@ interface PricingSectionProps {
   location?: string;
 }
 
+interface PricingItem {
+  title: string;
+  icon: JSX.Element;
+  price: string;
+  description: string;
+  details: string;
+  type: 'monthly' | 'single';
+  holidayPrice?: string;
+  isGroupWalk?: boolean;
+  extraInfo?: string;
+}
+
 const PricingSection: React.FC<PricingSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
 
-  // Updated pricing data
-  const pricingData = [
+  // Updated pricing data - show all services for Staffanstorp
+  const pricingData: PricingItem[] = [
     {
       title: t('pricing.fullMonth'),
       icon: <FaCalendarAlt />,
@@ -50,15 +62,17 @@ const PricingSection: React.FC<PricingSectionProps> = ({ location: _location }) 
       icon: <FaBed />,
       price: '350',
       description: t('pricing.overnight'),
-      details: '',
+      details: t('pricing.boardingCheckIn', 'Incheckning pensionat: 10-12 och 15-17'),
       type: 'single',
-      holidayPrice: '700'
+      holidayPrice: '700',
+      extraInfo: t('pricing.boardingExtraFee', 'Andra tider mot tillägg 200 kr per påbörjad timme')
     }
   ];
 
-  // Group pricing by type for layout
+  // Filter by type for layout
   const monthlyPlans = pricingData.filter(item => item.type === 'monthly');
   const singleServices = pricingData.filter(item => item.type === 'single');
+  
 
   return (
     <section id="pricing" className="section bg-light">
@@ -128,6 +142,11 @@ const PricingSection: React.FC<PricingSectionProps> = ({ location: _location }) 
                   {item.holidayPrice ? (
                     <>
                       <p className="text-sm text-gray-600 mb-4">{t('pricing.per24h')}</p>
+                      {item.extraInfo && (
+                        <div className="mb-3 p-2 bg-orange-50 rounded-md border border-orange-200">
+                          <p className="text-xs text-orange-700 font-medium">{item.extraInfo}</p>
+                        </div>
+                      )}
                       <div className="mt-3 pt-3 border-t border-gray-100">
                         <p className="text-sm font-medium text-gray-700">{t('pricing.holidayRate')}</p>
                         <div className="text-lg font-bold text-secondary">

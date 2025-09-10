@@ -2,10 +2,11 @@ import React, { useEffect, lazy, Suspense } from 'react';
 import '../i18n';  // Import i18n configuration
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
-// Lazy load components not needed for initial render
+// Direct import for PricingSection to test
+import PricingSection from '../components/PricingSection';
+// Lazy load other components
 const AboutSection = lazy(() => import('../components/AboutSection'));
 const SocialWalksSection = lazy(() => import('../components/SocialWalksSection'));
-const PricingSection = lazy(() => import('../components/PricingSection'));
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
 const SocialMediaSection = lazy(() => import('../components/SocialMediaSection'));
 const GoogleReviewsSection = lazy(() => import('../components/GoogleReviewsSection'));
@@ -56,10 +57,12 @@ const StaffanstorpPage: React.FC = () => {
       <Navbar location="staffanstorp" />
       <main>
         <HeroSection location="staffanstorp" />
+        {/* PricingSection direct - no lazy loading */}
+        <PricingSection location="staffanstorp" />
+        
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
           <AboutSection location="staffanstorp" />
           <SocialWalksSection location="staffanstorp" />
-          <PricingSection location="staffanstorp" />
           <SustainabilitySection />
           <SocialMediaSection />
           <GoogleReviewsSection />

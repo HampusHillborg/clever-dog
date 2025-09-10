@@ -61,6 +61,8 @@
       "holidayDescription": "Christmas, New Year's Eve, Easter and other major holidays",
       "closedOnHolidays": "Closed on red days (holidays)",
       "currency": "SEK",
+      "boardingCheckIn": "Boarding check-in: 10-12 and 15-17",
+      "boardingExtraFee": "Other times subject to a fee of 200 SEK per started hour",
       "notes": "All prices include VAT. Special prices for multiple dogs from the same family.",
       "contactNote": "Contact us for more information and to discuss your specific needs.",
       "walkNote": "Social Walk groups have a maximum of 5 dogs per group."

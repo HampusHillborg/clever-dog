@@ -4,7 +4,6 @@ import './i18n'  // Import i18n configuration
 // Lazy load components
 const LocationSelector = lazy(() => import('./components/LocationSelector'))
 const StaffanstorpPage = lazy(() => import('./pages/StaffanstorpPage'))
-const MalmoPage = lazy(() => import('./pages/MalmoPage'))
 const AdminPage = lazy(() => import('./components/AdminPage'))
 import { BookingProvider } from './components/BookingContext'
 import './App.css'
@@ -23,11 +22,6 @@ function App() {
             <Route path="/staffanstorp" element={
               <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
                 <StaffanstorpPage />
-              </Suspense>
-            } />
-            <Route path="/malmo" element={
-              <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
-                <MalmoPage />
               </Suspense>
             } />
             <Route path="/admin" element={
