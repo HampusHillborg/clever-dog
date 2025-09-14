@@ -1,11 +1,11 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import '../i18n';  // Import i18n configuration
 import Navbar from '../components/Navbar';
-import HeroSection from '../components/HeroSection';
-// Direct import for PricingSection to test
-import PricingSection from '../components/PricingSection';
+// Malmö-specific components
+import MalmoHeroSection from '../components/malmo/MalmoHeroSection';
+import MalmoPricingSection from '../components/malmo/MalmoPricingSection';
+import MalmoAboutSection from '../components/malmo/MalmoAboutSection';
 // Lazy load other components
-const AboutSection = lazy(() => import('../components/AboutSection'));
 const SocialWalksSection = lazy(() => import('../components/SocialWalksSection'));
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
 const SocialMediaSection = lazy(() => import('../components/SocialMediaSection'));
@@ -56,12 +56,11 @@ const MalmoPage: React.FC = () => {
     <>
       <Navbar location="malmo" />
       <main>
-        <HeroSection location="malmo" />
-        {/* PricingSection direct - no lazy loading */}
-        <PricingSection location="malmo" />
+        <MalmoHeroSection />
+        <MalmoAboutSection />
+        <MalmoPricingSection />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
-          <AboutSection location="malmo" />
           <SocialWalksSection location="malmo" />
           <SustainabilitySection />
           <SocialMediaSection />

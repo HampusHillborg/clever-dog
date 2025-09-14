@@ -1,11 +1,12 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import '../i18n';  // Import i18n configuration
 import Navbar from '../components/Navbar';
-import HeroSection from '../components/HeroSection';
-// Direct import for PricingSection to test
-import PricingSection from '../components/PricingSection';
+// Staffanstorp-specific components
+import StaffanstorpHeroSection from '../components/staffanstorp/StaffanstorpHeroSection';
+import StaffanstorpPricingSection from '../components/staffanstorp/StaffanstorpPricingSection';
+import StaffanstorpAboutSection from '../components/staffanstorp/StaffanstorpAboutSection';
+import StaffanstorpLocationSection from '../components/staffanstorp/StaffanstorpLocationSection';
 // Lazy load other components
-const AboutSection = lazy(() => import('../components/AboutSection'));
 const SocialWalksSection = lazy(() => import('../components/SocialWalksSection'));
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
 const SocialMediaSection = lazy(() => import('../components/SocialMediaSection'));
@@ -56,12 +57,12 @@ const StaffanstorpPage: React.FC = () => {
     <>
       <Navbar location="staffanstorp" />
       <main>
-        <HeroSection location="staffanstorp" />
-        {/* PricingSection direct - no lazy loading */}
-        <PricingSection location="staffanstorp" />
+        <StaffanstorpHeroSection />
+        <StaffanstorpAboutSection />
+        <StaffanstorpPricingSection />
+        <StaffanstorpLocationSection />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
-          <AboutSection location="staffanstorp" />
           <SocialWalksSection location="staffanstorp" />
           <SustainabilitySection />
           <SocialMediaSection />
