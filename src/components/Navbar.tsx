@@ -47,9 +47,6 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
           <a href="#about" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('about.title')}
           </a>
-          <a href="#social-walks" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('socialWalks.title')}
-          </a>
           <a href="#pricing" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('pricing.title')}
           </a>
@@ -91,9 +88,6 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
           <div className="flex flex-col space-y-4">
             <a href="#about" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('about.title')}
-            </a>
-            <a href="#social-walks" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('socialWalks.title')}
             </a>
             <a href="#pricing" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('pricing.title')}

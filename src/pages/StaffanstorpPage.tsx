@@ -7,7 +7,6 @@ import StaffanstorpPricingSection from '../components/staffanstorp/StaffanstorpP
 import StaffanstorpAboutSection from '../components/staffanstorp/StaffanstorpAboutSection';
 import StaffanstorpLocationSection from '../components/staffanstorp/StaffanstorpLocationSection';
 // Lazy load other components
-const SocialWalksSection = lazy(() => import('../components/SocialWalksSection'));
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
 const SocialMediaSection = lazy(() => import('../components/SocialMediaSection'));
 const GoogleReviewsSection = lazy(() => import('../components/GoogleReviewsSection'));
@@ -63,7 +62,6 @@ const StaffanstorpPage: React.FC = () => {
         <StaffanstorpLocationSection />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
-          <SocialWalksSection location="staffanstorp" />
           <SustainabilitySection />
           <SocialMediaSection />
           <GoogleReviewsSection />
