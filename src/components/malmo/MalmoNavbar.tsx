@@ -61,7 +61,7 @@ const MalmoNavbar: React.FC = () => {
             {t('navbar.contact')}
           </a>
           <button 
-            onClick={openBookingForm} 
+            onClick={() => openBookingForm('malmo')} 
             className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base whitespace-nowrap px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg ml-2"
             aria-label={t('bookCta')}
           >
@@ -117,7 +117,7 @@ const MalmoNavbar: React.FC = () => {
             <button 
               onClick={() => {
                 toggleMenu(); 
-                openBookingForm();
+                openBookingForm('malmo');
               }}
               className="w-full btn btn-primary text-center"
               aria-label={t('bookCta')}
