@@ -9,6 +9,9 @@
       "title": "Information",
       "content": "I am currently renovating the dog daycare to create an even safer and more homely environment for all dogs. Among other things, there will be a fenced play area in the garden and private boxes for each dog adapted to their needs. I respect each dog's personality and let them make contact at their own pace. Pictures coming soon!"
     },
+    "navbar": {
+      "team": "Our Team"
+    },
     "about": {
       "title": "About Me",
       "bio": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Staffanstorp at Malmövägen 7, where safety and joy are at the center for every dog.",
@@ -88,6 +91,26 @@
       "under40kg": "Under 40kg",
       "over40kg": "Over 40kg",
       "openingHours": "07:00 - 18:00 (Fri 07:00 - 17:00)",
+      "team": {
+        "title": "Our Team",
+        "subtitle": "Trained and passionate people who love dogs",
+        "dog": "My dog",
+        "alicja": {
+          "role": "Co-owner & Dog Behaviorist",
+          "description": "Alicja is co-owner of Clever Dog and a certified dog behaviorist with many years of experience. She has a deep passion for dogs' well-being and development.",
+          "dog": "Reya (Shiba Inu)"
+        },
+        "hampus": {
+          "role": "Co-owner & IT/Organization",
+          "description": "Hampus is co-owner of Clever Dog and handles IT and organizational matters. He ensures everything runs smoothly behind the scenes and creates an efficient operation.",
+          "dog": "Reya (Shiba Inu)"
+        },
+        "paulina": {
+          "role": "Daycare Teacher",
+          "description": "Paulina is our daycare teacher with extensive experience with dogs. She creates an educational and loving environment where dogs can learn and develop.",
+          "dog": "Maja (Pomeranian)"
+        }
+      },
       "duration": "1-1.5 hours",
       "groupWalk": "Group walk with socialization",
       "importantInfo": "Important Information",

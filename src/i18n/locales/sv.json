@@ -9,6 +9,9 @@
       "title": "Information",
       "content": "Just nu håller jag på att renovera hunddagiset för att skapa en ännu tryggare och mer hemtrevlig miljö för alla hundar. Det kommer bland annat att finnas en inhägnad lekyta i trädgården och privata boxar för varje hund anpassade efter deras behov. Jag respekterar varje hunds personlighet och låter dem ta kontakt i sin egen takt. Bilder kommer snart!"
     },
+    "navbar": {
+      "team": "Vårt Team"
+    },
     "about": {
       "title": "Om Mig",
       "bio": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Staffanstorp på Malmövägen 7, där trygghet och glädje står i centrum för varje hund.",
@@ -88,6 +91,26 @@
       "under40kg": "Under 40kg",
       "over40kg": "Över 40kg",
       "openingHours": "07:00 - 18:00 (Fre 07:00 - 17:00)",
+      "team": {
+        "title": "Vårt Team",
+        "subtitle": "Tränade och passionerade personer som älskar hundar",
+        "dog": "Min hund",
+        "alicja": {
+          "role": "Medägare & Hundbeteendevetare",
+          "description": "Alicja är medägare till Clever Dog och certifierad hundbeteendevetare med många års erfarenhet. Hon har en djup passion för hundars välbefinnande och utveckling.",
+          "dog": "Reya (Shiba Inu)"
+        },
+        "hampus": {
+          "role": "Medägare & IT/Organisation",
+          "description": "Hampus är medägare till Clever Dog och har hand om IT och organisationssaker. Han säkerställer att allt fungerar smidigt bakom kulisserna och skapar en effektiv verksamhet.",
+          "dog": "Reya (Shiba Inu)"
+        },
+        "paulina": {
+          "role": "Dagisfröken",
+          "description": "Paulina är vår dagisfröken och har gedigen erfarenhet med hundar. Hon skapar en pedagogisk och kärleksfull miljö där hundar kan lära och utvecklas.",
+          "dog": "Maja (Pomeranian)"
+        }
+      },
       "duration": "1-1,5 timme",
       "groupWalk": "Grupppromenad med socialisering",
       "importantInfo": "Viktig information",

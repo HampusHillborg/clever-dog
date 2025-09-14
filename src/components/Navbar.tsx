@@ -50,6 +50,9 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
           <a href="#pricing" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('pricing.title')}
           </a>
+          <a href="#team" className="font-medium hover:text-primary text-sm whitespace-nowrap">
+            {t('navbar.team')}
+          </a>
           <a href="#sustainability" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('sustainability.title')}
           </a>
@@ -91,6 +94,9 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
             </a>
             <a href="#pricing" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('pricing.title')}
+            </a>
+            <a href="#team" className="font-medium hover:text-primary" onClick={toggleMenu}>
+              {t('navbar.team')}
             </a>
             <a href="#sustainability" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('sustainability.title')}

@@ -6,6 +6,7 @@ import MalmoHeroSection from '../components/malmo/MalmoHeroSection';
 import MalmoPricingSection from '../components/malmo/MalmoPricingSection';
 import MalmoAboutSection from '../components/malmo/MalmoAboutSection';
 import MalmoLocationSection from '../components/malmo/MalmoLocationSection';
+import MalmoTeamSection from '../components/malmo/MalmoTeamSection';
 // Lazy load other components
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
 const SocialMediaSection = lazy(() => import('../components/SocialMediaSection'));
@@ -65,6 +66,7 @@ const MalmoPage: React.FC = () => {
           <SustainabilitySection />
           <SocialMediaSection />
           <GoogleReviewsSection />
+          <MalmoTeamSection />
           <ContactSection location="malmo" />
         </Suspense>
       </main>

@@ -9,6 +9,9 @@
       "title": "Informacja",
       "content": "Obecnie renowuję przedszkole dla psów, aby stworzyć jeszcze bezpieczniejsze i bardziej przytulne środowisko dla wszystkich psów. Między innymi, w środku będą prywatne boksy dla kążdego psiaka oraz wolna przestrzeń do zabawy, a w ogrodzie będzie ogrodzony plac zabaw, w którym psy będą mogły również się bawić. Szanuję osobowość każdego psa i pozwalam im nawiązać kontakt we własnym tempie. Zdjęcia wkrótce!"
     },
+    "navbar": {
+      "team": "Nasz Zespół"
+    },
     "about": {
       "title": "O Mnie",
       "bio": "Nazywam się Alicja i jestem certyfikowanym behawiorystą psów z wielkim sercem dla naszych czworonożnych przyjaciół. Prowadzę Clever Dog w Staffanstorp przy Malmövägen 7, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
@@ -88,6 +91,26 @@
       "under40kg": "Poniżej 40kg",
       "over40kg": "Powyżej 40kg",
       "openingHours": "07:00 - 18:00 (Pt 07:00 - 17:00)",
+      "team": {
+        "title": "Nasz Zespół",
+        "subtitle": "Wykwalifikowani i pasjonaci, którzy kochają psy",
+        "dog": "Mój pies",
+        "alicja": {
+          "role": "Współwłaścicielka & Behawiorysta Psów",
+          "description": "Alicja jest współwłaścicielką Clever Dog i certyfikowanym behawiorystą psów z wieloletnim doświadczeniem. Ma głęboką pasję do dobrostanu i rozwoju psów.",
+          "dog": "Reya (Shiba Inu)"
+        },
+        "hampus": {
+          "role": "Współwłaściciel & IT/Organizacja",
+          "description": "Hampus jest współwłaścicielem Clever Dog i zajmuje się sprawami IT i organizacyjnymi. Zapewnia, że wszystko działa płynnie za kulisami i tworzy wydajną działalność.",
+          "dog": "Reya (Shiba Inu)"
+        },
+        "paulina": {
+          "role": "Wychowawczyni Przedszkola",
+          "description": "Paulina jest naszą wychowawczynią przedszkola z bogatym doświadczeniem w pracy z psami. Tworzy edukacyjne i pełne miłości środowisko, w którym psy mogą się uczyć i rozwijać.",
+          "dog": "Maja (Pomeranian)"
+        }
+      },
       "duration": "1-1,5 godziny",
       "groupWalk": "Spacer grupowy z socjalizacją",
       "importantInfo": "Ważne informacje",
