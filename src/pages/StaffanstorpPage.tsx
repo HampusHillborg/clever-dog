@@ -1,6 +1,6 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import '../i18n';  // Import i18n configuration
-import Navbar from '../components/Navbar';
+import StaffanstorpNavbar from '../components/staffanstorp/StaffanstorpNavbar';
 // Staffanstorp-specific components
 import StaffanstorpHeroSection from '../components/staffanstorp/StaffanstorpHeroSection';
 import StaffanstorpPricingSection from '../components/staffanstorp/StaffanstorpPricingSection';
@@ -8,6 +8,8 @@ import StaffanstorpAboutSection from '../components/staffanstorp/StaffanstorpAbo
 import StaffanstorpLocationSection from '../components/staffanstorp/StaffanstorpLocationSection';
 // Lazy load other components
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
+const ImportantInfoSection = lazy(() => import('../components/ImportantInfoSection'));
+const DaycareScheduleSection = lazy(() => import('../components/DaycareScheduleSection'));
 const SocialMediaSection = lazy(() => import('../components/SocialMediaSection'));
 const GoogleReviewsSection = lazy(() => import('../components/GoogleReviewsSection'));
 const ContactSection = lazy(() => import('../components/ContactSection'));
@@ -54,17 +56,23 @@ const StaffanstorpPage: React.FC = () => {
 
   return (
     <>
-      <Navbar location="staffanstorp" />
+      <StaffanstorpNavbar />
       <main>
         <StaffanstorpHeroSection />
         <StaffanstorpAboutSection />
         <StaffanstorpPricingSection />
+        
+        <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+          <ImportantInfoSection />
+          <DaycareScheduleSection />
+        </Suspense>
+        
         <StaffanstorpLocationSection />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
-          <SustainabilitySection />
           <SocialMediaSection />
           <GoogleReviewsSection />
+          <SustainabilitySection />
           <ContactSection location="staffanstorp" />
         </Suspense>
       </main>

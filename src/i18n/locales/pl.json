@@ -10,14 +10,16 @@
       "content": "Obecnie renowuję przedszkole dla psów, aby stworzyć jeszcze bezpieczniejsze i bardziej przytulne środowisko dla wszystkich psów. Między innymi, w środku będą prywatne boksy dla kążdego psiaka oraz wolna przestrzeń do zabawy, a w ogrodzie będzie ogrodzony plac zabaw, w którym psy będą mogły również się bawić. Szanuję osobowość każdego psa i pozwalam im nawiązać kontakt we własnym tempie. Zdjęcia wkrótce!"
     },
     "navbar": {
-      "team": "Nasz Zespół"
+      "team": "Nasz Zespół",
+      "workWithUs": "Pracuj z nami",
+      "importantInfo": "Ważne informacje",
+      "schedule": "Harmonogram dnia"
     },
     "about": {
       "title": "O Mnie",
       "bio": "Nazywam się Alicja i jestem certyfikowanym behawiorystą psów z wielkim sercem dla naszych czworonożnych przyjaciół. Prowadzę Clever Dog w Staffanstorp przy Malmövägen 7, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
       "bio2": "Razem z moim 3-letnim Shiba Inu tworzę spokojne i pełne miłości środowisko dla rozwoju psów. Jeszcze w tym roku oferować będę również usługi pielęgnacji psów jako część działalności.",
       "bio3": "Z naszą strategiczną lokalizacją tylko 10 minut od Lund i 15 minut od Malmö, oferujemy właścicielom psów w całym regionie wygodną i dostępną opiekę nad psami najwyższej jakości.",
-      "permission": "Działalność jest zatwierdzona przez Urząd Wojewódzki (Länsstyrelsen) i posiadam wszystkie niezbędne pozwolenia na prowadzenie przedszkola i hotelu dla psów.",
       "bioMalmo": "Jesteśmy zespołem wykwalifikowanych pracowników z wielkimi sercami dla naszych czworonożnych przyjaciół. Prowadzimy Clever Dog w Malmö Jägersro, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
       "bio2Malmo": "Razem tworzymy spokojne i pełne miłości środowisko dla rozwoju psów. Nasza nowa, większa lokalizacja w Malmö skupia się na usługach hotelowych i treningu towarzyskim z wieloma wykwalifikowanymi pracownikami.",
       "bio3Malmo": "Z naszą centralną lokalizacją w Malmö oferujemy właścicielom psów w obszarze Malmö wygodną i dostępną opiekę nad psami najwyższej jakości w naszym nowoczesnym, przestronnym obiekcie.",
@@ -120,7 +122,6 @@
       "contactEmail": "Kontakt: cleverdog.aw@gmail.com",
       "malmoInterest": "Zainteresowany naszymi usługami w Malmö?",
       "contactForInfo": "Skontaktuj się z nami po więcej informacji",
-      "countyBoard": "Działalność jest zatwierdzona przez Urząd Wojewódzki i posiadam wszystkie niezbędne pozwolenia na prowadzenie przedszkola i hotelu dla psów.",
       "ourServices": "Nasze usługi"
     },
     "social": {
@@ -129,6 +130,82 @@
       "followText": "Bądź na bieżąco z naszymi najnowszymi aktywnościami przedszkola dla psów, wydarzeniami i uroczymi zdjęciami psów. Obserwuj nas na Instagramie, aby otrzymywać codzienne aktualizacje.",
       "viewProfile": "Kliknij, aby zobaczyć nasz profil",
       "visitInstagram": "Odwiedź Instagram"
+    },
+    "workWithUs": {
+      "title": "Pracuj z nami",
+      "subtitle": "Szukamy pasjonatów z doświadczeniem w pracy z psami, którzy kochają psy i chcą być częścią naszego rozwijającego się zespołu",
+      "benefits": {
+        "passion": {
+          "title": "Pasja do psów",
+          "description": "Pracuj z tym, co kochasz - z psami! Szukamy osób z doświadczeniem w pracy z psami, które szczerze troszczą się o dobrostan i rozwój psów."
+        },
+        "team": {
+          "title": "Silny zespół",
+          "description": "Zostań częścią zaangażowanego zespołu, gdzie wspieramy się nawzajem i razem tworzymy najlepsze możliwe środowisko dla naszych czworonożnych przyjaciół."
+        },
+        "growth": {
+          "title": "Rozwój osobisty",
+          "description": "Otrzymaj możliwość rozwijania swoich umiejętności w opiece nad psami i przyczyniaj się do budowania czegoś znaczącego razem z nami."
+        }
+      },
+      "cta": {
+        "title": "Zainteresowany?",
+        "description": "Wyślij nam e-mail, a opowiemy więcej o naszych otwartych stanowiskach i jak możesz zostać częścią rodziny Clever Dog. Szukamy osób z doświadczeniem w pracy z psami.",
+        "button": "Wyślij aplikację",
+        "sendTo": "Wyślij swoją aplikację na:"
+      }
+    },
+    "importantInfo": {
+      "title": "Ważne informacje",
+      "subtitle": "Informacje o naszych rutynach, wymaganiach i codziennej działalności",
+      "vaccination": {
+        "title": "Szczepienia",
+        "content": "Wymagamy, aby wszyscy nasi goście przedszkola byli szczepieni corocznie. Ma to na celu zmniejszenie rozprzestrzeniania się chorób i jako środek zapobiegawczy łagodzenie ewentualnej infekcji. Szczepienia są sprawdzane podczas zapisu, gdy prowadzimy dokumentację, gdy pies zaczyna przedszkole u nas. Szczepionka przeciwko kaszlowi kenelowemu powinna być podawana corocznie i doceniamy, gdy wszyscy właściciele psów informują personel o nowym szczepieniu."
+      },
+      "health": {
+        "title": "Zdrowie i choroby",
+        "content": "Bardzo dbamy o to, aby nie przyjmować chorych psów do naszego przedszkola. Jeśli pies wykazuje jakiekolwiek objawy, takie jak kaszel, chrząkanie, wymioty lub biegunka, prosimy o natychmiastowy kontakt telefoniczny, abyśmy mogli wspólnie zdecydować, jak postępować.\n\nCzasami może być trudno określić, czy pies jest zaraźliwy, czy nie. Dlatego zawsze zalecamy konsultację z naszym dobrze wyszkolonym personelem przed pozostawieniem psa w przedszkolu, abyśmy mogli udzielić najlepszej możliwej rady."
+      },
+      "requirements": {
+        "title": "Wymagania do rozpoczęcia",
+        "content": "Aby rozpocząć z nami, pies musi być zaszczepiony, ubezpieczony i mieć co najmniej 4 miesiące. Oferujemy ograniczoną liczbę miejsc dla psów o wysokości w kłębie powyżej 55 cm. Preferujemy, aby psy samce były wykastrowane, a samice są mile widziane podczas rui, w zależności od dostępności miejsca i czasu. Jeśli nasze boksy dla samic w rui są pełne, samica niestety musi zostać w domu."
+      },
+      "approval": {
+        "title": "Zatwierdzenie i pozwolenia",
+        "content": "Działalność jest zatwierdzona przez Urząd Wojewódzki (Länsstyrelsen) i posiadam wszystkie niezbędne pozwolenia na prowadzenie przedszkola i hotelu dla psów."
+      }
+    },
+    "schedule": {
+      "title": "Harmonogram dnia",
+      "subtitle": "Tak wygląda typowy dzień w naszym przedszkolu dla psów",
+      "dropOff": {
+        "title": "Przyprowadzenie",
+        "description": "Psy są przyprowadzane rano między 07:00 a 10:00. Planujemy dzień uwzględniając zarówno indywidualne potrzeby psów, jak i skład grupy, a także czynniki zewnętrzne, takie jak pogoda i temperatura."
+      },
+      "morningActivities": {
+        "title": "Aktywności poranne",
+        "description": "Rano psy mają możliwość zabawy i ruchu na naszych ogrodzonych placach ćwiczeń. Dla psów, które potrzebują dodatkowej stymulacji lub ruchu, oferujemy również spacery na smyczy."
+      },
+      "lunch": {
+        "title": "Lunch",
+        "description": "O 11.45 podawany jest lunch, który każdy właściciel przynosi dla swojego psa. Po posiłku wszystkie psy mają możliwość odpoczynku w spokojnym i bezpiecznym środowisku."
+      },
+      "afternoonActivities": {
+        "title": "Aktywności popołudniowe",
+        "description": "Po odpoczynku zaczynamy wyprowadzać psy jeden po drugim lub w mniejszych grupach. Potem przychodzi czas na psy, aby wyjść na padok podzielone na grupy w zależności od temperamentu i poziomu energii."
+      },
+      "quietTime": {
+        "title": "Czas spokoju",
+        "description": "Dążymy do stworzenia środowiska, w którym pies czuje się bezpieczny i otoczony opieką jak w domu. Środowisko wewnętrzne jest dostosowane do odpoczynku i regeneracji, z sofami, gdzie psy mogą się przytulać i relaksować."
+      },
+      "pickup": {
+        "title": "Odbieranie",
+        "description": "Psy mogą być odbierane między 17:00 a 18:00. Dbamy o to, aby każdy pies miał bezpieczny i wesoły dzień przed powrotem do domu do swoich rodzin."
+      },
+      "additionalInfo": {
+        "title": "Elastyczne godziny",
+        "content": "Dostosowujemy się do waszych potrzeb i w niektórych przypadkach możemy zaoferować elastyczne godziny przyprowadzania i odbierania. Skontaktujcie się z nami, aby omówić wasze konkretne życzenia."
+      }
     },
     "contact": {
       "title": "Kontakt",

@@ -10,14 +10,16 @@
       "content": "I am currently renovating the dog daycare to create an even safer and more homely environment for all dogs. Among other things, there will be a fenced play area in the garden and private boxes for each dog adapted to their needs. I respect each dog's personality and let them make contact at their own pace. Pictures coming soon!"
     },
     "navbar": {
-      "team": "Our Team"
+      "team": "Our Team",
+      "workWithUs": "Work with us",
+      "importantInfo": "Important information",
+      "schedule": "Daily schedule"
     },
     "about": {
       "title": "About Me",
       "bio": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Staffanstorp at Malmövägen 7, where safety and joy are at the center for every dog.",
       "bio2": "Together with my 3-year-old Shiba Inu, I create a calm and loving environment for dogs to develop in. Later this year, I will also offer dog grooming as part of the business.",
       "bio3": "With our strategic location just 10 minutes from Lund and 15 minutes from Malmö, we offer dog owners throughout the region convenient and accessible high-quality dog care.",
-      "permission": "The business is approved by the County Administrative Board (Länsstyrelsen) and I have all necessary permits for dog daycare and boarding operations.",
       "bioMalmo": "We are a team of trained staff with big hearts for our four-legged friends. We run Clever Dog in Malmö Jägersro, where safety and joy are at the center for every dog.",
       "bio2Malmo": "Together we create a calm and loving environment for dogs to develop in. Our new, larger location in Malmö focuses on daycare services and social training with multiple trained staff members.",
       "bio3Malmo": "With our central location in Malmö, we offer dog owners in the Malmö area convenient and accessible high-quality dog care in our modern, spacious facility.",
@@ -120,7 +122,6 @@
       "contactEmail": "Contact: cleverdog.aw@gmail.com",
       "malmoInterest": "Interested in our services in Malmö?",
       "contactForInfo": "Contact us for more information",
-      "countyBoard": "The business is approved by the County Administrative Board and I have all necessary permits for dog daycare and boarding operations.",
       "ourServices": "Our Services"
     },
     "social": {
@@ -129,6 +130,82 @@
       "followText": "Stay updated with our latest dog daycare activities, events, and cute dog photos. Follow us on Instagram for daily updates.",
       "viewProfile": "Click to view our profile",
       "visitInstagram": "Visit Instagram"
+    },
+    "workWithUs": {
+      "title": "Work with us",
+      "subtitle": "We're looking for passionate people with dog experience who love dogs and want to be part of our growing team",
+      "benefits": {
+        "passion": {
+          "title": "Passion for dogs",
+          "description": "Work with what you love - dogs! We're looking for people with dog experience who genuinely care about dogs' well-being and development."
+        },
+        "team": {
+          "title": "Strong team",
+          "description": "Become part of an engaged team where we support each other and together create the best possible environment for our four-legged friends."
+        },
+        "growth": {
+          "title": "Personal development",
+          "description": "Get the opportunity to develop your skills in dog care and contribute to building something meaningful together with us."
+        }
+      },
+      "cta": {
+        "title": "Interested?",
+        "description": "Send us an email and we'll tell you more about our open positions and how you can become part of the Clever Dog family. We're looking for people with dog experience.",
+        "button": "Send application",
+        "sendTo": "Send your application to:"
+      }
+    },
+    "importantInfo": {
+      "title": "Important information",
+      "subtitle": "Information about our routines, requirements and daily operations",
+      "vaccination": {
+        "title": "Vaccination",
+        "content": "We require that all our daycare guests are vaccinated annually. This is to reduce the spread of disease and as a preventive measure to alleviate any potential infection. Vaccination is checked during enrollment, when we keep records when the dog starts at daycare with us. Kennel cough vaccine should be given annually and we appreciate that all dog owners inform the staff when new vaccination has been done."
+      },
+      "health": {
+        "title": "Health and illness",
+        "content": "We are very careful not to accept sick dogs at our daycare. If the dog shows any symptoms, such as coughing, throat clearing, vomiting or diarrhea, we ask you to contact us immediately by phone, so that we together can decide how to proceed.\n\nSometimes it can be difficult to determine if a dog is contagious or not. Therefore, we always recommend that you consult our well-trained staff before leaving the dog at daycare, so that we can give you the best possible advice."
+      },
+      "requirements": {
+        "title": "Requirements to start",
+        "content": "To start with us, the dog must be vaccinated, insured and at least 4 months old. We offer a limited number of places for dogs with a shoulder height over 55 cm. We prefer that male dogs are neutered and female dogs are welcome during heat, subject to availability of space and time. If our heat boxes are full, the female dog unfortunately has to stay home."
+      },
+      "approval": {
+        "title": "Approval and permits",
+        "content": "The business is approved by the County Administrative Board (Länsstyrelsen) and I have all necessary permits for dog daycare and boarding operations."
+      }
+    },
+    "schedule": {
+      "title": "Daily schedule",
+      "subtitle": "This is what a typical day looks like at our dog daycare",
+      "dropOff": {
+        "title": "Drop-off",
+        "description": "Dogs are dropped off in the morning between 07:00 and 10:00. We plan the day considering both the dogs' individual needs and the group's composition, as well as external factors such as weather and temperature."
+      },
+      "morningActivities": {
+        "title": "Morning activities",
+        "description": "In the morning, the dogs get the opportunity to play and move around in our fenced exercise yards. For dogs that need extra stimulation or exercise, we also offer walks on leash."
+      },
+      "lunch": {
+        "title": "Lunch",
+        "description": "At 11.45 lunch is served, which each owner brings for their dog. After the meal, all dogs get the opportunity to rest in a calm and safe environment."
+      },
+      "afternoonActivities": {
+        "title": "Afternoon activities",
+        "description": "After rest, we start by taking out the dogs one by one or in smaller groups. Then it's time for the dogs to come out in the paddock divided into groups depending on temperament and energy level."
+      },
+      "quietTime": {
+        "title": "Quiet time",
+        "description": "We strive to create an environment where the dog feels safe and cared for like at home. The indoor environment is adapted for rest and recovery, with sofas where the dogs can cuddle and relax."
+      },
+      "pickup": {
+        "title": "Pick-up",
+        "description": "Dogs can be picked up between 17:00 and 18:00. We make sure each dog has a safe and fun day before returning home to their families."
+      },
+      "additionalInfo": {
+        "title": "Flexible times",
+        "content": "We adapt to your needs and can in some cases offer flexible drop-off and pick-up times. Contact us to discuss your specific wishes."
+      }
     },
     "contact": {
       "title": "Contact",

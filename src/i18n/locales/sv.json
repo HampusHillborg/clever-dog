@@ -10,14 +10,16 @@
       "content": "Just nu håller jag på att renovera hunddagiset för att skapa en ännu tryggare och mer hemtrevlig miljö för alla hundar. Det kommer bland annat att finnas en inhägnad lekyta i trädgården och privata boxar för varje hund anpassade efter deras behov. Jag respekterar varje hunds personlighet och låter dem ta kontakt i sin egen takt. Bilder kommer snart!"
     },
     "navbar": {
-      "team": "Vårt Team"
+      "team": "Vårt Team",
+      "workWithUs": "Jobba med oss",
+      "importantInfo": "Viktig information",
+      "schedule": "Dagsschema"
     },
     "about": {
       "title": "Om Mig",
       "bio": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Staffanstorp på Malmövägen 7, där trygghet och glädje står i centrum för varje hund.",
       "bio2": "Tillsammans med min 3-åriga shiba inu skapar jag en lugn och kärleksfull miljö för hundar att utvecklas i. Senare i år kommer jag även att erbjuda hundtrimning som en del av verksamheten.",
       "bio3": "Med vårt strategiska läge bara 10 minuter från Lund och 15 minuter från Malmö, erbjuder vi hundägare i hela regionen en bekväm och tillgänglig hundomsorg av högsta kvalitet.",
-      "permission": "Verksamheten är godkänd av Länsstyrelsen och jag har alla nödvändiga tillstånd för hunddagis och pensionatverksamhet.",
       "bioMalmo": "Vi är ett team av tränade personal med stora hjärtan för våra fyrbenta vänner. Vi driver Clever Dog i Malmö Jägersro, där trygghet och glädje står i centrum för varje hund.",
       "bio2Malmo": "Tillsammans skapar vi en lugn och kärleksfull miljö för hundar att utvecklas i. Vår nya, större plats i Malmö fokuserar på dagisverksamhet och social träning med flera tränade personal.",
       "bio3Malmo": "Med vår centrala placering i Malmö erbjuder vi hundägare i Malmöområdet en bekväm och tillgänglig hundomsorg av högsta kvalitet i vår moderna, rymliga lokal.",
@@ -120,7 +122,6 @@
       "contactEmail": "Kontakt: cleverdog.aw@gmail.com",
       "malmoInterest": "Intresserad av våra tjänster i Malmö?",
       "contactForInfo": "Kontakta oss för mer information",
-      "countyBoard": "Verksamheten är godkänd av Länsstyrelsen och jag har alla nödvändiga tillstånd för hunddagis- och pensionatsverksamhet.",
       "ourServices": "Våra tjänster"
     },
     "social": {
@@ -129,6 +130,82 @@
       "followText": "Håll dig uppdaterad med våra senaste hunddagisaktiviteter, evenemang och söta hundfoton. Följ oss på Instagram för dagliga uppdateringar.",
       "viewProfile": "Klicka för att se vår profil",
       "visitInstagram": "Besök Instagram"
+    },
+    "workWithUs": {
+      "title": "Jobba med oss",
+      "subtitle": "Vi söker passionerade personer med erfarenhet av hundar som älskar hundar och vill vara en del av vårt växande team",
+      "benefits": {
+        "passion": {
+          "title": "Passion för hundar",
+          "description": "Arbeta med det du älskar - hundar! Vi söker personer med erfarenhet av hundar som genuint bryr sig om hundars välbefinnande och utveckling."
+        },
+        "team": {
+          "title": "Starkt team",
+          "description": "Bli en del av ett engagerat team där vi stöttar varandra och tillsammans skapar den bästa möjliga miljön för våra fyra-benta vänner."
+        },
+        "growth": {
+          "title": "Personlig utveckling",
+          "description": "Få möjlighet att utveckla dina färdigheter inom hundomsorg och bidra till att bygga något meningsfullt tillsammans med oss."
+        }
+      },
+      "cta": {
+        "title": "Intresserad?",
+        "description": "Skicka oss ett mail så berättar vi mer om våra öppna positioner och hur du kan bli en del av Clever Dog-familjen. Vi söker personer med erfarenhet av hundar.",
+        "button": "Skicka ansökan",
+        "sendTo": "Skicka din ansökan till:"
+      }
+    },
+    "importantInfo": {
+      "title": "Viktig information",
+      "subtitle": "Information om våra rutiner, krav och dagliga verksamhet",
+      "vaccination": {
+        "title": "Vaccination",
+        "content": "Vi kräver att alla våra dagisgäster vaccineras årligen. Detta för att minska smittspridning och i förebyggande syfte lindra en eventuell smitta. Vaccination kontrolleras i samband med inskrivning, då vi för journal när hunden börjar på dagis hos oss. Vaccin mot kennelhosta ska ges årligen och vi uppskattar att alla hundägare informerar personalen när ny vaccinering gjorts."
+      },
+      "health": {
+        "title": "Hälsa och sjukdom",
+        "content": "Vi är mycket noga med att inte ta emot sjuka hundar på vårt dagis. Om hunden uppvisar några symptom, som hosta, harklingar, kräkningar eller diarré, ber vi er att omgående kontakta oss via telefon, så att vi tillsammans kan komma fram till hur vi går vidare.\n\nIbland kan det vara svårt att avgöra om en hund är smittsam eller inte. Därför rekommenderar vi alltid att ni konsulterar vår välutbildade personal innan ni lämnar hunden på dagis, så att vi kan ge er bästa möjliga råd."
+      },
+      "requirements": {
+        "title": "Krav för att börja",
+        "content": "För att börja hos oss måste hunden vara vaccinerad, försäkrad och minst 4 månader gammal. Vi erbjuder ett begränsat antal platser för hundar med en mankhöjd över 55 cm. Vi föredrar att hanhundar är kastrerade och tikar är välkomna under löp, i mån av tillgång till plats och tid. Om våra löpboxar är fulla, får tiken tyvärr stanna hemma."
+      },
+      "approval": {
+        "title": "Godkännande och tillstånd",
+        "content": "Verksamheten är godkänd av Länsstyrelsen och jag har alla nödvändiga tillstånd för hunddagis- och pensionatsverksamhet."
+      }
+    },
+    "schedule": {
+      "title": "Dagsschema",
+      "subtitle": "Så ser en vanlig dag ut på vårt hunddagis",
+      "dropOff": {
+        "title": "Inlämning",
+        "description": "Hundarna lämnas på morgonen mellan kl. 07.00 och 10:00. Vi planerar dagen med hänsyn till både hundarnas individuella behov och gruppens sammansättning, samt yttre faktorer som väder och temperatur."
+      },
+      "morningActivities": {
+        "title": "Morgonaktiviteter",
+        "description": "Under morgonen får hundarna möjlighet att leka och röra på sig i våra inhägnade rastgårdar. För de hundar som behöver extra stimulans eller rörelse erbjuder vi också promenader i koppel."
+      },
+      "lunch": {
+        "title": "Lunch",
+        "description": "Vid 11.45 serveras lunch, som varje ägare själv har med till sin hund. Efter maten får alla hundar möjlighet att vila i en lugn och trygg miljö."
+      },
+      "afternoonActivities": {
+        "title": "Eftermiddagsaktiviteter",
+        "description": "Efter vilan börjar vi med att ta ut hundarna en och en eller i mindre grupper. Sedan är det dags för hundarna att komma ut i hagen uppdelade i grupper beroende på temperament och energinivå."
+      },
+      "quietTime": {
+        "title": "Lugn tid",
+        "description": "Vi strävar efter att skapa en miljö där hunden känner sig trygg och omhändertagen som hemma. Inomhusmiljön är anpassad för vila och återhämtning, med soffor där hundarna kan mysa och koppla av."
+      },
+      "pickup": {
+        "title": "Upphämtning",
+        "description": "Hundarna kan hämtas mellan kl. 17.00 och 18.00. Vi ser till att varje hund får en trygg och rolig dag innan de återvänder hem till sina familjer."
+      },
+      "additionalInfo": {
+        "title": "Flexibla tider",
+        "content": "Vi anpassar oss efter dina behov och kan i vissa fall erbjuda flexibla inlämnings- och upphämtningstider. Kontakta oss för att diskutera dina specifika önskemål."
+      }
     },
     "contact": {
       "title": "Kontakt",

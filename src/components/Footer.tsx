@@ -97,11 +97,23 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
           <div className="flex flex-col items-center md:items-end">
             <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">{t('contact.title')}</h3>
             <address className="text-gray-400 mb-4 md:mb-6 text-center md:text-right not-italic text-sm md:text-base">
-              Malmövägen 7<br />
-              Staffanstorp<br />
-              <a href="mailto:cleverdog.aw@gmail.com" className="hover:text-primary">
-                cleverdog.aw@gmail.com
-              </a>
+              {location === 'malmo' ? (
+                <>
+                  Jägersro<br />
+                  Malmö<br />
+                  <a href="mailto:cleverdog.aw@gmail.com" className="hover:text-primary">
+                    cleverdog.aw@gmail.com
+                  </a>
+                </>
+              ) : (
+                <>
+                  Malmövägen 7<br />
+                  Staffanstorp<br />
+                  <a href="mailto:cleverdog.aw@gmail.com" className="hover:text-primary">
+                    cleverdog.aw@gmail.com
+                  </a>
+                </>
+              )}
             </address>
             <LanguageSwitcher />
           </div>
@@ -109,34 +121,62 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
 
         {/* Area Service Information for SEO - Hårdkodad på svenska för SEO */}
         <div className="border-t border-gray-800 mt-6 md:mt-8 pt-6 md:pt-8 text-xs text-gray-600">
-          <h4 className="text-sm text-gray-500 mb-3">
-            {i18n.language === 'sv' 
-              ? 'Perfekt läge för hundägare i hela regionen' 
-              : t('footer.locationTitle')}
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {location === 'malmo' ? (
             <div>
-              <p className="mb-2">
-                {i18n.language === 'sv'
-                  ? 'Med vårt strategiska läge i Staffanstorp är vi lättillgängliga för hundägare från hela sydvästra Skåne:' 
-                  : t('footer.strategicLocation')}
-              </p>
-              <ul className="list-disc pl-5 mb-2 space-y-1">
-                <li><strong>Lund:</strong> {i18n.language === 'sv' ? 'Endast 10 minuters bilresa' : t('footer.travelTimes.lund')}</li>
-                <li><strong>Malmö:</strong> {i18n.language === 'sv' ? 'Bara 15 minuter med bil' : t('footer.travelTimes.malmo')}</li>
-                <li><strong>Staffanstorp:</strong> {i18n.language === 'sv' ? 'Centralt läge på Malmövägen' : t('footer.travelTimes.staffanstorp')}</li>
-              </ul>
+              <h4 className="text-sm text-gray-500 mb-3">
+                Perfekt läge för hundägare i hela regionen
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="mb-2">
+                    <strong>Jägersro, Malmö</strong><br />
+                    Centralt läge i Malmö<br />
+                    Lättillgängligt<br />
+                    Perfekt för Malmöområdet
+                  </p>
+                </div>
+                <div>
+                  <p className="mb-2">
+                    Vi välkomnar hundar från hela regionen inklusive:
+                  </p>
+                  <p>
+                    Malmöområdet inklusive Limhamn, Hyllie, Oxie, Husie och närliggande områden.
+                  </p>
+                </div>
+              </div>
             </div>
+          ) : (
             <div>
-              <p className="mb-2">
-                {i18n.language === 'sv' ? 'Vi välkomnar hundar från hela regionen inklusive:' : t('footer.welcomeDogs')}
-              </p>
-              <p>
-                {/* Alltid på svenska för SEO */}
-                Lund, Dalby, Södra Sandby, Veberöd, Genarp, Hjärup, Lomma, Bjärred, Åkarp, Arlöv, Burlöv samt hela Malmö med områden som Limhamn, Hyllie, Oxie och Husie.
-              </p>
+              <h4 className="text-sm text-gray-500 mb-3">
+                {i18n.language === 'sv' 
+                  ? 'Perfekt läge för hundägare i hela regionen' 
+                  : t('footer.locationTitle')}
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="mb-2">
+                    {i18n.language === 'sv'
+                      ? 'Med vårt strategiska läge i Staffanstorp är vi lättillgängliga för hundägare från hela sydvästra Skåne:' 
+                      : t('footer.strategicLocation')}
+                  </p>
+                  <ul className="list-disc pl-5 mb-2 space-y-1">
+                    <li><strong>Lund:</strong> {i18n.language === 'sv' ? 'Endast 10 minuters bilresa' : t('footer.travelTimes.lund')}</li>
+                    <li><strong>Malmö:</strong> {i18n.language === 'sv' ? 'Bara 15 minuter med bil' : t('footer.travelTimes.malmo')}</li>
+                    <li><strong>Staffanstorp:</strong> {i18n.language === 'sv' ? 'Centralt läge på Malmövägen' : t('footer.travelTimes.staffanstorp')}</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-2">
+                    {i18n.language === 'sv' ? 'Vi välkomnar hundar från hela regionen inklusive:' : t('footer.welcomeDogs')}
+                  </p>
+                  <p>
+                    {/* Alltid på svenska för SEO */}
+                    Lund, Dalby, Södra Sandby, Veberöd, Genarp, Hjärup, Lomma, Bjärred, Åkarp, Arlöv, Burlöv samt hela Malmö med områden som Limhamn, Hyllie, Oxie och Husie.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="border-t border-gray-800 mt-4 pt-4 text-center text-gray-500 text-xs md:text-sm">

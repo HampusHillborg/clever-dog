@@ -1,6 +1,6 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import '../i18n';  // Import i18n configuration
-import Navbar from '../components/Navbar';
+import MalmoNavbar from '../components/malmo/MalmoNavbar';
 // Malmö-specific components
 import MalmoHeroSection from '../components/malmo/MalmoHeroSection';
 import MalmoPricingSection from '../components/malmo/MalmoPricingSection';
@@ -9,6 +9,9 @@ import MalmoLocationSection from '../components/malmo/MalmoLocationSection';
 import MalmoTeamSection from '../components/malmo/MalmoTeamSection';
 // Lazy load other components
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
+const WorkWithUsSection = lazy(() => import('../components/WorkWithUsSection'));
+const ImportantInfoSection = lazy(() => import('../components/ImportantInfoSection'));
+const DaycareScheduleSection = lazy(() => import('../components/DaycareScheduleSection'));
 const SocialMediaSection = lazy(() => import('../components/SocialMediaSection'));
 const GoogleReviewsSection = lazy(() => import('../components/GoogleReviewsSection'));
 const ContactSection = lazy(() => import('../components/ContactSection'));
@@ -55,18 +58,25 @@ const MalmoPage: React.FC = () => {
 
   return (
     <>
-      <Navbar location="malmo" />
+      <MalmoNavbar />
       <main>
         <MalmoHeroSection />
         <MalmoAboutSection />
         <MalmoPricingSection />
+        
+        <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+          <ImportantInfoSection />
+          <DaycareScheduleSection />
+        </Suspense>
+        
         <MalmoLocationSection />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
-          <SustainabilitySection />
           <SocialMediaSection />
           <GoogleReviewsSection />
           <MalmoTeamSection />
+          <WorkWithUsSection />
+          <SustainabilitySection />
           <ContactSection location="malmo" />
         </Suspense>
       </main>

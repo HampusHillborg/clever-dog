@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaBars, FaTimes } from 'react-icons/fa';
-import LanguageSwitcher from './LanguageSwitcher';
-import { useBooking } from './BookingContext';
-import dogLogo from '../assets/images/logos/Logo.png';
+import LanguageSwitcher from '../LanguageSwitcher';
+import { useBooking } from '../BookingContext';
+import dogLogo from '../../assets/images/logos/Logo.png';
 
-interface NavbarProps {
-  location?: string;
-}
-
-const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
+const StaffanstorpNavbar: React.FC = () => {
   const { t } = useTranslation();
   const { openBookingForm } = useBooking();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,11 +46,11 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
           <a href="#pricing" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('pricing.title')}
           </a>
-          <a href="#team" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('navbar.team')}
+          <a href="#important-info" className="font-medium hover:text-primary text-sm whitespace-nowrap">
+            {t('navbar.importantInfo')}
           </a>
-          <a href="#work-with-us" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('navbar.workWithUs')}
+          <a href="#daycare-schedule" className="font-medium hover:text-primary text-sm whitespace-nowrap">
+            {t('navbar.schedule')}
           </a>
           <a href="#sustainability" className="font-medium hover:text-primary text-sm whitespace-nowrap">
             {t('sustainability.title')}
@@ -98,11 +94,11 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
             <a href="#pricing" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('pricing.title')}
             </a>
-            <a href="#team" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('navbar.team')}
+            <a href="#important-info" className="font-medium hover:text-primary" onClick={toggleMenu}>
+              {t('navbar.importantInfo')}
             </a>
-            <a href="#work-with-us" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('navbar.workWithUs')}
+            <a href="#daycare-schedule" className="font-medium hover:text-primary" onClick={toggleMenu}>
+              {t('navbar.schedule')}
             </a>
             <a href="#sustainability" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('sustainability.title')}
@@ -127,4 +123,4 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
   );
 };
 
-export default Navbar; 
+export default StaffanstorpNavbar;
