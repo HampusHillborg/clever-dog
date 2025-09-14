@@ -10,10 +10,14 @@
       "content": "Just nu håller jag på att renovera hunddagiset för att skapa en ännu tryggare och mer hemtrevlig miljö för alla hundar. Det kommer bland annat att finnas en inhägnad lekyta i trädgården och privata boxar för varje hund anpassade efter deras behov. Jag respekterar varje hunds personlighet och låter dem ta kontakt i sin egen takt. Bilder kommer snart!"
     },
     "navbar": {
-      "team": "Vårt Team",
+      "team": "Team",
       "workWithUs": "Jobba med oss",
-      "importantInfo": "Viktig information",
-      "schedule": "Dagsschema"
+      "importantInfo": "Information",
+      "schedule": "Schema",
+      "about": "Om oss",
+      "pricing": "Priser",
+      "sustainability": "Hållbarhet",
+      "contact": "Kontakt"
     },
     "about": {
       "title": "Om Mig",

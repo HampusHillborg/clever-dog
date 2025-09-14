@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import LanguageSwitcher from '../LanguageSwitcher';
+import InformationDropdown from '../InformationDropdown';
 import { useBooking } from '../BookingContext';
 import dogLogo from '../../assets/images/logos/Logo.png';
 
@@ -39,34 +40,29 @@ const MalmoNavbar: React.FC = () => {
         </button>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex lg:items-center lg:justify-end lg:flex-1 lg:space-x-5">
-          <a href="#about" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('about.title')}
+        <div className="hidden lg:flex lg:items-center lg:justify-end lg:flex-1 lg:space-x-6">
+          <a href="#about" className="font-semibold hover:text-orange-600 text-base whitespace-nowrap transition-colors duration-200">
+            {t('navbar.about')}
           </a>
-          <a href="#pricing" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('pricing.title')}
+          <a href="#pricing" className="font-semibold hover:text-orange-600 text-base whitespace-nowrap transition-colors duration-200">
+            {t('navbar.pricing')}
           </a>
-          <a href="#team" className="font-medium hover:text-primary text-sm whitespace-nowrap">
+          <a href="#team" className="font-semibold hover:text-orange-600 text-base whitespace-nowrap transition-colors duration-200">
             {t('navbar.team')}
           </a>
-          <a href="#work-with-us" className="font-medium hover:text-primary text-sm whitespace-nowrap">
+          <a href="#work-with-us" className="font-semibold hover:text-orange-600 text-base whitespace-nowrap transition-colors duration-200">
             {t('navbar.workWithUs')}
           </a>
-          <a href="#important-info" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('navbar.importantInfo')}
+          <InformationDropdown />
+          <a href="#sustainability" className="font-semibold hover:text-orange-600 text-base whitespace-nowrap transition-colors duration-200">
+            {t('navbar.sustainability')}
           </a>
-          <a href="#daycare-schedule" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('navbar.schedule')}
-          </a>
-          <a href="#sustainability" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('sustainability.title')}
-          </a>
-          <a href="#contact" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('contact.title')}
+          <a href="#contact" className="font-semibold hover:text-orange-600 text-base whitespace-nowrap transition-colors duration-200">
+            {t('navbar.contact')}
           </a>
           <button 
             onClick={openBookingForm} 
-            className="btn btn-primary ml-2 text-sm whitespace-nowrap"
+            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base whitespace-nowrap px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg ml-2"
             aria-label={t('bookCta')}
           >
             {t('bookCta')}
@@ -95,10 +91,10 @@ const MalmoNavbar: React.FC = () => {
         <div className="container pb-4 lg:hidden">
           <div className="flex flex-col space-y-4">
             <a href="#about" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('about.title')}
+              {t('navbar.about')}
             </a>
             <a href="#pricing" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('pricing.title')}
+              {t('navbar.pricing')}
             </a>
             <a href="#team" className="font-medium hover:text-primary" onClick={toggleMenu}>
               {t('navbar.team')}
@@ -113,10 +109,10 @@ const MalmoNavbar: React.FC = () => {
               {t('navbar.schedule')}
             </a>
             <a href="#sustainability" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('sustainability.title')}
+              {t('navbar.sustainability')}
             </a>
             <a href="#contact" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('contact.title')}
+              {t('navbar.contact')}
             </a>
             <button 
               onClick={() => {

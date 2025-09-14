@@ -10,10 +10,14 @@
       "content": "I am currently renovating the dog daycare to create an even safer and more homely environment for all dogs. Among other things, there will be a fenced play area in the garden and private boxes for each dog adapted to their needs. I respect each dog's personality and let them make contact at their own pace. Pictures coming soon!"
     },
     "navbar": {
-      "team": "Our Team",
+      "team": "Team",
       "workWithUs": "Work with us",
-      "importantInfo": "Important information",
-      "schedule": "Daily schedule"
+      "importantInfo": "Information",
+      "schedule": "Schedule",
+      "about": "About",
+      "pricing": "Pricing",
+      "sustainability": "Sustainability",
+      "contact": "Contact"
     },
     "about": {
       "title": "About Me",

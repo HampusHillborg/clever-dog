@@ -10,10 +10,14 @@
       "content": "Obecnie renowuję przedszkole dla psów, aby stworzyć jeszcze bezpieczniejsze i bardziej przytulne środowisko dla wszystkich psów. Między innymi, w środku będą prywatne boksy dla kążdego psiaka oraz wolna przestrzeń do zabawy, a w ogrodzie będzie ogrodzony plac zabaw, w którym psy będą mogły również się bawić. Szanuję osobowość każdego psa i pozwalam im nawiązać kontakt we własnym tempie. Zdjęcia wkrótce!"
     },
     "navbar": {
-      "team": "Nasz Zespół",
+      "team": "Zespół",
       "workWithUs": "Pracuj z nami",
-      "importantInfo": "Ważne informacje",
-      "schedule": "Harmonogram dnia"
+      "importantInfo": "Informacje",
+      "schedule": "Harmonogram",
+      "about": "O nas",
+      "pricing": "Cennik",
+      "sustainability": "Zrównoważony rozwój",
+      "contact": "Kontakt"
     },
     "about": {
       "title": "O Mnie",
@@ -330,20 +334,20 @@
         "locations": "Dwie lokalizacje do wyboru"
       },
       "staffanstorp": {
-        "subtitle": "Istniejący hotel i pensjonat dla psów",
-        "description": "Nasza główna siedziba w Staffanstorp oferuje kompleksową opiekę nad psami, w tym hotel dzienny, pensjonat i spacery towarzyskie. Dzięki strategicznemu położeniu zaledwie 10 minut od Lund i 15 minut od Malmö.",
+        "subtitle": "Istniejące przedszkole i pensjonat dla psów",
+        "description": "Nasza główna siedziba w Staffanstorp oferuje kompleksową opiekę nad psami, w tym przedszkole dzienne, pensjonat i spacery towarzyskie. Dzięki strategicznemu położeniu zaledwie 10 minut od Lund i 15 minut od Malmö.",
         "services": {
-          "daycare": "Hotel dzienny dla psów",
+          "daycare": "Przedszkole dzienne dla psów",
           "boarding": "Pensjonat dla psów", 
           "grooming": "Obcinanie Pazurów & Kąpiel"
         },
         "status": "Otwarte teraz"
       },
       "malmo": {
-        "subtitle": "Nowoczesny hotel dzienny w Malmö",
-        "description": "Nasz nowy hotel dzienny dla psów w Malmö oferuje nowoczesną opiekę nad psami skupioną na usługach hotelowych i treningu towarzyskim. Doskonale położony w Jägersro dla właścicieli psów w obszarze Malmö.",
+        "subtitle": "Nowoczesne przedszkole dla psów w Malmö",
+        "description": "Nasze nowe przedszkole dla psów w Malmö oferuje nowoczesną opiekę nad psami skupioną na usługach przedszkolnych i treningu towarzyskim. Doskonale położone w Jägersro dla właścicieli psów w obszarze Malmö.",
         "services": {
-          "daycare": "Hotel dzienny dla psów",
+          "daycare": "Przedszkole dzienne dla psów",
           "grooming": "Strzyżenie & Kąpiel",
           "training": "Trening psów"
         },
