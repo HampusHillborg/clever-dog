@@ -15,9 +15,10 @@
       "bio2": "Razem z moim 3-letnim Shiba Inu tworzę spokojne i pełne miłości środowisko dla rozwoju psów. Jeszcze w tym roku oferować będę również usługi pielęgnacji psów jako część działalności.",
       "bio3": "Z naszą strategiczną lokalizacją tylko 10 minut od Lund i 15 minut od Malmö, oferujemy właścicielom psów w całym regionie wygodną i dostępną opiekę nad psami najwyższej jakości.",
       "permission": "Działalność jest zatwierdzona przez Urząd Wojewódzki (Länsstyrelsen) i posiadam wszystkie niezbędne pozwolenia na prowadzenie przedszkola i hotelu dla psów.",
-      "bioMalmo": "Nazywam się Alicja i jestem certyfikowanym behawiorystą psów z wielkim sercem dla naszych czworonożnych przyjaciół. Prowadzę Clever Dog w Malmö przy Sadelgatan 6, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
-      "bio2Malmo": "Razem z moim 3-letnim Shiba Inu tworzę spokojne i pełne miłości środowisko dla rozwoju psów. Nasza nowa lokalizacja w Malmö skupia się na usługach hotelowych i treningu towarzyskim.",
-      "bio3Malmo": "Z naszą centralną lokalizacją w Malmö oferujemy właścicielom psów w obszarze Malmö wygodną i dostępną opiekę nad psami najwyższej jakości.",
+      "bioMalmo": "Jesteśmy zespołem wykwalifikowanych pracowników z wielkimi sercami dla naszych czworonożnych przyjaciół. Prowadzimy Clever Dog w Malmö Jägersro, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
+      "bio2Malmo": "Razem tworzymy spokojne i pełne miłości środowisko dla rozwoju psów. Nasza nowa, większa lokalizacja w Malmö skupia się na usługach hotelowych i treningu towarzyskim z wieloma wykwalifikowanymi pracownikami.",
+      "bio3Malmo": "Z naszą centralną lokalizacją w Malmö oferujemy właścicielom psów w obszarze Malmö wygodną i dostępną opiekę nad psami najwyższej jakości w naszym nowoczesnym, przestronnym obiekcie.",
+      "aboutUs": "O Nas",
       "address": "Adres",
       "email": "Email",
       "instagram": "Instagram",
@@ -74,6 +75,18 @@
       "notes": "Wszystkie ceny zawierają VAT. Specjalne ceny dla wielu psów z tej samej rodziny.",
       "contactNote": "Skontaktuj się z nami, aby uzyskać więcej informacji i omówić swoje konkretne potrzeby.",
       "walkNote": "* Grupy Spacerów Socjalizacyjnych liczą maksymalnie 5 psów na grupę.",
+      "groomingServices": "Obcinanie Pazurów & Kąpiel",
+      "nailClipping": "Obcinanie pazurów",
+      "nailClippingDesc": "Tylko obcinanie pazurów",
+      "groomingAndBath": "Obcinanie pazurów i kąpiel",
+      "groomingUnder8kg": "Poniżej 8kg",
+      "groomingUnder20kg": "Poniżej 20kg", 
+      "groomingUnder40kg": "Poniżej 40kg",
+      "groomingOver40kg": "Powyżej 40kg",
+      "under8kg": "Poniżej 8kg",
+      "under20kg": "Poniżej 20kg",
+      "under40kg": "Poniżej 40kg",
+      "over40kg": "Powyżej 40kg",
       "openingHours": "07:00 - 18:00 (Pt 07:00 - 17:00)",
       "duration": "1-1,5 godziny",
       "groupWalk": "Spacer grupowy z socjalizacją",
@@ -222,17 +235,16 @@
         "services": {
           "daycare": "Hotel dzienny dla psów",
           "boarding": "Pensjonat dla psów", 
-          "grooming": "Pielęgnacja psów",
-          "socialWalks": "Spacery towarzyskie"
+          "grooming": "Obcinanie Pazurów & Kąpiel"
         },
         "status": "Otwarte teraz"
       },
       "malmo": {
         "subtitle": "Nowoczesny hotel dzienny w Malmö",
-        "description": "Nasz nowy hotel dzienny dla psów w Malmö oferuje nowoczesną opiekę nad psami skupioną na usługach hotelowych i treningu towarzyskim. Doskonale położony przy Sadelgatan 6 dla właścicieli psów w obszarze Malmö.",
+        "description": "Nasz nowy hotel dzienny dla psów w Malmö oferuje nowoczesną opiekę nad psami skupioną na usługach hotelowych i treningu towarzyskim. Doskonale położony w Jägersro dla właścicieli psów w obszarze Malmö.",
         "services": {
           "daycare": "Hotel dzienny dla psów",
-          "socialWalks": "Spacery towarzyskie",
+          "grooming": "Strzyżenie & Kąpiel",
           "training": "Trening psów"
         },
         "status": "Otwarte teraz"

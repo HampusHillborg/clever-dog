@@ -65,12 +65,12 @@ const StaffanstorpAboutSection: React.FC = () => {
                 </div>
                 <div className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4">
                   <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">🚶</span>
+                    <span className="text-white font-bold text-lg">✂️</span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-900 mb-1">{t('pricing.socialWalk')}</h4>
+                    <h4 className="font-semibold text-orange-900 mb-1">{t('locationSelector.staffanstorp.services.grooming')}</h4>
                     <p className="text-sm text-orange-700">
-                      {t('locationSelector.staffanstorp.services.socialWalks')}
+                      {t('locationSelector.staffanstorp.services.grooming')}
                     </p>
                   </div>
                 </div>

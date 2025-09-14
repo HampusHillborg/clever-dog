@@ -15,9 +15,10 @@
       "bio2": "Tillsammans med min 3-åriga shiba inu skapar jag en lugn och kärleksfull miljö för hundar att utvecklas i. Senare i år kommer jag även att erbjuda hundtrimning som en del av verksamheten.",
       "bio3": "Med vårt strategiska läge bara 10 minuter från Lund och 15 minuter från Malmö, erbjuder vi hundägare i hela regionen en bekväm och tillgänglig hundomsorg av högsta kvalitet.",
       "permission": "Verksamheten är godkänd av Länsstyrelsen och jag har alla nödvändiga tillstånd för hunddagis och pensionatverksamhet.",
-      "bioMalmo": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Malmö på Sadelgatan 6, där trygghet och glädje står i centrum för varje hund.",
-      "bio2Malmo": "Tillsammans med min 3-åriga shiba inu skapar jag en lugn och kärleksfull miljö för hundar att utvecklas i. Vår nya plats i Malmö fokuserar på dagisverksamhet och social träning.",
-      "bio3Malmo": "Med vår centrala placering i Malmö erbjuder vi hundägare i Malmöområdet en bekväm och tillgänglig hundomsorg av högsta kvalitet.",
+      "bioMalmo": "Vi är ett team av tränade personal med stora hjärtan för våra fyrbenta vänner. Vi driver Clever Dog i Malmö Jägersro, där trygghet och glädje står i centrum för varje hund.",
+      "bio2Malmo": "Tillsammans skapar vi en lugn och kärleksfull miljö för hundar att utvecklas i. Vår nya, större plats i Malmö fokuserar på dagisverksamhet och social träning med flera tränade personal.",
+      "bio3Malmo": "Med vår centrala placering i Malmö erbjuder vi hundägare i Malmöområdet en bekväm och tillgänglig hundomsorg av högsta kvalitet i vår moderna, rymliga lokal.",
+      "aboutUs": "Om Oss",
       "address": "Adress",
       "email": "E-post",
       "instagram": "Instagram",
@@ -74,6 +75,18 @@
       "notes": "Alla priser är inklusive moms. Specialpriser för flera hundar från samma familj.",
       "contactNote": "Kontakta oss för mer information och för att diskutera dina specifika behov.",
       "walkNote": "* Social Promenad grupper har maximalt 5 hundar per grupp.",
+      "groomingServices": "Kloklippning & Bad",
+      "nailClipping": "Kloklipp",
+      "nailClippingDesc": "Endast kloklippning",
+      "groomingAndBath": "Kloklipp och bad",
+      "groomingUnder8kg": "Under 8kg",
+      "groomingUnder20kg": "Under 20kg", 
+      "groomingUnder40kg": "Under 40kg",
+      "groomingOver40kg": "Över 40kg",
+      "under8kg": "Under 8kg",
+      "under20kg": "Under 20kg",
+      "under40kg": "Under 40kg",
+      "over40kg": "Över 40kg",
       "openingHours": "07:00 - 18:00 (Fre 07:00 - 17:00)",
       "duration": "1-1,5 timme",
       "groupWalk": "Grupppromenad med socialisering",
@@ -222,17 +235,16 @@
         "services": {
           "daycare": "Hunddagis",
           "boarding": "Hundpensionat", 
-          "grooming": "Hundtrimning",
-          "socialWalks": "Social Promenader"
+          "grooming": "Kloklippning & Bad"
         },
         "status": "Öppet nu"
       },
       "malmo": {
         "subtitle": "Modernt hunddagis i Malmö",
-        "description": "Vårt nya hunddagis i Malmö erbjuder modern hundomsorg med fokus på dagisverksamhet och social träning. Perfekt beläget på Sadelgatan 6 för hundägare i Malmöområdet.",
+        "description": "Vårt nya hunddagis i Malmö erbjuder modern hundomsorg med fokus på dagisverksamhet och social träning. Perfekt beläget i Jägersro för hundägare i Malmöområdet.",
         "services": {
           "daycare": "Hunddagis",
-          "socialWalks": "Social Promenader",
+          "grooming": "Kloklippning & Bad",
           "training": "Hundträning"
         },
         "status": "Öppet nu"

@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import MalmoHeroSection from '../components/malmo/MalmoHeroSection';
 import MalmoPricingSection from '../components/malmo/MalmoPricingSection';
 import MalmoAboutSection from '../components/malmo/MalmoAboutSection';
+import MalmoLocationSection from '../components/malmo/MalmoLocationSection';
 // Lazy load other components
 const SocialWalksSection = lazy(() => import('../components/SocialWalksSection'));
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
@@ -59,6 +60,7 @@ const MalmoPage: React.FC = () => {
         <MalmoHeroSection />
         <MalmoAboutSection />
         <MalmoPricingSection />
+        <MalmoLocationSection />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
           <SocialWalksSection location="malmo" />

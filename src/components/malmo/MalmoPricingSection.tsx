@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCalendarAlt, FaDog, FaWalking } from 'react-icons/fa';
+import { FaCalendarAlt, FaDog, FaCut } from 'react-icons/fa';
 
 const MalmoPricingSection: React.FC = () => {
   const { t } = useTranslation();
@@ -53,15 +53,56 @@ const MalmoPricingSection: React.FC = () => {
       period: t('pricing.perOccasion')
     },
     {
-      icon: FaWalking,
-      title: t('pricing.socialWalk'),
+      icon: FaCut,
+      title: t('pricing.nailClipping'),
       details: [
-        t('pricing.duration'),
-        t('pricing.groupWalk')
+        t('pricing.nailClippingDesc')
       ],
-      price: '300',
-      period: t('pricing.perOccasion'),
-      note: t('pricing.walkNote')
+      price: '150',
+      period: t('pricing.perOccasion')
+    }
+  ];
+
+  const groomingServices = [
+    {
+      icon: FaCut,
+      title: t('pricing.groomingUnder8kg'),
+      details: [
+        t('pricing.groomingAndBath'),
+        t('pricing.under8kg')
+      ],
+      price: '600',
+      period: t('pricing.perOccasion')
+    },
+    {
+      icon: FaCut,
+      title: t('pricing.groomingUnder20kg'),
+      details: [
+        t('pricing.groomingAndBath'),
+        t('pricing.under20kg')
+      ],
+      price: '700',
+      period: t('pricing.perOccasion')
+    },
+    {
+      icon: FaCut,
+      title: t('pricing.groomingUnder40kg'),
+      details: [
+        t('pricing.groomingAndBath'),
+        t('pricing.under40kg')
+      ],
+      price: '800',
+      period: t('pricing.perOccasion')
+    },
+    {
+      icon: FaCut,
+      title: t('pricing.groomingOver40kg'),
+      details: [
+        t('pricing.groomingAndBath'),
+        t('pricing.over40kg')
+      ],
+      price: '1000',
+      period: t('pricing.perOccasion')
     }
   ];
 
@@ -102,10 +143,39 @@ const MalmoPricingSection: React.FC = () => {
         </div>
 
         {/* Individual Services Section */}
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto mb-12">
           <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">{t('pricing.individualServices')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {individualServices.map((service, index) => (
+              <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <div className="text-center mb-4">
+                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <service.icon className="text-white text-lg" />
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900 mb-3">{service.title}</h4>
+                  <div className="space-y-1 text-gray-600">
+                    {service.details.map((detail, idx) => (
+                      <p key={idx} className="text-sm">{detail}</p>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-500 mb-1">{service.price} SEK</div>
+                  <div className="text-sm text-gray-500 mb-3">{service.period}</div>
+                  {service.note && (
+                    <p className="text-xs text-gray-500 mt-2">{service.note}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Grooming Services Section */}
+        <div className="max-w-6xl mx-auto">
+          <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">{t('pricing.groomingServices')}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {groomingServices.map((service, index) => (
               <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                 <div className="text-center mb-4">
                   <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
