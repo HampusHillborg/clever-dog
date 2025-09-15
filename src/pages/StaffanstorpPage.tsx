@@ -5,7 +5,6 @@ import StaffanstorpNavbar from '../components/staffanstorp/StaffanstorpNavbar';
 import StaffanstorpHeroSection from '../components/staffanstorp/StaffanstorpHeroSection';
 import StaffanstorpPricingSection from '../components/staffanstorp/StaffanstorpPricingSection';
 import StaffanstorpAboutSection from '../components/staffanstorp/StaffanstorpAboutSection';
-import StaffanstorpLocationSection from '../components/staffanstorp/StaffanstorpLocationSection';
 // Lazy load other components
 const SustainabilitySection = lazy(() => import('../components/SustainabilitySection'));
 const ImportantInfoSection = lazy(() => import('../components/ImportantInfoSection'));
@@ -67,7 +66,6 @@ const StaffanstorpPage: React.FC = () => {
           <DaycareScheduleSection />
         </Suspense>
         
-        <StaffanstorpLocationSection />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
           <SocialMediaSection />

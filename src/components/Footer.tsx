@@ -34,10 +34,18 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
                   : (isSwedish ? 'Hunddagis i Staffanstorp med fokus på trygghet, glädje och utveckling' : t('heroDescription'))
                 }
               </p>
-              <p className="text-gray-400 text-center md:text-left mb-4 text-sm">
-                <FaMapMarkerAlt className="inline mr-1" /> 
-                {location === 'malmo' ? 'Centralt beläget i Malmö' : '10 min från Lund | 15 min från Malmö'}
-              </p>
+              <div className="text-gray-400 text-center md:text-left mb-4 text-sm">
+                <p className="mb-2">
+                  <FaMapMarkerAlt className="inline mr-1" /> 
+                  {location === 'malmo' ? 'Centralt beläget i Malmö Jägersro' : 'Malmövägen 7, Staffanstorp'}
+                </p>
+                <p className="text-xs">
+                  {location === 'malmo' 
+                    ? 'Perfekt för Malmöområdet' 
+                    : '10 min från Lund | 15 min från Malmö'
+                  }
+                </p>
+              </div>
               <div className="flex space-x-4">
                 <a 
                   href="https://www.instagram.com/CleverDog_" 
