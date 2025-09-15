@@ -102,8 +102,6 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         message: formData.message || ''
       };
 
-      // Debug: Logga templateParams (ta bort i produktion)
-      console.log('Malmö TemplateParams:', templateParams);
 
       // Skicka e-post till dig
       await emailjs.send(

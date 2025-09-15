@@ -69,9 +69,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
       chip_number: formData.chipNumber,
       address: formData.address,
       personnummer: formData.personnummer,
+      additional_info: formData.additionalInfo,
       reply_to: formData.email,
       request_date: new Date().toLocaleDateString()
     };
+
 
     // Replace with your actual EmailJS Service ID, Template ID, and Public Key
     emailjs.send(
@@ -90,6 +92,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         request_date: new Date().toLocaleDateString(),
         reply_to: 'cleverdog.aw@gmail.com', // Your email for replies
       };
+
       
       return emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
