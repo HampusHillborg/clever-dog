@@ -405,7 +405,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                     <option value="boarding">{t('booking.form.inquiryOptions.boarding')}</option>
                     <option value="socialWalk">{t('booking.form.inquiryOptions.socialWalk')}</option>
                     <option value="question">{t('booking.form.inquiryOptions.question')}</option>
-                    <option value="other">{t('booking.form.inquiryOptions.other')}</option>
                   </select>
                 </div>
                 
@@ -481,9 +480,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                   </div>
                 )}
                 
-                {/* Display additional dog information fields except for "other" and "question" inquiry types */}
+                {/* Display additional dog information fields except for "question" inquiry type */}
                 {formData.inquiryType && 
-                 formData.inquiryType !== 'other' && 
                  formData.inquiryType !== 'question' && (
                   <div className="space-y-4 mt-4 border-t pt-4">
                     <div>
