@@ -26,6 +26,9 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
     dogSocialization: '',
     problemBehaviors: '',
     allergies: '',
+    chipNumber: '',
+    address: '',
+    personnummer: '',
     message: '',
     location: 'malmo'
   });
@@ -76,6 +79,11 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         service_type: formData.serviceType,
         location: 'Malmö',
         to_email: 'cleverdog.malmo@gmail.com',
+        
+        // Nya fält som lades till
+        chip_number: formData.chipNumber || '',
+        address: formData.address || '',
+        personnummer: formData.personnummer || '',
         
         // Hundinfo (endast för dagis)
         dog_name: formData.dogName || '',
@@ -130,6 +138,9 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         dogSocialization: '',
         problemBehaviors: '',
         allergies: '',
+        chipNumber: '',
+        address: '',
+        personnummer: '',
         message: '',
         location: 'malmo'
       });
@@ -260,6 +271,49 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {t('malmoBooking.chipNumber')} *
+              </label>
+              <input
+                type="text"
+                name="chipNumber"
+                value={formData.chipNumber}
+                onChange={handleInputChange}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {t('malmoBooking.personnummer')} *
+              </label>
+              <input
+                type="text"
+                name="personnummer"
+                value={formData.personnummer}
+                onChange={handleInputChange}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              {t('malmoBooking.address')} *
+            </label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              required
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>

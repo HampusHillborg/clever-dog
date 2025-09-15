@@ -98,7 +98,7 @@ const MalmoHeroSection: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <ContentSection t={t} openBookingForm={openBookingForm} />
+            <ContentSection t={t} openBookingForm={() => openBookingForm('malmo')} />
             
             {/* Trust Banner - Add with animation */}
             <motion.div
@@ -116,7 +116,7 @@ const MalmoHeroSection: React.FC = () => {
           </motion.div>
         ) : (
           <div>
-            <ContentSection t={t} openBookingForm={openBookingForm} />
+            <ContentSection t={t} openBookingForm={() => openBookingForm('malmo')} />
             
             {/* Trust Banner - No animation for mobile */}
             <div className="mt-6 flex justify-center">
