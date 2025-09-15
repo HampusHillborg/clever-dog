@@ -533,16 +533,39 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                   </div>
                 )}
                 
+                {/* Special section for general questions */}
+                {formData.inquiryType === 'question' && (
+                  <div className="space-y-4 mt-4 border-t pt-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="text-lg font-medium text-blue-900 mb-2">
+                        {t('booking.form.generalQuestion.title')}
+                      </h4>
+                      <p className="text-blue-700 text-sm mb-4">
+                        {t('booking.form.generalQuestion.description')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 <div>
-                  <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-700">{t('booking.form.additionalInfo')}</label>
+                  <label htmlFor="additionalInfo" className="block text-sm font-medium text-gray-700">
+                    {formData.inquiryType === 'question' 
+                      ? t('booking.form.generalQuestion.questionLabel')
+                      : t('booking.form.additionalInfo')
+                    }
+                  </label>
                   <textarea
                     id="additionalInfo"
                     name="additionalInfo"
-                    rows={4}
+                    rows={formData.inquiryType === 'question' ? 5 : 4}
                     value={formData.additionalInfo}
                     onChange={handleChange}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                    placeholder={t('booking.form.additionalInfoPlaceholder')}
+                    placeholder={formData.inquiryType === 'question' 
+                      ? t('booking.form.generalQuestion.questionPlaceholder')
+                      : t('booking.form.additionalInfoPlaceholder')
+                    }
+                    required={formData.inquiryType === 'question'}
                   ></textarea>
                 </div>
               </div>

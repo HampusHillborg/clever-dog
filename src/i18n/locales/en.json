@@ -321,6 +321,12 @@
         "selectInquiry": "Select inquiry type",
         "additionalInfo": "Additional Information",
         "additionalInfoPlaceholder": "For example, special requests or questions",
+        "generalQuestion": {
+          "title": "General Question",
+          "description": "Ask your question here and we'll get back to you as soon as possible. We usually respond within 2-3 business days.",
+          "questionLabel": "Your question",
+          "questionPlaceholder": "Please describe your question in as much detail as possible so we can give you the best answer..."
+        },
         "submitDefault": "Send Booking Request",
         "submitGmail": "Send with Gmail",
         "submitOutlook": "Send with Outlook",

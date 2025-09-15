@@ -26,7 +26,7 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.fiveDaysWeek'),
         t('pricing.openingHours')
       ],
-      price: '2800',
+      price: '3500',
       period: t('pricing.perMonth'),
       note: t('pricing.closedOnHolidays')
     },
@@ -37,7 +37,7 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.twoDaysWeek'),
         t('pricing.openingHours')
       ],
-      price: '1200',
+      price: '2500',
       period: t('pricing.perMonth'),
       note: t('pricing.closedOnHolidays')
     }
@@ -85,7 +85,7 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.groomingAndBath'),
         t('pricing.under8kg')
       ],
-      price: '600',
+      price: '250',
       period: t('pricing.perOccasion')
     },
     {
@@ -95,7 +95,7 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.groomingAndBath'),
         t('pricing.under20kg')
       ],
-      price: '700',
+      price: '400',
       period: t('pricing.perOccasion')
     },
     {
@@ -105,7 +105,7 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.groomingAndBath'),
         t('pricing.under40kg')
       ],
-      price: '800',
+      price: '600',
       period: t('pricing.perOccasion')
     },
     {
@@ -115,7 +115,7 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.groomingAndBath'),
         t('pricing.over40kg')
       ],
-      price: '1000',
+      price: '800',
       period: t('pricing.perOccasion')
     }
   ];

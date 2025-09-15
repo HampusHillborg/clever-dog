@@ -325,6 +325,12 @@
         "selectInquiry": "Wybierz rodzaj zapytania",
         "additionalInfo": "Dodatkowe Informacje",
         "additionalInfoPlaceholder": "Na przykład, specjalne prośby lub pytania",
+        "generalQuestion": {
+          "title": "Ogólne Pytanie",
+          "description": "Zadaj swoje pytanie tutaj, a odpowiemy tak szybko, jak to możliwe. Zwykle odpowiadamy w ciągu 2-3 dni roboczych.",
+          "questionLabel": "Twoje pytanie",
+          "questionPlaceholder": "Opisz swoje pytanie tak szczegółowo, jak to możliwe, abyśmy mogli dać Ci najlepszą odpowiedź..."
+        },
         "submitDefault": "Wyślij prośbę o rezerwację",
         "submitGmail": "Wyślij przez Gmail",
         "submitOutlook": "Wyślij przez Outlook",

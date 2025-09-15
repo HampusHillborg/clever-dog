@@ -325,6 +325,12 @@
         "selectInquiry": "Välj ärende",
         "additionalInfo": "Övrig information",
         "additionalInfoPlaceholder": "Exempelvis särskilda önskemål eller frågor",
+        "generalQuestion": {
+          "title": "Allmän fråga",
+          "description": "Ställ din fråga här så återkommer vi till dig så snart som möjligt. Vi svarar vanligtvis inom 2-3 arbetsdagar.",
+          "questionLabel": "Din fråga",
+          "questionPlaceholder": "Beskriv din fråga så detaljerat som möjligt så att vi kan ge dig det bästa svaret..."
+        },
         "submitDefault": "Skicka bokningsförfrågan",
         "submitGmail": "Skicka med Gmail",
         "submitOutlook": "Skicka med Outlook",
