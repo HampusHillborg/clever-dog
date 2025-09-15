@@ -184,11 +184,11 @@
       "subtitle": "Så ser en vanlig dag ut på vårt hunddagis",
       "dropOff": {
         "title": "Inlämning",
-        "description": "Hundarna lämnas på morgonen mellan kl. 07.00 och 10:00. Vi planerar dagen med hänsyn till både hundarnas individuella behov och gruppens sammansättning, samt yttre faktorer som väder och temperatur."
+        "description": "Hundarna lämnas på morgonen mellan kl. 07:00 och 09:00. Vi planerar dagen med hänsyn till både hundarnas individuella behov och gruppens sammansättning, samt yttre faktorer som väder och temperatur."
       },
       "morningActivities": {
-        "title": "Morgonaktiviteter",
-        "description": "Under morgonen får hundarna möjlighet att leka och röra på sig i våra inhägnade rastgårdar. För de hundar som behöver extra stimulans eller rörelse erbjuder vi också promenader i koppel."
+        "title": "Morgonaktiviteter & Lek",
+        "description": "Från 09:00 till 11:45 får hundarna möjlighet att leka och röra på sig i våra inhägnade rastgårdar. För de hundar som behöver extra stimulans eller rörelse erbjuder vi också promenader i koppel."
       },
       "lunch": {
         "title": "Lunch",
@@ -204,7 +204,7 @@
       },
       "pickup": {
         "title": "Upphämtning",
-        "description": "Hundarna kan hämtas mellan kl. 17.00 och 18.00. Vi ser till att varje hund får en trygg och rolig dag innan de återvänder hem till sina familjer."
+        "description": "Hundarna kan hämtas mellan kl. 15:00 och 18:00 (17:00 på fredagar). Vi ser till att varje hund får en trygg och rolig dag innan de återvänder hem till sina familjer."
       },
       "additionalInfo": {
         "title": "Flexibla tider",

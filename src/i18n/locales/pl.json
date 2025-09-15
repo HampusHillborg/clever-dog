@@ -184,11 +184,11 @@
       "subtitle": "Tak wygląda typowy dzień w naszym przedszkolu dla psów",
       "dropOff": {
         "title": "Przyprowadzenie",
-        "description": "Psy są przyprowadzane rano między 07:00 a 10:00. Planujemy dzień uwzględniając zarówno indywidualne potrzeby psów, jak i skład grupy, a także czynniki zewnętrzne, takie jak pogoda i temperatura."
+        "description": "Psy są przyprowadzane rano między 07:00 a 09:00. Planujemy dzień uwzględniając zarówno indywidualne potrzeby psów, jak i skład grupy, a także czynniki zewnętrzne, takie jak pogoda i temperatura."
       },
       "morningActivities": {
-        "title": "Aktywności poranne",
-        "description": "Rano psy mają możliwość zabawy i ruchu na naszych ogrodzonych placach ćwiczeń. Dla psów, które potrzebują dodatkowej stymulacji lub ruchu, oferujemy również spacery na smyczy."
+        "title": "Aktywności poranne i zabawa",
+        "description": "Od 09:00 do 11:45 psy mają możliwość zabawy i ruchu na naszych ogrodzonych placach ćwiczeń. Dla psów, które potrzebują dodatkowej stymulacji lub ruchu, oferujemy również spacery na smyczy."
       },
       "lunch": {
         "title": "Lunch",
@@ -204,7 +204,7 @@
       },
       "pickup": {
         "title": "Odbieranie",
-        "description": "Psy mogą być odbierane między 17:00 a 18:00. Dbamy o to, aby każdy pies miał bezpieczny i wesoły dzień przed powrotem do domu do swoich rodzin."
+        "description": "Psy mogą być odbierane między 15:00 a 18:00 (17:00 w piątki). Dbamy o to, aby każdy pies miał bezpieczny i wesoły dzień przed powrotem do domu do swoich rodzin."
       },
       "additionalInfo": {
         "title": "Elastyczne godziny",

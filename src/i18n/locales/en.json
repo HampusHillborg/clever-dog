@@ -184,11 +184,11 @@
       "subtitle": "This is what a typical day looks like at our dog daycare",
       "dropOff": {
         "title": "Drop-off",
-        "description": "Dogs are dropped off in the morning between 07:00 and 10:00. We plan the day considering both the dogs' individual needs and the group's composition, as well as external factors such as weather and temperature."
+        "description": "Dogs are dropped off in the morning between 07:00 and 09:00. We plan the day considering both the dogs' individual needs and the group's composition, as well as external factors such as weather and temperature."
       },
       "morningActivities": {
-        "title": "Morning activities",
-        "description": "In the morning, the dogs get the opportunity to play and move around in our fenced exercise yards. For dogs that need extra stimulation or exercise, we also offer walks on leash."
+        "title": "Morning Activities & Play",
+        "description": "From 09:00 to 11:45, the dogs get the opportunity to play and move around in our fenced exercise yards. For dogs that need extra stimulation or exercise, we also offer walks on leash."
       },
       "lunch": {
         "title": "Lunch",
@@ -204,7 +204,7 @@
       },
       "pickup": {
         "title": "Pick-up",
-        "description": "Dogs can be picked up between 17:00 and 18:00. We make sure each dog has a safe and fun day before returning home to their families."
+        "description": "Dogs can be picked up between 15:00 and 18:00 (17:00 on Fridays). We make sure each dog has a safe and fun day before returning home to their families."
       },
       "additionalInfo": {
         "title": "Flexible times",

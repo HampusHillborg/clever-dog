@@ -7,14 +7,14 @@ const DaycareScheduleSection: React.FC = () => {
 
   const scheduleItems = [
     {
-      time: '07:00 - 10:00',
+      time: '07:00 - 09:00',
       icon: FaClock,
       title: t('schedule.dropOff.title'),
       description: t('schedule.dropOff.description'),
       color: 'bg-blue-500'
     },
     {
-      time: '10:00 - 11:45',
+      time: '09:00 - 11:45',
       icon: FaPlay,
       title: t('schedule.morningActivities.title'),
       description: t('schedule.morningActivities.description'),
@@ -42,7 +42,7 @@ const DaycareScheduleSection: React.FC = () => {
       color: 'bg-indigo-500'
     },
     {
-      time: '17:00 - 18:00',
+      time: '15:00 - 18:00',
       icon: FaHome,
       title: t('schedule.pickup.title'),
       description: t('schedule.pickup.description'),
