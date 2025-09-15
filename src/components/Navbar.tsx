@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaBars, FaTimes } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useBooking } from './BookingContext';
 import dogLogo from '../assets/images/logos/Logo.png';
@@ -12,17 +13,15 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
   const { t } = useTranslation();
   const { openBookingForm } = useBooking();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+  const goToHomepage = () => {
+    navigate('/');
   };
 
   return (
@@ -30,7 +29,7 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
       <div className="container flex items-center justify-between py-4">
         {/* Logo */}
         <button 
-          onClick={scrollToTop}
+          onClick={goToHomepage}
           className="flex items-center space-x-2 hover:opacity-80 transition-opacity logo-button"
           aria-label="Go to homepage"
         >
@@ -43,33 +42,35 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
         </button>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex lg:items-center lg:justify-end lg:flex-1 lg:space-x-5">
-          <a href="#about" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('about.title')}
-          </a>
-          <a href="#pricing" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('pricing.title')}
-          </a>
-          <a href="#team" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('navbar.team')}
-          </a>
-          <a href="#work-with-us" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('navbar.workWithUs')}
-          </a>
-          <a href="#sustainability" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('sustainability.title')}
-          </a>
-          <a href="#contact" className="font-medium hover:text-primary text-sm whitespace-nowrap">
-            {t('contact.title')}
-          </a>
-          <button 
-            onClick={() => openBookingForm()} 
-            className="btn btn-primary ml-2 text-sm whitespace-nowrap"
-            aria-label={t('bookCta')}
-          >
-            {t('bookCta')}
-          </button>
-          <div className="ml-2">
+        <div className="hidden lg:flex lg:items-center lg:justify-end lg:flex-1 lg:space-x-6">
+          {/* Main Navigation Links */}
+          <div className="flex items-center space-x-6">
+            <a href="#about" className="font-medium hover:text-primary text-sm whitespace-nowrap transition-colors">
+              {t('about.title')}
+            </a>
+            <a href="#pricing" className="font-medium hover:text-primary text-sm whitespace-nowrap transition-colors">
+              {t('pricing.title')}
+            </a>
+            <a href="#team" className="font-medium hover:text-primary text-sm whitespace-nowrap transition-colors">
+              {t('navbar.team')}
+            </a>
+            <a href="#work-with-us" className="font-medium hover:text-primary text-sm whitespace-nowrap transition-colors">
+              {t('navbar.workWithUs')}
+            </a>
+            <a href="#contact" className="font-medium hover:text-primary text-sm whitespace-nowrap transition-colors">
+              {t('contact.title')}
+            </a>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
+            <button 
+              onClick={() => openBookingForm()} 
+              className="btn btn-primary text-sm whitespace-nowrap"
+              aria-label={t('bookCta')}
+            >
+              {t('bookCta')}
+            </button>
             <LanguageSwitcher />
           </div>
         </div>
@@ -92,34 +93,38 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
       {isMenuOpen && (
         <div className="container pb-4 lg:hidden">
           <div className="flex flex-col space-y-4">
-            <a href="#about" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('about.title')}
-            </a>
-            <a href="#pricing" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('pricing.title')}
-            </a>
-            <a href="#team" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('navbar.team')}
-            </a>
-            <a href="#work-with-us" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('navbar.workWithUs')}
-            </a>
-            <a href="#sustainability" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('sustainability.title')}
-            </a>
-            <a href="#contact" className="font-medium hover:text-primary" onClick={toggleMenu}>
-              {t('contact.title')}
-            </a>
-            <button 
-              onClick={() => {
-                toggleMenu(); 
-                openBookingForm();
-              }}
-              className="w-full btn btn-primary text-center"
-              aria-label={t('bookCta')}
-            >
-              {t('bookCta')}
-            </button>
+            {/* Navigation Links */}
+            <div className="space-y-3">
+              <a href="#about" className="block font-medium hover:text-primary py-2" onClick={toggleMenu}>
+                {t('about.title')}
+              </a>
+              <a href="#pricing" className="block font-medium hover:text-primary py-2" onClick={toggleMenu}>
+                {t('pricing.title')}
+              </a>
+              <a href="#team" className="block font-medium hover:text-primary py-2" onClick={toggleMenu}>
+                {t('navbar.team')}
+              </a>
+              <a href="#work-with-us" className="block font-medium hover:text-primary py-2" onClick={toggleMenu}>
+                {t('navbar.workWithUs')}
+              </a>
+              <a href="#contact" className="block font-medium hover:text-primary py-2" onClick={toggleMenu}>
+                {t('contact.title')}
+              </a>
+            </div>
+            
+            {/* Action Button */}
+            <div className="pt-4 border-t border-gray-200">
+              <button 
+                onClick={() => {
+                  toggleMenu(); 
+                  openBookingForm();
+                }}
+                className="w-full btn btn-primary text-center"
+                aria-label={t('bookCta')}
+              >
+                {t('bookCta')}
+              </button>
+            </div>
           </div>
         </div>
       )}
