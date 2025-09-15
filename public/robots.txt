@@ -1,6 +1,31 @@
-# All robots allowed
 User-agent: *
 Allow: /
 
-# Sitemap location
-Sitemap: https://cleverdog.se/sitemap.xml 
+# Sitemap
+Sitemap: https://cleverdog.se/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Allow all search engines to index all content
+Disallow:
+
+# Specific rules for different bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+# Block bad bots (if any)
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /

@@ -81,7 +81,7 @@ const MalmoPricingSection: React.FC = () => {
         t('pricing.groomingAndBath'),
         t('pricing.under8kg')
       ],
-      price: '600',
+      price: '250',
       period: t('pricing.perOccasion')
     },
     {
@@ -91,7 +91,7 @@ const MalmoPricingSection: React.FC = () => {
         t('pricing.groomingAndBath'),
         t('pricing.under20kg')
       ],
-      price: '700',
+      price: '400',
       period: t('pricing.perOccasion')
     },
     {
@@ -101,7 +101,7 @@ const MalmoPricingSection: React.FC = () => {
         t('pricing.groomingAndBath'),
         t('pricing.under40kg')
       ],
-      price: '800',
+      price: '600',
       period: t('pricing.perOccasion')
     },
     {
@@ -111,7 +111,7 @@ const MalmoPricingSection: React.FC = () => {
         t('pricing.groomingAndBath'),
         t('pricing.over40kg')
       ],
-      price: '1000',
+      price: '800',
       period: t('pricing.perOccasion')
     }
   ];
