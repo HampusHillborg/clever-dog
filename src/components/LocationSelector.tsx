@@ -19,6 +19,9 @@ const LocationSelector: React.FC = () => {
       hoverGradient: 'from-orange-500 to-orange-700',
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600',
+      status: 'open',
+      statusText: 'Öppet nu',
+      statusColor: 'bg-green-500',
     },
     {
       id: 'malmo',
@@ -28,6 +31,9 @@ const LocationSelector: React.FC = () => {
       hoverGradient: 'from-blue-500 to-blue-700',
       iconBg: 'bg-blue-100',
       iconColor: 'text-blue-600',
+      status: 'opening-soon',
+      statusText: 'Öppnar snart',
+      statusColor: 'bg-yellow-500',
     }
   ];
 
@@ -106,6 +112,13 @@ const LocationSelector: React.FC = () => {
                         </div>
                       </div>
                       
+                      {/* Status Badge */}
+                      <div className="flex justify-center mb-4">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white ${location.statusColor}`}>
+                          {location.statusText}
+                        </span>
+                      </div>
+
                       {/* Location Info */}
                       <h3 className="text-2xl font-bold text-gray-900 mb-3">
                         {location.name}
