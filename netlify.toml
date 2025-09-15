@@ -4,16 +4,6 @@
   command = "npm run build"
   functions = "netlify/functions"
 
-# Form handling
-[build.environment]
-  NETLIFY_FORMS = "true"
-
-# E-postmallar för formulär
-[forms]
-  [forms.malmo-interest]
-    email_template = "netlify/email-templates/malmo-interest.html"
-    subject = "🐕 Intresseanmälan Malmö Jägersro - {{name}}"
-    to = "cleverdog.aw@gmail.com"
 
 [dev]
   framework = "vite"
