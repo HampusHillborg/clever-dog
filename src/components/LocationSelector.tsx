@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// import { useTranslation } from 'react-i18next'; // Unused for now
 import { useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaArrowRight } from 'react-icons/fa';
 import { motion } from 'framer-motion';
@@ -7,7 +7,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import dogLogo from '../assets/images/logos/Logo.png';
 
 const LocationSelector: React.FC = () => {
-  const { t } = useTranslation();
+  // const { t } = useTranslation(); // Unused for now
   const navigate = useNavigate();
 
   const locations = [

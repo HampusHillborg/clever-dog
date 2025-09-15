@@ -9,7 +9,7 @@ interface PricingSectionProps {
 
 interface PricingItem {
   title: string;
-  icon: JSX.Element;
+  icon: React.ReactElement;
   price: string;
   description: string;
   details: string;

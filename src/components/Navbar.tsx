@@ -63,7 +63,7 @@ const Navbar: React.FC<NavbarProps> = ({ location: _location }) => {
             {t('contact.title')}
           </a>
           <button 
-            onClick={openBookingForm} 
+            onClick={() => openBookingForm()} 
             className="btn btn-primary ml-2 text-sm whitespace-nowrap"
             aria-label={t('bookCta')}
           >

@@ -55,7 +55,7 @@ const StaffanstorpNavbar: React.FC = () => {
             {t('navbar.contact')}
           </a>
           <button 
-            onClick={openBookingForm} 
+            onClick={() => openBookingForm()} 
             className="bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base whitespace-nowrap px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg ml-2"
             aria-label={t('bookCta')}
           >

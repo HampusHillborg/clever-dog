@@ -20,10 +20,7 @@ export const useBooking = () => {
 export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
   const [isMalmoBookingFormOpen, setIsMalmoBookingFormOpen] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<string>('');
-
   const openBookingForm = (location?: string) => {
-    setCurrentLocation(location || '');
     if (location === 'malmo') {
       setIsMalmoBookingFormOpen(true);
     } else {
@@ -34,7 +31,6 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const closeBookingForm = () => {
     setIsBookingFormOpen(false);
     setIsMalmoBookingFormOpen(false);
-    setCurrentLocation('');
   };
 
   return (

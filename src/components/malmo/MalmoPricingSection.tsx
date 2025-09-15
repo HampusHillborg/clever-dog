@@ -1,11 +1,21 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCalendarAlt, FaDog, FaCut } from 'react-icons/fa';
+import { IconType } from 'react-icons';
+
+interface ServiceItem {
+  icon: IconType;
+  title: string;
+  details: string[];
+  price: string;
+  period: string;
+  note?: string;
+}
 
 const MalmoPricingSection: React.FC = () => {
   const { t } = useTranslation();
 
-  const passes = [
+  const passes: ServiceItem[] = [
     {
       icon: FaCalendarAlt,
       title: t('pricing.fullMonth'),
@@ -41,7 +51,7 @@ const MalmoPricingSection: React.FC = () => {
     }
   ];
 
-  const individualServices = [
+  const individualServices: ServiceItem[] = [
     {
       icon: FaDog,
       title: t('pricing.singleDay'),
@@ -63,7 +73,7 @@ const MalmoPricingSection: React.FC = () => {
     }
   ];
 
-  const groomingServices = [
+  const groomingServices: ServiceItem[] = [
     {
       icon: FaCut,
       title: t('pricing.groomingUnder8kg'),
