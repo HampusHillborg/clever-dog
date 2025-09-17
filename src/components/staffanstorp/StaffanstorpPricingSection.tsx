@@ -32,12 +32,23 @@ const StaffanstorpPricingSection: React.FC = () => {
     },
     {
       icon: FaCalendarAlt,
-      title: t('pricing.partTime'),
+      title: t('pricing.partTime3Days'),
+      details: [
+        t('pricing.threeDaysWeek'),
+        t('pricing.openingHours')
+      ],
+      price: '3000',
+      period: t('pricing.perMonth'),
+      note: t('pricing.closedOnHolidays')
+    },
+    {
+      icon: FaCalendarAlt,
+      title: t('pricing.partTime2Days'),
       details: [
         t('pricing.twoDaysWeek'),
         t('pricing.openingHours')
       ],
-      price: '2500',
+      price: '2750',
       period: t('pricing.perMonth'),
       note: t('pricing.closedOnHolidays')
     }
@@ -80,43 +91,12 @@ const StaffanstorpPricingSection: React.FC = () => {
   const groomingServices: ServiceItem[] = [
     {
       icon: FaCut,
-      title: t('pricing.groomingUnder8kg'),
+      title: t('pricing.groomingServices'),
       details: [
-        t('pricing.groomingAndBath'),
-        t('pricing.under8kg')
+        t('pricing.comingSoon')
       ],
-      price: '250',
-      period: t('pricing.perOccasion')
-    },
-    {
-      icon: FaCut,
-      title: t('pricing.groomingUnder20kg'),
-      details: [
-        t('pricing.groomingAndBath'),
-        t('pricing.under20kg')
-      ],
-      price: '400',
-      period: t('pricing.perOccasion')
-    },
-    {
-      icon: FaCut,
-      title: t('pricing.groomingUnder40kg'),
-      details: [
-        t('pricing.groomingAndBath'),
-        t('pricing.under40kg')
-      ],
-      price: '600',
-      period: t('pricing.perOccasion')
-    },
-    {
-      icon: FaCut,
-      title: t('pricing.groomingOver40kg'),
-      details: [
-        t('pricing.groomingAndBath'),
-        t('pricing.over40kg')
-      ],
-      price: '800',
-      period: t('pricing.perOccasion')
+      price: '',
+      period: ''
     }
   ];
 
@@ -133,7 +113,7 @@ const StaffanstorpPricingSection: React.FC = () => {
         </div>
 
         {/* Passes Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
           {passes.map((pass, index) => (
             <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
               <div className="text-center mb-6">
@@ -193,9 +173,9 @@ const StaffanstorpPricingSection: React.FC = () => {
         </div>
 
         {/* Grooming Services Section */}
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">{t('pricing.groomingServices')}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {groomingServices.map((service, index) => (
               <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                 <div className="text-center mb-4">
@@ -210,8 +190,14 @@ const StaffanstorpPricingSection: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-500 mb-1">{service.price} SEK</div>
-                  <div className="text-sm text-gray-500 mb-3">{service.period}</div>
+                  {service.price ? (
+                    <>
+                      <div className="text-2xl font-bold text-orange-500 mb-1">{service.price} SEK</div>
+                      <div className="text-sm text-gray-500 mb-3">{service.period}</div>
+                    </>
+                  ) : (
+                    <div className="text-2xl font-bold text-orange-500 mb-1">{t('pricing.comingSoon')}</div>
+                  )}
                   {service.note && (
                     <p className="text-xs text-gray-500 mt-2">{service.note}</p>
                   )}
