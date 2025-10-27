@@ -382,7 +382,7 @@ const AdminPage: React.FC = () => {
             <li>Kostnaden för hundpensionat är ${contractData.price}kr totalt för hela vistelsen och ska betalas i samband med lämning av hunden.</li>
             <li>Vid avbokning mindre än 7 dagar före vistelsen debiteras 50% av priset.</li>
             ` : contractData.contractType === 'singleDay' ? `
-            <li>Kostnaden för enstaka dag är 300kr per dag och ska betalas i förväg.</li>
+            <li>Kostnaden för enstaka dag är 350kr per dag och ska betalas i förväg.</li>
             <li>Vid avbokning mindre än 7 dagar före dagen återbetalas inte avgiften.</li>
             ` : `
             <li>Kostnaden för sociala promenader är ${contractData.price}kr per gång och ska betalas i förväg.</li>
