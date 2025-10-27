@@ -10,8 +10,9 @@ interface ContactSectionProps {
 const ContactSection: React.FC<ContactSectionProps> = ({ location }) => {
   const { t } = useTranslation();
   
-  // Always use mailto protocol for email links
-  const emailLink = "mailto:cleverdog.aw@gmail.com";
+  // Different email addresses for different locations
+  const email = location === 'malmo' ? 'cleverdog.malmo@gmail.com' : 'cleverdog.aw@gmail.com';
+  const emailLink = `mailto:${email}`;
 
   return (
     <section id="contact" className="section bg-light">
@@ -55,7 +56,7 @@ const ContactSection: React.FC<ContactSectionProps> = ({ location }) => {
                 <div>
                   <h4 className="font-medium">{t('about.email')}</h4>
                    <a href={emailLink} className="hover:text-primary">
-                     cleverdog.aw@gmail.com
+                     {email}
                    </a>
                 </div>
               </div>
