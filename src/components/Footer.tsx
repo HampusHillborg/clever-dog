@@ -37,7 +37,7 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
               <div className="text-gray-400 text-center md:text-left mb-4 text-sm">
                 <p className="mb-2">
                   <FaMapMarkerAlt className="inline mr-1" /> 
-                  {location === 'malmo' ? 'Centralt beläget i Malmö Jägersro' : 'Malmövägen 7, Staffanstorp'}
+                  {location === 'malmo' ? 'Bellisgatan 13, Malmö 21232' : 'Malmövägen 7, Staffanstorp'}
                 </p>
                 <p className="text-xs">
                   {location === 'malmo' 
@@ -112,8 +112,8 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
             <address className="text-gray-400 mb-4 md:mb-6 text-center md:text-right not-italic text-sm md:text-base">
               {location === 'malmo' ? (
                 <>
-                  Jägersro<br />
-                  Malmö<br />
+                  Bellisgatan 13<br />
+                  Malmö 21232<br />
                   <a href="mailto:cleverdog.malmo@gmail.com" className="hover:text-primary">
                     cleverdog.malmo@gmail.com
                   </a>
@@ -144,7 +144,7 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
               <div className="text-xs text-gray-400 space-y-2">
                 {location === 'malmo' ? (
                   <>
-                    <p><strong>Adress:</strong> Jägersro, Malmö</p>
+                    <p><strong>Adress:</strong> Bellisgatan 13, Malmö 21232</p>
                     <p><strong>Läge:</strong> Centralt beläget i Malmö</p>
                     <p><strong>Fördelar:</strong> Lättillgängligt, bra parkering</p>
                     <p><strong>Perfekt för:</strong> Malmöområdet och närliggande städer</p>

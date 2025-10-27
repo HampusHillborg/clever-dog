@@ -101,7 +101,7 @@ const MalmoAboutSection: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 text-lg">Address</p>
-                    <p className="text-gray-600 mb-1">Jägersro, Malmö</p>
+                    <p className="text-gray-600 mb-1">Bellisgatan 13, Malmö 21232</p>
                     <p className="text-orange-600 text-sm font-medium">Centralt läge i Malmö</p>
                   </div>
                 </div>
