@@ -4,7 +4,7 @@
     "heroDescription": "Przedszkole dla psów w Staffanstorp, koncentrujące się na bezpieczeństwie, radości i rozwoju",
     "cta": "Dowiedz się więcej",
     "bookCta": "Zarezerwuj miejsce",
-    "malmoCta": "Nowe Przedszkole dla Psów w Malmö Jägersro - Zarejestruj Zainteresowanie",
+    "malmoCta": "Nowe Przedszkole dla Psów w Malmö Videdal - Zarejestruj Zainteresowanie",
     "infoSection": {
       "title": "Informacja",
       "content": "Obecnie renowuję przedszkole dla psów, aby stworzyć jeszcze bezpieczniejsze i bardziej przytulne środowisko dla wszystkich psów. Między innymi, w środku będą prywatne boksy dla kążdego psiaka oraz wolna przestrzeń do zabawy, a w ogrodzie będzie ogrodzony plac zabaw, w którym psy będą mogły również się bawić. Szanuję osobowość każdego psa i pozwalam im nawiązać kontakt we własnym tempie. Zdjęcia wkrótce!"
@@ -24,7 +24,7 @@
       "bio": "Nazywam się Alicja i jestem certyfikowanym behawiorystą psów z wielkim sercem dla naszych czworonożnych przyjaciół. Prowadzę Clever Dog w Staffanstorp przy Malmövägen 7, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
       "bio2": "Razem z moim 3-letnim Shiba Inu tworzę spokojne i pełne miłości środowisko dla rozwoju psów. Jeszcze w tym roku oferować będę również usługi pielęgnacji psów jako część działalności.",
       "bio3": "Z naszą strategiczną lokalizacją tylko 10 minut od Lund i 15 minut od Malmö, oferujemy właścicielom psów w całym regionie wygodną i dostępną opiekę nad psami najwyższej jakości.",
-      "bioMalmo": "Jesteśmy zespołem wykwalifikowanych pracowników z wielkimi sercami dla naszych czworonożnych przyjaciół. Prowadzimy Clever Dog w Malmö Jägersro, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
+      "bioMalmo": "Jesteśmy zespołem wykwalifikowanych pracowników z wielkimi sercami dla naszych czworonożnych przyjaciół. Prowadzimy Clever Dog w Malmö Videdal, gdzie bezpieczeństwo i radość są najważniejsze dla każdego psa.",
       "bio2Malmo": "Razem tworzymy spokojne i pełne miłości środowisko dla rozwoju psów. Nasza nowa, większa lokalizacja w Malmö skupia się na usługach hotelowych i treningu towarzyskim z wieloma wykwalifikowanymi pracownikami.",
       "bio3Malmo": "Z naszą centralną lokalizacją w Malmö oferujemy właścicielom psów w obszarze Malmö wygodną i dostępną opiekę nad psami najwyższej jakości w naszym nowoczesnym, przestronnym obiekcie.",
       "aboutUs": "O Nas",
@@ -351,11 +351,11 @@
         "errorMessage": "Wystąpił błąd podczas wysyłania Twojej prośby o rezerwację. Prosimy spróbować ponownie później."
       },
       "malmo": {
-        "title": "Rejestracja Zainteresowania - Malmö Jägersro",
-        "subtitle": "Nowe Przedszkole dla Psów w Malmö Jägersro",
-        "description": "Planujemy otwarcie nowego przedszkola dla psów w Malmö Jägersro! Zarejestruj swoje zainteresowanie, a skontaktujemy się z Tobą, gdy będziemy mieli więcej informacji do udostępnienia.",
+        "title": "Rejestracja Zainteresowania - Malmö Videdal",
+        "subtitle": "Nowe Przedszkole dla Psów w Malmö Videdal",
+        "description": "Planujemy otwarcie nowego przedszkola dla psów w Malmö Videdal! Zarejestruj swoje zainteresowanie, a skontaktujemy się z Tobą, gdy będziemy mieli więcej informacji do udostępnienia.",
         "successTitle": "Dziękujemy za Twoje zainteresowanie!",
-        "successMessage": "Otrzymaliśmy Twoją rejestrację zainteresowania naszym nowym przedszkolem dla psów w Malmö Jägersro. Skontaktujemy się z Tobą, gdy będziemy mieli więcej informacji do udostępnienia.",
+        "successMessage": "Otrzymaliśmy Twoją rejestrację zainteresowania naszym nowym przedszkolem dla psów w Malmö Videdal. Skontaktujemy się z Tobą, gdy będziemy mieli więcej informacji do udostępnienia.",
         "ownerInfo": "Informacje o Właścicielu",
         "dogInfo": "Informacje o Psie",
         "dogBehaviorHealth": "Zachowanie i Zdrowie Psa",
@@ -366,8 +366,8 @@
         "allergies": "Alergie lub problemy zdrowotne",
         "allergiesPlaceholder": "Czy Twój pies ma jakieś alergie, leki lub problemy zdrowotne, o których powinniśmy wiedzieć?",
         "additionalInfoPlaceholder": "Prosimy opowiedzieć nam o swoim psie, potrzebach lub pytaniach...",
-        "addressPlaceholder": "Twój adres w Malmö Jägersro",
-        "submit": "Zarejestruj Zainteresowanie Malmö Jägersro",
+        "addressPlaceholder": "Twój adres w Malmö Videdal",
+        "submit": "Zarejestruj Zainteresowanie Malmö Videdal",
         "submitting": "Wysyłanie...",
         "close": "Zamknij"
       },
@@ -405,7 +405,7 @@
       },
       "malmo": {
         "subtitle": "Nowoczesne przedszkole dla psów w Malmö",
-        "description": "Nasze nowe przedszkole dla psów w Malmö oferuje nowoczesną opiekę nad psami skupioną na usługach przedszkolnych i treningu towarzyskim. Doskonale położone w Jägersro dla właścicieli psów w obszarze Malmö.",
+        "description": "Nasze nowe przedszkole dla psów w Malmö oferuje nowoczesną opiekę nad psami skupioną na usługach przedszkolnych i treningu towarzyskim. Doskonale położone w Videdal dla właścicieli psów w obszarze Malmö.",
         "services": {
           "daycare": "Przedszkole dzienne dla psów",
           "grooming": "Strzyżenie & Kąpiel",

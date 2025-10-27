@@ -4,7 +4,7 @@
     "heroDescription": "Dog daycare in Staffanstorp focusing on safety, joy, and development",
     "cta": "Learn more",
     "bookCta": "Book a spot",
-    "malmoCta": "New Dog Daycare in Malmö Jägersro - Register Interest",
+    "malmoCta": "New Dog Daycare in Malmö Videdal - Register Interest",
     "infoSection": {
       "title": "Information",
       "content": "I am currently renovating the dog daycare to create an even safer and more homely environment for all dogs. Among other things, there will be a fenced play area in the garden and private boxes for each dog adapted to their needs. I respect each dog's personality and let them make contact at their own pace. Pictures coming soon!"
@@ -24,7 +24,7 @@
       "bio": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Staffanstorp at Malmövägen 7, where safety and joy are at the center for every dog.",
       "bio2": "Together with my 3-year-old Shiba Inu, I create a calm and loving environment for dogs to develop in. Later this year, I will also offer dog grooming as part of the business.",
       "bio3": "With our strategic location just 10 minutes from Lund and 15 minutes from Malmö, we offer dog owners throughout the region convenient and accessible high-quality dog care.",
-      "bioMalmo": "We are a team of trained staff with big hearts for our four-legged friends. We run Clever Dog in Malmö Jägersro, where safety and joy are at the center for every dog.",
+      "bioMalmo": "We are a team of trained staff with big hearts for our four-legged friends. We run Clever Dog in Malmö Videdal, where safety and joy are at the center for every dog.",
       "bio2Malmo": "Together we create a calm and loving environment for dogs to develop in. Our new, larger location in Malmö focuses on daycare services and social training with multiple trained staff members.",
       "bio3Malmo": "With our central location in Malmö, we offer dog owners in the Malmö area convenient and accessible high-quality dog care in our modern, spacious facility.",
       "aboutUs": "About Us",
@@ -351,11 +351,11 @@
         "errorMessage": "An error occurred when sending your booking request. Please try again later."
       },
       "malmo": {
-        "title": "Interest Registration - Malmö Jägersro",
-        "subtitle": "New Dog Daycare in Malmö Jägersro",
-        "description": "We are planning to open a new dog daycare in Malmö Jägersro! Register your interest and we will contact you when we have more information to share.",
+        "title": "Interest Registration - Malmö Videdal",
+        "subtitle": "New Dog Daycare in Malmö Videdal",
+        "description": "We are planning to open a new dog daycare in Malmö Videdal! Register your interest and we will contact you when we have more information to share.",
         "successTitle": "Thank you for your interest!",
-        "successMessage": "We have received your interest registration for our new dog daycare in Malmö Jägersro. We will contact you when we have more information to share.",
+        "successMessage": "We have received your interest registration for our new dog daycare in Malmö Videdal. We will contact you when we have more information to share.",
         "ownerInfo": "Owner Information",
         "dogInfo": "Dog Information",
         "dogBehaviorHealth": "Dog Behavior and Health",
@@ -366,8 +366,8 @@
         "allergies": "Allergies or health problems",
         "allergiesPlaceholder": "Does your dog have any allergies, medications or health problems we should know about?",
         "additionalInfoPlaceholder": "Please tell us about your dog, your needs or any questions you have...",
-        "addressPlaceholder": "Your address in Malmö Jägersro",
-        "submit": "Register Interest for Malmö Jägersro",
+        "addressPlaceholder": "Your address in Malmö Videdal",
+        "submit": "Register Interest for Malmö Videdal",
         "submitting": "Sending...",
         "close": "Close"
       },
@@ -405,7 +405,7 @@
       },
       "malmo": {
         "subtitle": "Modern dog daycare in Malmö",
-        "description": "Our new dog daycare in Malmö offers modern dog care focused on daycare services and social training. Perfectly located in Jägersro for dog owners in the Malmö area.",
+        "description": "Our new dog daycare in Malmö offers modern dog care focused on daycare services and social training. Perfectly located in Videdal for dog owners in the Malmö area.",
         "services": {
           "daycare": "Dog Daycare",
           "grooming": "Grooming & Bath",

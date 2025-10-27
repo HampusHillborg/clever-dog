@@ -25,7 +25,7 @@ const LocationSelector: React.FC = () => {
     },
     {
       id: 'malmo',
-      name: 'Malmö Jägersro',
+      name: 'Malmö Videdal',
       description: 'Modernt hunddagis i Malmö',
       gradient: 'from-blue-400 to-blue-600',
       hoverGradient: 'from-blue-500 to-blue-700',

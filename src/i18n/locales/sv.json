@@ -4,7 +4,7 @@
     "heroDescription": "Hunddagis i Staffanstorp med fokus på trygghet, glädje och utveckling",
     "cta": "Läs mer",
     "bookCta": "Boka plats",
-    "malmoCta": "Nytt hunddagis i Malmö Jägersro - Anmäl intresse",
+    "malmoCta": "Nytt hunddagis i Malmö Videdal - Anmäl intresse",
     "infoSection": {
       "title": "Information",
       "content": "Just nu håller jag på att renovera hunddagiset för att skapa en ännu tryggare och mer hemtrevlig miljö för alla hundar. Det kommer bland annat att finnas en inhägnad lekyta i trädgården och privata boxar för varje hund anpassade efter deras behov. Jag respekterar varje hunds personlighet och låter dem ta kontakt i sin egen takt. Bilder kommer snart!"
@@ -24,7 +24,7 @@
       "bio": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Staffanstorp på Malmövägen 7, där trygghet och glädje står i centrum för varje hund.",
       "bio2": "Tillsammans med min 3-åriga shiba inu skapar jag en lugn och kärleksfull miljö för hundar att utvecklas i. Senare i år kommer jag även att erbjuda hundtrimning som en del av verksamheten.",
       "bio3": "Med vårt strategiska läge bara 10 minuter från Lund och 15 minuter från Malmö, erbjuder vi hundägare i hela regionen en bekväm och tillgänglig hundomsorg av högsta kvalitet.",
-      "bioMalmo": "Vi är ett team av tränade personal med stora hjärtan för våra fyrbenta vänner. Vi driver Clever Dog i Malmö Jägersro, där trygghet och glädje står i centrum för varje hund.",
+      "bioMalmo": "Vi är ett team av tränade personal med stora hjärtan för våra fyrbenta vänner. Vi driver Clever Dog i Malmö Videdal, där trygghet och glädje står i centrum för varje hund.",
       "bio2Malmo": "Tillsammans skapar vi en lugn och kärleksfull miljö för hundar att utvecklas i. Vår nya, större plats i Malmö fokuserar på dagisverksamhet och social träning med flera tränade personal.",
       "bio3Malmo": "Med vår centrala placering i Malmö erbjuder vi hundägare i Malmöområdet en bekväm och tillgänglig hundomsorg av högsta kvalitet i vår moderna, rymliga lokal.",
       "aboutUs": "Om Oss",
@@ -351,11 +351,11 @@
         "errorMessage": "Ett fel uppstod när din bokningsförfrågan skulle skickas. Vänligen försök igen senare."
       },
       "malmo": {
-        "title": "Intresseanmälan - Malmö Jägersro",
-        "subtitle": "Nytt hunddagis i Malmö Jägersro",
-        "description": "Vi planerar att öppna ett nytt hunddagis i Malmö Jägersro! Anmäl ditt intresse så kontaktar vi dig när vi har mer information att dela.",
+        "title": "Intresseanmälan - Malmö Videdal",
+        "subtitle": "Nytt hunddagis i Malmö Videdal",
+        "description": "Vi planerar att öppna ett nytt hunddagis i Malmö Videdal! Anmäl ditt intresse så kontaktar vi dig när vi har mer information att dela.",
         "successTitle": "Tack för din intresseanmälan!",
-        "successMessage": "Vi har mottagit din intresseanmälan för vårt nya hunddagis i Malmö Jägersro. Vi kommer att kontakta dig när vi har mer information att dela.",
+        "successMessage": "Vi har mottagit din intresseanmälan för vårt nya hunddagis i Malmö Videdal. Vi kommer att kontakta dig när vi har mer information att dela.",
         "ownerInfo": "Ägarens information",
         "dogInfo": "Hundens information",
         "dogBehaviorHealth": "Hundens beteende och hälsa",
@@ -366,8 +366,8 @@
         "allergies": "Allergier eller hälsoproblem",
         "allergiesPlaceholder": "Har hunden några allergier, mediciner eller hälsoproblem vi bör känna till?",
         "additionalInfoPlaceholder": "Berätta gärna om din hund, dina behov eller frågor du har...",
-        "addressPlaceholder": "Din adress i Malmö Jägersro",
-        "submit": "Anmäl intresse för Malmö Jägersro",
+        "addressPlaceholder": "Din adress i Malmö Videdal",
+        "submit": "Anmäl intresse för Malmö Videdal",
         "submitting": "Skickar...",
         "close": "Stäng"
       },
@@ -405,7 +405,7 @@
       },
       "malmo": {
         "subtitle": "Modernt hunddagis i Malmö",
-        "description": "Vårt nya hunddagis i Malmö erbjuder modern hundomsorg med fokus på dagisverksamhet och social träning. Perfekt beläget i Jägersro för hundägare i Malmöområdet.",
+        "description": "Vårt nya hunddagis i Malmö erbjuder modern hundomsorg med fokus på dagisverksamhet och social träning. Perfekt beläget i Videdal för hundägare i Malmöområdet.",
         "services": {
           "daycare": "Hunddagis",
           "grooming": "Kloklippning & Bad",

@@ -87,7 +87,7 @@ const MalmoHeroSection: React.FC = () => {
   return (
     <div className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay - Responsive Image */}
-      <HeroImage alt="Malmö hunddagis - Modernt hunddagis i Malmö Jägersro" />
+      <HeroImage alt="Malmö hunddagis - Modernt hunddagis i Malmö Videdal" />
       <div className="absolute inset-0 z-0 bg-black bg-opacity-50" />
 
       {/* Content */}
