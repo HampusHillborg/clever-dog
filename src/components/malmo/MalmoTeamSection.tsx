@@ -23,7 +23,7 @@ const MalmoTeamSection: React.FC = () => {
       image: hampusImage
     },
     {
-      name: 'Nicole',
+      name: 'Nicole S',
       role: t('pricing.team.nicole.role'),
       description: t('pricing.team.nicole.description'),
       dog: t('pricing.team.nicole.dog'),
@@ -46,7 +46,7 @@ const MalmoTeamSection: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {teamMembers.map((member, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-lg p-8 text-center">
+              <div key={index} className="bg-white rounded-2xl shadow-lg p-8 text-center flex flex-col">
                 <div className="mb-6">
                   <img 
                     src={member.image} 
@@ -56,8 +56,8 @@ const MalmoTeamSection: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{member.name}</h3>
                 <p className="text-orange-600 font-semibold mb-4">{member.role}</p>
-                <p className="text-gray-700 mb-4 leading-relaxed">{member.description}</p>
-                <div className="bg-orange-50 rounded-lg p-4">
+                <p className="text-gray-700 mb-4 leading-relaxed flex-grow">{member.description}</p>
+                <div className="bg-orange-50 rounded-lg p-4 mt-auto">
                   <p className="text-sm text-orange-800">
                     <span className="font-semibold">{t('pricing.team.dog')}:</span> {member.dog}
                   </p>

@@ -29,7 +29,7 @@ exports.handler = async (event, context) => {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Intresseanmälan Malmö Jägersro</title>
+      <title>Intresseanmälan Malmö Videdal</title>
       <style>
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -120,14 +120,14 @@ exports.handler = async (event, context) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>🐕 Intresseanmälan Malmö Jägersro</h1>
-          <p>Nya hunddagiset i Malmö Jägersro</p>
+          <h1>🐕 Intresseanmälan Malmö Videdal</h1>
+          <p>Nya hunddagiset i Malmö Videdal</p>
         </div>
         
         <div class="content">
           <div class="highlight">
             <strong>🎉 Ny intresseanmälan mottagen!</strong><br>
-            Någon har anmält intresse för det nya hunddagiset i Malmö Jägersro.
+            Någon har anmält intresse för det nya hunddagiset i Malmö Videdal.
           </div>
 
           <div class="section">
@@ -218,7 +218,7 @@ exports.handler = async (event, context) => {
           ` : ''}
 
           <div class="highlight">
-            <strong>📍 Plats:</strong> Malmö Jägersro<br>
+            <strong>📍 Plats:</strong> Malmö Videdal<br>
             <strong>📅 Datum:</strong> ${new Date().toLocaleDateString('sv-SE')}<br>
             <strong>⏰ Tid:</strong> ${new Date().toLocaleTimeString('sv-SE')}
           </div>
@@ -237,7 +237,7 @@ exports.handler = async (event, context) => {
     const emailParams = {
       to: 'cleverdog.aw@gmail.com',
       from: 'noreply@cleverdog.se',
-      subject: `🐕 Intresseanmälan Malmö Jägersro - ${formData.name || 'Okänd person'}`,
+      subject: `🐕 Intresseanmälan Malmö Videdal - ${formData.name || 'Okänd person'}`,
       html: htmlEmail,
     };
 
