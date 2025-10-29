@@ -407,19 +407,30 @@ export const getPlanningForDate = async (
     return history.find(p => p.date === date && p.location === location) || null;
   }
 
+  // Use .maybeSingle() instead of .single() to handle missing rows gracefully
   const { data, error } = await supabase!
     .from('planning_history')
     .select('*')
     .eq('date', date)
     .eq('location', location)
-    .single();
+    .maybeSingle();
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      // No rows returned
+    // Handle 406 and PGRST116 as "not found" cases
+    // PGRST116 = no rows returned
+    // 406 errors can occur with .single() when no rows found
+    if (error.code === 'PGRST116' || 
+        (error.message && error.message.includes('406')) ||
+        (error.message && error.message.includes('multiple')) ||
+        error.message === 'JSON object requested, multiple (or no) rows returned') {
       return null;
     }
     console.error('Error fetching planning for date:', error);
+    return null;
+  }
+
+  // If no data found, return null
+  if (!data) {
     return null;
   }
 
