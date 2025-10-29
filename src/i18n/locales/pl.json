@@ -112,10 +112,10 @@
           "description": "Hampus jest współwłaścicielem Clever Dog i zajmuje się sprawami IT i organizacyjnymi. Zapewnia, że wszystko działa płynnie za kulisami i tworzy wydajną działalność.",
           "dog": "Reya (Shiba Inu)"
         },
-        "paulina": {
-          "role": "Wychowawczyni Przedszkola",
-          "description": "Paulina jest naszą wychowawczynią przedszkola z bogatym doświadczeniem w pracy z psami. Tworzy edukacyjne i pełne miłości środowisko, w którym psy mogą się uczyć i rozwijać.",
-          "dog": "Maja (Pomeranian)"
+        "nicole": {
+          "role": "Kierownik Placówki",
+          "description": "Nicole jest kierownikiem naszej placówki z kilkuletnim doświadczeniem zarówno w działalności przedszkola, jak i mobilnego przedszkola dla psów. Nie ma nic lepszego niż możliwość stworzenia środowiska, w którym każda osoba dobrze się czuje i ma zaspokojone swoje potrzeby. Wszystko, co dotyczy treningu psów, to coś, czym jest naprawdę pasjonuje.",
+          "dog": "Kriga (Australian Shepherd)"
         }
       },
       "duration": "1-1,5 godziny",
