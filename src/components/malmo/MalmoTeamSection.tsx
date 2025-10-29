@@ -1,5 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import alicjaImage from '../../assets/images/ProfilePictures/Alicja.jpg';
+import hampusImage from '../../assets/images/ProfilePictures/Hampus.jpg';
+import nicoleImage from '../../assets/images/ProfilePictures/nicole.jpg';
 
 const MalmoTeamSection: React.FC = () => {
   const { t } = useTranslation();
@@ -9,19 +12,23 @@ const MalmoTeamSection: React.FC = () => {
       name: 'Alicja W',
       role: t('pricing.team.alicja.role'),
       description: t('pricing.team.alicja.description'),
-      dog: t('pricing.team.alicja.dog')
+      dog: t('pricing.team.alicja.dog'),
+      image: alicjaImage
     },
+    {
+      name: 'Nicole S',
+      role: t('pricing.team.nicole.role'),
+      description: t('pricing.team.nicole.description'),
+      dog: t('pricing.team.nicole.dog'),
+      image: nicoleImage
+    }
+    ,
     {
       name: 'Hampus H',
       role: t('pricing.team.hampus.role'),
       description: t('pricing.team.hampus.description'),
-      dog: t('pricing.team.hampus.dog')
-    },
-    {
-      name: 'Paulina M',
-      role: t('pricing.team.paulina.role'),
-      description: t('pricing.team.paulina.description'),
-      dog: t('pricing.team.paulina.dog')
+      dog: t('pricing.team.hampus.dog'),
+      image: hampusImage
     }
   ];
 
@@ -40,11 +47,18 @@ const MalmoTeamSection: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {teamMembers.map((member, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-lg p-8 text-center">
+              <div key={index} className="bg-white rounded-2xl shadow-lg p-8 text-center flex flex-col">
+                <div className="mb-6">
+                  <img 
+                    src={member.image} 
+                    alt={member.name}
+                    className="w-32 h-32 rounded-full object-cover mx-auto"
+                  />
+                </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{member.name}</h3>
                 <p className="text-orange-600 font-semibold mb-4">{member.role}</p>
-                <p className="text-gray-700 mb-4 leading-relaxed">{member.description}</p>
-                <div className="bg-orange-50 rounded-lg p-4">
+                <p className="text-gray-700 mb-4 leading-relaxed flex-grow">{member.description}</p>
+                <div className="bg-orange-50 rounded-lg p-4 mt-auto">
                   <p className="text-sm text-orange-800">
                     <span className="font-semibold">{t('pricing.team.dog')}:</span> {member.dog}
                   </p>
