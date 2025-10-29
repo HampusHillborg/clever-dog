@@ -61,6 +61,7 @@ const MalmoPage: React.FC = () => {
       <main>
         <MalmoHeroSection />
         <MalmoAboutSection />
+        <MalmoTeamSection />
         <MalmoPricingSection />
         
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
@@ -72,7 +73,6 @@ const MalmoPage: React.FC = () => {
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
           <SocialMediaSection />
           <GoogleReviewsSection />
-          <MalmoTeamSection />
           <WorkWithUsSection />
           <SustainabilitySection />
           <ContactSection location="malmo" />
