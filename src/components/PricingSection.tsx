@@ -19,7 +19,7 @@ interface PricingItem {
   extraInfo?: string;
 }
 
-const PricingSection: React.FC<PricingSectionProps> = ({ location }) => {
+const PricingSection: React.FC<PricingSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
 
   // Updated pricing data - show all services for both locations

@@ -66,7 +66,7 @@ export const getDogs = async (): Promise<Dog[]> => {
   }
 
   // Transform database format to app format
-  return (data || []).map(dog => ({
+  return ((data as any) || []).map((dog: any) => ({
     id: dog.id,
     name: dog.name,
     breed: dog.breed,
@@ -109,7 +109,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
       color: dog.color,
       locations: dog.locations,
       type: dog.type || null,
-    }, {
+    } as any, {
       onConflict: 'id'
     })
     .select()
@@ -120,17 +120,18 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     throw error;
   }
 
+  const dbDog = data as any;
   return {
-    id: data.id,
-    name: data.name,
-    breed: data.breed,
-    age: data.age,
-    owner: data.owner,
-    phone: data.phone,
-    notes: data.notes ? String(data.notes) : undefined,
-    color: data.color,
-    locations: (Array.isArray(data.locations) ? data.locations : []) as ('malmo' | 'staffanstorp')[],
-    type: (data.type as 'fulltime' | 'parttime-3' | 'parttime-2') || undefined,
+    id: dbDog.id,
+    name: dbDog.name,
+    breed: dbDog.breed,
+    age: dbDog.age,
+    owner: dbDog.owner,
+    phone: dbDog.phone,
+    notes: dbDog.notes ? String(dbDog.notes) : undefined,
+    color: dbDog.color,
+    locations: (Array.isArray(dbDog.locations) ? dbDog.locations : []) as ('malmo' | 'staffanstorp')[],
+    type: (dbDog.type as 'fulltime' | 'parttime-3' | 'parttime-2') || undefined,
   };
 };
 
@@ -177,7 +178,7 @@ export const getBoardingRecords = async (): Promise<BoardingRecord[]> => {
     return saved ? JSON.parse(saved) : [];
   }
 
-  return (data || []).map(record => ({
+  return ((data as any) || []).map((record: any) => ({
     id: record.id,
     dogId: record.dog_id,
     dogName: record.dog_name,
@@ -217,7 +218,7 @@ export const saveBoardingRecord = async (record: BoardingRecord): Promise<Boardi
       end_date: record.endDate,
       notes: record.notes || null,
       is_archived: record.isArchived || false,
-    }, {
+    } as any, {
       onConflict: 'id'
     })
     .select()
@@ -228,16 +229,17 @@ export const saveBoardingRecord = async (record: BoardingRecord): Promise<Boardi
     throw error;
   }
 
+  const dbRecord = data as any;
   return {
-    id: data.id,
-    dogId: data.dog_id,
-    dogName: data.dog_name,
-    location: data.location as 'malmo' | 'staffanstorp',
-    startDate: data.start_date,
-    endDate: data.end_date,
-    notes: data.notes ? String(data.notes) : undefined,
-    createdAt: data.created_at || new Date().toISOString(),
-    isArchived: data.is_archived || false,
+    id: dbRecord.id,
+    dogId: dbRecord.dog_id,
+    dogName: dbRecord.dog_name,
+    location: dbRecord.location as 'malmo' | 'staffanstorp',
+    startDate: dbRecord.start_date,
+    endDate: dbRecord.end_date,
+    notes: dbRecord.notes ? String(dbRecord.notes) : undefined,
+    createdAt: dbRecord.created_at || new Date().toISOString(),
+    isArchived: dbRecord.is_archived || false,
   };
 };
 
@@ -284,7 +286,7 @@ export const getPlanningHistory = async (): Promise<PlanningData[]> => {
     return saved ? JSON.parse(saved) : [];
   }
 
-  return (data || []).map(planning => ({
+  return ((data as any) || []).map((planning: any) => ({
     id: planning.id,
     date: planning.date,
     location: planning.location as 'malmo' | 'staffanstorp',
@@ -318,7 +320,7 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
       date: planning.date,
       location: planning.location,
       cages: planning.cages,
-    }, {
+    } as any, {
       onConflict: 'date,location'
     })
     .select()
@@ -329,12 +331,13 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
     throw error;
   }
 
+  const dbPlanning = data as any;
   return {
-    id: data.id,
-    date: data.date,
-    location: data.location as 'malmo' | 'staffanstorp',
-    cages: data.cages as PlanningData['cages'],
-    createdAt: data.created_at || new Date().toISOString(),
+    id: dbPlanning.id,
+    date: dbPlanning.date,
+    location: dbPlanning.location as 'malmo' | 'staffanstorp',
+    cages: (Array.isArray(dbPlanning.cages) ? dbPlanning.cages : []) as PlanningData['cages'],
+    createdAt: dbPlanning.created_at || new Date().toISOString(),
   };
 };
 
@@ -366,12 +369,13 @@ export const getPlanningForDate = async (
     return null;
   }
 
+  const dbPlanning = data as any;
   return {
-    id: data.id,
-    date: data.date,
-    location: data.location as 'malmo' | 'staffanstorp',
-    cages: data.cages as PlanningData['cages'],
-    createdAt: data.created_at || new Date().toISOString(),
+    id: dbPlanning.id,
+    date: dbPlanning.date,
+    location: dbPlanning.location as 'malmo' | 'staffanstorp',
+    cages: (Array.isArray(dbPlanning.cages) ? dbPlanning.cages : []) as PlanningData['cages'],
+    createdAt: dbPlanning.created_at || new Date().toISOString(),
   };
 };
 

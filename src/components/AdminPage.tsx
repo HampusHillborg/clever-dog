@@ -101,7 +101,7 @@ const AdminPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
-  const [contracts, setContracts] = useState<ContractData[]>([]);
+  const [contracts] = useState<ContractData[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [editingDog, setEditingDog] = useState<Dog | null>(null);
   const [isDogModalOpen, setIsDogModalOpen] = useState(false);
@@ -419,32 +419,15 @@ const AdminPage: React.FC = () => {
     });
   };
 
-  const loadPlanningData = (location: 'malmo' | 'staffanstorp', date: string) => {
-    const savedData = planningHistory.find(p => p.location === location && p.date === date);
-    if (savedData) {
-      if (location === 'malmo') {
-        setPlanningMalmo(savedData.cages);
-      } else {
-        setPlanningStaffanstorp(savedData.cages);
-      }
-    } else {
-      // Initialize with empty cages if no saved data
-      const emptyCages = location === 'malmo' ? getInitialCages('malmo') : getInitialCages('staffanstorp');
-      if (location === 'malmo') {
-        setPlanningMalmo(emptyCages);
-      } else {
-        setPlanningStaffanstorp(emptyCages);
-      }
-    }
-  };
 
-  const getInitialCages = (location: 'malmo' | 'staffanstorp'): Cage[] => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const getInitialCages = (_location: 'malmo' | 'staffanstorp'): Cage[] => {
     const cages: Cage[] = [];
     
     // Add 8 cages
     for (let i = 1; i <= 8; i++) {
       cages.push({
-        id: `${location}-cage-${i}`,
+        id: `${_location}-cage-${i}`,
         name: `Bur ${i}`,
         type: 'cage',
         dogs: []
@@ -454,7 +437,7 @@ const AdminPage: React.FC = () => {
     // Add 2 free areas
     for (let i = 1; i <= 2; i++) {
       cages.push({
-        id: `${location}-free-${i}`,
+        id: `${_location}-free-${i}`,
         name: `Fri yta ${i}`,
         type: 'free-area',
         dogs: []
