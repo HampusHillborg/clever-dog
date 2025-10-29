@@ -527,7 +527,10 @@ const AdminPage: React.FC = () => {
       notes: dogForm.notes,
       color: editingDog?.color || randomColor,
       locations: dogForm.locations,
-      type: dogForm.type || undefined
+      // Only set type if it's not empty string
+      type: (dogForm.type && dogForm.type.trim() !== '') 
+        ? (dogForm.type as 'fulltime' | 'parttime-3' | 'parttime-2')
+        : undefined
     };
 
     // Save to database
@@ -783,7 +786,15 @@ const AdminPage: React.FC = () => {
 
   // Statistics calculation functions
   const calculateDogIncome = (dog: Dog, location: 'malmo' | 'staffanstorp'): number => {
-    if (!dog.locations.includes(location)) return 0;
+    // Safety checks
+    if (!dog || !dog.locations) return 0;
+    
+    // Ensure locations is an array
+    const locations = Array.isArray(dog.locations) ? dog.locations : [];
+    if (!locations.includes(location)) return 0;
+    
+    // Only calculate income if dog has a type
+    if (!dog.type) return 0;
     
     const prices = PRICES[location];
     switch (dog.type) {
@@ -819,44 +830,69 @@ const AdminPage: React.FC = () => {
   };
 
   const getStatistics = (): DogStatistics => {
-    let filteredDogs = dogs;
+    // Ensure we have valid dogs data
+    const validDogs = dogs.filter(dog => dog && dog.id);
+    
+    // Debug: Log dogs without types (both dev and prod for debugging)
+    const dogsWithoutTypes = validDogs.filter(dog => !dog.type);
+    if (dogsWithoutTypes.length > 0) {
+      console.log(`⚠️ ${dogsWithoutTypes.length} hundar saknar typ och räknas inte med i inkomsten:`, 
+        dogsWithoutTypes.map(d => d.name).join(', '));
+    }
+    
+    let filteredDogs = validDogs;
     
     // Filter dogs by location
     if (statisticsFilter.location === 'malmo') {
-      filteredDogs = dogs.filter(dog => dog.locations.includes('malmo'));
+      filteredDogs = validDogs.filter(dog => dog.locations && Array.isArray(dog.locations) && dog.locations.includes('malmo'));
     } else if (statisticsFilter.location === 'staffanstorp') {
-      filteredDogs = dogs.filter(dog => dog.locations.includes('staffanstorp'));
+      filteredDogs = validDogs.filter(dog => dog.locations && Array.isArray(dog.locations) && dog.locations.includes('staffanstorp'));
     }
     
-    const malmoDogs = dogs.filter(dog => dog.locations.includes('malmo'));
-    const staffanstorpDogs = dogs.filter(dog => dog.locations.includes('staffanstorp'));
-    const bothLocationDogs = dogs.filter(dog => dog.locations.includes('malmo') && dog.locations.includes('staffanstorp'));
+    const malmoDogs = validDogs.filter(dog => dog && dog.locations && Array.isArray(dog.locations) && dog.locations.includes('malmo'));
+    const staffanstorpDogs = validDogs.filter(dog => dog && dog.locations && Array.isArray(dog.locations) && dog.locations.includes('staffanstorp'));
+    const bothLocationDogs = validDogs.filter(dog => {
+      if (!dog || !dog.locations || !Array.isArray(dog.locations)) return false;
+      return dog.locations.includes('malmo') && dog.locations.includes('staffanstorp');
+    });
     
-    const malmoIncome = malmoDogs.reduce((sum, dog) => sum + calculateDogIncome(dog, 'malmo'), 0);
-    const staffanstorpIncome = staffanstorpDogs.reduce((sum, dog) => sum + calculateDogIncome(dog, 'staffanstorp'), 0);
+    const malmoIncome = malmoDogs.reduce((sum, dog) => {
+      const income = calculateDogIncome(dog, 'malmo');
+      return sum + income;
+    }, 0);
+    const staffanstorpIncome = staffanstorpDogs.reduce((sum, dog) => {
+      const income = calculateDogIncome(dog, 'staffanstorp');
+      return sum + income;
+    }, 0);
     
     const boardingMalmoIncome = calculateBoardingIncome('malmo', statisticsFilter);
     const boardingStaffanstorpIncome = calculateBoardingIncome('staffanstorp', statisticsFilter);
     
     const incomeByType = {
-      fulltime: filteredDogs.filter(dog => dog.type === 'fulltime').reduce((sum, dog) => {
-        let income = 0;
-        if (dog.locations.includes('malmo')) income += PRICES.malmo.fulltime;
-        if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.fulltime;
-        return sum + income;
-      }, 0),
-      parttime3: filteredDogs.filter(dog => dog.type === 'parttime-3').reduce((sum, dog) => {
-        let income = 0;
-        if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime3;
-        if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime3;
-        return sum + income;
-      }, 0),
-      parttime2: filteredDogs.filter(dog => dog.type === 'parttime-2').reduce((sum, dog) => {
-        let income = 0;
-        if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime2;
-        if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime2;
-        return sum + income;
-      }, 0)
+      fulltime: filteredDogs
+        .filter(dog => dog && dog.type === 'fulltime' && dog.locations && Array.isArray(dog.locations))
+        .reduce((sum, dog) => {
+          let income = 0;
+          if (dog.locations.includes('malmo')) income += PRICES.malmo.fulltime;
+          if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.fulltime;
+          return sum + income;
+        }, 0),
+      parttime3: filteredDogs
+        .filter(dog => dog && dog.type === 'parttime-3' && dog.locations && Array.isArray(dog.locations))
+        .reduce((sum, dog) => {
+          let income = 0;
+          if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime3;
+          if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime3;
+          return sum + income;
+        }, 0),
+      parttime2: filteredDogs
+        .filter(dog => dog && dog.type === 'parttime-2' && dog.locations && Array.isArray(dog.locations))
+        .reduce((sum, dog) => {
+          let income = 0;
+          if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime2;
+          if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime2;
+          return sum + income;
+        }, 0)
     };
     
     return {
@@ -2456,6 +2492,15 @@ const AdminPage: React.FC = () => {
             <div className="text-3xl font-bold text-green-600 mb-2">
               {stats.totalIncome.toLocaleString()} SEK
             </div>
+            {/* Warning if dogs are missing type */}
+            {dogs.some(dog => !dog.type) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-yellow-800">
+                  <strong>OBS:</strong> Vissa hundar saknar typ (heltid/deltid). 
+                  Dessa räknas inte med i inkomsten. Redigera hundarna och lägg till typ för korrekt beräkning.
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <p className="text-sm text-gray-600">Malmö</p>

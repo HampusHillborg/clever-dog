@@ -79,18 +79,42 @@ export const getDogs = async (): Promise<Dog[]> => {
   }
 
   // Transform database format to app format
-  return ((data as any) || []).map((dog: any) => ({
-    id: dog.id,
-    name: dog.name,
-    breed: dog.breed,
-    age: dog.age,
-    owner: dog.owner,
-    phone: dog.phone,
-    notes: dog.notes ? String(dog.notes) : undefined,
-    color: dog.color,
-    locations: (Array.isArray(dog.locations) ? dog.locations : []) as ('malmo' | 'staffanstorp')[],
-    type: (dog.type as 'fulltime' | 'parttime-3' | 'parttime-2') || undefined,
-  }));
+  return ((data as any) || []).map((dog: any) => {
+    // Ensure locations is always an array
+    let locations: ('malmo' | 'staffanstorp')[] = [];
+    if (Array.isArray(dog.locations)) {
+      locations = dog.locations;
+    } else if (dog.locations && typeof dog.locations === 'string') {
+      // Handle case where locations might be a string (shouldn't happen but safety)
+      try {
+        locations = JSON.parse(dog.locations);
+      } catch {
+        locations = [dog.locations as 'malmo' | 'staffanstorp'];
+      }
+    }
+    
+    // Ensure type is properly converted (null -> undefined, empty string -> undefined)
+    let type: 'fulltime' | 'parttime-3' | 'parttime-2' | undefined = undefined;
+    if (dog.type && typeof dog.type === 'string' && dog.type.trim() !== '') {
+      const typeValue = dog.type.trim();
+      if (typeValue === 'fulltime' || typeValue === 'parttime-3' || typeValue === 'parttime-2') {
+        type = typeValue as 'fulltime' | 'parttime-3' | 'parttime-2';
+      }
+    }
+    
+    return {
+      id: dog.id,
+      name: dog.name || '',
+      breed: dog.breed || '',
+      age: dog.age || '',
+      owner: dog.owner || '',
+      phone: dog.phone || '',
+      notes: dog.notes ? String(dog.notes) : undefined,
+      color: dog.color || 'bg-gray-100 text-gray-800',
+      locations: locations,
+      type: type,
+    };
+  });
 };
 
 export const saveDog = async (dog: Dog): Promise<Dog> => {
@@ -149,17 +173,39 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
   }
 
   const dbDog = data as any;
+  
+  // Ensure locations is always an array
+  let locations: ('malmo' | 'staffanstorp')[] = [];
+  if (Array.isArray(dbDog.locations)) {
+    locations = dbDog.locations;
+  } else if (dbDog.locations) {
+    try {
+      locations = JSON.parse(dbDog.locations);
+    } catch {
+      locations = [];
+    }
+  }
+  
+  // Ensure type is properly converted
+  let type: 'fulltime' | 'parttime-3' | 'parttime-2' | undefined = undefined;
+  if (dbDog.type && typeof dbDog.type === 'string' && dbDog.type.trim() !== '') {
+    const typeValue = dbDog.type.trim();
+    if (typeValue === 'fulltime' || typeValue === 'parttime-3' || typeValue === 'parttime-2') {
+      type = typeValue as 'fulltime' | 'parttime-3' | 'parttime-2';
+    }
+  }
+  
   const savedDog = {
     id: dbDog.id, // Use the UUID from database
-    name: dbDog.name,
-    breed: dbDog.breed,
-    age: dbDog.age,
-    owner: dbDog.owner,
-    phone: dbDog.phone,
+    name: dbDog.name || '',
+    breed: dbDog.breed || '',
+    age: dbDog.age || '',
+    owner: dbDog.owner || '',
+    phone: dbDog.phone || '',
     notes: dbDog.notes ? String(dbDog.notes) : undefined,
-    color: dbDog.color,
-    locations: (Array.isArray(dbDog.locations) ? dbDog.locations : []) as ('malmo' | 'staffanstorp')[],
-    type: (dbDog.type as 'fulltime' | 'parttime-3' | 'parttime-2') || undefined,
+    color: dbDog.color || 'bg-gray-100 text-gray-800',
+    locations: locations,
+    type: type,
   };
   
   // If the ID changed (old format to UUID), we need to update localStorage
