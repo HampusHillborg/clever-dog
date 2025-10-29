@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter } from 'react-icons/fa';
+import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
 
 interface ContractData {
@@ -60,28 +60,6 @@ interface PlanningData {
   createdAt: string;
 }
 
-interface StatisticsFilter {
-  location: 'all' | 'malmo' | 'staffanstorp';
-  period: 'all' | 'month' | 'year';
-  year?: number;
-  month?: number;
-}
-
-interface DogStatistics {
-  totalDogs: number;
-  malmoDogs: number;
-  staffanstorpDogs: number;
-  bothLocationDogs: number;
-  totalIncome: number;
-  malmoIncome: number;
-  staffanstorpIncome: number;
-  incomeByType: {
-    fulltime: number;
-    parttime3: number;
-    parttime2: number;
-  };
-}
-
 type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics';
 
 const AdminPage: React.FC = () => {
@@ -106,6 +84,12 @@ const AdminPage: React.FC = () => {
   const [editingBoardingRecord, setEditingBoardingRecord] = useState<BoardingRecord | null>(null);
   const [boardingFilter, setBoardingFilter] = useState<'all' | 'current' | 'archived' | 'future' | 'ongoing'>('all');
   const [boardingYearFilter, setBoardingYearFilter] = useState<string>(new Date().getFullYear().toString());
+  const [statisticsFilter, setStatisticsFilter] = useState({
+    location: 'all' as 'all' | 'malmo' | 'staffanstorp',
+    year: new Date().getFullYear().toString(),
+    month: 'all' as 'all' | string,
+    type: 'all' as 'all' | 'daycare' | 'boarding'
+  });
   const [dogForm, setDogForm] = useState({
     name: '',
     breed: '',
@@ -120,30 +104,6 @@ const AdminPage: React.FC = () => {
   const [planningMalmo, setPlanningMalmo] = useState<Cage[]>([]);
   const [planningHistory, setPlanningHistory] = useState<PlanningData[]>([]);
   const [currentPlanningDate, setCurrentPlanningDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [statisticsFilter, setStatisticsFilter] = useState<StatisticsFilter>({
-    location: 'all',
-    period: 'all',
-    year: new Date().getFullYear(),
-    month: new Date().getMonth() + 1
-  });
-
-  // Pricing constants based on location
-  const PRICES = {
-    malmo: {
-      fulltime: 3500,
-      parttime3: 3000,
-      parttime2: 2750,
-      singleDay: 350,
-      boarding: 400 // Same price as Staffanstorp
-    },
-    staffanstorp: {
-      fulltime: 3500,
-      parttime3: 3000,
-      parttime2: 2750,
-      singleDay: 350,
-      boarding: 400
-    }
-  };
   const [selectedDay, setSelectedDay] = useState<string>(() => {
     // Get current day of week (0 = Sunday, 1 = Monday, etc.)
     const today = new Date();
@@ -388,6 +348,109 @@ const AdminPage: React.FC = () => {
     return cages;
   };
 
+  // Pricing structure
+  const getPricing = (location: 'malmo' | 'staffanstorp') => {
+    if (location === 'malmo') {
+      return {
+        fulltime: 3500,
+        parttime3: 2800,
+        parttime2: 2000,
+        singleDay: 350,
+        boarding: 400
+      };
+    } else {
+      return {
+        fulltime: 3000,
+        parttime3: 2400,
+        parttime2: 1800,
+        singleDay: 300,
+        boarding: 350
+      };
+    }
+  };
+
+  // Calculate statistics
+  const calculateStatistics = () => {
+    const { location, year, month, type } = statisticsFilter;
+    
+    // Filter planning data
+    let filteredPlanning = planningHistory;
+    if (location !== 'all') {
+      filteredPlanning = filteredPlanning.filter(p => p.location === location);
+    }
+    if (year !== 'all') {
+      filteredPlanning = filteredPlanning.filter(p => new Date(p.date).getFullYear().toString() === year);
+    }
+    if (month !== 'all') {
+      filteredPlanning = filteredPlanning.filter(p => (new Date(p.date).getMonth() + 1).toString() === month);
+    }
+
+    // Filter boarding data
+    let filteredBoarding = boardingRecords;
+    if (location !== 'all') {
+      filteredBoarding = filteredBoarding.filter(r => r.location === location);
+    }
+    if (year !== 'all') {
+      filteredBoarding = filteredBoarding.filter(r => new Date(r.startDate).getFullYear().toString() === year);
+    }
+    if (month !== 'all') {
+      filteredBoarding = filteredBoarding.filter(r => (new Date(r.startDate).getMonth() + 1).toString() === month);
+    }
+
+    // Calculate daycare income
+    let daycareIncome = 0;
+    if (type === 'all' || type === 'daycare') {
+      filteredPlanning.forEach(planning => {
+        const pricing = getPricing(planning.location);
+        const dogsOnDay = planning.cages.flatMap(cage => cage.dogs || []);
+        
+        dogsOnDay.forEach(dogId => {
+          const dog = dogs.find(d => d.id === dogId);
+          if (dog) {
+            switch (dog.type) {
+              case 'fulltime':
+                daycareIncome += pricing.fulltime;
+                break;
+              case 'parttime-3':
+                daycareIncome += pricing.parttime3;
+                break;
+              case 'parttime-2':
+                daycareIncome += pricing.parttime2;
+                break;
+              default:
+                daycareIncome += pricing.singleDay;
+            }
+          }
+        });
+      });
+    }
+
+    // Calculate boarding income
+    let boardingIncome = 0;
+    if (type === 'all' || type === 'boarding') {
+      filteredBoarding.forEach(record => {
+        const pricing = getPricing(record.location);
+        const days = Math.ceil((new Date(record.endDate).getTime() - new Date(record.startDate).getTime()) / (1000 * 60 * 60 * 24));
+        boardingIncome += days * pricing.boarding;
+      });
+    }
+
+    return {
+      daycareIncome,
+      boardingIncome,
+      totalIncome: daycareIncome + boardingIncome,
+      daycareDays: filteredPlanning.length,
+      boardingDays: filteredBoarding.reduce((sum, record) => {
+        const days = Math.ceil((new Date(record.endDate).getTime() - new Date(record.startDate).getTime()) / (1000 * 60 * 60 * 24));
+        return sum + days;
+      }, 0),
+      uniqueDogs: new Set([
+        ...filteredPlanning.flatMap(p => p.cages.flatMap(c => c.dogs || [])),
+        ...filteredBoarding.map(r => r.dogId)
+      ]).size
+    };
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setContractData(prev => ({ ...prev, [name]: value }));
@@ -622,96 +685,6 @@ const AdminPage: React.FC = () => {
     ];
     const month = parseInt(monthKey.split('-')[1]) - 1;
     return monthNames[month];
-  };
-
-  // Statistics calculation functions
-  const calculateDogIncome = (dog: Dog, location: 'malmo' | 'staffanstorp'): number => {
-    if (!dog.locations.includes(location)) return 0;
-    
-    const prices = PRICES[location];
-    switch (dog.type) {
-      case 'fulltime':
-        return prices.fulltime;
-      case 'parttime-3':
-        return prices.parttime3;
-      case 'parttime-2':
-        return prices.parttime2;
-      default:
-        return 0;
-    }
-  };
-
-  const calculateBoardingIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
-    const prices = PRICES[location];
-    let filteredRecords = boardingRecords.filter(record => record.location === location);
-    
-    if (filter.period === 'year' && filter.year) {
-      filteredRecords = filteredRecords.filter(record => {
-        const recordYear = new Date(record.startDate).getFullYear();
-        return recordYear === filter.year;
-      });
-    } else if (filter.period === 'month' && filter.year && filter.month) {
-      filteredRecords = filteredRecords.filter(record => {
-        const recordDate = new Date(record.startDate);
-        return recordDate.getFullYear() === filter.year && 
-               recordDate.getMonth() + 1 === filter.month;
-      });
-    }
-    
-    return filteredRecords.length * prices.boarding;
-  };
-
-  const getStatistics = (): DogStatistics => {
-    let filteredDogs = dogs;
-    
-    // Filter dogs by location
-    if (statisticsFilter.location === 'malmo') {
-      filteredDogs = dogs.filter(dog => dog.locations.includes('malmo'));
-    } else if (statisticsFilter.location === 'staffanstorp') {
-      filteredDogs = dogs.filter(dog => dog.locations.includes('staffanstorp'));
-    }
-    
-    const malmoDogs = dogs.filter(dog => dog.locations.includes('malmo'));
-    const staffanstorpDogs = dogs.filter(dog => dog.locations.includes('staffanstorp'));
-    const bothLocationDogs = dogs.filter(dog => dog.locations.includes('malmo') && dog.locations.includes('staffanstorp'));
-    
-    const malmoIncome = malmoDogs.reduce((sum, dog) => sum + calculateDogIncome(dog, 'malmo'), 0);
-    const staffanstorpIncome = staffanstorpDogs.reduce((sum, dog) => sum + calculateDogIncome(dog, 'staffanstorp'), 0);
-    
-    const boardingMalmoIncome = calculateBoardingIncome('malmo', statisticsFilter);
-    const boardingStaffanstorpIncome = calculateBoardingIncome('staffanstorp', statisticsFilter);
-    
-    const incomeByType = {
-      fulltime: filteredDogs.filter(dog => dog.type === 'fulltime').reduce((sum, dog) => {
-        let income = 0;
-        if (dog.locations.includes('malmo')) income += PRICES.malmo.fulltime;
-        if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.fulltime;
-        return sum + income;
-      }, 0),
-      parttime3: filteredDogs.filter(dog => dog.type === 'parttime-3').reduce((sum, dog) => {
-        let income = 0;
-        if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime3;
-        if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime3;
-        return sum + income;
-      }, 0),
-      parttime2: filteredDogs.filter(dog => dog.type === 'parttime-2').reduce((sum, dog) => {
-        let income = 0;
-        if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime2;
-        if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime2;
-        return sum + income;
-      }, 0)
-    };
-    
-    return {
-      totalDogs: filteredDogs.length,
-      malmoDogs: malmoDogs.length,
-      staffanstorpDogs: staffanstorpDogs.length,
-      bothLocationDogs: bothLocationDogs.length,
-      totalIncome: malmoIncome + staffanstorpIncome + boardingMalmoIncome + boardingStaffanstorpIncome,
-      malmoIncome: malmoIncome + boardingMalmoIncome,
-      staffanstorpIncome: staffanstorpIncome + boardingStaffanstorpIncome,
-      incomeByType
-    };
   };
 
   const handleDrop = (cageId: string, location: 'staffanstorp' | 'malmo') => {
@@ -1348,12 +1321,30 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Hundpensionat */}
+        {/* Statistik */}
         <div>
           <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <FaDog className="mr-2 text-red-600" />
-            Hundpensionat
+            <FaFilePdf className="mr-2 text-orange-600" />
+            Statistik & Rapporter
           </h3>
+          <div className="grid grid-cols-1 gap-4">
+            <div 
+              onClick={() => setCurrentView('statistics')}
+              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 hover:scale-105"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4 mx-auto">
+                <FaFilePdf className="text-orange-600 text-2xl" />
+              </div>
+              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Statistik & Inkomst</h4>
+              <p className="text-center text-gray-600 text-sm">Inkomstanalys och statistik med filtrering</p>
+              <div className="mt-3 text-center">
+                <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                  Inkomstberäkning
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div 
               onClick={() => setCurrentView('boarding-malmo')}
@@ -1383,31 +1374,6 @@ const AdminPage: React.FC = () => {
               <div className="mt-3 text-center">
                 <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
                   {boardingRecords.filter(r => r.location === 'staffanstorp').length} registreringar
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Statistik & Analys */}
-        <div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <FaChartBar className="mr-2 text-emerald-600" />
-            Statistik & Analys
-          </h3>
-          <div className="grid grid-cols-1 gap-4">
-            <div 
-              onClick={() => setCurrentView('statistics')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4 mx-auto">
-                <FaChartBar className="text-emerald-600 text-2xl" />
-              </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Statistik & Inkomst</h4>
-              <p className="text-center text-gray-600 text-sm">Detaljerad statistik och inkomstanalys</p>
-              <div className="mt-3 text-center">
-                <span className="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
-                  Filtrerbar statistik
                 </span>
               </div>
             </div>
@@ -1443,6 +1409,7 @@ const AdminPage: React.FC = () => {
       </div>
     </div>
   );
+};
 
   const renderContracts = () => (
     <div className="space-y-6">
@@ -2137,19 +2104,299 @@ const AdminPage: React.FC = () => {
 
   const renderBoardingMalmo = () => renderBoarding('malmo');
   const renderBoardingStaffanstorp = () => renderBoarding('staffanstorp');
-
   const renderCalendarMalmo = () => renderCalendar('malmo');
   const renderCalendarStaffanstorp = () => renderCalendar('staffanstorp');
 
+  // Missing functions that are referenced in the code
+  const openDogModal = (dog?: Dog) => {
+    if (dog) {
+      setDogForm({
+        name: dog.name,
+        breed: dog.breed,
+        age: dog.age,
+        owner: dog.owner,
+        phone: dog.phone,
+        notes: dog.notes,
+        locations: dog.locations,
+        type: dog.type || 'fulltime'
+      });
+      setEditingDog(dog);
+    } else {
+      setDogForm({
+        name: '',
+        breed: '',
+        age: '',
+        owner: '',
+        phone: '',
+        notes: '',
+        locations: ['staffanstorp'],
+        type: 'fulltime'
+      });
+      setEditingDog(null);
+    }
+    setIsDogModalOpen(true);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUsername('');
+    setPassword('');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setContractData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const saveDog = () => {
+    if (!dogForm.name.trim() || !dogForm.breed.trim() || !dogForm.owner.trim() || dogForm.locations.length === 0) {
+      alert('Vänligen fyll i alla obligatoriska fält och välj minst en plats');
+      return;
+    }
+
+    const dogData: Dog = {
+      id: editingDog?.id || Date.now().toString(),
+      name: dogForm.name.trim(),
+      breed: dogForm.breed.trim(),
+      age: dogForm.age.trim(),
+      owner: dogForm.owner.trim(),
+      phone: dogForm.phone.trim(),
+      notes: dogForm.notes.trim(),
+      locations: dogForm.locations,
+      type: dogForm.type
+    };
+
+    if (editingDog) {
+      setDogs(prev => prev.map(dog => dog.id === editingDog.id ? dogData : dog));
+    } else {
+      setDogs(prev => [...prev, dogData]);
+    }
+
+    setIsDogModalOpen(false);
+    setDogForm({
+      name: '',
+      breed: '',
+      age: '',
+      owner: '',
+      phone: '',
+      notes: '',
+      locations: ['staffanstorp'],
+      type: 'fulltime'
+    });
+    setEditingDog(null);
+  };
+
+  const deleteDog = (id: string) => {
+    if (window.confirm('Är du säker på att du vill ta bort denna hund?')) {
+      setDogs(prev => prev.filter(dog => dog.id !== id));
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, dogId: string) => {
+    e.dataTransfer.setData('text/plain', dogId);
+  };
+
+  const handleDragEnd = () => {
+    // Clean up if needed
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleInfoClick = (e: React.MouseEvent, dogId: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const dog = dogs.find(d => d.id === dogId);
+    if (dog) {
+      openDogModal(dog);
+    }
+  };
+
+  const saveBoardingRecord = () => {
+    if (!selectedDogForBoarding || !boardingForm.startDate || !boardingForm.endDate) {
+      alert('Vänligen fyll i alla obligatoriska fält');
+      return;
+    }
+
+    const record: BoardingRecord = {
+      id: editingBoardingRecord?.id || Date.now().toString(),
+      dogId: selectedDogForBoarding.id,
+      dogName: selectedDogForBoarding.name,
+      location: (window as any).currentBoardingLocation,
+      startDate: boardingForm.startDate,
+      endDate: boardingForm.endDate,
+      notes: boardingForm.notes,
+      createdAt: editingBoardingRecord?.createdAt || new Date().toISOString(),
+      isArchived: false
+    };
+
+    if (editingBoardingRecord) {
+      setBoardingRecords(prev => prev.map(r => r.id === editingBoardingRecord.id ? record : r));
+    } else {
+      setBoardingRecords(prev => [...prev, record]);
+    }
+
+    setIsBoardingModalOpen(false);
+    setBoardingForm({
+      startDate: '',
+      endDate: '',
+      notes: ''
+    });
+    setSelectedDogForBoarding(null);
+    setEditingBoardingRecord(null);
+  };
+
+  const deleteBoardingRecord = (id: string) => {
+    if (window.confirm('Är du säker på att du vill ta bort denna pensionatsregistrering?')) {
+      setBoardingRecords(prev => prev.filter(r => r.id !== id));
+    }
+  };
+
+  const openBoardingModal = (_location: 'malmo' | 'staffanstorp', record?: BoardingRecord) => {
+    (window as any).currentBoardingLocation = _location;
+    
+    if (record) {
+      const dog = dogs.find(d => d.id === record.dogId);
+      setBoardingForm({
+        startDate: record.startDate,
+        endDate: record.endDate,
+        notes: record.notes
+      });
+      setSelectedDogForBoarding(dog || null);
+      setEditingBoardingRecord(record);
+    } else {
+      setBoardingForm({
+        startDate: '',
+        endDate: '',
+        notes: ''
+      });
+      setSelectedDogForBoarding(null);
+      setEditingBoardingRecord(null);
+    }
+    
+    setIsBoardingModalOpen(true);
+  };
+
+  const getBoardingRecordsByMonth = (records: BoardingRecord[], year: string) => {
+    return records.reduce((acc, record) => {
+      const recordYear = new Date(record.startDate).getFullYear().toString();
+      if (recordYear === year) {
+        const month = (new Date(record.startDate).getMonth() + 1).toString();
+        if (!acc[month]) {
+          acc[month] = [];
+        }
+        acc[month].push(record);
+      }
+      return acc;
+    }, {} as Record<string, BoardingRecord[]>);
+  };
+
+  const categorizeBoardingRecords = (records: BoardingRecord[]) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    return records.reduce((acc, record) => {
+      const startDate = new Date(record.startDate);
+      const endDate = new Date(record.endDate);
+      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+      if (startDateOnly <= today && endDateOnly >= today) {
+        acc.ongoing.push(record);
+      } else if (startDateOnly > today) {
+        acc.future.push(record);
+      } else {
+        acc.archived.push(record);
+      }
+      return acc;
+    }, { ongoing: [] as BoardingRecord[], future: [] as BoardingRecord[], archived: [] as BoardingRecord[] });
+  };
+
+  const getMonthName = (monthIndex: number) => {
+    const months = ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni', 'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'];
+    return months[monthIndex];
+  };
+
+  const handleDrop = (e: React.DragEvent, cageId: string, location: 'malmo' | 'staffanstorp') => {
+    e.preventDefault();
+    const dogId = e.dataTransfer.getData('text/plain');
+    
+    if (location === 'malmo') {
+      setPlanningMalmo(prev => prev.map(cage => {
+        if (cage.id === cageId) {
+          return {
+            ...cage,
+            dogs: [...(cage.dogs || []), dogId]
+          };
+        }
+        return cage;
+      }));
+    } else {
+      setPlanningStaffanstorp(prev => prev.map(cage => {
+        if (cage.id === cageId) {
+          return {
+            ...cage,
+            dogs: [...(cage.dogs || []), dogId]
+          };
+        }
+        return cage;
+      }));
+    }
+    
+    // Save planning data
+    savePlanningData(location);
+  };
+
+  const removeDogFromCage = (dogId: string, cageId: string, location: 'malmo' | 'staffanstorp') => {
+    if (location === 'malmo') {
+      setPlanningMalmo(prev => prev.map(cage => {
+        if (cage.id === cageId) {
+          return {
+            ...cage,
+            dogs: (cage.dogs || []).filter(id => id !== dogId)
+          };
+        }
+        return cage;
+      }));
+    } else {
+      setPlanningStaffanstorp(prev => prev.map(cage => {
+        if (cage.id === cageId) {
+          return {
+            ...cage,
+            dogs: (cage.dogs || []).filter(id => id !== dogId)
+          };
+        }
+        return cage;
+      }));
+    }
+    
+    // Save planning data
+    savePlanningData(location);
+  };
+
+  const resetCages = (location: 'malmo' | 'staffanstorp') => {
+    if (window.confirm(`Är du säker på att du vill återställa alla burar för ${location === 'malmo' ? 'Malmö' : 'Staffanstorp'}?`)) {
+      const emptyCages = getInitialCages(location);
+      if (location === 'malmo') {
+        setPlanningMalmo(emptyCages);
+      } else {
+        setPlanningStaffanstorp(emptyCages);
+      }
+      savePlanningData(location);
+    }
+  };
+
+  const generatePDF = () => {
+    // PDF generation logic would go here
+    alert('PDF-generering kommer snart!');
+  };
+
   const renderStatistics = () => {
-    const stats = getStatistics();
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
-    const months = [
-      { value: 1, name: 'Januari' }, { value: 2, name: 'Februari' }, { value: 3, name: 'Mars' },
-      { value: 4, name: 'April' }, { value: 5, name: 'Maj' }, { value: 6, name: 'Juni' },
-      { value: 7, name: 'Juli' }, { value: 8, name: 'Augusti' }, { value: 9, name: 'September' },
-      { value: 10, name: 'Oktober' }, { value: 11, name: 'November' }, { value: 12, name: 'December' }
+    const stats = calculateStatistics();
+    const monthNames = [
+      'Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
+      'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'
     ];
 
     return (
@@ -2158,219 +2405,187 @@ const AdminPage: React.FC = () => {
           <h2 className="text-xl font-bold text-gray-900">Statistik & Inkomst</h2>
         </div>
 
-        {/* Filter Controls */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <FaFilter className="mr-2 text-blue-500" />
-            Filtrera statistik
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Location Filter */}
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Filter</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Plats</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Plats</label>
               <select
                 value={statisticsFilter.location}
-                onChange={(e) => setStatisticsFilter(prev => ({ ...prev, location: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => setStatisticsFilter({ ...statisticsFilter, location: e.target.value as 'all' | 'malmo' | 'staffanstorp' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
                 <option value="all">Alla platser</option>
                 <option value="malmo">Malmö</option>
                 <option value="staffanstorp">Staffanstorp</option>
               </select>
             </div>
-
-            {/* Period Filter */}
+            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Period</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">År</label>
               <select
-                value={statisticsFilter.period}
-                onChange={(e) => setStatisticsFilter(prev => ({ ...prev, period: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={statisticsFilter.year}
+                onChange={(e) => setStatisticsFilter({ ...statisticsFilter, year: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option value="all">Alla perioder</option>
-                <option value="year">Per år</option>
-                <option value="month">Per månad</option>
+                {Array.from({ length: 5 }, (_, i) => {
+                  const year = new Date().getFullYear() - i;
+                  return (
+                    <option key={year} value={year.toString()}>
+                      {year}
+                    </option>
+                  );
+                })}
               </select>
             </div>
-
-            {/* Year Filter */}
-            {statisticsFilter.period !== 'all' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">År</label>
-                <select
-                  value={statisticsFilter.year || currentYear}
-                  onChange={(e) => setStatisticsFilter(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {years.map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {/* Month Filter */}
-            {statisticsFilter.period === 'month' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Månad</label>
-                <select
-                  value={statisticsFilter.month || 1}
-                  onChange={(e) => setStatisticsFilter(prev => ({ ...prev, month: parseInt(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {months.map(month => (
-                    <option key={month.value} value={month.value}>{month.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Dogs */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-            <div className="flex items-center">
-              <FaDog className="text-blue-500 text-2xl mr-3" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Totalt antal hundar</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalDogs}</p>
-              </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Månad</label>
+              <select
+                value={statisticsFilter.month}
+                onChange={(e) => setStatisticsFilter({ ...statisticsFilter, month: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="all">Alla månader</option>
+                {monthNames.map((month, index) => (
+                  <option key={index + 1} value={(index + 1).toString()}>
+                    {month}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
-
-          {/* Malmö Dogs */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-            <div className="flex items-center">
-              <FaDog className="text-green-500 text-2xl mr-3" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Malmö hundar</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.malmoDogs}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Staffanstorp Dogs */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
-            <div className="flex items-center">
-              <FaDog className="text-orange-500 text-2xl mr-3" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Staffanstorp hundar</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.staffanstorpDogs}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Both Locations */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
-            <div className="flex items-center">
-              <FaDog className="text-purple-500 text-2xl mr-3" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Båda platser</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.bothLocationDogs}</p>
-              </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Typ</label>
+              <select
+                value={statisticsFilter.type}
+                onChange={(e) => setStatisticsFilter({ ...statisticsFilter, type: e.target.value as 'all' | 'daycare' | 'boarding' })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="all">Alla typer</option>
+                <option value="daycare">Dagis</option>
+                <option value="boarding">Pensionat</option>
+              </select>
             </div>
           </div>
         </div>
 
         {/* Income Statistics */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Total Income */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <FaChartBar className="mr-2 text-green-500" />
-              Total inkomst
-            </h3>
-            <div className="text-3xl font-bold text-green-600 mb-2">
-              {stats.totalIncome.toLocaleString()} SEK
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-gray-600">Malmö</p>
-                <p className="text-lg font-semibold text-green-600">{stats.malmoIncome.toLocaleString()} SEK</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Dagisinkomst</p>
+                <p className="text-2xl font-bold text-green-600">{stats.daycareIncome.toLocaleString('sv-SE')} kr</p>
               </div>
-              <div className="text-center p-3 bg-orange-50 rounded-lg">
-                <p className="text-sm text-gray-600">Staffanstorp</p>
-                <p className="text-lg font-semibold text-orange-600">{stats.staffanstorpIncome.toLocaleString()} SEK</p>
+              <div className="bg-green-100 p-3 rounded-full">
+                <FaDog className="text-green-600 text-xl" />
               </div>
             </div>
           </div>
 
-          {/* Income by Type */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <FaChartBar className="mr-2 text-blue-500" />
-              Inkomst per typ
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">Heltid</span>
-                <span className="text-lg font-semibold text-blue-600">{stats.incomeByType.fulltime.toLocaleString()} SEK</span>
+          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pensionatsinkomst</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.boardingIncome.toLocaleString('sv-SE')} kr</p>
               </div>
-              <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">Deltid (3 dagar)</span>
-                <span className="text-lg font-semibold text-yellow-600">{stats.incomeByType.parttime3.toLocaleString()} SEK</span>
+              <div className="bg-blue-100 p-3 rounded-full">
+                <FaDog className="text-blue-600 text-xl" />
               </div>
-              <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">Deltid (2 dagar)</span>
-                <span className="text-lg font-semibold text-purple-600">{stats.incomeByType.parttime2.toLocaleString()} SEK</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total inkomst</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.totalIncome.toLocaleString('sv-SE')} kr</p>
+              </div>
+              <div className="bg-purple-100 p-3 rounded-full">
+                <FaFilePdf className="text-purple-600 text-xl" />
               </div>
             </div>
           </div>
         </div>
 
+        {/* Activity Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-orange-600 mb-2">{stats.daycareDays}</div>
+              <div className="text-sm text-gray-600">Planerade dagisdagar</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-indigo-600 mb-2">{stats.boardingDays}</div>
+              <div className="text-sm text-gray-600">Pensionatsdagar</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-teal-600 mb-2">{stats.uniqueDogs}</div>
+              <div className="text-sm text-gray-600">Unika hundar</div>
+            </div>
+          </div>
+        </div>
+
         {/* Pricing Information */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Prisinformation</h3>
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Prisstruktur</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Malmö priser</h4>
+              <h4 className="font-semibold text-blue-600 mb-3">Malmö</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Heltid:</span>
-                  <span className="font-semibold">{PRICES.malmo.fulltime} SEK/månad</span>
+                  <span className="font-semibold">3 500 kr/månad</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Deltid (3 dagar):</span>
-                  <span className="font-semibold">{PRICES.malmo.parttime3} SEK/månad</span>
+                  <span>Deltid 3 dagar:</span>
+                  <span className="font-semibold">2 800 kr/månad</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Deltid (2 dagar):</span>
-                  <span className="font-semibold">{PRICES.malmo.parttime2} SEK/månad</span>
+                  <span>Deltid 2 dagar:</span>
+                  <span className="font-semibold">2 000 kr/månad</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Enstaka dag:</span>
-                  <span className="font-semibold">{PRICES.malmo.singleDay} SEK</span>
+                  <span className="font-semibold">350 kr/dag</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Hundpensionat:</span>
-                  <span className="font-semibold">{PRICES.malmo.boarding} SEK/dygn</span>
+                  <span>Pensionat:</span>
+                  <span className="font-semibold">400 kr/dag</span>
                 </div>
               </div>
             </div>
+            
             <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Staffanstorp priser</h4>
+              <h4 className="font-semibold text-green-600 mb-3">Staffanstorp</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Heltid:</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.fulltime} SEK/månad</span>
+                  <span className="font-semibold">3 000 kr/månad</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Deltid (3 dagar):</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.parttime3} SEK/månad</span>
+                  <span>Deltid 3 dagar:</span>
+                  <span className="font-semibold">2 400 kr/månad</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Deltid (2 dagar):</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.parttime2} SEK/månad</span>
+                  <span>Deltid 2 dagar:</span>
+                  <span className="font-semibold">1 800 kr/månad</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Enstaka dag:</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.singleDay} SEK</span>
+                  <span className="font-semibold">300 kr/dag</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Hundpensionat:</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.boarding} SEK/dygn</span>
+                  <span>Pensionat:</span>
+                  <span className="font-semibold">350 kr/dag</span>
                 </div>
               </div>
             </div>
@@ -2845,7 +3060,7 @@ const AdminPage: React.FC = () => {
                  currentView === 'calendar-malmo' ? 'Kalender Malmö' :
                  currentView === 'calendar-staffanstorp' ? 'Kalender Staffanstorp' :
                  currentView === 'statistics' ? 'Statistik & Inkomst' :
-                 'Dashboard'}
+                 'Kalender Staffanstorp'}
               </h1>
         </div>
             <button

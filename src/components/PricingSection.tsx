@@ -22,7 +22,7 @@ interface PricingItem {
 const PricingSection: React.FC<PricingSectionProps> = ({ location }) => {
   const { t } = useTranslation();
 
-  // Updated pricing data - show all services for Staffanstorp, exclude boarding for Malmö
+  // Updated pricing data - show all services for both locations
   const pricingData: PricingItem[] = [
     {
       title: t('pricing.fullMonth'),
@@ -60,27 +60,18 @@ const PricingSection: React.FC<PricingSectionProps> = ({ location }) => {
     {
       title: t('pricing.boarding'),
       icon: <FaBed />,
-      price: '350',
+      price: '400',
       description: t('pricing.overnight'),
       details: t('pricing.boardingCheckIn', 'Incheckning pensionat: 10-12 och 15-17'),
       type: 'single',
-      holidayPrice: '700',
+      holidayPrice: '800',
       extraInfo: t('pricing.boardingExtraFee', 'Andra tider mot tillägg 200 kr per påbörjad timme')
     }
   ];
 
   // Filter by type for layout and location
   const monthlyPlans = pricingData.filter(item => item.type === 'monthly');
-  const singleServices = pricingData.filter(item => {
-    if (item.type === 'single') {
-      // For Malmö, exclude boarding service
-      if (location === 'malmo' && item.title === t('pricing.boarding')) {
-        return false;
-      }
-      return true;
-    }
-    return false;
-  });
+  const singleServices = pricingData.filter(item => item.type === 'single');
   
 
   return (

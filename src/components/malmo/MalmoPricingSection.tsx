@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaCalendarAlt, FaDog, FaCut } from 'react-icons/fa';
+import { FaCalendarAlt, FaDog, FaCut, FaBed } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 
 interface ServiceItem {
@@ -10,6 +10,9 @@ interface ServiceItem {
   price: string;
   period: string;
   note?: string;
+  holidayRate?: string;
+  holidayPrice?: string;
+  holidayDetails?: string;
 }
 
 const MalmoPricingSection: React.FC = () => {
@@ -70,8 +73,21 @@ const MalmoPricingSection: React.FC = () => {
       ],
       price: '150',
       period: t('pricing.perOccasion')
+    },
+    {
+      icon: FaBed,
+      title: t('pricing.boarding'),
+      details: [
+        t('pricing.overnight')
+      ],
+      price: '400',
+      period: t('pricing.per24h'),
+      holidayRate: t('pricing.holidayRate'),
+      holidayPrice: '800',
+      holidayDetails: t('pricing.holidayDescription')
     }
   ];
+
 
   const groomingServices: ServiceItem[] = [
     {
@@ -153,9 +169,9 @@ const MalmoPricingSection: React.FC = () => {
         </div>
 
         {/* Individual Services Section */}
-        <div className="max-w-4xl mx-auto mb-12">
+        <div className="max-w-6xl mx-auto mb-12">
           <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">{t('pricing.individualServices')}</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {individualServices.map((service, index) => (
               <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                 <div className="text-center mb-4">
@@ -172,6 +188,13 @@ const MalmoPricingSection: React.FC = () => {
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-500 mb-1">{service.price} SEK</div>
                   <div className="text-sm text-gray-500 mb-3">{service.period}</div>
+                  {service.holidayRate && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-sm text-gray-600 mb-1">{service.holidayRate}</p>
+                      <div className="text-xl font-bold text-green-500 mb-1">{service.holidayPrice} SEK</div>
+                      <p className="text-xs text-gray-500">{service.holidayDetails}</p>
+                    </div>
+                  )}
                   {service.note && (
                     <p className="text-xs text-gray-500 mt-2">{service.note}</p>
                   )}
