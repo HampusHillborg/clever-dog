@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebook } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebook, FaDog, FaCalendarAlt, FaCut, FaGraduationCap } from 'react-icons/fa';
 
 const MalmoAboutSection: React.FC = () => {
   const { t } = useTranslation();
@@ -33,101 +33,108 @@ const MalmoAboutSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Services and Contact Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Services */}
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center lg:text-left">
+          {/* Services and Contact Sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Services Section */}
+            <div className="flex flex-col h-full">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 {t('pricing.ourServices')}
               </h3>
-              <div className="space-y-4">
-                <div className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">🐕</span>
+              <div className="space-y-4 flex-grow">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                    <FaDog className="text-white text-xl" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-900 mb-1">{t('pricing.daycare')}</h4>
-                    <p className="text-sm text-orange-700">
-                      {t('locationSelector.malmo.services.daycare')}
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">{t('pricing.daycare')}</h4>
+                    <p className="text-sm text-gray-600">
+                      Professionell hundomsorg i modern miljö
                     </p>
                   </div>
                 </div>
-                <div className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">📅</span>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                    <FaCalendarAlt className="text-white text-xl" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-900 mb-1">{t('pricing.partTime')}</h4>
-                    <p className="text-sm text-orange-700">
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">{t('pricing.partTime')}</h4>
+                    <p className="text-sm text-gray-600">
                       {t('pricing.twoDaysWeek')} / {t('pricing.threeDaysWeek')}
                     </p>
                   </div>
                 </div>
-                <div className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">✂️</span>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                    <FaCut className="text-white text-xl" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-900 mb-1">{t('locationSelector.malmo.services.grooming')}</h4>
-                    <p className="text-sm text-orange-700">
-                      {t('locationSelector.malmo.services.grooming')}
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">{t('locationSelector.malmo.services.grooming')}</h4>
+                    <p className="text-sm text-gray-600">
+                      Kloklippning, bad och styling
                     </p>
                   </div>
                 </div>
-                <div className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">🎓</span>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                    <FaGraduationCap className="text-white text-xl" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-orange-900 mb-1">{t('locationSelector.malmo.services.training')}</h4>
-                    <p className="text-sm text-orange-700">
-                      {t('locationSelector.malmo.services.training')}
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">{t('locationSelector.malmo.services.training')}</h4>
+                    <p className="text-sm text-gray-600">
+                      Professionell hundträning med erfarna tränare
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Contact Info */}
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            {/* Contact Section */}
+            <div className="flex flex-col h-full">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 {t('contact.title')}
               </h3>
-              
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FaMapMarkerAlt className="text-white text-lg" />
+              <div className="space-y-4 flex-grow">
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                    <FaMapMarkerAlt className="text-white text-xl" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 text-lg">Address</p>
-                    <p className="text-gray-600 mb-1">Bellisgatan 13, Malmö 21232</p>
-                    <p className="text-orange-600 text-sm font-medium">Centralt läge i Malmö</p>
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">Address</h4>
+                    <p className="text-sm text-gray-600 mb-1">Bellisgatan 13</p>
+                    <p className="text-sm text-gray-600">Malmö 21232</p>
+                    <p className="text-orange-600 text-xs font-medium mt-2">Centralt läge</p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FaEnvelope className="text-white text-lg" />
+                <a 
+                  href="mailto:cleverdog.malmo@gmail.com"
+                  className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 flex items-start space-x-4 group"
+                >
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-110 transition-transform">
+                    <FaEnvelope className="text-white text-xl" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 text-lg">Email</p>
-                    <p className="text-gray-600">cleverdog.malmo@gmail.com</p>
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">Email</h4>
+                    <p className="text-sm text-gray-600 group-hover:text-orange-600 transition-colors break-all">
+                      cleverdog.malmo@gmail.com
+                    </p>
                   </div>
-                </div>
+                </a>
 
                 <a 
                   href="https://www.instagram.com/cleverdog_hunddagis" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-4 hover:bg-orange-100 rounded-lg p-2 -m-2 transition-colors"
+                  className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 flex items-start space-x-4 group"
                 >
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FaInstagram className="text-white text-lg" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-110 transition-transform">
+                    <FaInstagram className="text-white text-xl" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 text-lg">Instagram</p>
-                    <p className="text-gray-600">@cleverdog_hunddagis</p>
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">Instagram</h4>
+                    <p className="text-sm text-gray-600 group-hover:text-orange-600 transition-colors">
+                      @cleverdog_hunddagis
+                    </p>
                   </div>
                 </a>
 
@@ -135,14 +142,16 @@ const MalmoAboutSection: React.FC = () => {
                   href="https://www.facebook.com/people/CleverDog/61555454325558/" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-4 hover:bg-orange-100 rounded-lg p-2 -m-2 transition-colors"
+                  className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-all duration-300 flex items-start space-x-4 group"
                 >
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <FaFacebook className="text-white text-lg" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-110 transition-transform">
+                    <FaFacebook className="text-white text-xl" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 text-lg">Facebook</p>
-                    <p className="text-gray-600">Clever Dog</p>
+                    <h4 className="font-bold text-gray-900 mb-1 text-lg">Facebook</h4>
+                    <p className="text-sm text-gray-600 group-hover:text-orange-600 transition-colors">
+                      Clever Dog
+                    </p>
                   </div>
                 </a>
               </div>

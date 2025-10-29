@@ -16,18 +16,19 @@ const MalmoTeamSection: React.FC = () => {
       image: alicjaImage
     },
     {
-      name: 'Hampus H',
-      role: t('pricing.team.hampus.role'),
-      description: t('pricing.team.hampus.description'),
-      dog: t('pricing.team.hampus.dog'),
-      image: hampusImage
-    },
-    {
       name: 'Nicole S',
       role: t('pricing.team.nicole.role'),
       description: t('pricing.team.nicole.description'),
       dog: t('pricing.team.nicole.dog'),
       image: nicoleImage
+    }
+    ,
+    {
+      name: 'Hampus H',
+      role: t('pricing.team.hampus.role'),
+      description: t('pricing.team.hampus.description'),
+      dog: t('pricing.team.hampus.dog'),
+      image: hampusImage
     }
   ];
 
