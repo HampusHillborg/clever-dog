@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
+import { 
+  getDogs as fetchDogs, 
+  saveDog as saveDogToDb, 
+  deleteDog as deleteDogFromDb,
+  getBoardingRecords as fetchBoardingRecords,
+  saveBoardingRecord as saveBoardingRecordToDb,
+  deleteBoardingRecord as deleteBoardingRecordFromDb,
+  getPlanningHistory as fetchPlanningHistory,
+  savePlanningData as savePlanningDataToDb
+} from '../lib/database';
 
 interface ContractData {
   // Common fields
@@ -296,27 +306,74 @@ const AdminPage: React.FC = () => {
     localStorage.removeItem('adminAuthToken');
   };
 
-  // Load dogs from localStorage on mount
+  // Load dogs from database on mount
   useEffect(() => {
-    const savedDogs = localStorage.getItem('cleverDogs');
-    if (savedDogs) {
-      const parsedDogs = JSON.parse(savedDogs);
-      // Migrate old dogs to new locations format
-      const dogsWithLocations = parsedDogs.map((dog: any) => ({
-        ...dog,
-        locations: dog.locations || (dog.location ? [dog.location] : ['staffanstorp'])
-      }));
-      setDogs(dogsWithLocations);
-      localStorage.setItem('cleverDogs', JSON.stringify(dogsWithLocations));
-    }
+    const loadDogs = async () => {
+      try {
+        const loadedDogs = await fetchDogs();
+        // Migrate old dogs to new locations format (for localStorage fallback)
+        const dogsWithLocations = loadedDogs.map((dog: any) => ({
+          ...dog,
+          locations: dog.locations || (dog.location ? [dog.location] : ['staffanstorp'])
+        }));
+        setDogs(dogsWithLocations);
+        // Also update localStorage as backup
+        localStorage.setItem('cleverDogs', JSON.stringify(dogsWithLocations));
+      } catch (error) {
+        console.error('Error loading dogs:', error);
+        // Fallback to localStorage
+        const savedDogs = localStorage.getItem('cleverDogs');
+        if (savedDogs) {
+          const parsedDogs = JSON.parse(savedDogs);
+          const dogsWithLocations = parsedDogs.map((dog: any) => ({
+            ...dog,
+            locations: dog.locations || (dog.location ? [dog.location] : ['staffanstorp'])
+          }));
+          setDogs(dogsWithLocations);
+        }
+      }
+    };
+    loadDogs();
   }, []);
 
-  // Load planning history from localStorage on mount
+  // Load planning history from database on mount
   useEffect(() => {
-    const savedPlanningHistory = localStorage.getItem('cleverPlanningHistory');
-    if (savedPlanningHistory) {
-      setPlanningHistory(JSON.parse(savedPlanningHistory));
-    }
+    const loadPlanningHistory = async () => {
+      try {
+        const history = await fetchPlanningHistory();
+        setPlanningHistory(history);
+        // Also update localStorage as backup
+        localStorage.setItem('cleverPlanningHistory', JSON.stringify(history));
+      } catch (error) {
+        console.error('Error loading planning history:', error);
+        // Fallback to localStorage
+        const saved = localStorage.getItem('cleverPlanningHistory');
+        if (saved) {
+          setPlanningHistory(JSON.parse(saved));
+        }
+      }
+    };
+    loadPlanningHistory();
+  }, []);
+
+  // Load boarding records from database on mount
+  useEffect(() => {
+    const loadBoardingRecords = async () => {
+      try {
+        const records = await fetchBoardingRecords();
+        setBoardingRecords(records);
+        // Also update localStorage as backup
+        localStorage.setItem('cleverBoarding', JSON.stringify(records));
+      } catch (error) {
+        console.error('Error loading boarding records:', error);
+        // Fallback to localStorage
+        const saved = localStorage.getItem('cleverBoarding');
+        if (saved) {
+          setBoardingRecords(JSON.parse(saved));
+        }
+      }
+    };
+    loadBoardingRecords();
   }, []);
 
   const savePlanningData = (location: 'malmo' | 'staffanstorp', cages: Cage[]) => {
@@ -328,19 +385,38 @@ const AdminPage: React.FC = () => {
       createdAt: new Date().toISOString()
     };
 
-    const existingIndex = planningHistory.findIndex(p => p.id === planningData.id);
-    let updatedHistory;
-    
-    if (existingIndex >= 0) {
-      updatedHistory = planningHistory.map((p, index) => 
-        index === existingIndex ? planningData : p
-      );
-    } else {
-      updatedHistory = [...planningHistory, planningData];
-    }
+    // Save to database
+    savePlanningDataToDb(planningData).then((savedPlanning) => {
+      const existingIndex = planningHistory.findIndex(p => p.id === savedPlanning.id);
+      let updatedHistory;
+      
+      if (existingIndex >= 0) {
+        updatedHistory = planningHistory.map((p, index) => 
+          index === existingIndex ? savedPlanning : p
+        );
+      } else {
+        updatedHistory = [...planningHistory, savedPlanning];
+      }
 
-    setPlanningHistory(updatedHistory);
-    localStorage.setItem('cleverPlanningHistory', JSON.stringify(updatedHistory));
+      setPlanningHistory(updatedHistory);
+      localStorage.setItem('cleverPlanningHistory', JSON.stringify(updatedHistory));
+    }).catch((error) => {
+      console.error('Error saving planning data:', error);
+      // Fallback to localStorage
+      const existingIndex = planningHistory.findIndex(p => p.id === planningData.id);
+      let updatedHistory;
+      
+      if (existingIndex >= 0) {
+        updatedHistory = planningHistory.map((p, index) => 
+          index === existingIndex ? planningData : p
+        );
+      } else {
+        updatedHistory = [...planningHistory, planningData];
+      }
+
+      setPlanningHistory(updatedHistory);
+      localStorage.setItem('cleverPlanningHistory', JSON.stringify(updatedHistory));
+    });
   };
 
   const loadPlanningData = (location: 'malmo' | 'staffanstorp', date: string) => {
@@ -416,25 +492,48 @@ const AdminPage: React.FC = () => {
       type: dogForm.type || undefined
     };
 
-    let updatedDogs;
-    if (editingDog) {
-      updatedDogs = dogs.map(d => d.id === editingDog.id ? newDog : d);
-    } else {
-      updatedDogs = [...dogs, newDog];
-    }
-
-    setDogs(updatedDogs);
-    localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
+    // Save to database
+    saveDogToDb(newDog).then((savedDog) => {
+      // Update local state
+      let updatedDogs;
+      if (editingDog) {
+        updatedDogs = dogs.map(d => d.id === editingDog.id ? savedDog : d);
+      } else {
+        updatedDogs = [...dogs, savedDog];
+      }
+      setDogs(updatedDogs);
+      localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
+    }).catch((error) => {
+      console.error('Error saving dog:', error);
+      // Fallback to localStorage
+      let updatedDogs;
+      if (editingDog) {
+        updatedDogs = dogs.map(d => d.id === editingDog.id ? newDog : d);
+      } else {
+        updatedDogs = [...dogs, newDog];
+      }
+      setDogs(updatedDogs);
+      localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
+    });
     setIsDogModalOpen(false);
     setEditingDog(null);
     setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', notes: '', locations: ['staffanstorp'], type: '' });
   };
 
-  const deleteDog = (id: string) => {
+  const deleteDog = async (id: string) => {
     if (confirm('Är du säker på att du vill ta bort denna hund?')) {
-      const updatedDogs = dogs.filter(d => d.id !== id);
-      setDogs(updatedDogs);
-      localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
+      try {
+        await deleteDogFromDb(id);
+        const updatedDogs = dogs.filter(d => d.id !== id);
+        setDogs(updatedDogs);
+        localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
+      } catch (error) {
+        console.error('Error deleting dog:', error);
+        // Still update local state even if DB fails
+        const updatedDogs = dogs.filter(d => d.id !== id);
+        setDogs(updatedDogs);
+        localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
+      }
     }
   };
 
@@ -491,41 +590,44 @@ const AdminPage: React.FC = () => {
       return;
     }
 
-    if (editingBoardingRecord) {
-      // Update existing record
-      const updatedRecords = boardingRecords.map(record => 
-        record.id === editingBoardingRecord.id 
-          ? {
-              ...record,
-              dogId: selectedDogForBoarding,
-              dogName: selectedDog.name,
-              location: location,
-              startDate: boardingForm.startDate,
-              endDate: boardingForm.endDate,
-              notes: boardingForm.notes || undefined
-            }
-          : record
-      );
-      setBoardingRecords(updatedRecords);
-      localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
-    } else {
-      // Create new record
-      const newRecord: BoardingRecord = {
-        id: `${Date.now()}`,
-        dogId: selectedDogForBoarding,
-        dogName: selectedDog.name,
-        location: location,
-        startDate: boardingForm.startDate,
-        endDate: boardingForm.endDate,
-        notes: boardingForm.notes || undefined,
-        createdAt: new Date().toISOString(),
-        isArchived: false
-      };
+    const recordToSave: BoardingRecord = editingBoardingRecord
+      ? {
+          ...editingBoardingRecord,
+          dogId: selectedDogForBoarding,
+          dogName: selectedDog.name,
+          location: location,
+          startDate: boardingForm.startDate,
+          endDate: boardingForm.endDate,
+          notes: boardingForm.notes || undefined
+        }
+      : {
+          id: `${Date.now()}`,
+          dogId: selectedDogForBoarding,
+          dogName: selectedDog.name,
+          location: location,
+          startDate: boardingForm.startDate,
+          endDate: boardingForm.endDate,
+          notes: boardingForm.notes || undefined,
+          createdAt: new Date().toISOString(),
+          isArchived: false
+        };
 
-      const updatedRecords = [...boardingRecords, newRecord];
+    // Save to database
+    saveBoardingRecordToDb(recordToSave).then((savedRecord) => {
+      const updatedRecords = editingBoardingRecord
+        ? boardingRecords.map(r => r.id === editingBoardingRecord.id ? savedRecord : r)
+        : [...boardingRecords, savedRecord];
       setBoardingRecords(updatedRecords);
       localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
-    }
+    }).catch((error) => {
+      console.error('Error saving boarding record:', error);
+      // Fallback to localStorage
+      const updatedRecords = editingBoardingRecord
+        ? boardingRecords.map(r => r.id === editingBoardingRecord.id ? recordToSave : r)
+        : [...boardingRecords, recordToSave];
+      setBoardingRecords(updatedRecords);
+      localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
+    });
     
     setIsBoardingModalOpen(false);
     setBoardingForm({ startDate: '', endDate: '', notes: '' });
@@ -533,11 +635,20 @@ const AdminPage: React.FC = () => {
     setEditingBoardingRecord(null);
   };
 
-  const deleteBoardingRecord = (id: string) => {
+  const deleteBoardingRecord = async (id: string) => {
     if (confirm('Är du säker på att du vill ta bort denna registrering?')) {
-      const updatedRecords = boardingRecords.filter(r => r.id !== id);
-      setBoardingRecords(updatedRecords);
-      localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
+      try {
+        await deleteBoardingRecordFromDb(id);
+        const updatedRecords = boardingRecords.filter(r => r.id !== id);
+        setBoardingRecords(updatedRecords);
+        localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
+      } catch (error) {
+        console.error('Error deleting boarding record:', error);
+        // Still update local state
+        const updatedRecords = boardingRecords.filter(r => r.id !== id);
+        setBoardingRecords(updatedRecords);
+        localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
+      }
     }
   };
 
@@ -564,20 +675,28 @@ const AdminPage: React.FC = () => {
   // Auto-archive records whenever boardingRecords changes
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
-    const needsUpdate = boardingRecords.some(record => 
+    const recordsToArchive = boardingRecords.filter(record => 
       record.endDate < today && !record.isArchived
     );
     
-    if (needsUpdate) {
-      const updatedRecords = boardingRecords.map(record => {
-        if (record.endDate < today && !record.isArchived) {
-          return { ...record, isArchived: true };
-        }
-        return record;
+    if (recordsToArchive.length > 0) {
+      // Archive all records that need archiving
+      Promise.all(
+        recordsToArchive.map(record => {
+          const archivedRecord = { ...record, isArchived: true };
+          return saveBoardingRecordToDb(archivedRecord).catch((error) => {
+            console.error('Error archiving record:', error);
+            return archivedRecord; // Return the local copy if DB save fails
+          });
+        })
+      ).then((archivedRecords) => {
+        const updatedRecords = boardingRecords.map(record => {
+          const archived = archivedRecords.find(ar => ar.id === record.id);
+          return archived || record;
+        });
+        setBoardingRecords(updatedRecords);
+        localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
       });
-      
-      setBoardingRecords(updatedRecords);
-      localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
     }
   }, [boardingRecords]);
 
