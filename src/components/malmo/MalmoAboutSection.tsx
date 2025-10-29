@@ -34,9 +34,9 @@ const MalmoAboutSection: React.FC = () => {
           </div>
 
           {/* Services and Contact Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
             {/* Services Section */}
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 {t('pricing.ourServices')}
               </h3>
@@ -89,7 +89,7 @@ const MalmoAboutSection: React.FC = () => {
             </div>
 
             {/* Contact Section */}
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 {t('contact.title')}
               </h3>
