@@ -34,13 +34,13 @@ const MalmoAboutSection: React.FC = () => {
           </div>
 
           {/* Services and Contact Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12" style={{ gridAutoRows: '1fr' }}>
             {/* Services Section */}
-            <div className="flex flex-col">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+            <div className="flex flex-col h-full">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6 flex-shrink-0">
                 {t('pricing.ourServices')}
               </h3>
-              <div className="space-y-4 flex-grow">
+              <div className="space-y-4 flex-grow min-h-0">
                 <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start space-x-4">
                   <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
                     <FaDog className="text-white text-xl" />
@@ -89,11 +89,11 @@ const MalmoAboutSection: React.FC = () => {
             </div>
 
             {/* Contact Section */}
-            <div className="flex flex-col">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+            <div className="flex flex-col h-full">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6 flex-shrink-0">
                 {t('contact.title')}
               </h3>
-              <div className="space-y-4 flex-grow">
+              <div className="space-y-4 flex-grow min-h-0">
                 <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start space-x-4">
                   <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
                     <FaMapMarkerAlt className="text-white text-xl" />
@@ -102,7 +102,6 @@ const MalmoAboutSection: React.FC = () => {
                     <h4 className="font-bold text-gray-900 mb-1 text-lg">Address</h4>
                     <p className="text-sm text-gray-600 mb-1">Bellisgatan 13</p>
                     <p className="text-sm text-gray-600">Malmö 21232</p>
-                    <p className="text-orange-600 text-xs font-medium mt-2">Centralt läge</p>
                   </div>
                 </div>
 
