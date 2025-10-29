@@ -42,6 +42,19 @@ export type PlanningData = {
 // Helper to check if Supabase is available, otherwise fallback to localStorage
 const isSupabaseAvailable = () => supabase !== null;
 
+// Generate UUID v4
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for older browsers
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 // ============================================================================
 // DOGS CRUD OPERATIONS
 // ============================================================================
@@ -96,10 +109,25 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     return dog;
   }
 
+  // Convert ID to UUID format if needed (handle both UUID and timestamp strings)
+  let dogId = dog.id;
+  // If ID doesn't look like a UUID, generate a new one (only for new dogs)
+  if (!dog.id || !dog.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    // Check if this is an existing dog (has an ID that's not a UUID format)
+    // For new dogs, generate UUID. For existing dogs with non-UUID IDs, we need to handle migration
+    if (dog.id && dog.id.length > 0) {
+      // This is an existing dog with old ID format - keep it but Supabase will auto-generate UUID on insert
+      // We'll need to update the ID after insert
+      dogId = generateUUID();
+    } else {
+      dogId = generateUUID();
+    }
+  }
+
   const { data, error } = await supabase!
     .from('dogs')
     .upsert({
-      id: dog.id,
+      id: dogId,
       name: dog.name,
       breed: dog.breed,
       age: dog.age,
@@ -121,8 +149,8 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
   }
 
   const dbDog = data as any;
-  return {
-    id: dbDog.id,
+  const savedDog = {
+    id: dbDog.id, // Use the UUID from database
     name: dbDog.name,
     breed: dbDog.breed,
     age: dbDog.age,
@@ -133,6 +161,19 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     locations: (Array.isArray(dbDog.locations) ? dbDog.locations : []) as ('malmo' | 'staffanstorp')[],
     type: (dbDog.type as 'fulltime' | 'parttime-3' | 'parttime-2') || undefined,
   };
+  
+  // If the ID changed (old format to UUID), we need to update localStorage
+  if (dog.id !== savedDog.id && isSupabaseAvailable()) {
+    // Update any references in localStorage
+    const saved = localStorage.getItem('cleverDogs');
+    if (saved) {
+      const dogs: Dog[] = JSON.parse(saved);
+      const updatedDogs = dogs.map(d => d.id === dog.id ? savedDog : d);
+      localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
+    }
+  }
+  
+  return savedDog;
 };
 
 export const deleteDog = async (dogId: string): Promise<void> => {
@@ -207,10 +248,16 @@ export const saveBoardingRecord = async (record: BoardingRecord): Promise<Boardi
     return record;
   }
 
+  // Convert ID to UUID format if needed
+  let recordId = record.id;
+  if (!record.id || !record.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    recordId = generateUUID();
+  }
+
   const { data, error } = await supabase!
     .from('boarding_records')
     .upsert({
-      id: record.id,
+      id: recordId,
       dog_id: record.dogId,
       dog_name: record.dogName,
       location: record.location,
@@ -313,10 +360,17 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
     return planning;
   }
 
+  // Convert ID to UUID format if needed (planning IDs are often in format "location-date")
+  // For planning, we'll generate UUID but also use date+location as unique constraint
+  let planningId = planning.id;
+  if (!planning.id || !planning.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    planningId = generateUUID();
+  }
+
   const { data, error } = await supabase!
     .from('planning_history')
     .upsert({
-      id: planning.id,
+      id: planningId,
       date: planning.date,
       location: planning.location,
       cages: planning.cages,

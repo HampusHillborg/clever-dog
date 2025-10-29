@@ -9,7 +9,8 @@ import {
   saveBoardingRecord as saveBoardingRecordToDb,
   deleteBoardingRecord as deleteBoardingRecordFromDb,
   getPlanningHistory as fetchPlanningHistory,
-  savePlanningData as savePlanningDataToDb
+  savePlanningData as savePlanningDataToDb,
+  getPlanningForDate
 } from '../lib/database';
 
 interface ContractData {
@@ -160,6 +161,27 @@ const AdminPage: React.FC = () => {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     return days[today.getDay()];
   });
+
+  // Update currentPlanningDate when selectedDay changes
+  useEffect(() => {
+    const getDateForDayOfWeek = (dayName: string) => {
+      const today = new Date();
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const currentDay = today.getDay();
+      const targetDay = days.indexOf(dayName);
+      const diff = targetDay - currentDay;
+      
+      // If same week, use today or next occurrence
+      const targetDate = new Date(today);
+      targetDate.setDate(today.getDate() + diff);
+      
+      return targetDate.toISOString().split('T')[0];
+    };
+
+    // Update currentPlanningDate to match the selected day
+    const dateForDay = getDateForDayOfWeek(selectedDay);
+    setCurrentPlanningDate(dateForDay);
+  }, [selectedDay]);
   const [draggedDog, setDraggedDog] = useState<Dog | null>(null);
 
   // Function to create initial cages
@@ -181,30 +203,63 @@ const AdminPage: React.FC = () => {
     ];
   };
 
-  // Load planning when day changes
+  // Load planning when date changes (from database)
   useEffect(() => {
-    const loadPlanningForDay = (day: string) => {
-      // Load Staffanstorp
-      const staffanstorpKey = `planningStaffanstorp-${day}`;
-      const staffanstorpPlanning = localStorage.getItem(staffanstorpKey);
-      if (staffanstorpPlanning) {
-        setPlanningStaffanstorp(JSON.parse(staffanstorpPlanning));
-      } else {
-        setPlanningStaffanstorp(createInitialCages('staffanstorp'));
-      }
+    const loadPlanningForDate = async () => {
+      // Try to load from database first
+      try {
+        // Load Staffanstorp
+        const staffanstorpData = await getPlanningForDate(currentPlanningDate, 'staffanstorp');
+        if (staffanstorpData && staffanstorpData.cages) {
+          setPlanningStaffanstorp(staffanstorpData.cages);
+        } else {
+          // Fallback to localStorage or create initial
+          const staffanstorpKey = `planningStaffanstorp-${selectedDay}`;
+          const staffanstorpPlanning = localStorage.getItem(staffanstorpKey);
+          if (staffanstorpPlanning) {
+            setPlanningStaffanstorp(JSON.parse(staffanstorpPlanning));
+          } else {
+            setPlanningStaffanstorp(createInitialCages('staffanstorp'));
+          }
+        }
 
-      // Load Malmö
-      const malmoKey = `planningMalmo-${day}`;
-      const malmoPlanning = localStorage.getItem(malmoKey);
-      if (malmoPlanning) {
-        setPlanningMalmo(JSON.parse(malmoPlanning));
-      } else {
-        setPlanningMalmo(createInitialCages('malmo'));
+        // Load Malmö
+        const malmoData = await getPlanningForDate(currentPlanningDate, 'malmo');
+        if (malmoData && malmoData.cages) {
+          setPlanningMalmo(malmoData.cages);
+        } else {
+          // Fallback to localStorage or create initial
+          const malmoKey = `planningMalmo-${selectedDay}`;
+          const malmoPlanning = localStorage.getItem(malmoKey);
+          if (malmoPlanning) {
+            setPlanningMalmo(JSON.parse(malmoPlanning));
+          } else {
+            setPlanningMalmo(createInitialCages('malmo'));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading planning from database:', error);
+        // Fallback to localStorage
+        const staffanstorpKey = `planningStaffanstorp-${selectedDay}`;
+        const staffanstorpPlanning = localStorage.getItem(staffanstorpKey);
+        if (staffanstorpPlanning) {
+          setPlanningStaffanstorp(JSON.parse(staffanstorpPlanning));
+        } else {
+          setPlanningStaffanstorp(createInitialCages('staffanstorp'));
+        }
+
+        const malmoKey = `planningMalmo-${selectedDay}`;
+        const malmoPlanning = localStorage.getItem(malmoKey);
+        if (malmoPlanning) {
+          setPlanningMalmo(JSON.parse(malmoPlanning));
+        } else {
+          setPlanningMalmo(createInitialCages('malmo'));
+        }
       }
     };
 
-    loadPlanningForDay(selectedDay);
-  }, [selectedDay]);
+    loadPlanningForDate();
+  }, [currentPlanningDate, selectedDay]);
   const [contractData, setContractData] = useState<ContractData>({
     customerName: '',
     customerAddress: '',
@@ -1634,7 +1689,21 @@ const AdminPage: React.FC = () => {
               <label className="text-sm font-semibold text-gray-700">Välj veckodag:</label>
               <select
                 value={selectedDay}
-                onChange={(e) => setSelectedDay(e.target.value)}
+                onChange={(e) => {
+                  setSelectedDay(e.target.value);
+                  // Update date when day changes
+                  const getDateForDayOfWeek = (dayName: string) => {
+                    const today = new Date();
+                    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                    const currentDay = today.getDay();
+                    const targetDay = days.indexOf(dayName);
+                    const diff = targetDay - currentDay;
+                    const targetDate = new Date(today);
+                    targetDate.setDate(today.getDate() + diff);
+                    return targetDate.toISOString().split('T')[0];
+                  };
+                  setCurrentPlanningDate(getDateForDayOfWeek(e.target.value));
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value="monday">Måndag</option>
