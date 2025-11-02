@@ -45,7 +45,7 @@ interface Dog {
   notes?: string;
   color: string; // For visual distinction
   locations: ('malmo' | 'staffanstorp')[]; // Which daycares the dog belongs to (can be both)
-  type?: 'fulltime' | 'parttime-3' | 'parttime-2';
+  type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean; // Whether the dog is active (default: true)
 }
 
@@ -143,13 +143,15 @@ const AdminPage: React.FC = () => {
     phone: '',
     notes: '',
     locations: ['staffanstorp'] as ('malmo' | 'staffanstorp')[],
-    type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | '',
+    type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '',
     isActive: true
   });
   const [planningStaffanstorp, setPlanningStaffanstorp] = useState<Cage[]>([]);
   const [planningMalmo, setPlanningMalmo] = useState<Cage[]>([]);
   const [planningHistory, setPlanningHistory] = useState<PlanningData[]>([]);
   const [currentPlanningDate, setCurrentPlanningDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  // Search state for dog categories in planning view (location_category)
+  const [planningSearch, setPlanningSearch] = useState<Record<string, string>>({});
   const [statisticsFilter, setStatisticsFilter] = useState<StatisticsFilter>({
     location: 'all',
     period: 'all',
@@ -537,7 +539,7 @@ const AdminPage: React.FC = () => {
       locations: dogForm.locations,
       // Only set type if it's not empty string
       type: (dogForm.type && dogForm.type.trim() !== '') 
-        ? (dogForm.type as 'fulltime' | 'parttime-3' | 'parttime-2')
+        ? (dogForm.type as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding')
         : undefined,
       isActive: dogForm.isActive
     };
@@ -794,8 +796,30 @@ const AdminPage: React.FC = () => {
     return monthNames[month];
   };
 
+  // Helper function to find the last location a dog was planned at
+  const getLastPlannedLocation = (dogId: string): 'malmo' | 'staffanstorp' | null => {
+    // Find all planning entries where this dog appears
+    const dogPlanningEntries = planningHistory.filter(plan => 
+      plan.cages && plan.cages.some(cage => 
+        cage.dogs && Array.isArray(cage.dogs) && cage.dogs.includes(dogId)
+      )
+    );
+    
+    if (dogPlanningEntries.length === 0) return null;
+    
+    // Sort by date descending (most recent first)
+    dogPlanningEntries.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return dateB - dateA;
+    });
+    
+    // Return the location of the most recent planning
+    return dogPlanningEntries[0].location;
+  };
+
   // Statistics calculation functions
-  const calculateDogIncome = (dog: Dog, location: 'malmo' | 'staffanstorp'): number => {
+  const calculateDogIncome = (dog: Dog, location: 'malmo' | 'staffanstorp', assignLocationForBoth: boolean = false): number => {
     // Safety checks
     if (!dog || !dog.locations) return 0;
     
@@ -803,11 +827,28 @@ const AdminPage: React.FC = () => {
     const locations = Array.isArray(dog.locations) ? dog.locations : [];
     if (!locations.includes(location)) return 0;
     
-    // Only calculate income if dog has a type
-    if (!dog.type) return 0;
+    // Handle dogs with both locations - only count to the last planned location
+    if (assignLocationForBoth && locations.includes('malmo') && locations.includes('staffanstorp')) {
+      const lastLocation = getLastPlannedLocation(dog.id);
+      if (lastLocation === null) {
+        // If never planned, use first location in array as fallback
+        return location === locations[0] ? calculateDogIncomeForType(dog.type, location) : 0;
+      }
+      // Only count if this is the last planned location
+      if (lastLocation !== location) return 0;
+    }
     
+    // Only calculate income if dog has a type (excluding singleDay and boarding)
+    if (!dog.type || dog.type === 'singleDay' || dog.type === 'boarding') return 0;
+    
+    return calculateDogIncomeForType(dog.type, location);
+  };
+
+  // Helper function to calculate income for a specific dog type and location
+  const calculateDogIncomeForType = (type: string | undefined, location: 'malmo' | 'staffanstorp'): number => {
+    if (!type) return 0;
     const prices = PRICES[location];
-    switch (dog.type) {
+    switch (type) {
       case 'fulltime':
         return prices.fulltime;
       case 'parttime-3':
@@ -839,9 +880,13 @@ const AdminPage: React.FC = () => {
     return filteredRecords.length * prices.boarding;
   };
 
-  // Calculate single day income from planning history
-  const calculateSingleDayIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
+  // Calculate single day income from planning history - counts actual planned days per singleDay dog
+  const calculateSingleDayIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter, validDogsList: Dog[]): number => {
     if (!statisticsFilter.includeSingleDays) return 0;
+    
+    // Get all dogs with type 'singleDay'
+    const singleDayDogs = validDogsList.filter((dog: Dog) => dog.type === 'singleDay');
+    if (singleDayDogs.length === 0) return 0;
     
     let filteredPlanning = planningHistory.filter(p => p.location === location);
     
@@ -859,18 +904,21 @@ const AdminPage: React.FC = () => {
       });
     }
     
-    // Count unique days that have dogs assigned
-    let singleDayCount = 0;
-    filteredPlanning.forEach(plan => {
-      const hasDogs = plan.cages && plan.cages.some(cage => 
-        cage.dogs && Array.isArray(cage.dogs) && cage.dogs.length > 0
-      );
-      if (hasDogs) {
-        singleDayCount++;
-      }
+    // Count how many times each singleDay dog was planned in this location during the period
+    let totalSingleDayDays = 0;
+    singleDayDogs.forEach((dog: Dog) => {
+      filteredPlanning.forEach(plan => {
+        // Check if this dog was planned on this date
+        const wasPlanned = plan.cages && plan.cages.some(cage => 
+          cage.dogs && Array.isArray(cage.dogs) && cage.dogs.includes(dog.id)
+        );
+        if (wasPlanned) {
+          totalSingleDayDays++;
+        }
+      });
     });
     
-    return singleDayCount * PRICES[location].singleDay;
+    return totalSingleDayDays * PRICES[location].singleDay;
   };
 
   // Calculate boarding income with proper day count
@@ -958,12 +1006,13 @@ const AdminPage: React.FC = () => {
     });
     
     // Calculate daycare income (monthly subscriptions)
+    // For dogs with both locations, only count to the last planned location
     const malmoDaycareIncome = malmoDogs.reduce((sum, dog) => {
-      const income = calculateDogIncome(dog, 'malmo');
+      const income = calculateDogIncome(dog, 'malmo', true);
       return sum + income;
     }, 0);
     const staffanstorpDaycareIncome = staffanstorpDogs.reduce((sum, dog) => {
-      const income = calculateDogIncome(dog, 'staffanstorp');
+      const income = calculateDogIncome(dog, 'staffanstorp', true);
       return sum + income;
     }, 0);
     
@@ -972,8 +1021,8 @@ const AdminPage: React.FC = () => {
     const boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
     
     // Calculate single day income from planning history
-    const singleDayMalmoIncome = calculateSingleDayIncome('malmo', statisticsFilter);
-    const singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter);
+    const singleDayMalmoIncome = calculateSingleDayIncome('malmo', statisticsFilter, validDogs);
+    const singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter, validDogs);
     
     // Total income calculations
     const totalDaycareIncome = malmoDaycareIncome + staffanstorpDaycareIncome;
@@ -987,26 +1036,26 @@ const AdminPage: React.FC = () => {
       fulltime: filteredDogs
         .filter(dog => dog && dog.type === 'fulltime' && dog.locations && Array.isArray(dog.locations))
         .reduce((sum, dog) => {
-          let income = 0;
-          if (dog.locations.includes('malmo')) income += PRICES.malmo.fulltime;
-          if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.fulltime;
-          return sum + income;
+          // Use the same logic as calculateDogIncome for both locations
+          const malmoIncome = calculateDogIncome(dog, 'malmo', true);
+          const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
+          return sum + malmoIncome + staffanstorpIncome;
         }, 0),
       parttime3: filteredDogs
         .filter(dog => dog && dog.type === 'parttime-3' && dog.locations && Array.isArray(dog.locations))
         .reduce((sum, dog) => {
-          let income = 0;
-          if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime3;
-          if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime3;
-          return sum + income;
+          // Use the same logic as calculateDogIncome for both locations
+          const malmoIncome = calculateDogIncome(dog, 'malmo', true);
+          const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
+          return sum + malmoIncome + staffanstorpIncome;
         }, 0),
       parttime2: filteredDogs
         .filter(dog => dog && dog.type === 'parttime-2' && dog.locations && Array.isArray(dog.locations))
         .reduce((sum, dog) => {
-          let income = 0;
-          if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime2;
-          if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime2;
-          return sum + income;
+          // Use the same logic as calculateDogIncome for both locations
+          const malmoIncome = calculateDogIncome(dog, 'malmo', true);
+          const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
+          return sum + malmoIncome + staffanstorpIncome;
         }, 0),
       singleDay: totalSingleDayIncome,
       boarding: totalBoardingIncome
@@ -1881,6 +1930,123 @@ const AdminPage: React.FC = () => {
   };
 
 
+  // Helper function to filter dogs by search query
+  const filterBySearch = (dogsList: Dog[], searchQuery: string) => {
+    if (!searchQuery.trim()) return dogsList;
+    const query = searchQuery.toLowerCase();
+    return dogsList.filter(dog => 
+      dog.name.toLowerCase().includes(query) ||
+      dog.owner.toLowerCase().includes(query)
+    );
+  };
+
+  // Helper function to get search key
+  const getSearchKey = (location: string, category: string) => `${location}_${category}`;
+
+  // Helper function to get search value
+  const getSearchValue = (location: string, category: string) => {
+    return planningSearch[getSearchKey(location, category)] || '';
+  };
+
+  // Helper function to set search value
+  const setSearchValue = (location: string, category: string, value: string) => {
+    setPlanningSearch(prev => ({
+      ...prev,
+      [getSearchKey(location, category)]: value
+    }));
+  };
+
+  // Component to render a category of dogs with search
+  const renderDogCategory = (
+    title: string,
+    dogs: Dog[],
+    searchKey: string,
+    icon: string,
+    bgColor: string,
+    borderColor: string,
+    badgeColor: string
+  ) => {
+    const searchQuery = getSearchValue(searchKey.split('_')[0], searchKey.split('_')[1]);
+    const filteredDogs = filterBySearch(dogs, searchQuery);
+    
+    // Hide category if no dogs and no active search
+    if (dogs.length === 0 && !searchQuery.trim()) return null;
+
+    return (
+      <div className={`bg-gradient-to-br ${bgColor} rounded-xl shadow-lg p-5 border-2 ${borderColor}`}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{icon}</span>
+            <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+          </div>
+          <span className={`${badgeColor} text-sm font-semibold px-3 py-1 rounded-full`}>
+            {filteredDogs.length}
+          </span>
+        </div>
+        
+        {/* Search input */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder={`Sök ${title.toLowerCase()}...`}
+            value={getSearchValue(searchKey.split('_')[0], searchKey.split('_')[1])}
+            onChange={(e) => setSearchValue(searchKey.split('_')[0], searchKey.split('_')[1], e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+        </div>
+
+        {/* Dogs list */}
+        <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+          {filteredDogs.map(dog => (
+            <div
+              key={dog.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, dog)}
+              onDragEnd={handleDragEnd}
+              className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 ${dog.color} relative group border-2 border-transparent hover:border-primary`}
+              title="Dra för att flytta"
+            >
+              <button
+                onClick={(e) => handleInfoClick(e, dog)}
+                onMouseDown={(e) => e.stopPropagation()}
+                onDragStart={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                className="absolute top-3 right-3 text-gray-500 hover:text-primary z-30 transition-colors"
+                title="Visa info"
+              >
+                <FaInfoCircle className="text-lg" />
+              </button>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">🐕</span>
+                <div className="font-bold text-base">{dog.name}</div>
+              </div>
+              <div className="text-xs text-gray-600 mb-2">👤 {dog.owner}</div>
+              <div className="flex gap-1 mt-1">
+                {dog.locations.map(loc => (
+                  <span key={loc} className={`text-xs px-2 py-1 rounded ${loc === 'malmo' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'}`}>
+                    {loc === 'malmo' ? '📍 Malmö' : '📍 Staffanstorp'}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+          {filteredDogs.length === 0 && dogs.length > 0 && (
+            <div className="text-center py-4 text-gray-400 text-sm">
+              <p>Inga hundar matchar sökningen</p>
+            </div>
+          )}
+          {dogs.length === 0 && (
+            <div className="text-center py-4 text-gray-400 text-sm">
+              <p>Inga hundar i denna kategori</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderPlanning = (planning: Cage[], location: 'staffanstorp' | 'malmo') => {
     // Get dogs on active boarding for this date and location
     const getBoardingDogs = () => {
@@ -1912,8 +2078,27 @@ const AdminPage: React.FC = () => {
       );
     };
 
+    // Categorize available dogs (exclude boarding-only dogs from regular planning)
+    const categorizeDogs = (dogsList: Dog[]) => {
+      // Filter out boarding-only dogs from regular planning categories
+      const nonBoardingDogs = dogsList.filter(dog => dog.type !== 'boarding');
+      return {
+        fulltime: nonBoardingDogs.filter(dog => dog.type === 'fulltime'),
+        parttime3: nonBoardingDogs.filter(dog => dog.type === 'parttime-3'),
+        parttime2: nonBoardingDogs.filter(dog => dog.type === 'parttime-2'),
+        singleDay: nonBoardingDogs.filter(dog => dog.type === 'singleDay' || !dog.type)
+      };
+    };
+
     const boardingDogs = getBoardingDogs();
     const availableDogs = getAvailableDogs();
+    const categorizedDogs = categorizeDogs(availableDogs);
+    const searchKeyPrefix = location;
+
+    // Count planned dogs
+    const plannedDogsCount = planning.reduce((total, cage) => {
+      return total + (cage.dogs?.length || 0);
+    }, 0);
 
     // Format date for display
     const formatDateDisplay = (dateString: string) => {
@@ -2002,6 +2187,12 @@ const AdminPage: React.FC = () => {
                   </span>
                 )}
               </div>
+
+              {/* Planned Dogs Counter */}
+              <div className="flex items-center gap-2 bg-blue-50 border-2 border-blue-300 rounded-lg px-4 py-2">
+                <span className="text-sm font-semibold text-gray-700">Inplanerade hundar:</span>
+                <span className="text-xl font-bold text-blue-700">{plannedDogsCount}</span>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -2023,75 +2214,79 @@ const AdminPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Dogs Lists */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Available Dogs */}
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg p-5 border border-gray-200">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-xl font-bold text-gray-800">Tillgängliga hundar</h3>
-                <span className="bg-primary text-white text-sm font-semibold px-3 py-1 rounded-full">
-                  {availableDogs.length}
-                </span>
-              </div>
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                {availableDogs.map(dog => (
-                  <div
-                    key={dog.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, dog)}
-                    onDragEnd={handleDragEnd}
-                    className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 ${dog.color} relative group border-2 border-transparent hover:border-primary`}
-                    title="Dra för att flytta"
-                  >
-                    <button
-                      onClick={(e) => handleInfoClick(e, dog)}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      onDragStart={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                      }}
-                      className="absolute top-3 right-3 text-gray-500 hover:text-primary z-30 transition-colors"
-                      title="Visa info"
-                    >
-                      <FaInfoCircle className="text-lg" />
-                    </button>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl">🐕</span>
-                      <div className="font-bold text-base">{dog.name}</div>
-                    </div>
-                    <div className="text-xs text-gray-600 mb-2">👤 {dog.owner}</div>
-                    <div className="flex gap-1 mt-1">
-                      {dog.locations.map(loc => (
-                        <span key={loc} className={`text-xs px-2 py-1 rounded ${loc === 'malmo' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'}`}>
-                          {loc === 'malmo' ? '📍 Malmö' : '📍 Staffanstorp'}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {availableDogs.length === 0 && (
-                  <div className="text-center py-8 text-gray-400">
-                    <FaDog className="text-5xl mx-auto mb-2" />
-                    <p className="text-sm">Inga lediga hundar</p>
-                  </div>
-                )}
-              </div>
-            </div>
+          {/* Left Column: Dogs Lists - Categorized */}
+          <div className="lg:col-span-1 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto pr-2">
+            {/* Fulltime */}
+            {renderDogCategory(
+              'Heltid',
+              categorizedDogs.fulltime,
+              `${searchKeyPrefix}_fulltime`,
+              '🕐',
+              'from-blue-50 to-blue-100',
+              'border-blue-300',
+              'bg-blue-500 text-white'
+            )}
+
+            {/* Parttime 3 days */}
+            {renderDogCategory(
+              'Deltid 3 dagar',
+              categorizedDogs.parttime3,
+              `${searchKeyPrefix}_parttime3`,
+              '📅',
+              'from-yellow-50 to-yellow-100',
+              'border-yellow-300',
+              'bg-yellow-500 text-white'
+            )}
+
+            {/* Parttime 2 days */}
+            {renderDogCategory(
+              'Deltid 2 dagar',
+              categorizedDogs.parttime2,
+              `${searchKeyPrefix}_parttime2`,
+              '📆',
+              'from-purple-50 to-purple-100',
+              'border-purple-300',
+              'bg-purple-500 text-white'
+            )}
+
+            {/* Single Day */}
+            {renderDogCategory(
+              'Enstaka dag',
+              categorizedDogs.singleDay,
+              `${searchKeyPrefix}_singleDay`,
+              '📝',
+              'from-green-50 to-green-100',
+              'border-green-300',
+              'bg-green-500 text-white'
+            )}
 
             {/* Dogs on Active Boarding */}
             {boardingDogs.length > 0 && (
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg p-5 border-2 border-orange-300">
-                <div className="flex items-center justify-between mb-5">
+              <div className={`bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg p-5 border-2 border-orange-300`}>
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🏨</span>
-                    <h3 className="text-xl font-bold text-gray-800">Hundpensionat</h3>
+                    <h3 className="text-lg font-bold text-gray-800">Hundpensionat</h3>
                   </div>
                   <span className="bg-orange-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
-                    {boardingDogs.length}
+                    {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).length}
                   </span>
                 </div>
-                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                  {boardingDogs.map(dog => {
+                
+                {/* Search input */}
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    placeholder="Sök hundpensionat..."
+                    value={getSearchValue(location, 'boarding')}
+                    onChange={(e) => setSearchValue(location, 'boarding', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Dogs list */}
+                <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+                  {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).map(dog => {
                     const boardingRecord = boardingRecords.find(r => r.dogId === dog.id && r.location === location);
                     return (
                       <div
@@ -2134,6 +2329,11 @@ const AdminPage: React.FC = () => {
                       </div>
                     );
                   })}
+                  {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).length === 0 && boardingDogs.length > 0 && (
+                    <div className="text-center py-4 text-gray-400 text-sm">
+                      <p>Inga hundar matchar sökningen</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -2465,7 +2665,9 @@ const AdminPage: React.FC = () => {
                           <div className={`px-2 py-1 rounded text-xs font-semibold ${dog.color} inline-block mt-1`}>
                             {dog.type === 'fulltime' ? 'Heltid' :
                              dog.type === 'parttime-3' ? 'Deltid 3 dagar' :
-                             dog.type === 'parttime-2' ? 'Deltid 2 dagar' : 'Dagis'}
+                             dog.type === 'parttime-2' ? 'Deltid 2 dagar' :
+                             dog.type === 'singleDay' ? 'Enstaka dag' :
+                             dog.type === 'boarding' ? 'Hundpensionat' : 'Dagis'}
                           </div>
                         )}
                         <div className="text-xs text-gray-500 mt-1">
@@ -3118,7 +3320,9 @@ const AdminPage: React.FC = () => {
                     dog.type === 'fulltime' ? 'Heltid' :
                     dog.type === 'parttime-3' ? 'Deltid 3 dagar' :
                     dog.type === 'parttime-2' ? 'Deltid 2 dagar' :
-                    'Hundpensionat'
+                    dog.type === 'singleDay' ? 'Enstaka dag' :
+                    dog.type === 'boarding' ? 'Hundpensionat' :
+                    '-'
                   }</p>
                 )}
                 {dog.notes && (
@@ -3999,13 +4203,15 @@ const AdminPage: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Typ</label>
                 <select
                   value={dogForm.type}
-                  onChange={(e) => setDogForm({ ...dogForm, type: e.target.value as 'fulltime' | 'parttime-3' | 'parttime-2' | '' })}
+                  onChange={(e) => setDogForm({ ...dogForm, type: e.target.value as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
                   <option value="">Välj typ</option>
                   <option value="fulltime">Heltid</option>
                   <option value="parttime-3">Deltid 3 dagar</option>
                   <option value="parttime-2">Deltid 2 dagar</option>
+                  <option value="singleDay">Enstaka dag</option>
+                  <option value="boarding">Hundpensionat</option>
                 </select>
               </div>
               <div className="md:col-span-2">

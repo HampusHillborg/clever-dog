@@ -11,7 +11,7 @@ export type Dog = {
   notes?: string;
   color: string;
   locations: ('malmo' | 'staffanstorp')[];
-  type?: 'fulltime' | 'parttime-3' | 'parttime-2';
+  type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean;
 };
 
@@ -95,11 +95,11 @@ export const getDogs = async (): Promise<Dog[]> => {
     }
     
     // Ensure type is properly converted (null -> undefined, empty string -> undefined)
-    let type: 'fulltime' | 'parttime-3' | 'parttime-2' | undefined = undefined;
+    let type: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
     if (dog.type && typeof dog.type === 'string' && dog.type.trim() !== '') {
       const typeValue = dog.type.trim();
-      if (typeValue === 'fulltime' || typeValue === 'parttime-3' || typeValue === 'parttime-2') {
-        type = typeValue as 'fulltime' | 'parttime-3' | 'parttime-2';
+      if (typeValue === 'fulltime' || typeValue === 'parttime-3' || typeValue === 'parttime-2' || typeValue === 'singleDay' || typeValue === 'boarding') {
+        type = typeValue as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
       }
     }
     
@@ -190,11 +190,11 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
   }
   
   // Ensure type is properly converted
-  let type: 'fulltime' | 'parttime-3' | 'parttime-2' | undefined = undefined;
+  let type: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
   if (dbDog.type && typeof dbDog.type === 'string' && dbDog.type.trim() !== '') {
     const typeValue = dbDog.type.trim();
-    if (typeValue === 'fulltime' || typeValue === 'parttime-3' || typeValue === 'parttime-2') {
-      type = typeValue as 'fulltime' | 'parttime-3' | 'parttime-2';
+    if (typeValue === 'fulltime' || typeValue === 'parttime-3' || typeValue === 'parttime-2' || typeValue === 'singleDay' || typeValue === 'boarding') {
+      type = typeValue as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
     }
   }
   
