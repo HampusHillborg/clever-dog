@@ -490,3 +490,132 @@ export const getPlanningForDate = async (
   };
 };
 
+// ============================================================================
+// BOX SETTINGS CRUD OPERATIONS
+// ============================================================================
+
+export type BoxSettings = {
+  malmo: { cages: Array<{ name: string }>; freeAreas: Array<{ name: string }> };
+  staffanstorp: { cages: Array<{ name: string }>; freeAreas: Array<{ name: string }> };
+};
+
+export const getBoxSettings = async (): Promise<BoxSettings> => {
+  // Default settings
+  const defaultSettings: BoxSettings = {
+    malmo: {
+      cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
+      freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
+    },
+    staffanstorp: {
+      cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
+      freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
+    }
+  };
+
+  if (!isSupabaseAvailable()) {
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverBoxSettings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return defaultSettings;
+      }
+    }
+    return defaultSettings;
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('box_settings')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching box settings:', error);
+      // Fallback to localStorage
+      const saved = localStorage.getItem('cleverBoxSettings');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return defaultSettings;
+        }
+      }
+      return defaultSettings;
+    }
+
+    // Transform database format to app format
+    const settings: BoxSettings = { ...defaultSettings };
+    
+    if (data && Array.isArray(data)) {
+      data.forEach((row: any) => {
+        const location = row.location as 'malmo' | 'staffanstorp';
+        if (location === 'malmo' || location === 'staffanstorp') {
+          const rowSettings = row.settings;
+          if (rowSettings && typeof rowSettings === 'object') {
+            settings[location] = {
+              cages: Array.isArray(rowSettings.cages) ? rowSettings.cages : [],
+              freeAreas: Array.isArray(rowSettings.freeAreas) ? rowSettings.freeAreas : []
+            };
+          }
+        }
+      });
+    }
+
+    return settings;
+  } catch (error) {
+    console.error('Error parsing box settings:', error);
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverBoxSettings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return defaultSettings;
+      }
+    }
+    return defaultSettings;
+  }
+};
+
+export const saveBoxSettings = async (settings: BoxSettings): Promise<BoxSettings> => {
+  // Always save to localStorage as backup
+  localStorage.setItem('cleverBoxSettings', JSON.stringify(settings));
+
+  if (!isSupabaseAvailable()) {
+    return settings;
+  }
+
+  try {
+    // Save settings for both locations
+    const locations: Array<'malmo' | 'staffanstorp'> = ['malmo', 'staffanstorp'];
+    
+    for (const location of locations) {
+      const locationSettings = settings[location];
+      
+      const { error } = await supabase!
+        .from('box_settings')
+        .upsert({
+          location: location,
+          settings: {
+            cages: locationSettings.cages,
+            freeAreas: locationSettings.freeAreas
+          }
+        } as any, {
+          onConflict: 'location'
+        });
+
+      if (error) {
+        console.error(`Error saving box settings for ${location}:`, error);
+        // Continue with other location even if one fails
+      }
+    }
+
+    return settings;
+  } catch (error) {
+    console.error('Error saving box settings:', error);
+    // Settings already saved to localStorage, so return them
+    return settings;
+  }
+};
+

@@ -10,7 +10,10 @@ import {
   deleteBoardingRecord as deleteBoardingRecordFromDb,
   getPlanningHistory as fetchPlanningHistory,
   savePlanningData as savePlanningDataToDb,
-  getPlanningForDate
+  getPlanningForDate,
+  getBoxSettings as fetchBoxSettings,
+  saveBoxSettings as saveBoxSettingsToDb,
+  type BoxSettings
 } from '../lib/database';
 
 interface ContractData {
@@ -93,7 +96,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings';
 
 const AdminPage: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -162,6 +165,48 @@ const AdminPage: React.FC = () => {
     return days[today.getDay()];
   });
 
+  // Box settings state (per location)
+  const [boxSettings, setBoxSettings] = useState<BoxSettings>({
+    malmo: {
+      cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
+      freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
+    },
+    staffanstorp: {
+      cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
+      freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
+    }
+  });
+
+  // Load box settings from database on mount
+  useEffect(() => {
+    const loadBoxSettings = async () => {
+      try {
+        const settings = await fetchBoxSettings();
+        setBoxSettings(settings);
+      } catch (error) {
+        console.error('Error loading box settings:', error);
+        // Keep default settings
+      }
+    };
+    loadBoxSettings();
+  }, []);
+
+  // Save box settings to database and state
+  const saveBoxSettings = async (settings: BoxSettings) => {
+    setBoxSettings(settings);
+    try {
+      await saveBoxSettingsToDb(settings);
+    } catch (error) {
+      console.error('Error saving box settings:', error);
+      // Settings still saved to localStorage by saveBoxSettingsToDb
+    }
+  };
+
+  // Settings view state
+  const [settingsLocation, setSettingsLocation] = useState<'malmo' | 'staffanstorp'>('staffanstorp');
+  const [editingBoxIndex, setEditingBoxIndex] = useState<{ type: 'cage' | 'free-area'; index: number } | null>(null);
+  const [editingBoxName, setEditingBoxName] = useState('');
+
   // Update currentPlanningDate when selectedDay changes
   useEffect(() => {
     const getDateForDayOfWeek = (dayName: string) => {
@@ -184,19 +229,21 @@ const AdminPage: React.FC = () => {
   }, [selectedDay]);
   const [draggedDog, setDraggedDog] = useState<Dog | null>(null);
 
-  // Function to create initial cages
+  // Function to create initial cages based on box settings
   const createInitialCages = (location: 'staffanstorp' | 'malmo') => {
     const prefix = location === 'staffanstorp' ? 'staffanstorp' : 'malmo';
+    const settings = boxSettings[location];
+    
     return [
-      ...Array.from({ length: 8 }, (_, i) => ({
+      ...settings.cages.map((cage, i) => ({
         id: `${prefix}-cage-${i + 1}`,
-        name: `Bur ${i + 1}`,
+        name: cage.name,
         type: 'cage' as const,
         dogs: []
       })),
-      ...Array.from({ length: 2 }, (_, i) => ({
+      ...settings.freeAreas.map((area, i) => ({
         id: `${prefix}-free-${i + 1}`,
-        name: `Fri yta ${i + 1}`,
+        name: area.name,
         type: 'free-area' as const,
         dogs: []
       }))
@@ -955,24 +1002,6 @@ const AdminPage: React.FC = () => {
 
   const resetCages = () => {
     if (confirm('Är du säker på att du vill återställa alla burar för denna dag?')) {
-      const createInitialCages = (location: 'staffanstorp' | 'malmo') => {
-        const prefix = location === 'staffanstorp' ? 'staffanstorp' : 'malmo';
-        return [
-          ...Array.from({ length: 8 }, (_, i) => ({
-            id: `${prefix}-cage-${i + 1}`,
-            name: `Bur ${i + 1}`,
-            type: 'cage' as const,
-            dogs: []
-          })),
-          ...Array.from({ length: 2 }, (_, i) => ({
-            id: `${prefix}-free-${i + 1}`,
-            name: `Fri yta ${i + 1}`,
-            type: 'free-area' as const,
-            dogs: []
-          }))
-        ];
-      };
-
       const newStaffanstorpCages = createInitialCages('staffanstorp');
       const newMalmoCages = createInitialCages('malmo');
 
@@ -1588,7 +1617,7 @@ const AdminPage: React.FC = () => {
             <FaChartBar className="mr-2 text-emerald-600" />
             Statistik & Analys
           </h3>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div 
               onClick={() => setCurrentView('statistics')}
               className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 hover:scale-105"
@@ -1601,6 +1630,22 @@ const AdminPage: React.FC = () => {
               <div className="mt-3 text-center">
                 <span className="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
                   Filtrerbar statistik
+                </span>
+              </div>
+            </div>
+
+            <div 
+              onClick={() => setCurrentView('settings')}
+              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 hover:scale-105"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 mx-auto">
+                <FaEdit className="text-gray-600 text-2xl" />
+              </div>
+              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
+              <p className="text-center text-gray-600 text-sm">Hantera boxar och burar</p>
+              <div className="mt-3 text-center">
+                <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                  Box-konfiguration
                 </span>
               </div>
             </div>
@@ -2809,6 +2854,281 @@ const AdminPage: React.FC = () => {
     </div>
   );
 
+  const renderSettings = () => {
+    const currentSettings = boxSettings[settingsLocation];
+
+    const handleAddCage = () => {
+      const newSettings = {
+        ...boxSettings,
+        [settingsLocation]: {
+          ...boxSettings[settingsLocation],
+          cages: [...currentSettings.cages, { name: `Bur ${currentSettings.cages.length + 1}` }]
+        }
+      };
+      saveBoxSettings(newSettings);
+    };
+
+    const handleAddFreeArea = () => {
+      const newSettings = {
+        ...boxSettings,
+        [settingsLocation]: {
+          ...boxSettings[settingsLocation],
+          freeAreas: [...currentSettings.freeAreas, { name: `Fri yta ${currentSettings.freeAreas.length + 1}` }]
+        }
+      };
+      saveBoxSettings(newSettings);
+    };
+
+    const handleRemoveCage = (index: number) => {
+      if (confirm('Är du säker på att du vill ta bort denna bur?')) {
+        const newSettings = {
+          ...boxSettings,
+          [settingsLocation]: {
+            ...boxSettings[settingsLocation],
+            cages: currentSettings.cages.filter((_, i) => i !== index)
+          }
+        };
+        saveBoxSettings(newSettings);
+      }
+    };
+
+    const handleRemoveFreeArea = (index: number) => {
+      if (confirm('Är du säker på att du vill ta bort denna fria yta?')) {
+        const newSettings = {
+          ...boxSettings,
+          [settingsLocation]: {
+            ...boxSettings[settingsLocation],
+            freeAreas: currentSettings.freeAreas.filter((_, i) => i !== index)
+          }
+        };
+        saveBoxSettings(newSettings);
+      }
+    };
+
+    const handleStartEdit = (type: 'cage' | 'free-area', index: number) => {
+      const item = type === 'cage' ? currentSettings.cages[index] : currentSettings.freeAreas[index];
+      setEditingBoxIndex({ type, index });
+      setEditingBoxName(item.name);
+    };
+
+    const handleSaveEdit = () => {
+      if (!editingBoxIndex || !editingBoxName.trim()) return;
+
+      const newSettings = {
+        ...boxSettings,
+        [settingsLocation]: {
+          ...boxSettings[settingsLocation],
+          [editingBoxIndex.type === 'cage' ? 'cages' : 'freeAreas']: editingBoxIndex.type === 'cage'
+            ? currentSettings.cages.map((cage, i) => i === editingBoxIndex.index ? { name: editingBoxName.trim() } : cage)
+            : currentSettings.freeAreas.map((area, i) => i === editingBoxIndex.index ? { name: editingBoxName.trim() } : area)
+        }
+      };
+      saveBoxSettings(newSettings);
+      setEditingBoxIndex(null);
+      setEditingBoxName('');
+    };
+
+    const handleCancelEdit = () => {
+      setEditingBoxIndex(null);
+      setEditingBoxName('');
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Box-inställningar</h2>
+          
+          {/* Location Selector */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Välj plats</label>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setSettingsLocation('staffanstorp')}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  settingsLocation === 'staffanstorp'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Staffanstorp
+              </button>
+              <button
+                onClick={() => setSettingsLocation('malmo')}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  settingsLocation === 'malmo'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                Malmö
+              </button>
+            </div>
+          </div>
+
+          {/* Cages Section */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">Burar</h3>
+              <button
+                onClick={handleAddCage}
+                className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+              >
+                <FaPlus className="mr-2" /> Lägg till bur
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {currentSettings.cages.map((cage, index) => (
+                <div
+                  key={index}
+                  className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 flex items-center justify-between"
+                >
+                  {editingBoxIndex?.type === 'cage' && editingBoxIndex.index === index ? (
+                    <div className="flex-1 flex gap-2">
+                      <input
+                        type="text"
+                        value={editingBoxName}
+                        onChange={(e) => setEditingBoxName(e.target.value)}
+                        className="flex-1 px-2 py-1 border border-blue-300 rounded-md"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleSaveEdit}
+                        className="px-2 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="px-2 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🏠</span>
+                        <span className="font-medium text-gray-800">{cage.name}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleStartEdit('cage', index)}
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Redigera namn"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleRemoveCage(index)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Ta bort"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+              {currentSettings.cages.length === 0 && (
+                <div className="col-span-full text-center py-8 text-gray-400">
+                  Inga burar konfigurerade
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Free Areas Section */}
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-800">Fria ytor</h3>
+              <button
+                onClick={handleAddFreeArea}
+                className="flex items-center bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+              >
+                <FaPlus className="mr-2" /> Lägg till fri yta
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {currentSettings.freeAreas.map((area, index) => (
+                <div
+                  key={index}
+                  className="bg-green-50 border-2 border-green-200 rounded-lg p-4 flex items-center justify-between"
+                >
+                  {editingBoxIndex?.type === 'free-area' && editingBoxIndex.index === index ? (
+                    <div className="flex-1 flex gap-2">
+                      <input
+                        type="text"
+                        value={editingBoxName}
+                        onChange={(e) => setEditingBoxName(e.target.value)}
+                        className="flex-1 px-2 py-1 border border-green-300 rounded-md"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        autoFocus
+                      />
+                      <button
+                        onClick={handleSaveEdit}
+                        className="px-2 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="px-2 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-sm"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🏞️</span>
+                        <span className="font-medium text-gray-800">{area.name}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleStartEdit('free-area', index)}
+                          className="text-green-600 hover:text-green-800"
+                          title="Redigera namn"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleRemoveFreeArea(index)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Ta bort"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+              {currentSettings.freeAreas.length === 0 && (
+                <div className="col-span-full text-center py-8 text-gray-400">
+                  Inga fria ytor konfigurerade
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              <strong>Obs:</strong> Ändringar här kommer att påverka nya planeringar. Befintliga planeringar påverkas inte.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch(currentView) {
       case 'dogs':
@@ -2829,6 +3149,8 @@ const AdminPage: React.FC = () => {
         return renderCalendarStaffanstorp();
       case 'statistics':
         return renderStatistics();
+      case 'settings':
+        return renderSettings();
       default:
         return renderDashboard();
     }
@@ -3061,6 +3383,7 @@ const AdminPage: React.FC = () => {
                  currentView === 'calendar-malmo' ? 'Kalender Malmö' :
                  currentView === 'calendar-staffanstorp' ? 'Kalender Staffanstorp' :
                  currentView === 'statistics' ? 'Statistik & Inkomst' :
+                 currentView === 'settings' ? 'Inställningar' :
                  'Dashboard'}
               </h1>
         </div>
