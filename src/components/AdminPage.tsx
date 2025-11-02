@@ -158,13 +158,6 @@ const AdminPage: React.FC = () => {
       boarding: 400
     }
   };
-  const [selectedDay, setSelectedDay] = useState<string>(() => {
-    // Get current day of week (0 = Sunday, 1 = Monday, etc.)
-    const today = new Date();
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    return days[today.getDay()];
-  });
-
   // Box settings state (per location)
   const [boxSettings, setBoxSettings] = useState<BoxSettings>({
     malmo: {
@@ -207,26 +200,13 @@ const AdminPage: React.FC = () => {
   const [editingBoxIndex, setEditingBoxIndex] = useState<{ type: 'cage' | 'free-area'; index: number } | null>(null);
   const [editingBoxName, setEditingBoxName] = useState('');
 
-  // Update currentPlanningDate when selectedDay changes
+  // Initialize currentPlanningDate to today when entering planning view (but not if coming from calendar)
   useEffect(() => {
-    const getDateForDayOfWeek = (dayName: string) => {
-      const today = new Date();
-      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const currentDay = today.getDay();
-      const targetDay = days.indexOf(dayName);
-      const diff = targetDay - currentDay;
-      
-      // If same week, use today or next occurrence
-      const targetDate = new Date(today);
-      targetDate.setDate(today.getDate() + diff);
-      
-      return targetDate.toISOString().split('T')[0];
-    };
-
-    // Update currentPlanningDate to match the selected day
-    const dateForDay = getDateForDayOfWeek(selectedDay);
-    setCurrentPlanningDate(dateForDay);
-  }, [selectedDay]);
+    if ((currentView === 'planning-malmo' || currentView === 'planning-staffanstorp') && !currentPlanningDate) {
+      const today = new Date().toISOString().split('T')[0];
+      setCurrentPlanningDate(today);
+    }
+  }, [currentView]);
   const [draggedDog, setDraggedDog] = useState<Dog | null>(null);
 
   // Function to create initial cages based on box settings
@@ -261,13 +241,7 @@ const AdminPage: React.FC = () => {
           setPlanningStaffanstorp(staffanstorpData.cages);
         } else {
           // Fallback to localStorage or create initial
-          const staffanstorpKey = `planningStaffanstorp-${selectedDay}`;
-          const staffanstorpPlanning = localStorage.getItem(staffanstorpKey);
-          if (staffanstorpPlanning) {
-            setPlanningStaffanstorp(JSON.parse(staffanstorpPlanning));
-          } else {
-            setPlanningStaffanstorp(createInitialCages('staffanstorp'));
-          }
+          setPlanningStaffanstorp(createInitialCages('staffanstorp'));
         }
 
         // Load Malmö
@@ -276,37 +250,18 @@ const AdminPage: React.FC = () => {
           setPlanningMalmo(malmoData.cages);
         } else {
           // Fallback to localStorage or create initial
-          const malmoKey = `planningMalmo-${selectedDay}`;
-          const malmoPlanning = localStorage.getItem(malmoKey);
-          if (malmoPlanning) {
-            setPlanningMalmo(JSON.parse(malmoPlanning));
-          } else {
-            setPlanningMalmo(createInitialCages('malmo'));
-          }
+          setPlanningMalmo(createInitialCages('malmo'));
         }
       } catch (error) {
         console.error('Error loading planning from database:', error);
-        // Fallback to localStorage
-        const staffanstorpKey = `planningStaffanstorp-${selectedDay}`;
-        const staffanstorpPlanning = localStorage.getItem(staffanstorpKey);
-        if (staffanstorpPlanning) {
-          setPlanningStaffanstorp(JSON.parse(staffanstorpPlanning));
-        } else {
-          setPlanningStaffanstorp(createInitialCages('staffanstorp'));
-        }
-
-        const malmoKey = `planningMalmo-${selectedDay}`;
-        const malmoPlanning = localStorage.getItem(malmoKey);
-        if (malmoPlanning) {
-          setPlanningMalmo(JSON.parse(malmoPlanning));
-        } else {
-          setPlanningMalmo(createInitialCages('malmo'));
-        }
+        // Fallback: create initial cages
+        setPlanningStaffanstorp(createInitialCages('staffanstorp'));
+        setPlanningMalmo(createInitialCages('malmo'));
       }
     };
 
     loadPlanningForDate();
-  }, [currentPlanningDate, selectedDay]);
+  }, [currentPlanningDate, boxSettings]);
   const [contractData, setContractData] = useState<ContractData>({
     customerName: '',
     customerAddress: '',
@@ -959,7 +914,6 @@ const AdminPage: React.FC = () => {
 
     const planning = location === 'staffanstorp' ? planningStaffanstorp : planningMalmo;
     const updatePlanning = location === 'staffanstorp' ? setPlanningStaffanstorp : setPlanningMalmo;
-    const storageKey = location === 'staffanstorp' ? `planningStaffanstorp-${selectedDay}` : `planningMalmo-${selectedDay}`;
 
     const updatedCages = planning.map(cage => {
       // Remove dog from its old cage if it exists
@@ -974,7 +928,6 @@ const AdminPage: React.FC = () => {
     });
 
     updatePlanning(updatedCages);
-    localStorage.setItem(storageKey, JSON.stringify(updatedCages));
     
     // Auto-save planning data with current date
     setTimeout(() => {
@@ -987,7 +940,6 @@ const AdminPage: React.FC = () => {
   const removeDogFromCage = (cageId: string, dogId: string, location: 'staffanstorp' | 'malmo') => {
     const planning = location === 'staffanstorp' ? planningStaffanstorp : planningMalmo;
     const updatePlanning = location === 'staffanstorp' ? setPlanningStaffanstorp : setPlanningMalmo;
-    const storageKey = location === 'staffanstorp' ? `planningStaffanstorp-${selectedDay}` : `planningMalmo-${selectedDay}`;
 
     const updatedCages = planning.map(cage => {
       if (cage.id === cageId && cage.dogs) {
@@ -997,19 +949,27 @@ const AdminPage: React.FC = () => {
     });
 
     updatePlanning(updatedCages);
-    localStorage.setItem(storageKey, JSON.stringify(updatedCages));
+    
+    // Auto-save planning data
+    setTimeout(() => {
+      savePlanningData(location, updatedCages);
+    }, 100);
   };
 
-  const resetCages = () => {
+  const resetCages = (location: 'staffanstorp' | 'malmo') => {
     if (confirm('Är du säker på att du vill återställa alla burar för denna dag?')) {
-      const newStaffanstorpCages = createInitialCages('staffanstorp');
-      const newMalmoCages = createInitialCages('malmo');
+      const newCages = createInitialCages(location);
+      
+      if (location === 'staffanstorp') {
+        setPlanningStaffanstorp(newCages);
+      } else {
+        setPlanningMalmo(newCages);
+      }
 
-      setPlanningStaffanstorp(newStaffanstorpCages);
-      setPlanningMalmo(newMalmoCages);
-
-      localStorage.setItem(`planningStaffanstorp-${selectedDay}`, JSON.stringify(newStaffanstorpCages));
-      localStorage.setItem(`planningMalmo-${selectedDay}`, JSON.stringify(newMalmoCages));
+      // Save to database
+      setTimeout(() => {
+        savePlanningData(location, newCages);
+      }, 100);
     }
   };
 
@@ -1737,19 +1697,8 @@ const AdminPage: React.FC = () => {
     return dogs.find(dog => dog.id === id) || null;
   };
 
-  const getDayNames = () => ({
-    monday: 'Måndag',
-    tuesday: 'Tisdag',
-    wednesday: 'Onsdag',
-    thursday: 'Torsdag',
-    friday: 'Fredag',
-    saturday: 'Lördag',
-    sunday: 'Söndag'
-  });
 
   const renderPlanning = (planning: Cage[], location: 'staffanstorp' | 'malmo') => {
-    const dayNames = getDayNames();
-    
     const getAvailableDogs = () => {
       // Get all dog IDs that are already in cages
       const assignedDogIds = planning.flatMap(cage => cage.dogs || []);
@@ -1761,44 +1710,96 @@ const AdminPage: React.FC = () => {
 
     const availableDogs = getAvailableDogs();
 
+    // Format date for display
+    const formatDateDisplay = (dateString: string) => {
+      const date = new Date(dateString);
+      const dayNames = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
+      const dayName = dayNames[date.getDay()];
+      return `${dayName} ${date.getDate()}/${date.getMonth() + 1} ${date.getFullYear()}`;
+    };
+
+    // Navigate dates (day/week)
+    const navigateDate = (days: number) => {
+      const currentDate = new Date(currentPlanningDate);
+      currentDate.setDate(currentDate.getDate() + days);
+      setCurrentPlanningDate(currentDate.toISOString().split('T')[0]);
+    };
+
+    const navigateWeek = (direction: 'prev' | 'next') => {
+      navigateDate(direction === 'next' ? 7 : -7);
+    };
+
+    const isToday = currentPlanningDate === new Date().toISOString().split('T')[0];
+
     return (
       <div className="space-y-6">
-        {/* Day Selector and Reset Button */}
+        {/* Date Selector and Reset Button */}
         <div className="bg-white rounded-xl shadow-md p-4 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-semibold text-gray-700">Välj veckodag:</label>
-              <select
-                value={selectedDay}
-                onChange={(e) => {
-                  setSelectedDay(e.target.value);
-                  // Update date when day changes
-                  const getDateForDayOfWeek = (dayName: string) => {
-                    const today = new Date();
-                    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                    const currentDay = today.getDay();
-                    const targetDay = days.indexOf(dayName);
-                    const diff = targetDay - currentDay;
-                    const targetDate = new Date(today);
-                    targetDate.setDate(today.getDate() + diff);
-                    return targetDate.toISOString().split('T')[0];
-                  };
-                  setCurrentPlanningDate(getDateForDayOfWeek(e.target.value));
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="monday">Måndag</option>
-                <option value="tuesday">Tisdag</option>
-                <option value="wednesday">Onsdag</option>
-                <option value="thursday">Torsdag</option>
-                <option value="friday">Fredag</option>
-                <option value="saturday">Lördag</option>
-                <option value="sunday">Söndag</option>
-              </select>
-              <span className="text-lg font-bold text-primary">{dayNames[selectedDay as keyof typeof dayNames]}</span>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold text-gray-700">Datum:</label>
+                <input
+                  type="date"
+                  value={currentPlanningDate}
+                  onChange={(e) => setCurrentPlanningDate(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              
+              {/* Date Navigation */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigateDate(-1)}
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  title="Föregående dag"
+                >
+                  ←
+                </button>
+                <button
+                  onClick={() => navigateWeek('prev')}
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  title="Föregående vecka"
+                >
+                  ← Vecka
+                </button>
+                <button
+                  onClick={() => setCurrentPlanningDate(new Date().toISOString().split('T')[0])}
+                  className={`px-3 py-2 rounded-lg transition-colors ${isToday ? 'bg-primary text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
+                  title="Gå till idag"
+                >
+                  Idag
+                </button>
+                <button
+                  onClick={() => navigateWeek('next')}
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  title="Nästa vecka"
+                >
+                  Vecka →
+                </button>
+                <button
+                  onClick={() => navigateDate(1)}
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  title="Nästa dag"
+                >
+                  →
+                </button>
+              </div>
+
+              {/* Date Display */}
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-primary">
+                  {formatDateDisplay(currentPlanningDate)}
+                </span>
+                {isToday && (
+                  <span className="px-2 py-1 bg-primary text-white text-xs font-semibold rounded-full">
+                    Idag
+                  </span>
+                )}
+              </div>
             </div>
             <button
-              onClick={resetCages}
+              onClick={() => resetCages(location)}
               className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
             >
               <FaTrash className="text-sm" />
