@@ -154,6 +154,8 @@ const AdminPage: React.FC = () => {
   const [planningSearch, setPlanningSearch] = useState<Record<string, string>>({});
   // Search state for dog selection in boarding form
   const [boardingDogSearch, setBoardingDogSearch] = useState<string>('');
+  // Search state for dogs tab
+  const [dogsTabSearch, setDogsTabSearch] = useState<string>('');
   const [statisticsFilter, setStatisticsFilter] = useState<StatisticsFilter>({
     location: 'all',
     period: 'all',
@@ -3267,10 +3269,23 @@ const AdminPage: React.FC = () => {
     );
   };
 
-  const renderDogs = () => (
+  const renderDogs = () => {
+    // Filter dogs based on search
+    const filteredDogs = dogs.filter(dog => {
+      if (!dogsTabSearch.trim()) return true;
+      const searchLower = dogsTabSearch.toLowerCase();
+      return dog.name.toLowerCase().includes(searchLower) ||
+             dog.owner.toLowerCase().includes(searchLower) ||
+             (dog.breed && dog.breed.toLowerCase().includes(searchLower)) ||
+             (dog.phone && dog.phone.toLowerCase().includes(searchLower));
+    });
+
+    return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">Hundar ({dogs.length})</h2>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <h2 className="text-xl font-bold text-gray-900">
+          Hundar ({dogs.length}{filteredDogs.length !== dogs.length ? `, visar ${filteredDogs.length}` : ''})
+        </h2>
         <button
           onClick={() => openDogModal()}
           className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors"
@@ -3278,6 +3293,19 @@ const AdminPage: React.FC = () => {
           <FaPlus className="mr-2" /> Lägg till hund
         </button>
       </div>
+
+      {/* Search input */}
+      {dogs.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <input
+            type="text"
+            placeholder="Sök på namn, ägare, ras eller telefon..."
+            value={dogsTabSearch}
+            onChange={(e) => setDogsTabSearch(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          />
+        </div>
+      )}
 
       {dogs.length === 0 ? (
         <div className="bg-white rounded-lg shadow-lg p-12 text-center">
@@ -3290,9 +3318,15 @@ const AdminPage: React.FC = () => {
             <FaPlus className="mr-2" /> Lägg till första hunden
           </button>
         </div>
+      ) : filteredDogs.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+          <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-500 mb-2">Inga hundar matchar sökningen</p>
+          <p className="text-sm text-gray-400">Försök med en annan sökterm</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {dogs.map((dog) => (
+          {filteredDogs.map((dog) => (
             <div key={dog.id} className="bg-white rounded-lg shadow-lg p-4 border-l-4 border-primary">
               <div className="flex justify-between items-start mb-3">
                 <div>
@@ -3345,142 +3379,9 @@ const AdminPage: React.FC = () => {
           ))}
         </div>
       )}
-
-      {/* Dog Modal */}
-      {isDogModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{editingDog ? 'Redigera hund' : 'Lägg till hund'}</h3>
-              <button
-                onClick={() => setIsDogModalOpen(false)}
-                className="text-gray-500 hover:text-gray-900"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hundens namn *</label>
-                <input
-                  type="text"
-                  value={dogForm.name}
-                  onChange={(e) => setDogForm({ ...dogForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Morris"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ras</label>
-                <input
-                  type="text"
-                  value={dogForm.breed}
-                  onChange={(e) => setDogForm({ ...dogForm, breed: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Labradoodle"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ålder</label>
-                <input
-                  type="text"
-                  value={dogForm.age}
-                  onChange={(e) => setDogForm({ ...dogForm, age: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., 3"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ägare *</label>
-                <input
-                  type="text"
-                  value={dogForm.owner}
-                  onChange={(e) => setDogForm({ ...dogForm, owner: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Tina Eriksson"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
-                <input
-                  type="text"
-                  value={dogForm.phone}
-                  onChange={(e) => setDogForm({ ...dogForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., 070-123 45 67"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Platser *</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={dogForm.locations.includes('staffanstorp')}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          if (!dogForm.locations.includes('staffanstorp')) {
-                            setDogForm({ ...dogForm, locations: [...dogForm.locations, 'staffanstorp'] });
-                          }
-                        } else {
-                          setDogForm({ ...dogForm, locations: dogForm.locations.filter(l => l !== 'staffanstorp') });
-                        }
-                      }}
-                      className="mr-2"
-                    />
-                    Staffanstorp
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={dogForm.locations.includes('malmo')}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          if (!dogForm.locations.includes('malmo')) {
-                            setDogForm({ ...dogForm, locations: [...dogForm.locations, 'malmo'] });
-                          }
-                        } else {
-                          setDogForm({ ...dogForm, locations: dogForm.locations.filter(l => l !== 'malmo') });
-                        }
-                      }}
-                      className="mr-2"
-                    />
-                    Malmö
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
-              <textarea
-                value={dogForm.notes}
-                onChange={(e) => setDogForm({ ...dogForm, notes: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                rows={3}
-                placeholder="Extra information om hunden..."
-              />
-            </div>
-            
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                onClick={() => setIsDogModalOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={saveDog}
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
-              >
-                Spara
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
+  };
 
   const renderSettings = () => {
     const currentSettings = boxSettings[settingsLocation];
