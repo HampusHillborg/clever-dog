@@ -316,6 +316,7 @@ const AdminPage: React.FC = () => {
       // Use Supabase Auth
       try {
         const user = await getCurrentUser();
+        console.log('Current user from getCurrentUser:', user);
         if (user) {
           setIsLoggedIn(true);
           setCurrentUser(user);
@@ -4009,7 +4010,11 @@ const AdminPage: React.FC = () => {
             </button>
       </div>
           
-          {renderContent()}
+          {isLoggedIn ? renderContent() : (
+            <div className="p-8 text-center">
+              <p className="text-gray-500">Kontrollerar autentisering...</p>
+            </div>
+          )}
         </div>
       </div>
 
