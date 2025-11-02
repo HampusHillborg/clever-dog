@@ -1772,18 +1772,18 @@ const AdminPage: React.FC = () => {
               {/* Date Navigation */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => navigateDate(-1)}
-                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                  title="Föregående dag"
-                >
-                  ←
-                </button>
-                <button
                   onClick={() => navigateWeek('prev')}
                   className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                   title="Föregående vecka"
                 >
                   ← Vecka
+                </button>
+                <button
+                  onClick={() => navigateDate(-1)}
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  title="Föregående dag"
+                >
+                  ←
                 </button>
                 <button
                   onClick={() => setCurrentPlanningDate(new Date().toISOString().split('T')[0])}
@@ -1793,18 +1793,18 @@ const AdminPage: React.FC = () => {
                   Idag
                 </button>
                 <button
-                  onClick={() => navigateWeek('next')}
-                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                  title="Nästa vecka"
-                >
-                  Vecka →
-                </button>
-                <button
                   onClick={() => navigateDate(1)}
                   className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                   title="Nästa dag"
                 >
                   →
+                </button>
+                <button
+                  onClick={() => navigateWeek('next')}
+                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  title="Nästa vecka"
+                >
+                  Vecka →
                 </button>
               </div>
 
