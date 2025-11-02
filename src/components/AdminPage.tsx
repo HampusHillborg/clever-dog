@@ -1987,7 +1987,17 @@ const AdminPage: React.FC = () => {
                     </div>
                     {cageDogs.length > 0 ? (
                       <div className="space-y-2">
-                        {cageDogs.map(dog => (
+                        {cageDogs.map(dog => {
+                          // Check if dog is on active boarding for this date and location
+                          const isOnBoarding = boardingRecords.some(record => 
+                            record.dogId === dog.id &&
+                            record.location === location &&
+                            !record.isArchived &&
+                            record.startDate <= currentPlanningDate &&
+                            record.endDate >= currentPlanningDate
+                          );
+                          
+                          return (
                           <div
                             key={dog.id}
                             draggable
@@ -2008,9 +2018,15 @@ const AdminPage: React.FC = () => {
                             >
                               <FaInfoCircle className="text-xs" />
                             </button>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-wrap">
                               <span className="text-base">🐕</span>
                               <div className="font-bold text-sm">{dog.name}</div>
+                              {isOnBoarding && (
+                                <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                                  <span>🏨</span>
+                                  <span>Pensionat</span>
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-gray-600 ml-5">{dog.owner}</div>
                             <button
@@ -2026,7 +2042,8 @@ const AdminPage: React.FC = () => {
                               ✕
                             </button>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="flex items-center justify-center text-gray-400 text-xs py-4">
