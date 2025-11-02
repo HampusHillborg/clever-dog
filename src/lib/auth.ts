@@ -83,42 +83,25 @@ export const signIn = async (email: string, password: string): Promise<{ success
     }
 
     // Get the user role from admin_users table
-    // Wait a bit for the trigger to create the entry if it's a new user
-    let userData: any = null;
-    let retries = 3;
-    
-    while (retries > 0) {
-      const { data, error: userError } = await supabase
+    const { data: userData, error: userError } = await supabase
+      .from('admin_users')
+      .select('role, email')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user role:', userError);
+      // If user doesn't exist in admin_users, create it with default role
+      const { error: insertError } = await supabase
         .from('admin_users')
-        .select('role, email')
-        .eq('id', authData.user.id)
-        .single();
+        .insert({
+          id: authData.user.id,
+          email: authData.user.email || email,
+          role: 'employee',
+        } as any);
 
-      if (!userError && data) {
-        userData = data;
-        break;
-      }
-
-      if (userError && userError.code === 'PGRST116') {
-        // User doesn't exist in admin_users yet, wait for trigger or create it
-        await new Promise(resolve => setTimeout(resolve, 500));
-        retries--;
-      } else {
-        // Other error, try to create the entry
-        console.error('Error fetching user role:', userError);
-        const { error: insertError } = await supabase
-          .from('admin_users')
-          .insert({
-            id: authData.user.id,
-            email: authData.user.email || email,
-            role: 'employee',
-          } as any);
-
-        if (!insertError) {
-          userData = { role: 'employee', email: authData.user.email || email };
-          break;
-        }
-        break;
+      if (insertError) {
+        console.error('Error creating admin_users entry:', insertError);
       }
     }
 
@@ -131,7 +114,6 @@ export const signIn = async (email: string, password: string): Promise<{ success
       },
     };
   } catch (error: any) {
-    console.error('Sign in error:', error);
     return { success: false, error: error.message || 'Failed to sign in' };
   }
 };
@@ -172,43 +154,15 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
     }
 
     // Get the user role from admin_users table
-    // Wait a bit for the trigger if needed
-    let userData: any = null;
-    let retries = 3;
-    
-    while (retries > 0) {
-      const { data, error: userError } = await supabase
-        .from('admin_users')
-        .select('role, email')
-        .eq('id', session.user.id)
-        .single();
+    const { data: userData, error: userError } = await supabase
+      .from('admin_users')
+      .select('role, email')
+      .eq('id', session.user.id)
+      .single() as { data: { role: string; email: string } | null; error: any };
 
-      if (!userError && data) {
-        userData = data;
-        break;
-      }
-
-      if (userError && (userError as any).code === 'PGRST116') {
-        // User doesn't exist in admin_users yet, wait for trigger
-        await new Promise(resolve => setTimeout(resolve, 500));
-        retries--;
-      } else {
-        // Other error - try to create the entry
-        console.error('Error fetching user role:', userError);
-        const { error: insertError } = await supabase
-          .from('admin_users')
-          .insert({
-            id: session.user.id,
-            email: session.user.email || '',
-            role: 'employee',
-          } as any);
-
-        if (!insertError) {
-          userData = { role: 'employee', email: session.user.email || '' };
-          break;
-        }
-        break;
-      }
+    if (userError) {
+      console.error('Error fetching user role:', userError);
+      return null;
     }
 
     return {
@@ -250,20 +204,26 @@ export const updateUserRole = async (userId: string, newRole: UserRole): Promise
 /**
  * Listen to auth state changes
  */
-export const onAuthStateChange = (callback: (user: AuthUser | null) => void) => {
+export const onAuthStateChange = (callback: (user: AuthUser | null) => void): { data: { subscription: { unsubscribe: () => void } } } => {
   if (!supabase) {
     return { data: { subscription: { unsubscribe: () => {} } } };
   }
 
-  const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+  const subscriptionResult = supabase.auth.onAuthStateChange(async (event, session) => {
     if (session?.user) {
-      const user = await getCurrentUser();
-      callback(user);
+      try {
+        const user = await getCurrentUser();
+        callback(user);
+      } catch (error) {
+        console.error('Error getting user in auth state change:', error);
+        callback(null);
+      }
     } else {
       callback(null);
     }
   });
 
-  return { data };
+  // Supabase's onAuthStateChange returns { data: { subscription: { unsubscribe } } }
+  return subscriptionResult;
 };
 

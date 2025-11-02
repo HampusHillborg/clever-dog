@@ -297,26 +297,31 @@ const AdminPage: React.FC = () => {
 
   // Check if user is already logged in from Supabase session
   useEffect(() => {
-    const checkAuth = async () => {
-      // Temporary: Auto-login for local development (only if Supabase is not configured)
-      const isDevelopment = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1' ||
-                           window.location.hostname.includes('localhost');
-      
-      // Check if Supabase is configured
-      const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
-      
-      if (isDevelopment && !isSupabaseConfigured) {
-        // Fallback for local development without Supabase
-        setIsLoggedIn(true);
-        setUserRole('admin');
-        return;
-      }
+    // Temporary: Auto-login for local development (only if Supabase is not configured)
+    const isDevelopment = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1' ||
+                         window.location.hostname.includes('localhost');
+    
+    // Check if Supabase is configured
+    const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+    
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
-      // Use Supabase Auth
+    if (isDevelopment && !isSupabaseConfigured) {
+      // Fallback for local development without Supabase
+      setIsLoggedIn(true);
+      setUserRole('admin');
+      return; // No cleanup needed
+    }
+
+    if (!isSupabaseConfigured) {
+      return; // No Supabase configured, no cleanup needed
+    }
+
+    // Check auth state
+    const checkAuth = async () => {
       try {
         const user = await getCurrentUser();
-        console.log('Current user from getCurrentUser:', user);
         if (user) {
           setIsLoggedIn(true);
           setCurrentUser(user);
@@ -346,9 +351,14 @@ const AdminPage: React.FC = () => {
       }
     });
 
+    if (authStateResult.data?.subscription) {
+      authSubscription = authStateResult.data.subscription;
+    }
+
+    // Cleanup function
     return () => {
-      if (authStateResult.data?.subscription) {
-        authStateResult.data.subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
       }
     };
   }, []);
@@ -4010,11 +4020,7 @@ const AdminPage: React.FC = () => {
             </button>
       </div>
           
-          {isLoggedIn ? renderContent() : (
-            <div className="p-8 text-center">
-              <p className="text-gray-500">Kontrollerar autentisering...</p>
-            </div>
-          )}
+          {renderContent()}
         </div>
       </div>
 
