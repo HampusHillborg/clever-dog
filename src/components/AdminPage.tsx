@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy } from 'react-icons/fa';
+import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
 import { 
   getDogs as fetchDogs, 
@@ -13,7 +13,11 @@ import {
   getPlanningForDate,
   getBoxSettings as fetchBoxSettings,
   saveBoxSettings as saveBoxSettingsToDb,
-  type BoxSettings
+  getApplications,
+  updateApplication,
+  findMatchingDogs,
+  type BoxSettings,
+  type Application
 } from '../lib/database';
 import { PRICES, VAT_RATE } from '../lib/prices';
 import { signIn, signOut, getCurrentUser, onAuthStateChange, type AuthUser } from '../lib/auth';
@@ -43,6 +47,7 @@ interface Dog {
   age: string;
   owner: string;
   phone: string;
+  email?: string; // Optional email field for matching
   notes?: string;
   color: string; // For visual distinction
   locations: ('malmo' | 'staffanstorp')[]; // Which daycares the dog belongs to (can be both)
@@ -112,7 +117,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications';
 
 type UserRole = 'admin' | 'employee';
 
@@ -146,6 +151,7 @@ const AdminPage: React.FC = () => {
     age: '',
     owner: '',
     phone: '',
+    email: '',
     notes: '',
     locations: ['staffanstorp'] as ('malmo' | 'staffanstorp')[],
     type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '',
@@ -183,6 +189,13 @@ const AdminPage: React.FC = () => {
       freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
     }
   });
+
+  // Applications state
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [applicationsFilter, setApplicationsFilter] = useState<'all' | 'new' | 'reviewed' | 'approved' | 'rejected' | 'matched' | 'added'>('all');
+  const [applicationsLocationFilter, setApplicationsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp'>('all');
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [applicationMatchingDogs, setApplicationMatchingDogs] = useState<Dog[]>([]);
 
   // Load box settings from database on mount
   useEffect(() => {
@@ -607,6 +620,7 @@ const AdminPage: React.FC = () => {
       age: dogForm.age,
       owner: dogForm.owner,
       phone: dogForm.phone,
+      email: dogForm.email || undefined,
       notes: dogForm.notes,
       color: editingDog?.color || randomColor,
       locations: dogForm.locations,
@@ -642,7 +656,7 @@ const AdminPage: React.FC = () => {
     });
     setIsDogModalOpen(false);
     setEditingDog(null);
-    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true });
+    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true });
   };
 
   const deleteDog = async (id: string) => {
@@ -671,6 +685,7 @@ const AdminPage: React.FC = () => {
         age: dog.age,
         owner: dog.owner,
         phone: dog.phone,
+        email: dog.email || '',
         notes: dog.notes || '',
         locations: dog.locations,
         type: dog.type || '',
@@ -678,7 +693,7 @@ const AdminPage: React.FC = () => {
       });
     } else {
       setEditingDog(null);
-      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true });
+      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true });
     }
     setIsDogModalOpen(true);
   };
@@ -828,9 +843,32 @@ const AdminPage: React.FC = () => {
     }
   }, [boardingRecords]);
 
+  // Load applications from database
+  useEffect(() => {
+    if (userRole !== 'admin') return; // Only load for admins
+    
+    const loadApplications = async () => {
+      try {
+        const filters: { status?: string; location?: string } = {};
+        if (applicationsFilter !== 'all') {
+          filters.status = applicationsFilter;
+        }
+        if (applicationsLocationFilter !== 'all') {
+          filters.location = applicationsLocationFilter;
+        }
+        const loadedApplications = await getApplications(filters);
+        setApplications(loadedApplications);
+      } catch (error) {
+        console.error('Error loading applications:', error);
+      }
+    };
+    
+    loadApplications();
+  }, [userRole, applicationsFilter, applicationsLocationFilter]);
+
   // Redirect employees away from restricted views
   useEffect(() => {
-    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings')) {
+    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings' || currentView === 'applications')) {
       setCurrentView('dashboard');
     }
   }, [userRole, currentView]);
@@ -1909,7 +1947,7 @@ const AdminPage: React.FC = () => {
               <FaChartBar className="mr-2 text-emerald-600" />
               Statistik & Analys
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div 
                 onClick={() => setCurrentView('statistics')}
                 className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 hover:scale-105"
@@ -1922,6 +1960,22 @@ const AdminPage: React.FC = () => {
                 <div className="mt-3 text-center">
                   <span className="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
                     Filtrerbar statistik
+                  </span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setCurrentView('applications')}
+                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
+                  <FaDog className="text-blue-600 text-2xl" />
+                </div>
+                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
+                <p className="text-center text-gray-600 text-sm">Granska och hantera nya ansökningar</p>
+                <div className="mt-3 text-center">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                    {applications.filter(a => a.status === 'new').length} nya
                   </span>
                 </div>
               </div>
@@ -3754,9 +3808,479 @@ const AdminPage: React.FC = () => {
   // IMPORTANT: All hooks above must be defined before any conditional returns
   // This ensures React hooks are always called in the same order
 
+  // Find matching dogs for an application
+  const checkApplicationMatches = async (application: Application) => {
+    try {
+      const matches = await findMatchingDogs(
+        application.owner_phone || '',
+        application.dog_name,
+        application.owner_email
+      );
+      setApplicationMatchingDogs(matches);
+    } catch (error) {
+      console.error('Error finding matching dogs:', error);
+      setApplicationMatchingDogs([]);
+    }
+  };
+
+  // Handle application selection
+  const handleSelectApplication = async (application: Application) => {
+    setSelectedApplication(application);
+    await checkApplicationMatches(application);
+  };
+
+  // Add dog directly from application
+  const handleAddDogFromApplication = async (application: Application, matchExistingDogId?: string) => {
+    try {
+      let newDog: Dog;
+      
+      if (matchExistingDogId) {
+        // Update existing dog with application data
+        const existingDog = dogs.find(d => d.id === matchExistingDogId);
+        if (!existingDog) {
+          alert('Hund hittades inte');
+          return;
+        }
+        
+        // Update dog with application info (but keep existing data as priority)
+        newDog = {
+          ...existingDog,
+          // Only update fields that are missing in existing dog
+          email: existingDog.email || application.owner_email || undefined,
+          notes: existingDog.notes || `${existingDog.notes ? existingDog.notes + '\n\n' : ''}Från ansökan: ${application.dog_socialization || ''}`.trim() || undefined,
+        };
+        
+        await saveDogToDb(newDog);
+        const updatedDogs = dogs.map(d => d.id === matchExistingDogId ? newDog : d);
+        setDogs(updatedDogs);
+        
+        // Update application status to matched
+        await updateApplication(application.id, {
+          status: 'matched',
+          matched_dog_id: matchExistingDogId,
+          matched_by: currentUser?.id,
+          matched_at: new Date().toISOString(),
+        });
+      } else {
+        // Create new dog from application
+        const colors = ['bg-blue-100 text-blue-800', 'bg-green-100 text-green-800', 'bg-purple-100 text-purple-800', 
+                        'bg-pink-100 text-pink-800', 'bg-orange-100 text-orange-800', 'bg-yellow-100 text-yellow-800'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // Determine dog type from service_type
+        let dogType: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
+        if (application.service_type === 'daycare') {
+          dogType = 'fulltime';
+        } else if (application.service_type === 'parttime') {
+          if (application.days_per_week === '2') {
+            dogType = 'parttime-2';
+          } else if (application.days_per_week === '3') {
+            dogType = 'parttime-3';
+          }
+        } else if (application.service_type === 'singleDay' || application.service_type === 'singleDay') {
+          dogType = 'singleDay';
+        } else if (application.service_type === 'boarding') {
+          dogType = 'boarding';
+        }
+        
+        newDog = {
+          id: '',
+          name: application.dog_name,
+          breed: application.dog_breed || '',
+          age: application.dog_age || '',
+          owner: application.owner_name,
+          phone: application.owner_phone || '',
+          email: application.owner_email || undefined,
+          notes: `${application.dog_socialization ? `Socialisering: ${application.dog_socialization}\n` : ''}${application.problem_behaviors ? `Problembeteenden: ${application.problem_behaviors}\n` : ''}${application.allergies ? `Allergier: ${application.allergies}\n` : ''}${application.message ? `Meddelande: ${application.message}` : ''}`.trim() || undefined,
+          color: randomColor,
+          locations: [application.location],
+          type: dogType,
+          isActive: true,
+        };
+        
+        const savedDog = await saveDogToDb(newDog);
+        setDogs([...dogs, savedDog]);
+        
+        // Update application status to added
+        await updateApplication(application.id, {
+          status: 'added',
+          matched_dog_id: savedDog.id,
+          matched_by: currentUser?.id,
+          matched_at: new Date().toISOString(),
+        });
+      }
+      
+      // Reload applications to reflect status change
+      const filters: { status?: string; location?: string } = {};
+      if (applicationsFilter !== 'all') {
+        filters.status = applicationsFilter;
+      }
+      if (applicationsLocationFilter !== 'all') {
+        filters.location = applicationsLocationFilter;
+      }
+      const updatedApplications = await getApplications(filters);
+      setApplications(updatedApplications);
+      
+      // Close selected application
+      setSelectedApplication(null);
+      setApplicationMatchingDogs([]);
+      
+      alert('Hund tillagd!');
+    } catch (error) {
+      console.error('Error adding dog from application:', error);
+      alert('Fel uppstod vid tillägg av hund');
+    }
+  };
+
+  // Update application status
+  const handleUpdateApplicationStatus = async (application: Application, newStatus: Application['status']) => {
+    try {
+      await updateApplication(application.id, { status: newStatus });
+      const filters: { status?: string; location?: string } = {};
+      if (applicationsFilter !== 'all') {
+        filters.status = applicationsFilter;
+      }
+      if (applicationsLocationFilter !== 'all') {
+        filters.location = applicationsLocationFilter;
+      }
+      const updatedApplications = await getApplications(filters);
+      setApplications(updatedApplications);
+    } catch (error) {
+      console.error('Error updating application status:', error);
+      alert('Fel uppstod vid uppdatering av ansökan');
+    }
+  };
+
+  const renderApplications = () => {
+    if (userRole !== 'admin') {
+      return renderDashboard();
+    }
+
+    const filteredApplications = applications;
+
+    const getStatusBadge = (status: Application['status']) => {
+      const badges: Record<Application['status'], { text: string; color: string }> = {
+        'new': { text: 'Ny', color: 'bg-blue-100 text-blue-800' },
+        'reviewed': { text: 'Granskad', color: 'bg-yellow-100 text-yellow-800' },
+        'approved': { text: 'Godkänd', color: 'bg-green-100 text-green-800' },
+        'rejected': { text: 'Avslagen', color: 'bg-red-100 text-red-800' },
+        'matched': { text: 'Matchad', color: 'bg-purple-100 text-purple-800' },
+        'added': { text: 'Tillagd', color: 'bg-green-200 text-green-900' },
+      };
+      const badge = badges[status] || badges['new'];
+      return (
+        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${badge.color}`}>
+          {badge.text}
+        </span>
+      );
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <h2 className="text-xl font-bold text-gray-900">Ansökningar ({filteredApplications.length})</h2>
+          
+          {/* Filters */}
+          <div className="flex gap-4 flex-wrap">
+            <select
+              value={applicationsFilter}
+              onChange={(e) => setApplicationsFilter(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+            >
+              <option value="all">Alla statusar</option>
+              <option value="new">Nya</option>
+              <option value="reviewed">Granskade</option>
+              <option value="approved">Godkända</option>
+              <option value="rejected">Avslagna</option>
+              <option value="matched">Matchade</option>
+              <option value="added">Tillagda</option>
+            </select>
+            
+            <select
+              value={applicationsLocationFilter}
+              onChange={(e) => setApplicationsLocationFilter(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+            >
+              <option value="all">Alla platser</option>
+              <option value="malmo">Malmö</option>
+              <option value="staffanstorp">Staffanstorp</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Applications List */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          {filteredApplications.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              Inga ansökningar hittades
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {filteredApplications.map((application) => (
+                <div
+                  key={application.id}
+                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                    selectedApplication?.id === application.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                  }`}
+                  onClick={() => handleSelectApplication(application)}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {application.dog_name}
+                        </h3>
+                        {getStatusBadge(application.status)}
+                        <span className="text-sm text-gray-500">
+                          {application.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600">
+                        <div>
+                          <span className="font-medium">Ägare:</span> {application.owner_name}
+                        </div>
+                        <div>
+                          <span className="font-medium">Telefon:</span> {application.owner_phone || 'Saknas'}
+                        </div>
+                        <div>
+                          <span className="font-medium">E-post:</span> {application.owner_email}
+                        </div>
+                        <div>
+                          <span className="font-medium">Tjänst:</span> {application.service_type}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500">
+                        {new Date(application.created_at).toLocaleDateString('sv-SE')} {new Date(application.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Application Detail Modal */}
+        {selectedApplication && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Ansökan: {selectedApplication.dog_name}
+                </h3>
+                <button
+                  onClick={() => {
+                    setSelectedApplication(null);
+                    setApplicationMatchingDogs([]);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <FaTimes className="text-gray-500" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Status and Actions */}
+                <div className="flex items-center justify-between">
+                  {getStatusBadge(selectedApplication.status)}
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedApplication.status}
+                      onChange={(e) => handleUpdateApplicationStatus(selectedApplication, e.target.value as Application['status'])}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    >
+                      <option value="new">Ny</option>
+                      <option value="reviewed">Granskad</option>
+                      <option value="approved">Godkänd</option>
+                      <option value="rejected">Avslagen</option>
+                      <option value="matched">Matchad</option>
+                      <option value="added">Tillagd</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Owner Information */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Ägareinformation</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Namn:</span> {selectedApplication.owner_name}
+                    </div>
+                    <div>
+                      <span className="font-medium">E-post:</span> {selectedApplication.owner_email}
+                    </div>
+                    <div>
+                      <span className="font-medium">Telefon:</span> {selectedApplication.owner_phone || 'Saknas'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Adress:</span> {selectedApplication.owner_address || 'Saknas'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Personnummer:</span> {selectedApplication.owner_personnummer || 'Saknas'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dog Information */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Hundinformation</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Namn:</span> {selectedApplication.dog_name}
+                    </div>
+                    <div>
+                      <span className="font-medium">Ras:</span> {selectedApplication.dog_breed || 'Saknas'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Ålder:</span> {selectedApplication.dog_age || 'Saknas'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Kön:</span> {selectedApplication.dog_gender || 'Saknas'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Höjd:</span> {selectedApplication.dog_height || 'Saknas'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Kastrerad:</span> {selectedApplication.is_neutered || 'Saknas'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Chipnummer:</span> {selectedApplication.dog_chip_number || 'Saknas'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Service Information */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Tjänstinformation</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Tjänsttyp:</span> {selectedApplication.service_type}
+                    </div>
+                    <div>
+                      <span className="font-medium">Plats:</span> {selectedApplication.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                    </div>
+                    {selectedApplication.days_per_week && (
+                      <div>
+                        <span className="font-medium">Dagar per vecka:</span> {selectedApplication.days_per_week}
+                      </div>
+                    )}
+                    {selectedApplication.start_date && (
+                      <div>
+                        <span className="font-medium">Startdatum:</span> {new Date(selectedApplication.start_date).toLocaleDateString('sv-SE')}
+                      </div>
+                    )}
+                    {selectedApplication.end_date && (
+                      <div>
+                        <span className="font-medium">Slutdatum:</span> {new Date(selectedApplication.end_date).toLocaleDateString('sv-SE')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                {(selectedApplication.dog_socialization || selectedApplication.problem_behaviors || selectedApplication.allergies || selectedApplication.message || selectedApplication.additional_info) && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-3">Ytterligare information</h4>
+                    <div className="space-y-2 text-sm">
+                      {selectedApplication.dog_socialization && (
+                        <div>
+                          <span className="font-medium">Socialisering:</span>
+                          <p className="text-gray-700 mt-1">{selectedApplication.dog_socialization}</p>
+                        </div>
+                      )}
+                      {selectedApplication.problem_behaviors && (
+                        <div>
+                          <span className="font-medium">Problembeteenden:</span>
+                          <p className="text-gray-700 mt-1">{selectedApplication.problem_behaviors}</p>
+                        </div>
+                      )}
+                      {selectedApplication.allergies && (
+                        <div>
+                          <span className="font-medium">Allergier:</span>
+                          <p className="text-gray-700 mt-1">{selectedApplication.allergies}</p>
+                        </div>
+                      )}
+                      {selectedApplication.message && (
+                        <div>
+                          <span className="font-medium">Meddelande:</span>
+                          <p className="text-gray-700 mt-1">{selectedApplication.message}</p>
+                        </div>
+                      )}
+                      {selectedApplication.additional_info && (
+                        <div>
+                          <span className="font-medium">Övrig information:</span>
+                          <p className="text-gray-700 mt-1">{selectedApplication.additional_info}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Matching Dogs */}
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-semibold text-gray-900">
+                      Matchade hundar ({applicationMatchingDogs.length})
+                    </h4>
+                    <button
+                      onClick={() => checkApplicationMatches(selectedApplication)}
+                      className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+                    >
+                      Sök igen
+                    </button>
+                  </div>
+                  {applicationMatchingDogs.length === 0 ? (
+                    <p className="text-sm text-gray-600">
+                      Ingen matchande hund hittades baserat på telefonnummer/email + hundens namn
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {applicationMatchingDogs.map((dog) => (
+                        <div
+                          key={dog.id}
+                          className="bg-white rounded-lg p-3 border border-blue-200"
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <div className="font-medium">{dog.name}</div>
+                              <div className="text-sm text-gray-600">
+                                Ägare: {dog.owner} | Telefon: {dog.phone}
+                                {dog.email && ` | E-post: ${dog.email}`}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleAddDogFromApplication(selectedApplication, dog.id)}
+                              className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm"
+                            >
+                              Matcha med denna hund
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Add New Dog Button */}
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => handleAddDogFromApplication(selectedApplication)}
+                    className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium"
+                  >
+                    Lägg till som ny hund
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderContent = () => {
     // Redirect employees away from restricted views
-    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings')) {
+    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings' || currentView === 'applications')) {
       return renderDashboard();
     }
 
@@ -3781,6 +4305,8 @@ const AdminPage: React.FC = () => {
         return userRole === 'admin' ? renderStatistics() : renderDashboard();
       case 'settings':
         return userRole === 'admin' ? renderSettings() : renderDashboard();
+      case 'applications':
+        return userRole === 'admin' ? renderApplications() : renderDashboard();
       default:
         return renderDashboard();
     }
@@ -4014,6 +4540,7 @@ const AdminPage: React.FC = () => {
                  currentView === 'calendar-staffanstorp' ? 'Kalender Staffanstorp' :
                  currentView === 'statistics' ? 'Statistik & Inkomst' :
                  currentView === 'settings' ? 'Inställningar' :
+                 currentView === 'applications' ? 'Ansökningar' :
                  'Dashboard'}
               </h1>
               <div className="ml-4">
@@ -4220,6 +4747,17 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setDogForm({ ...dogForm, phone: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="e.g., 070-123 45 67"
+                  disabled={userRole === 'employee'}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">E-post</label>
+                <input
+                  type="email"
+                  value={dogForm.email}
+                  onChange={(e) => setDogForm({ ...dogForm, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="e.g., agare@example.com"
                   disabled={userRole === 'employee'}
                 />
               </div>

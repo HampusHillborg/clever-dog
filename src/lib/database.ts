@@ -8,6 +8,7 @@ export type Dog = {
   age: string;
   owner: string;
   phone: string;
+  email?: string; // Optional email field for matching
   notes?: string;
   color: string;
   locations: ('malmo' | 'staffanstorp')[];
@@ -110,6 +111,7 @@ export const getDogs = async (): Promise<Dog[]> => {
       age: dog.age || '',
       owner: dog.owner || '',
       phone: dog.phone || '',
+      email: dog.email || undefined,
       notes: dog.notes ? String(dog.notes) : undefined,
       color: dog.color || 'bg-gray-100 text-gray-800',
       locations: locations,
@@ -159,6 +161,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
       age: dog.age,
       owner: dog.owner,
       phone: dog.phone,
+      email: dog.email || null,
       notes: dog.notes || null,
       color: dog.color,
       locations: dog.locations,
@@ -205,6 +208,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     age: dbDog.age || '',
     owner: dbDog.owner || '',
     phone: dbDog.phone || '',
+    email: dbDog.email || undefined,
     notes: dbDog.notes ? String(dbDog.notes) : undefined,
     color: dbDog.color || 'bg-gray-100 text-gray-800',
     locations: locations,
@@ -944,8 +948,8 @@ export const updateApplication = async (id: string, updates: Partial<Application
   }
 };
 
-// Find potential matching dogs based on phone number and dog name
-export const findMatchingDogs = async (phone: string, dogName: string): Promise<Dog[]> => {
+// Find potential matching dogs based on phone number, email, and dog name
+export const findMatchingDogs = async (phone: string, dogName: string, email?: string): Promise<Dog[]> => {
   const allDogs = await getDogs();
   
   // Normalize phone numbers (remove spaces, dashes, etc.)
@@ -953,15 +957,29 @@ export const findMatchingDogs = async (phone: string, dogName: string): Promise<
     return phoneNum.replace(/\s+/g, '').replace(/-/g, '').replace(/\(/g, '').replace(/\)/g, '');
   };
   
+  // Normalize email (lowercase and trim)
+  const normalizeEmail = (emailAddr: string): string => {
+    return emailAddr.toLowerCase().trim();
+  };
+  
   const normalizedSearchPhone = normalizePhone(phone || '');
   const normalizedSearchName = dogName.toLowerCase().trim();
+  const normalizedSearchEmail = email ? normalizeEmail(email) : '';
   
   return allDogs.filter(dog => {
     const normalizedDogPhone = normalizePhone(dog.phone || '');
     const normalizedDogName = dog.name.toLowerCase().trim();
+    const normalizedDogEmail = dog.email ? normalizeEmail(dog.email) : '';
     
-    return normalizedDogPhone === normalizedSearchPhone && 
-           normalizedDogName === normalizedSearchName;
+    // Match if phone + name match, OR email + name match
+    const phoneNameMatch = normalizedDogPhone === normalizedSearchPhone && 
+                          normalizedDogName === normalizedSearchName;
+    
+    const emailNameMatch = normalizedSearchEmail && 
+                          normalizedDogEmail === normalizedSearchEmail &&
+                          normalizedDogName === normalizedSearchName;
+    
+    return phoneNameMatch || emailNameMatch;
   });
 };
 

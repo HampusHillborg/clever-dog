@@ -13,6 +13,7 @@ export type Database = {
           age: string;
           owner: string;
           phone: string;
+          email: string | null;
           notes: string | null;
           color: string;
           locations: string[];
@@ -28,6 +29,7 @@ export type Database = {
           age: string;
           owner: string;
           phone: string;
+          email?: string | null;
           notes?: string | null;
           color: string;
           locations?: string[];
@@ -43,6 +45,7 @@ export type Database = {
           age?: string;
           owner?: string;
           phone?: string;
+          email?: string | null;
           notes?: string | null;
           color?: string;
           locations?: string[];
