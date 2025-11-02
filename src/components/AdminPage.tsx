@@ -16,6 +16,7 @@ import {
   type BoxSettings
 } from '../lib/database';
 import { PRICES, VAT_RATE } from '../lib/prices';
+import { signIn, signOut, getCurrentUser, onAuthStateChange, type AuthUser } from '../lib/auth';
 
 interface ContractData {
   // Common fields
@@ -113,9 +114,13 @@ interface DogStatistics {
 
 type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings';
 
+type UserRole = 'admin' | 'employee';
+
 const AdminPage: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
+  const [userRole, setUserRole] = useState<UserRole>('admin');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -290,44 +295,61 @@ const AdminPage: React.FC = () => {
     daysPerWeek: ''
   });
 
-  // Check if user is already logged in from JWT token in localStorage
+  // Check if user is already logged in from Supabase session
   useEffect(() => {
-    // Temporary: Auto-login for local development
-    const isDevelopment = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1' ||
-                         window.location.hostname.includes('localhost');
-    
-    if (isDevelopment) {
-      setIsLoggedIn(true);
-      return;
-    }
-    
-    const checkAuthToken = async () => {
-      const token = localStorage.getItem('adminAuthToken');
-      if (!token) return;
+    const checkAuth = async () => {
+      // Temporary: Auto-login for local development (only if Supabase is not configured)
+      const isDevelopment = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.hostname.includes('localhost');
       
+      // Check if Supabase is configured
+      const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+      
+      if (isDevelopment && !isSupabaseConfigured) {
+        // Fallback for local development without Supabase
+        setIsLoggedIn(true);
+        setUserRole('admin');
+        return;
+      }
+
+      // Use Supabase Auth
       try {
-        const response = await fetch('/.netlify/functions/verify-token', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        const data = await response.json();
-        if (data.success) {
+        const user = await getCurrentUser();
+        if (user) {
           setIsLoggedIn(true);
+          setCurrentUser(user);
+          setUserRole(user.role);
         } else {
-          // Token is invalid or expired, clean up localStorage
-          localStorage.removeItem('adminAuthToken');
+          setIsLoggedIn(false);
+          setCurrentUser(null);
         }
       } catch (err) {
-        console.error('Error verifying token:', err);
-        localStorage.removeItem('adminAuthToken');
+        console.error('Error checking auth:', err);
+        setIsLoggedIn(false);
+        setCurrentUser(null);
       }
     };
-    
-    checkAuthToken();
+
+    checkAuth();
+
+    // Listen to auth state changes
+    const authStateResult = onAuthStateChange((user) => {
+      if (user) {
+        setIsLoggedIn(true);
+        setCurrentUser(user);
+        setUserRole(user.role);
+      } else {
+        setIsLoggedIn(false);
+        setCurrentUser(null);
+      }
+    });
+
+    return () => {
+      if (authStateResult.data?.subscription) {
+        authStateResult.data.subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -335,44 +357,69 @@ const AdminPage: React.FC = () => {
     setIsLoading(true);
     setError('');
     
-    // Temporary: Auto-login for local development
+    // Check if Supabase is configured
+    const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
+    
+    // Temporary: Auto-login for local development (only if Supabase is not configured)
     const isDevelopment = window.location.hostname === 'localhost' || 
                          window.location.hostname === '127.0.0.1' ||
                          window.location.hostname.includes('localhost');
-    if (isDevelopment) {
+    
+    if (isDevelopment && !isSupabaseConfigured) {
+      // Fallback for local development without Supabase
+      const devRole = email.toLowerCase().includes('employee') || email.toLowerCase().includes('anstalld') 
+        ? 'employee' 
+        : 'admin';
       setIsLoggedIn(true);
+      setUserRole(devRole);
       setIsLoading(false);
       return;
     }
     
+    if (!isSupabaseConfigured) {
+      setError('Autentisering är inte konfigurerad. Kontakta administratören.');
+      setIsLoading(false);
+      return;
+    }
+    
+    // Use Supabase Auth
     try {
-      const response = await fetch('/.netlify/functions/auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
+      const result = await signIn(email, password);
       
-      const data = await response.json();
-      
-      if (data.success) {
-        localStorage.setItem('adminAuthToken', data.token);
+      if (result.success && result.user) {
         setIsLoggedIn(true);
+        setCurrentUser(result.user);
+        setUserRole(result.user.role);
+        setEmail(''); // Clear email
+        setPassword(''); // Clear password
       } else {
-        setError(data.error || 'Invalid username or password');
+        setError(result.error || 'Ogiltigt e-postadress eller lösenord');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Something went wrong. Please try again.');
+      setError('Något gick fel. Försök igen.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    localStorage.removeItem('adminAuthToken');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setIsLoggedIn(false);
+      setUserRole('admin');
+      setCurrentUser(null);
+      setEmail('');
+      setPassword('');
+    } catch (err) {
+      console.error('Logout error:', err);
+      // Still clear local state even if logout fails
+      setIsLoggedIn(false);
+      setUserRole('admin');
+      setCurrentUser(null);
+      setEmail('');
+      setPassword('');
+    }
   };
 
   // Load dogs from database on mount
@@ -1595,7 +1642,12 @@ const AdminPage: React.FC = () => {
           <div className="flex justify-center mb-8">
             <FaLock className="text-4xl text-primary" />
           </div>
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Admin Login</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+            CleverDog Admin
+          </h2>
+          <p className="text-center text-gray-600 mb-4 text-sm">
+            Logga in med din e-postadress och lösenord
+          </p>
           
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
@@ -1605,20 +1657,21 @@ const AdminPage: React.FC = () => {
           
           <form onSubmit={handleLogin}>
             <div className="mb-4">
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">E-postadress</label>
               <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
                 required
                 disabled={isLoading}
+                placeholder="din@epost.se"
               />
             </div>
             
             <div className="mb-6">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Lösenord</label>
               <input
                 id="password"
                 type="password"
@@ -1627,6 +1680,7 @@ const AdminPage: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
                 required
                 disabled={isLoading}
+                placeholder="••••••••"
               />
             </div>
             
@@ -1635,7 +1689,7 @@ const AdminPage: React.FC = () => {
               className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-colors"
               disabled={isLoading}
             >
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? 'Loggar in...' : 'Logga in'}
             </button>
           </form>
         </div>
@@ -1676,21 +1730,23 @@ const AdminPage: React.FC = () => {
               </div>
             </div>
 
-            <div 
-              onClick={() => setCurrentView('contracts')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-green-200 hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4 mx-auto">
-                <FaFilePdf className="text-green-600 text-2xl" />
+            {userRole === 'admin' && (
+              <div 
+                onClick={() => setCurrentView('contracts')}
+                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-green-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4 mx-auto">
+                  <FaFilePdf className="text-green-600 text-2xl" />
+                </div>
+                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Kontrakt</h4>
+                <p className="text-center text-gray-600 text-sm">Skapa och hantera dagiskontrakt</p>
+                <div className="mt-3 text-center">
+                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                    PDF-generator
+                  </span>
+                </div>
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Kontrakt</h4>
-              <p className="text-center text-gray-600 text-sm">Skapa och hantera dagiskontrakt</p>
-              <div className="mt-3 text-center">
-                <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  PDF-generator
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -1817,46 +1873,48 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Statistik & Analys */}
-        <div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <FaChartBar className="mr-2 text-emerald-600" />
-            Statistik & Analys
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
-              onClick={() => setCurrentView('statistics')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4 mx-auto">
-                <FaChartBar className="text-emerald-600 text-2xl" />
+        {/* Statistik & Analys - Only for admin */}
+        {userRole === 'admin' && (
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <FaChartBar className="mr-2 text-emerald-600" />
+              Statistik & Analys
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div 
+                onClick={() => setCurrentView('statistics')}
+                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4 mx-auto">
+                  <FaChartBar className="text-emerald-600 text-2xl" />
+                </div>
+                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Statistik & Inkomst</h4>
+                <p className="text-center text-gray-600 text-sm">Detaljerad statistik och inkomstanalys</p>
+                <div className="mt-3 text-center">
+                  <span className="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
+                    Filtrerbar statistik
+                  </span>
+                </div>
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Statistik & Inkomst</h4>
-              <p className="text-center text-gray-600 text-sm">Detaljerad statistik och inkomstanalys</p>
-              <div className="mt-3 text-center">
-                <span className="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
-                  Filtrerbar statistik
-                </span>
-              </div>
-            </div>
 
-            <div 
-              onClick={() => setCurrentView('settings')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 mx-auto">
-                <FaEdit className="text-gray-600 text-2xl" />
-              </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
-              <p className="text-center text-gray-600 text-sm">Hantera boxar och burar</p>
-              <div className="mt-3 text-center">
-                <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-                  Box-konfiguration
-                </span>
+              <div 
+                onClick={() => setCurrentView('settings')}
+                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 mx-auto">
+                  <FaEdit className="text-gray-600 text-2xl" />
+                </div>
+                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
+                <p className="text-center text-gray-600 text-sm">Hantera boxar och burar</p>
+                <div className="mt-3 text-center">
+                  <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                    Box-konfiguration
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Quick Stats */}
@@ -3286,12 +3344,14 @@ const AdminPage: React.FC = () => {
         <h2 className="text-xl font-bold text-gray-900">
           Hundar ({dogs.length}{filteredDogs.length !== dogs.length ? `, visar ${filteredDogs.length}` : ''})
         </h2>
-        <button
-          onClick={() => openDogModal()}
-          className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors"
-        >
-          <FaPlus className="mr-2" /> Lägg till hund
-        </button>
+        {userRole === 'admin' && (
+          <button
+            onClick={() => openDogModal()}
+            className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors"
+          >
+            <FaPlus className="mr-2" /> Lägg till hund
+          </button>
+        )}
       </div>
 
       {/* Search input */}
@@ -3311,12 +3371,14 @@ const AdminPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-12 text-center">
           <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
           <p className="text-gray-500 mb-4">Inga hundar tillagda än</p>
-          <button
-            onClick={() => openDogModal()}
-            className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto"
-          >
-            <FaPlus className="mr-2" /> Lägg till första hunden
-          </button>
+          {userRole === 'admin' && (
+            <button
+              onClick={() => openDogModal()}
+              className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto"
+            >
+              <FaPlus className="mr-2" /> Lägg till första hunden
+            </button>
+          )}
         </div>
       ) : filteredDogs.length === 0 ? (
         <div className="bg-white rounded-lg shadow-lg p-12 text-center">
@@ -3341,20 +3403,22 @@ const AdminPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openDogModal(dog)}
-                    className="text-gray-600 hover:text-primary"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => deleteDog(dog.id)}
-                    className="text-gray-600 hover:text-red-600"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
+                {userRole === 'admin' && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openDogModal(dog)}
+                      className="text-gray-600 hover:text-primary"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => deleteDog(dog.id)}
+                      className="text-gray-600 hover:text-red-600"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                )}
               </div>
               <div className="space-y-1 text-sm">
                 <p><strong>Ras:</strong> {dog.breed || '-'}</p>
@@ -3658,12 +3722,24 @@ const AdminPage: React.FC = () => {
     );
   };
 
+  // Redirect employees away from restricted views
+  useEffect(() => {
+    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings')) {
+      setCurrentView('dashboard');
+    }
+  }, [userRole, currentView]);
+
   const renderContent = () => {
+    // Redirect employees away from restricted views
+    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings')) {
+      return renderDashboard();
+    }
+
     switch(currentView) {
       case 'dogs':
         return renderDogs();
       case 'contracts':
-        return renderContracts();
+        return userRole === 'admin' ? renderContracts() : renderDashboard();
       case 'planning-malmo':
         return renderPlanningMalmo();
       case 'planning-staffanstorp':
@@ -3677,9 +3753,9 @@ const AdminPage: React.FC = () => {
       case 'calendar-staffanstorp':
         return renderCalendarStaffanstorp();
       case 'statistics':
-        return renderStatistics();
+        return userRole === 'admin' ? renderStatistics() : renderDashboard();
       case 'settings':
-        return renderSettings();
+        return userRole === 'admin' ? renderSettings() : renderDashboard();
       default:
         return renderDashboard();
     }
@@ -3915,6 +3991,15 @@ const AdminPage: React.FC = () => {
                  currentView === 'settings' ? 'Inställningar' :
                  'Dashboard'}
               </h1>
+              <div className="ml-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  userRole === 'admin' 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  {userRole === 'admin' ? 'Admin' : 'Anställd'}
+                </span>
+              </div>
         </div>
             <button
               onClick={handleLogout}
@@ -4038,7 +4123,9 @@ const AdminPage: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{editingDog ? 'Redigera hund' : 'Lägg till hund'}</h3>
+              <h3 className="text-xl font-bold">
+                {userRole === 'employee' ? 'Visa hundinformation' : (editingDog ? 'Redigera hund' : 'Lägg till hund')}
+              </h3>
               <button
                 onClick={() => setIsDogModalOpen(false)}
                 className="text-gray-500 hover:text-gray-900"
@@ -4046,6 +4133,14 @@ const AdminPage: React.FC = () => {
                 ✕
               </button>
             </div>
+            
+            {userRole === 'employee' && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  Du har endast läsbehörighet. Du kan inte redigera eller lägga till hundar.
+                </p>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -4056,6 +4151,7 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setDogForm({ ...dogForm, name: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="e.g., Morris"
+                  disabled={userRole === 'employee'}
                 />
               </div>
               <div>
@@ -4066,6 +4162,7 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setDogForm({ ...dogForm, breed: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="e.g., Labradoodle"
+                  disabled={userRole === 'employee'}
                 />
               </div>
               <div>
@@ -4076,6 +4173,7 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setDogForm({ ...dogForm, age: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="e.g., 3"
+                  disabled={userRole === 'employee'}
                 />
               </div>
               <div>
@@ -4086,6 +4184,7 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setDogForm({ ...dogForm, owner: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="e.g., Tina Eriksson"
+                  disabled={userRole === 'employee'}
                 />
               </div>
               <div>
@@ -4096,6 +4195,7 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setDogForm({ ...dogForm, phone: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   placeholder="e.g., 070-123 45 67"
+                  disabled={userRole === 'employee'}
                 />
               </div>
               <div className="md:col-span-2">
@@ -4115,6 +4215,7 @@ const AdminPage: React.FC = () => {
                         }
                       }}
                       className="mr-2"
+                      disabled={userRole === 'employee'}
                     />
                     Staffanstorp
                   </label>
@@ -4132,6 +4233,7 @@ const AdminPage: React.FC = () => {
                         }
                       }}
                       className="mr-2"
+                      disabled={userRole === 'employee'}
                     />
                     Malmö
                   </label>
@@ -4143,6 +4245,7 @@ const AdminPage: React.FC = () => {
                   value={dogForm.type}
                   onChange={(e) => setDogForm({ ...dogForm, type: e.target.value as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  disabled={userRole === 'employee'}
                 >
                   <option value="">Välj typ</option>
                   <option value="fulltime">Heltid</option>
@@ -4159,6 +4262,7 @@ const AdminPage: React.FC = () => {
                     checked={dogForm.isActive}
                     onChange={(e) => setDogForm({ ...dogForm, isActive: e.target.checked })}
                     className="w-4 h-4 text-blue-600 rounded"
+                    disabled={userRole === 'employee'}
                   />
                   <span className="text-sm text-gray-700">
                     Aktiv hund
@@ -4177,6 +4281,7 @@ const AdminPage: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 rows={3}
                 placeholder="Extra information om hunden..."
+                disabled={userRole === 'employee'}
               />
             </div>
             
@@ -4185,14 +4290,16 @@ const AdminPage: React.FC = () => {
                 onClick={() => setIsDogModalOpen(false)}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
-                Avbryt
+                {userRole === 'employee' ? 'Stäng' : 'Avbryt'}
               </button>
-              <button
-                onClick={saveDog}
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
-              >
-                Spara
-              </button>
+              {userRole === 'admin' && (
+                <button
+                  onClick={saveDog}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                >
+                  Spara
+                </button>
+              )}
             </div>
           </div>
         </div>
