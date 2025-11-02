@@ -884,10 +884,6 @@ const AdminPage: React.FC = () => {
   const calculateSingleDayIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter, validDogsList: Dog[]): number => {
     if (!statisticsFilter.includeSingleDays) return 0;
     
-    // Get all dogs with type 'singleDay'
-    const singleDayDogs = validDogsList.filter((dog: Dog) => dog.type === 'singleDay');
-    if (singleDayDogs.length === 0) return 0;
-    
     let filteredPlanning = planningHistory.filter(p => p.location === location);
     
     // Filter by period
@@ -904,17 +900,29 @@ const AdminPage: React.FC = () => {
       });
     }
     
-    // Count how many times each singleDay dog was planned in this location during the period
+    // Count how many times each singleDay dog was planned in this specific location during the period
+    // We only count dogs that were actually planned here, regardless of their location profile
     let totalSingleDayDays = 0;
-    singleDayDogs.forEach((dog: Dog) => {
-      filteredPlanning.forEach(plan => {
-        // Check if this dog was planned on this date
-        const wasPlanned = plan.cages && plan.cages.some(cage => 
-          cage.dogs && Array.isArray(cage.dogs) && cage.dogs.includes(dog.id)
-        );
-        if (wasPlanned) {
-          totalSingleDayDays++;
-        }
+    const processedDogs = new Set<string>(); // Track which dogs we've counted for this location
+    
+    filteredPlanning.forEach(plan => {
+      if (!plan.cages) return;
+      
+      plan.cages.forEach(cage => {
+        if (!cage.dogs || !Array.isArray(cage.dogs)) return;
+        
+        cage.dogs.forEach(dogId => {
+          // Find the dog to check if it's a singleDay dog
+          const dog = validDogsList.find((d: Dog) => d.id === dogId);
+          if (dog && dog.type === 'singleDay') {
+            // Use date + dogId as unique key to avoid counting same dog twice on same date
+            const key = `${plan.date}-${dogId}`;
+            if (!processedDogs.has(key)) {
+              processedDogs.add(key);
+              totalSingleDayDays++;
+            }
+          }
+        });
       });
     });
     
