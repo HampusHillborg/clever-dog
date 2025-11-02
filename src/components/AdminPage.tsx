@@ -387,9 +387,12 @@ const AdminPage: React.FC = () => {
       const devRole = email.toLowerCase().includes('employee') || email.toLowerCase().includes('anstalld') 
         ? 'employee' 
         : 'admin';
-      setIsLoggedIn(true);
+      setEmail(''); // Clear email
+      setPassword(''); // Clear password
       setUserRole(devRole);
       setIsLoading(false);
+      // Set isLoggedIn last to trigger re-render
+      setIsLoggedIn(true);
       return;
     }
     
@@ -404,11 +407,13 @@ const AdminPage: React.FC = () => {
       const result = await signIn(email, password);
       
       if (result.success && result.user) {
-        setIsLoggedIn(true);
+        // Update all state in sequence to ensure proper re-render
         setCurrentUser(result.user);
         setUserRole(result.user.role);
         setEmail(''); // Clear email
         setPassword(''); // Clear password
+        // Set isLoggedIn last to trigger the conditional render
+        setIsLoggedIn(true);
       } else {
         setError(result.error || 'Ogiltigt e-postadress eller lösenord');
       }
