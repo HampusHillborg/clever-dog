@@ -1699,15 +1699,37 @@ const AdminPage: React.FC = () => {
 
 
   const renderPlanning = (planning: Cage[], location: 'staffanstorp' | 'malmo') => {
-    const getAvailableDogs = () => {
-      // Get all dog IDs that are already in cages
+    // Get dogs on active boarding for this date and location
+    const getBoardingDogs = () => {
+      const activeBoardingRecords = boardingRecords.filter(record => {
+        return record.location === location &&
+               !record.isArchived &&
+               record.startDate <= currentPlanningDate &&
+               record.endDate >= currentPlanningDate;
+      });
+
+      const boardingDogIds = activeBoardingRecords.map(record => record.dogId);
+      const boardingDogs = dogs.filter(dog => boardingDogIds.includes(dog.id));
+      
+      // Exclude dogs already assigned to cages
       const assignedDogIds = planning.flatMap(cage => cage.dogs || []);
-      // Filter dogs by location and exclude already assigned dogs
+      return boardingDogs.filter(dog => !assignedDogIds.includes(dog.id));
+    };
+
+    const getAvailableDogs = () => {
+      // Get all dog IDs that are already in cages or in boarding
+      const assignedDogIds = planning.flatMap(cage => cage.dogs || []);
+      const boardingDogIds = getBoardingDogs().map(dog => dog.id);
+      
+      // Filter dogs by location, exclude assigned and boarding dogs
       return dogs.filter(dog => 
-        dog.locations.includes(location) && !assignedDogIds.includes(dog.id)
+        dog.locations.includes(location) && 
+        !assignedDogIds.includes(dog.id) &&
+        !boardingDogIds.includes(dog.id)
       );
     };
 
+    const boardingDogs = getBoardingDogs();
     const availableDogs = getAvailableDogs();
 
     // Format date for display
@@ -1809,8 +1831,68 @@ const AdminPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Dogs on Active Boarding */}
+          {boardingDogs.length > 0 && (
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg p-5 border-2 border-orange-300">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🏨</span>
+                  <h3 className="text-xl font-bold text-gray-800">Hundpensionat</h3>
+                </div>
+                <span className="bg-orange-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                  {boardingDogs.length}
+                </span>
+              </div>
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                {boardingDogs.map(dog => {
+                  const boardingRecord = boardingRecords.find(r => r.dogId === dog.id && r.location === location);
+                  return (
+                    <div
+                      key={dog.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, dog)}
+                      onDragEnd={handleDragEnd}
+                      className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 ${dog.color} relative group border-2 border-orange-400 hover:border-orange-500`}
+                      title="Dra för att flytta"
+                    >
+                      <button
+                        onClick={(e) => handleInfoClick(e, dog)}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onDragStart={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                        }}
+                        className="absolute top-3 right-3 text-gray-500 hover:text-primary z-30 transition-colors"
+                        title="Visa info"
+                      >
+                        <FaInfoCircle className="text-lg" />
+                      </button>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">🏨</span>
+                        <div className="font-bold text-base">{dog.name}</div>
+                      </div>
+                      <div className="text-xs text-gray-600 mb-2">👤 {dog.owner}</div>
+                      {boardingRecord && (
+                        <div className="text-xs text-orange-700 mb-2 font-semibold">
+                          Pensionat: {new Date(boardingRecord.startDate).toLocaleDateString('sv-SE')} - {new Date(boardingRecord.endDate).toLocaleDateString('sv-SE')}
+                        </div>
+                      )}
+                      <div className="flex gap-1 mt-1">
+                        {dog.locations.map(loc => (
+                          <span key={loc} className={`text-xs px-2 py-1 rounded ${loc === 'malmo' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'}`}>
+                            {loc === 'malmo' ? '📍 Malmö' : '📍 Staffanstorp'}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Available Dogs */}
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg p-5 border border-gray-200">
+          <div className={`bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg p-5 border border-gray-200 ${boardingDogs.length > 0 ? '' : 'lg:col-span-1'}`}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-xl font-bold text-gray-800">Tillgängliga hundar</h3>
               <span className="bg-primary text-white text-sm font-semibold px-3 py-1 rounded-full">
@@ -1863,7 +1945,7 @@ const AdminPage: React.FC = () => {
           </div>
 
           {/* Cages and Free Areas */}
-          <div className="lg:col-span-2">
+          <div className={`${boardingDogs.length > 0 ? 'lg:col-span-1' : 'lg:col-span-2'}`}>
             <h3 className="text-xl font-bold text-gray-800 mb-5">Burar och ytor</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {planning.map(cage => {
