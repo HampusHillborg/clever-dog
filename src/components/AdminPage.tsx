@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter } from 'react-icons/fa';
+import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
 import { 
   getDogs as fetchDogs, 
@@ -199,6 +199,9 @@ const AdminPage: React.FC = () => {
   const [settingsLocation, setSettingsLocation] = useState<'malmo' | 'staffanstorp'>('staffanstorp');
   const [editingBoxIndex, setEditingBoxIndex] = useState<{ type: 'cage' | 'free-area'; index: number } | null>(null);
   const [editingBoxName, setEditingBoxName] = useState('');
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [copyIncludeBoarding, setCopyIncludeBoarding] = useState(true);
+  const [customCopyDate, setCustomCopyDate] = useState('');
 
   // Initialize currentPlanningDate to today when entering planning view (but not if coming from calendar)
   useEffect(() => {
@@ -970,6 +973,64 @@ const AdminPage: React.FC = () => {
       setTimeout(() => {
         savePlanningData(location, newCages);
       }, 100);
+    }
+  };
+
+  // Copy planning from another date
+  const copyPlanningFromDate = async (
+    sourceDate: string, 
+    location: 'staffanstorp' | 'malmo',
+    includeBoarding: boolean
+  ) => {
+    try {
+      // Get planning from source date
+      const sourcePlanning = await getPlanningForDate(sourceDate, location);
+      
+      if (!sourcePlanning || !sourcePlanning.cages) {
+        alert(`Ingen planering hittades för ${new Date(sourceDate).toLocaleDateString('sv-SE')}`);
+        return;
+      }
+
+      // Get boarding dogs for current date to filter them out if needed
+      const currentDateBoardingRecords = boardingRecords.filter(record => 
+        record.location === location &&
+        !record.isArchived &&
+        record.startDate <= currentPlanningDate &&
+        record.endDate >= currentPlanningDate
+      );
+      const boardingDogIds = currentDateBoardingRecords.map(record => record.dogId);
+
+      // Copy cages and optionally filter out boarding dogs
+      const copiedCages: Cage[] = sourcePlanning.cages.map(cage => {
+        const copiedDogs = (cage.dogs || []).filter(dogId => {
+          if (!includeBoarding && boardingDogIds.includes(dogId)) {
+            return false; // Exclude boarding dogs
+          }
+          return true; // Include all dogs or only non-boarding dogs
+        });
+        return {
+          ...cage,
+          dogs: copiedDogs
+        };
+      });
+
+      // Update planning state
+      if (location === 'staffanstorp') {
+        setPlanningStaffanstorp(copiedCages);
+      } else {
+        setPlanningMalmo(copiedCages);
+      }
+
+      // Save to database
+      setTimeout(() => {
+        savePlanningData(location, copiedCages);
+      }, 100);
+
+      setIsCopyModalOpen(false);
+      alert(`Planering kopierad från ${new Date(sourceDate).toLocaleDateString('sv-SE')}`);
+    } catch (error) {
+      console.error('Error copying planning:', error);
+      alert('Fel uppstod vid kopiering av planering');
     }
   };
 
@@ -1820,13 +1881,22 @@ const AdminPage: React.FC = () => {
                 )}
               </div>
             </div>
-            <button
-              onClick={() => resetCages(location)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
-            >
-              <FaTrash className="text-sm" />
-              Återställ burar
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsCopyModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
+              >
+                <FaCopy className="text-sm" />
+                Kopiera planering
+              </button>
+              <button
+                onClick={() => resetCages(location)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+              >
+                <FaTrash className="text-sm" />
+                Återställ burar
+              </button>
+            </div>
           </div>
         </div>
 
@@ -3723,6 +3793,124 @@ const AdminPage: React.FC = () => {
                 className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
               >
                 Spara
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copy Planning Modal */}
+      {isCopyModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Kopiera planering</h3>
+              <button
+                onClick={() => setIsCopyModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Välj vilken planering du vill kopiera från:
+                </p>
+                
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      const prevDate = new Date(currentPlanningDate);
+                      prevDate.setDate(prevDate.getDate() - 1);
+                      const sourceDate = prevDate.toISOString().split('T')[0];
+                      const currentLocation = currentView === 'planning-malmo' ? 'malmo' : 'staffanstorp';
+                      copyPlanningFromDate(sourceDate, currentLocation, copyIncludeBoarding);
+                    }}
+                    className="w-full px-4 py-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-left"
+                  >
+                    <div className="font-semibold">Från dagen innan</div>
+                    <div className="text-sm text-gray-600">
+                      {(() => {
+                        const prevDate = new Date(currentPlanningDate);
+                        prevDate.setDate(prevDate.getDate() - 1);
+                        return prevDate.toLocaleDateString('sv-SE');
+                      })()}
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      const prevWeekDate = new Date(currentPlanningDate);
+                      prevWeekDate.setDate(prevWeekDate.getDate() - 7);
+                      const sourceDate = prevWeekDate.toISOString().split('T')[0];
+                      const currentLocation = currentView === 'planning-malmo' ? 'malmo' : 'staffanstorp';
+                      copyPlanningFromDate(sourceDate, currentLocation, copyIncludeBoarding);
+                    }}
+                    className="w-full px-4 py-3 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-left"
+                  >
+                    <div className="font-semibold">Från samma veckodag förra veckan</div>
+                    <div className="text-sm text-gray-600">
+                      {(() => {
+                        const prevWeekDate = new Date(currentPlanningDate);
+                        prevWeekDate.setDate(prevWeekDate.getDate() - 7);
+                        return prevWeekDate.toLocaleDateString('sv-SE');
+                      })()}
+                    </div>
+                  </button>
+                  
+                  <div className="px-4 py-3 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                    <div className="font-semibold text-purple-800 mb-2">Från valt datum</div>
+                    <input
+                      type="date"
+                      value={customCopyDate}
+                      onChange={(e) => setCustomCopyDate(e.target.value)}
+                      className="w-full px-3 py-2 border border-purple-300 rounded-md text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                    <button
+                      onClick={() => {
+                        if (!customCopyDate) {
+                          alert('Välj ett datum att kopiera från');
+                          return;
+                        }
+                        const currentLocation = currentView === 'planning-malmo' ? 'malmo' : 'staffanstorp';
+                        copyPlanningFromDate(customCopyDate, currentLocation, copyIncludeBoarding);
+                      }}
+                      disabled={!customCopyDate}
+                      className="w-full mt-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      Kopiera från detta datum
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={copyIncludeBoarding}
+                    onChange={(e) => setCopyIncludeBoarding(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Inkludera hundpensionat planeringar
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 mt-2 ml-6">
+                  Om avmarkerat kopieras endast vanlig planering, inga hundpensionat-hundar kopieras.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setIsCopyModalOpen(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Avbryt
               </button>
             </div>
           </div>
