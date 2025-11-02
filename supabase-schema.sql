@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS dogs (
   color TEXT NOT NULL,
   locations JSONB NOT NULL DEFAULT '[]'::jsonb, -- Array of 'malmo' | 'staffanstorp'
   type TEXT CHECK (type IN ('fulltime', 'parttime-3', 'parttime-2')),
+  is_active BOOLEAN DEFAULT TRUE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -54,6 +55,7 @@ CREATE TABLE IF NOT EXISTS box_settings (
 
 -- Indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_dogs_locations ON dogs USING GIN(locations);
+CREATE INDEX IF NOT EXISTS idx_dogs_is_active ON dogs(is_active);
 CREATE INDEX IF NOT EXISTS idx_boarding_location ON boarding_records(location);
 CREATE INDEX IF NOT EXISTS idx_boarding_dates ON boarding_records(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_boarding_archived ON boarding_records(is_archived);

@@ -45,6 +45,7 @@ interface Dog {
   color: string; // For visual distinction
   locations: ('malmo' | 'staffanstorp')[]; // Which daycares the dog belongs to (can be both)
   type?: 'fulltime' | 'parttime-3' | 'parttime-2';
+  isActive?: boolean; // Whether the dog is active (default: true)
 }
 
 interface BoardingRecord {
@@ -128,7 +129,8 @@ const AdminPage: React.FC = () => {
     phone: '',
     notes: '',
     locations: ['staffanstorp'] as ('malmo' | 'staffanstorp')[],
-    type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | ''
+    type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | '',
+    isActive: true
   });
   const [planningStaffanstorp, setPlanningStaffanstorp] = useState<Cage[]>([]);
   const [planningMalmo, setPlanningMalmo] = useState<Cage[]>([]);
@@ -535,7 +537,8 @@ const AdminPage: React.FC = () => {
       // Only set type if it's not empty string
       type: (dogForm.type && dogForm.type.trim() !== '') 
         ? (dogForm.type as 'fulltime' | 'parttime-3' | 'parttime-2')
-        : undefined
+        : undefined,
+      isActive: dogForm.isActive
     };
 
     // Save to database
@@ -594,11 +597,12 @@ const AdminPage: React.FC = () => {
         phone: dog.phone,
         notes: dog.notes || '',
         locations: dog.locations,
-        type: dog.type || ''
+        type: dog.type || '',
+        isActive: dog.isActive !== undefined ? dog.isActive : true
       });
     } else {
       setEditingDog(null);
-      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', notes: '', locations: ['staffanstorp'], type: '' });
+      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true });
     }
     setIsDogModalOpen(true);
   };
@@ -3768,6 +3772,22 @@ const AdminPage: React.FC = () => {
                   <option value="parttime-3">Deltid 3 dagar</option>
                   <option value="parttime-2">Deltid 2 dagar</option>
                 </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={dogForm.isActive}
+                    onChange={(e) => setDogForm({ ...dogForm, isActive: e.target.checked })}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Aktiv hund
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-6">
+                  Inaktiva hundar visas inte i planering och listor, men kan användas i statistik.
+                </p>
               </div>
             </div>
             <div className="mt-4">

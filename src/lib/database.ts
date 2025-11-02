@@ -12,6 +12,7 @@ export type Dog = {
   color: string;
   locations: ('malmo' | 'staffanstorp')[];
   type?: 'fulltime' | 'parttime-3' | 'parttime-2';
+  isActive?: boolean;
 };
 
 export type BoardingRecord = {
@@ -113,6 +114,7 @@ export const getDogs = async (): Promise<Dog[]> => {
       color: dog.color || 'bg-gray-100 text-gray-800',
       locations: locations,
       type: type,
+      isActive: dog.is_active !== undefined ? dog.is_active : true,
     };
   });
 };
@@ -161,6 +163,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
       color: dog.color,
       locations: dog.locations,
       type: dog.type || null,
+      is_active: dog.isActive !== undefined ? dog.isActive : true,
     } as any, {
       onConflict: 'id'
     })
@@ -206,6 +209,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     color: dbDog.color || 'bg-gray-100 text-gray-800',
     locations: locations,
     type: type,
+    isActive: dbDog.is_active !== undefined ? dbDog.is_active : true,
   };
   
   // If the ID changed (old format to UUID), we need to update localStorage

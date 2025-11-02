@@ -27,6 +27,7 @@ export type Dog = {
   color: string;
   locations: ('malmo' | 'staffanstorp')[];
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | null;
+  is_active?: boolean;
   created_at?: string;
   updated_at?: string;
 };
