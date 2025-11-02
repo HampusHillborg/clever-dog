@@ -158,7 +158,7 @@ const AdminPage: React.FC = () => {
   const [dogsTabSearch, setDogsTabSearch] = useState<string>('');
   const [statisticsFilter, setStatisticsFilter] = useState<StatisticsFilter>({
     location: 'all',
-    period: 'all',
+    period: 'month', // Default to current month
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
     includeActive: true,
