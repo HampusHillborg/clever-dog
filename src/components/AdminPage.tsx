@@ -223,7 +223,7 @@ const AdminPage: React.FC = () => {
       const today = new Date().toISOString().split('T')[0];
       setCurrentPlanningDate(today);
     }
-  }, [currentView]);
+  }, [currentView, currentPlanningDate]);
   const [draggedDog, setDraggedDog] = useState<Dog | null>(null);
 
   // Function to create initial cages based on box settings
@@ -249,6 +249,11 @@ const AdminPage: React.FC = () => {
 
   // Load planning when date changes (from database)
   useEffect(() => {
+    // Only load if we have a date and boxSettings are loaded
+    if (!currentPlanningDate || !boxSettings.malmo.cages.length || !boxSettings.staffanstorp.cages.length) {
+      return;
+    }
+
     const loadPlanningForDate = async () => {
       // Try to load from database first
       try {
@@ -278,7 +283,8 @@ const AdminPage: React.FC = () => {
     };
 
     loadPlanningForDate();
-  }, [currentPlanningDate, boxSettings]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPlanningDate]);
   const [contractData, setContractData] = useState<ContractData>({
     customerName: '',
     customerAddress: '',
@@ -816,6 +822,13 @@ const AdminPage: React.FC = () => {
       });
     }
   }, [boardingRecords]);
+
+  // Redirect employees away from restricted views
+  useEffect(() => {
+    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings')) {
+      setCurrentView('dashboard');
+    }
+  }, [userRole, currentView]);
 
   const getBoardingRecordsByMonth = (records: BoardingRecord[], year: string) => {
     const recordsByMonth: { [key: string]: BoardingRecord[] } = {};
@@ -3733,12 +3746,8 @@ const AdminPage: React.FC = () => {
     );
   };
 
-  // Redirect employees away from restricted views
-  useEffect(() => {
-    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings')) {
-      setCurrentView('dashboard');
-    }
-  }, [userRole, currentView]);
+  // IMPORTANT: All hooks above must be defined before any conditional returns
+  // This ensures React hooks are always called in the same order
 
   const renderContent = () => {
     // Redirect employees away from restricted views
