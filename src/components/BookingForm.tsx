@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaUser, FaDog, FaEnvelope, FaPhone, FaQuestionCircle } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
+import { saveApplication } from '../lib/database';
 
 interface BookingFormProps {
   isOpen: boolean;
@@ -43,13 +44,40 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormError('');
     
-    // Prepare the EmailJS template parameters
-    const templateParams = {
+    try {
+      // Save to Supabase first
+      await saveApplication({
+        location: 'staffanstorp',
+        owner_name: formData.name,
+        owner_email: formData.email,
+        owner_phone: formData.phone || undefined,
+        owner_address: formData.address || undefined,
+        owner_personnummer: formData.personnummer || undefined,
+        dog_name: formData.dogName || '',
+        dog_breed: formData.dogBreed || undefined,
+        dog_gender: formData.dogGender || undefined,
+        dog_height: formData.dogHeight || undefined,
+        dog_age: formData.dogAge || undefined,
+        dog_chip_number: formData.chipNumber || undefined,
+        is_neutered: formData.isNeutered || undefined,
+        service_type: formData.inquiryType || '',
+        days_per_week: formData.inquiryType === 'partTime' ? formData.partTimeDays : undefined,
+        start_date: formData.startDate || undefined,
+        end_date: formData.endDate || undefined,
+        part_time_days: formData.partTimeDays || undefined,
+        dog_socialization: formData.dogSocialization || undefined,
+        problem_behaviors: formData.problemBehaviors || undefined,
+        allergies: formData.allergies || undefined,
+        additional_info: formData.additionalInfo || undefined,
+      });
+
+      // Prepare the EmailJS template parameters
+      const templateParams = {
       from_name: formData.name,
       from_email: formData.email,
       phone: formData.phone,
@@ -75,14 +103,14 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     };
 
 
-    // Replace with your actual EmailJS Service ID, Template ID, and Public Key
-    emailjs.send(
-      import.meta.env.VITE_EMAILJS_SERVICE_ID, 
-      import.meta.env.VITE_EMAILJS_BOOKING_TEMPLATE_ID,
-      templateParams,
-      import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-    )
-    .then((_result: any) => {
+      // Replace with your actual EmailJS Service ID, Template ID, and Public Key
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID, 
+        import.meta.env.VITE_EMAILJS_BOOKING_TEMPLATE_ID,
+        templateParams,
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+
       // Send auto-reply to the customer
       const autoReplyParams = {
         from_name: formData.name,
@@ -93,15 +121,13 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         reply_to: 'cleverdog.aw@gmail.com', // Your email for replies
       };
 
-      
-      return emailjs.send(
+      await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
         import.meta.env.VITE_EMAILJS_AUTOREPLY_TEMPLATE_ID,
         autoReplyParams,
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
-    })
-    .then((_result: any) => {
+
       setIsSubmitting(false);
       setFormSuccess(true);
       // Reset form after successful submission
@@ -133,12 +159,11 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         onClose();
         setFormSuccess(false);
       }, 3000);
-    })
-    .catch((error: unknown) => {
-      console.error('EmailJS error:', error);
+    } catch (error: unknown) {
+      console.error('Error submitting form:', error);
       setIsSubmitting(false);
       setFormError(t('booking.form.errorMessage') || 'An error occurred when sending your booking request. Please try again later.');
-    });
+    }
   };
 
   if (!isOpen) return null;

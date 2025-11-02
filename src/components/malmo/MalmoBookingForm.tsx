@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaTimes, FaDog, FaCalendarWeek, FaQuestionCircle } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
+import { saveApplication } from '../../lib/database';
 
 interface MalmoBookingFormProps {
   isOpen: boolean;
@@ -70,6 +71,30 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
     setSubmitStatus('idle');
 
     try {
+      // Save to Supabase first
+      await saveApplication({
+        location: 'malmo',
+        owner_name: formData.name,
+        owner_email: formData.email,
+        owner_phone: formData.phone || undefined,
+        owner_address: formData.address || undefined,
+        owner_personnummer: formData.personnummer || undefined,
+        dog_name: formData.dogName || '',
+        dog_breed: formData.dogBreed || undefined,
+        dog_gender: formData.dogGender || undefined,
+        dog_height: formData.dogHeight || undefined,
+        dog_age: formData.dogAge || undefined,
+        dog_chip_number: formData.chipNumber || undefined,
+        is_neutered: formData.isNeutered || undefined,
+        service_type: formData.serviceType,
+        days_per_week: formData.daysPerWeek || undefined,
+        start_date: formData.startDate || undefined,
+        dog_socialization: formData.dogSocialization || undefined,
+        problem_behaviors: formData.problemBehaviors || undefined,
+        allergies: formData.allergies || undefined,
+        message: formData.message || undefined,
+      });
+
       // Komplett templateParams med alla fält
       const templateParams = {
         // Grundläggande kontaktinfo

@@ -623,3 +623,345 @@ export const saveBoxSettings = async (settings: BoxSettings): Promise<BoxSetting
   }
 };
 
+// ============================================================================
+// APPLICATIONS CRUD OPERATIONS
+// ============================================================================
+
+export type Application = {
+  id: string;
+  location: 'malmo' | 'staffanstorp';
+  
+  // Owner information
+  owner_name: string;
+  owner_email: string;
+  owner_phone?: string;
+  owner_address?: string;
+  owner_personnummer?: string;
+  
+  // Dog information
+  dog_name: string;
+  dog_breed?: string;
+  dog_gender?: string;
+  dog_height?: string;
+  dog_age?: string;
+  dog_chip_number?: string;
+  is_neutered?: string;
+  
+  // Service information
+  service_type: string;
+  days_per_week?: string;
+  start_date?: string;
+  end_date?: string;
+  part_time_days?: string;
+  
+  // Additional information
+  dog_socialization?: string;
+  problem_behaviors?: string;
+  allergies?: string;
+  additional_info?: string;
+  message?: string;
+  
+  // Status and matching
+  status: 'new' | 'reviewed' | 'approved' | 'rejected' | 'matched' | 'added';
+  matched_dog_id?: string;
+  matched_by?: string;
+  matched_at?: string;
+  
+  // Admin notes
+  admin_notes?: string;
+  
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+};
+
+export const saveApplication = async (application: Omit<Application, 'id' | 'status' | 'created_at' | 'updated_at' | 'matched_dog_id' | 'matched_by' | 'matched_at' | 'admin_notes'>): Promise<Application> => {
+  if (!isSupabaseAvailable()) {
+    // Fallback to localStorage
+    const newApplication: Application = {
+      ...application,
+      id: generateUUID(),
+      status: 'new',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    const saved = localStorage.getItem('cleverApplications');
+    const applications = saved ? JSON.parse(saved) : [];
+    applications.push(newApplication);
+    localStorage.setItem('cleverApplications', JSON.stringify(applications));
+    
+    return newApplication;
+  }
+
+  try {
+    // Map camelCase to snake_case for database
+    const { data, error } = await supabase!
+      .from('applications')
+      .insert({
+        location: application.location, // Explicitly map location
+        owner_name: application.owner_name,
+        owner_email: application.owner_email,
+        owner_phone: application.owner_phone || null,
+        owner_address: application.owner_address || null,
+        owner_personnummer: application.owner_personnummer || null,
+        dog_name: application.dog_name,
+        dog_breed: application.dog_breed || null,
+        dog_gender: application.dog_gender || null,
+        dog_height: application.dog_height || null,
+        dog_age: application.dog_age || null,
+        dog_chip_number: application.dog_chip_number || null,
+        is_neutered: application.is_neutered || null,
+        service_type: application.service_type,
+        days_per_week: application.days_per_week || null,
+        start_date: application.start_date || null,
+        end_date: application.end_date || null,
+        part_time_days: application.part_time_days || null,
+        dog_socialization: application.dog_socialization || null,
+        problem_behaviors: application.problem_behaviors || null,
+        allergies: application.allergies || null,
+        additional_info: application.additional_info || null,
+        message: application.message || null,
+        status: 'new'
+      } as any)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving application:', error);
+      // Fallback to localStorage
+      const newApplication: Application = {
+        ...application,
+        id: generateUUID(),
+        status: 'new',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      const saved = localStorage.getItem('cleverApplications');
+      const applications = saved ? JSON.parse(saved) : [];
+      applications.push(newApplication);
+      localStorage.setItem('cleverApplications', JSON.stringify(applications));
+      
+      return newApplication;
+    }
+
+    return data as Application;
+  } catch (error) {
+    console.error('Error saving application:', error);
+    // Fallback to localStorage
+    const newApplication: Application = {
+      ...application,
+      id: generateUUID(),
+      status: 'new',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    const saved = localStorage.getItem('cleverApplications');
+    const applications = saved ? JSON.parse(saved) : [];
+    applications.push(newApplication);
+    localStorage.setItem('cleverApplications', JSON.stringify(applications));
+    
+    return newApplication;
+  }
+};
+
+export const getApplications = async (filters?: { status?: string; location?: string }): Promise<Application[]> => {
+  if (!isSupabaseAvailable()) {
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverApplications');
+    let applications: Application[] = saved ? JSON.parse(saved) : [];
+    
+    if (filters?.status) {
+      applications = applications.filter(a => a.status === filters.status);
+    }
+    if (filters?.location) {
+      applications = applications.filter(a => a.location === filters.location);
+    }
+    
+    return applications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  try {
+    let query = supabase!
+      .from('applications')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (filters?.status) {
+      query = query.eq('status', filters.status);
+    }
+    if (filters?.location) {
+      query = query.eq('location', filters.location);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching applications:', error);
+      // Fallback to localStorage
+      const saved = localStorage.getItem('cleverApplications');
+      let applications: Application[] = saved ? JSON.parse(saved) : [];
+      
+      if (filters?.status) {
+        applications = applications.filter(a => a.status === filters.status);
+      }
+      if (filters?.location) {
+        applications = applications.filter(a => a.location === filters.location);
+      }
+      
+      return applications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+
+    return ((data as any) || []) as Application[];
+  } catch (error) {
+    console.error('Error fetching applications:', error);
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverApplications');
+    let applications: Application[] = saved ? JSON.parse(saved) : [];
+    
+    if (filters?.status) {
+      applications = applications.filter(a => a.status === filters.status);
+    }
+    if (filters?.location) {
+      applications = applications.filter(a => a.location === filters.location);
+    }
+    
+    return applications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+};
+
+export const updateApplication = async (id: string, updates: Partial<Application>): Promise<Application> => {
+  if (!isSupabaseAvailable()) {
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverApplications');
+    const applications: Application[] = saved ? JSON.parse(saved) : [];
+    const index = applications.findIndex(a => a.id === id);
+    
+    if (index >= 0) {
+      applications[index] = {
+        ...applications[index],
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      localStorage.setItem('cleverApplications', JSON.stringify(applications));
+      return applications[index];
+    }
+    
+    throw new Error('Application not found');
+  }
+
+  try {
+    // Map updates to snake_case format for database
+    const updateData: any = {};
+    if (updates.location) updateData.location = updates.location;
+    if (updates.owner_name !== undefined) updateData.owner_name = updates.owner_name;
+    if (updates.owner_email !== undefined) updateData.owner_email = updates.owner_email;
+    if (updates.owner_phone !== undefined) updateData.owner_phone = updates.owner_phone;
+    if (updates.owner_address !== undefined) updateData.owner_address = updates.owner_address;
+    if (updates.owner_personnummer !== undefined) updateData.owner_personnummer = updates.owner_personnummer;
+    if (updates.dog_name !== undefined) updateData.dog_name = updates.dog_name;
+    if (updates.dog_breed !== undefined) updateData.dog_breed = updates.dog_breed;
+    if (updates.dog_gender !== undefined) updateData.dog_gender = updates.dog_gender;
+    if (updates.dog_height !== undefined) updateData.dog_height = updates.dog_height;
+    if (updates.dog_age !== undefined) updateData.dog_age = updates.dog_age;
+    if (updates.dog_chip_number !== undefined) updateData.dog_chip_number = updates.dog_chip_number;
+    if (updates.is_neutered !== undefined) updateData.is_neutered = updates.is_neutered;
+    if (updates.service_type !== undefined) updateData.service_type = updates.service_type;
+    if (updates.days_per_week !== undefined) updateData.days_per_week = updates.days_per_week;
+    if (updates.start_date !== undefined) updateData.start_date = updates.start_date;
+    if (updates.end_date !== undefined) updateData.end_date = updates.end_date;
+    if (updates.part_time_days !== undefined) updateData.part_time_days = updates.part_time_days;
+    if (updates.dog_socialization !== undefined) updateData.dog_socialization = updates.dog_socialization;
+    if (updates.problem_behaviors !== undefined) updateData.problem_behaviors = updates.problem_behaviors;
+    if (updates.allergies !== undefined) updateData.allergies = updates.allergies;
+    if (updates.additional_info !== undefined) updateData.additional_info = updates.additional_info;
+    if (updates.message !== undefined) updateData.message = updates.message;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.matched_dog_id !== undefined) updateData.matched_dog_id = updates.matched_dog_id;
+    if (updates.matched_by !== undefined) updateData.matched_by = updates.matched_by;
+    if (updates.matched_at !== undefined) updateData.matched_at = updates.matched_at;
+    if (updates.admin_notes !== undefined) updateData.admin_notes = updates.admin_notes;
+    updateData.updated_at = new Date().toISOString();
+
+    const { data, error } = await (supabase!.from('applications' as any) as any)
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating application:', error);
+      // Fallback to localStorage
+      const saved = localStorage.getItem('cleverApplications');
+      const applications: Application[] = saved ? JSON.parse(saved) : [];
+      const index = applications.findIndex(a => a.id === id);
+      
+      if (index >= 0) {
+        applications[index] = {
+          ...applications[index],
+          ...updates,
+          updated_at: new Date().toISOString()
+        };
+        localStorage.setItem('cleverApplications', JSON.stringify(applications));
+        return applications[index];
+      }
+      
+      throw new Error('Application not found');
+    }
+
+    // Also update localStorage as backup
+    const saved = localStorage.getItem('cleverApplications');
+    if (saved) {
+      const applications: Application[] = JSON.parse(saved);
+      const index = applications.findIndex(a => a.id === id);
+      if (index >= 0) {
+        applications[index] = data as Application;
+        localStorage.setItem('cleverApplications', JSON.stringify(applications));
+      }
+    }
+
+    return data as Application;
+  } catch (error) {
+    console.error('Error updating application:', error);
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverApplications');
+    const applications: Application[] = saved ? JSON.parse(saved) : [];
+    const index = applications.findIndex(a => a.id === id);
+    
+    if (index >= 0) {
+      applications[index] = {
+        ...applications[index],
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+      localStorage.setItem('cleverApplications', JSON.stringify(applications));
+      return applications[index];
+    }
+    
+    throw error;
+  }
+};
+
+// Find potential matching dogs based on phone number and dog name
+export const findMatchingDogs = async (phone: string, dogName: string): Promise<Dog[]> => {
+  const allDogs = await getDogs();
+  
+  // Normalize phone numbers (remove spaces, dashes, etc.)
+  const normalizePhone = (phoneNum: string): string => {
+    return phoneNum.replace(/\s+/g, '').replace(/-/g, '').replace(/\(/g, '').replace(/\)/g, '');
+  };
+  
+  const normalizedSearchPhone = normalizePhone(phone || '');
+  const normalizedSearchName = dogName.toLowerCase().trim();
+  
+  return allDogs.filter(dog => {
+    const normalizedDogPhone = normalizePhone(dog.phone || '');
+    const normalizedDogName = dog.name.toLowerCase().trim();
+    
+    return normalizedDogPhone === normalizedSearchPhone && 
+           normalizedDogName === normalizedSearchName;
+  });
+};
+
