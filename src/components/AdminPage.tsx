@@ -15,6 +15,7 @@ import {
   saveBoxSettings as saveBoxSettingsToDb,
   type BoxSettings
 } from '../lib/database';
+import { PRICES, VAT_RATE } from '../lib/prices';
 
 interface ContractData {
   // Common fields
@@ -80,6 +81,10 @@ interface StatisticsFilter {
   period: 'all' | 'month' | 'year';
   year?: number;
   month?: number;
+  includeActive: boolean;
+  includeInactive: boolean;
+  includeBoarding: boolean;
+  includeSingleDays: boolean;
 }
 
 interface DogStatistics {
@@ -88,12 +93,21 @@ interface DogStatistics {
   staffanstorpDogs: number;
   bothLocationDogs: number;
   totalIncome: number;
+  totalIncomeWithVAT: number;
+  totalIncomeWithoutVAT: number;
   malmoIncome: number;
   staffanstorpIncome: number;
   incomeByType: {
     fulltime: number;
     parttime3: number;
     parttime2: number;
+    singleDay: number;
+    boarding: number;
+  };
+  incomeByCategory: {
+    daycare: number;
+    boarding: number;
+    singleDays: number;
   };
 }
 
@@ -140,26 +154,13 @@ const AdminPage: React.FC = () => {
     location: 'all',
     period: 'all',
     year: new Date().getFullYear(),
-    month: new Date().getMonth() + 1
+    month: new Date().getMonth() + 1,
+    includeActive: true,
+    includeInactive: false,
+    includeBoarding: true,
+    includeSingleDays: true
   });
 
-  // Pricing constants based on location
-  const PRICES = {
-    malmo: {
-      fulltime: 3500,
-      parttime3: 3000,
-      parttime2: 2750,
-      singleDay: 350,
-      boarding: 400 // Same price as Staffanstorp
-    },
-    staffanstorp: {
-      fulltime: 3500,
-      parttime3: 3000,
-      parttime2: 2750,
-      singleDay: 350,
-      boarding: 400
-    }
-  };
   // Box settings state (per location)
   const [boxSettings, setBoxSettings] = useState<BoxSettings>({
     malmo: {
@@ -838,15 +839,106 @@ const AdminPage: React.FC = () => {
     return filteredRecords.length * prices.boarding;
   };
 
+  // Calculate single day income from planning history
+  const calculateSingleDayIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
+    if (!statisticsFilter.includeSingleDays) return 0;
+    
+    let filteredPlanning = planningHistory.filter(p => p.location === location);
+    
+    // Filter by period
+    if (filter.period === 'year' && filter.year) {
+      filteredPlanning = filteredPlanning.filter(p => {
+        const planYear = new Date(p.date).getFullYear();
+        return planYear === filter.year;
+      });
+    } else if (filter.period === 'month' && filter.year && filter.month) {
+      filteredPlanning = filteredPlanning.filter(p => {
+        const planDate = new Date(p.date);
+        return planDate.getFullYear() === filter.year && 
+               planDate.getMonth() + 1 === filter.month;
+      });
+    }
+    
+    // Count unique days that have dogs assigned
+    let singleDayCount = 0;
+    filteredPlanning.forEach(plan => {
+      const hasDogs = plan.cages && plan.cages.some(cage => 
+        cage.dogs && Array.isArray(cage.dogs) && cage.dogs.length > 0
+      );
+      if (hasDogs) {
+        singleDayCount++;
+      }
+    });
+    
+    return singleDayCount * PRICES[location].singleDay;
+  };
+
+  // Calculate boarding income with proper day count
+  const calculateBoardingIncomeDetailed = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
+    if (!statisticsFilter.includeBoarding) return 0;
+    
+    const prices = PRICES[location];
+    let filteredRecords = boardingRecords.filter(record => 
+      record.location === location && !record.isArchived
+    );
+    
+    // Filter by period
+    if (filter.period === 'year' && filter.year) {
+      filteredRecords = filteredRecords.filter(record => {
+        const recordYear = new Date(record.startDate).getFullYear();
+        return recordYear === filter.year;
+      });
+    } else if (filter.period === 'month' && filter.year && filter.month) {
+      filteredRecords = filteredRecords.filter(record => {
+        const startDate = new Date(record.startDate);
+        const endDate = new Date(record.endDate);
+        const filterStart = new Date(filter.year!, filter.month! - 1, 1);
+        const filterEnd = new Date(filter.year!, filter.month!, 0);
+        
+        // Check if boarding period overlaps with filter month
+        return startDate <= filterEnd && endDate >= filterStart;
+      });
+    }
+    
+    // Calculate total days and income
+    let totalDays = 0;
+    filteredRecords.forEach(record => {
+      const startDate = new Date(record.startDate);
+      const endDate = new Date(record.endDate);
+      
+      if (filter.period === 'month' && filter.year && filter.month) {
+        // Calculate days within the filtered month
+        const filterStart = new Date(filter.year, filter.month - 1, 1);
+        const filterEnd = new Date(filter.year, filter.month, 0);
+        
+        const actualStart = startDate > filterStart ? startDate : filterStart;
+        const actualEnd = endDate < filterEnd ? endDate : filterEnd;
+        
+        if (actualStart <= actualEnd) {
+          const daysDiff = Math.ceil((actualEnd.getTime() - actualStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          totalDays += daysDiff;
+        }
+      } else {
+        // For year or all: count all days in boarding period
+        const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        totalDays += daysDiff;
+      }
+    });
+    
+    return totalDays * prices.boarding;
+  };
+
   const getStatistics = (): DogStatistics => {
     // Ensure we have valid dogs data
-    const validDogs = dogs.filter(dog => dog && dog.id);
+    let validDogs = dogs.filter(dog => dog && dog.id);
     
-    // Debug: Log dogs without types (both dev and prod for debugging)
-    const dogsWithoutTypes = validDogs.filter(dog => !dog.type);
-    if (dogsWithoutTypes.length > 0) {
-      console.log(`⚠️ ${dogsWithoutTypes.length} hundar saknar typ och räknas inte med i inkomsten:`, 
-        dogsWithoutTypes.map(d => d.name).join(', '));
+    // Filter by active/inactive status
+    if (statisticsFilter.includeActive && !statisticsFilter.includeInactive) {
+      validDogs = validDogs.filter(dog => dog.isActive !== false); // Default true if undefined
+    } else if (!statisticsFilter.includeActive && statisticsFilter.includeInactive) {
+      validDogs = validDogs.filter(dog => dog.isActive === false);
+    } else if (!statisticsFilter.includeActive && !statisticsFilter.includeInactive) {
+      validDogs = []; // No dogs if both are excluded
     }
     
     let filteredDogs = validDogs;
@@ -865,18 +957,32 @@ const AdminPage: React.FC = () => {
       return dog.locations.includes('malmo') && dog.locations.includes('staffanstorp');
     });
     
-    const malmoIncome = malmoDogs.reduce((sum, dog) => {
+    // Calculate daycare income (monthly subscriptions)
+    const malmoDaycareIncome = malmoDogs.reduce((sum, dog) => {
       const income = calculateDogIncome(dog, 'malmo');
       return sum + income;
     }, 0);
-    const staffanstorpIncome = staffanstorpDogs.reduce((sum, dog) => {
+    const staffanstorpDaycareIncome = staffanstorpDogs.reduce((sum, dog) => {
       const income = calculateDogIncome(dog, 'staffanstorp');
       return sum + income;
     }, 0);
     
-    const boardingMalmoIncome = calculateBoardingIncome('malmo', statisticsFilter);
-    const boardingStaffanstorpIncome = calculateBoardingIncome('staffanstorp', statisticsFilter);
+    // Calculate boarding income
+    const boardingMalmoIncome = calculateBoardingIncomeDetailed('malmo', statisticsFilter);
+    const boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
     
+    // Calculate single day income from planning history
+    const singleDayMalmoIncome = calculateSingleDayIncome('malmo', statisticsFilter);
+    const singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter);
+    
+    // Total income calculations
+    const totalDaycareIncome = malmoDaycareIncome + staffanstorpDaycareIncome;
+    const totalBoardingIncome = boardingMalmoIncome + boardingStaffanstorpIncome;
+    const totalSingleDayIncome = singleDayMalmoIncome + singleDayStaffanstorpIncome;
+    const totalIncomeWithoutVAT = totalDaycareIncome + totalBoardingIncome + totalSingleDayIncome;
+    const totalIncomeWithVAT = totalIncomeWithoutVAT * (1 + VAT_RATE);
+    
+    // Income by type (monthly subscriptions)
     const incomeByType = {
       fulltime: filteredDogs
         .filter(dog => dog && dog.type === 'fulltime' && dog.locations && Array.isArray(dog.locations))
@@ -901,7 +1007,16 @@ const AdminPage: React.FC = () => {
           if (dog.locations.includes('malmo')) income += PRICES.malmo.parttime2;
           if (dog.locations.includes('staffanstorp')) income += PRICES.staffanstorp.parttime2;
           return sum + income;
-        }, 0)
+        }, 0),
+      singleDay: totalSingleDayIncome,
+      boarding: totalBoardingIncome
+    };
+    
+    // Income by category
+    const incomeByCategory = {
+      daycare: totalDaycareIncome,
+      boarding: totalBoardingIncome,
+      singleDays: totalSingleDayIncome
     };
     
     return {
@@ -909,10 +1024,13 @@ const AdminPage: React.FC = () => {
       malmoDogs: malmoDogs.length,
       staffanstorpDogs: staffanstorpDogs.length,
       bothLocationDogs: bothLocationDogs.length,
-      totalIncome: malmoIncome + staffanstorpIncome + boardingMalmoIncome + boardingStaffanstorpIncome,
-      malmoIncome: malmoIncome + boardingMalmoIncome,
-      staffanstorpIncome: staffanstorpIncome + boardingStaffanstorpIncome,
-      incomeByType
+      totalIncome: totalIncomeWithoutVAT,
+      totalIncomeWithVAT: totalIncomeWithVAT,
+      totalIncomeWithoutVAT: totalIncomeWithoutVAT,
+      malmoIncome: malmoDaycareIncome + boardingMalmoIncome + singleDayMalmoIncome,
+      staffanstorpIncome: staffanstorpDaycareIncome + boardingStaffanstorpIncome + singleDayStaffanstorpIncome,
+      incomeByType,
+      incomeByCategory
     };
   };
 
@@ -2593,7 +2711,7 @@ const AdminPage: React.FC = () => {
             <FaFilter className="mr-2 text-blue-500" />
             Filtrera statistik
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {/* Location Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Plats</label>
@@ -2654,6 +2772,48 @@ const AdminPage: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Additional Filters */}
+          <div className="border-t pt-4 mt-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={statisticsFilter.includeActive}
+                  onChange={(e) => setStatisticsFilter(prev => ({ ...prev, includeActive: e.target.checked }))}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <span className="text-sm text-gray-700">Aktiva hundar</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={statisticsFilter.includeInactive}
+                  onChange={(e) => setStatisticsFilter(prev => ({ ...prev, includeInactive: e.target.checked }))}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <span className="text-sm text-gray-700">Inaktiva hundar</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={statisticsFilter.includeBoarding}
+                  onChange={(e) => setStatisticsFilter(prev => ({ ...prev, includeBoarding: e.target.checked }))}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <span className="text-sm text-gray-700">Hundpensionat</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={statisticsFilter.includeSingleDays}
+                  onChange={(e) => setStatisticsFilter(prev => ({ ...prev, includeSingleDays: e.target.checked }))}
+                  className="w-4 h-4 text-blue-600 rounded"
+                />
+                <span className="text-sm text-gray-700">Enstaka dagar</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Statistics Cards */}
@@ -2703,34 +2863,97 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Income Statistics */}
+        {/* Expected Income */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-md p-6 border-2 border-green-200">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+            <FaChartBar className="mr-2 text-green-600" />
+            Förväntad inkomst
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Without VAT */}
+            <div className="bg-white rounded-lg p-5 border-2 border-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600">Exklusive moms (25%)</span>
+                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">Exkl. moms</span>
+              </div>
+              <div className="text-4xl font-bold text-gray-800 mb-1">
+                {Math.round(stats.totalIncomeWithoutVAT).toLocaleString()} SEK
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Moms: {Math.round(stats.totalIncomeWithoutVAT * VAT_RATE).toLocaleString()} SEK
+              </div>
+            </div>
+
+            {/* With VAT */}
+            <div className="bg-white rounded-lg p-5 border-2 border-green-300">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600">Inklusive moms (25%)</span>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Inkl. moms</span>
+              </div>
+              <div className="text-4xl font-bold text-green-600 mb-1">
+                {Math.round(stats.totalIncomeWithVAT).toLocaleString()} SEK
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Utan moms: {Math.round(stats.totalIncomeWithoutVAT).toLocaleString()} SEK
+              </div>
+            </div>
+          </div>
+
+          {/* Income by Location */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-sm text-gray-600 mb-1">Malmö</p>
+              <p className="text-2xl font-bold text-green-700">{Math.round(stats.malmoIncome).toLocaleString()} SEK</p>
+              <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
+            </div>
+            <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <p className="text-sm text-gray-600 mb-1">Staffanstorp</p>
+              <p className="text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
+              <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
+            </div>
+          </div>
+
+          {/* Warning if dogs are missing type */}
+          {dogs.some(dog => !dog.type && dog.isActive !== false) && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800">
+                <strong>OBS:</strong> Vissa aktiva hundar saknar typ (heltid/deltid). 
+                Dessa räknas inte med i inkomsten. Redigera hundarna och lägg till typ för korrekt beräkning.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Income Statistics Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Total Income */}
+          {/* Income by Category */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <FaChartBar className="mr-2 text-green-500" />
-              Total inkomst
+              <FaChartBar className="mr-2 text-purple-500" />
+              Inkomst per kategori
             </h3>
-            <div className="text-3xl font-bold text-green-600 mb-2">
-              {stats.totalIncome.toLocaleString()} SEK
-            </div>
-            {/* Warning if dogs are missing type */}
-            {dogs.some(dog => !dog.type) && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>OBS:</strong> Vissa hundar saknar typ (heltid/deltid). 
-                  Dessa räknas inte med i inkomsten. Redigera hundarna och lägg till typ för korrekt beräkning.
-                </p>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                <div>
+                  <span className="text-sm font-medium text-gray-700 block">Hunddagis</span>
+                  <span className="text-xs text-gray-500">Månadskonstanter</span>
+                </div>
+                <span className="text-xl font-bold text-blue-600">{Math.round(stats.incomeByCategory.daycare).toLocaleString()} SEK</span>
               </div>
-            )}
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-gray-600">Malmö</p>
-                <p className="text-lg font-semibold text-green-600">{stats.malmoIncome.toLocaleString()} SEK</p>
+              <div className="flex justify-between items-center p-4 bg-orange-50 rounded-lg border-l-4 border-orange-500">
+                <div>
+                  <span className="text-sm font-medium text-gray-700 block">Hundpensionat</span>
+                  <span className="text-xs text-gray-500">Per dygn</span>
+                </div>
+                <span className="text-xl font-bold text-orange-600">{Math.round(stats.incomeByCategory.boarding).toLocaleString()} SEK</span>
               </div>
-              <div className="text-center p-3 bg-orange-50 rounded-lg">
-                <p className="text-sm text-gray-600">Staffanstorp</p>
-                <p className="text-lg font-semibold text-orange-600">{stats.staffanstorpIncome.toLocaleString()} SEK</p>
+              <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                <div>
+                  <span className="text-sm font-medium text-gray-700 block">Enstaka dagar</span>
+                  <span className="text-xs text-gray-500">Per tillfälle</span>
+                </div>
+                <span className="text-xl font-bold text-green-600">{Math.round(stats.incomeByCategory.singleDays).toLocaleString()} SEK</span>
               </div>
             </div>
           </div>
@@ -2739,21 +2962,33 @@ const AdminPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <FaChartBar className="mr-2 text-blue-500" />
-              Inkomst per typ
+              Inkomst per typ (Hunddagis)
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                 <span className="text-sm font-medium text-gray-700">Heltid</span>
-                <span className="text-lg font-semibold text-blue-600">{stats.incomeByType.fulltime.toLocaleString()} SEK</span>
+                <span className="text-lg font-semibold text-blue-600">{Math.round(stats.incomeByType.fulltime).toLocaleString()} SEK</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                 <span className="text-sm font-medium text-gray-700">Deltid (3 dagar)</span>
-                <span className="text-lg font-semibold text-yellow-600">{stats.incomeByType.parttime3.toLocaleString()} SEK</span>
+                <span className="text-lg font-semibold text-yellow-600">{Math.round(stats.incomeByType.parttime3).toLocaleString()} SEK</span>
               </div>
               <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                 <span className="text-sm font-medium text-gray-700">Deltid (2 dagar)</span>
-                <span className="text-lg font-semibold text-purple-600">{stats.incomeByType.parttime2.toLocaleString()} SEK</span>
+                <span className="text-lg font-semibold text-purple-600">{Math.round(stats.incomeByType.parttime2).toLocaleString()} SEK</span>
               </div>
+              {statisticsFilter.includeSingleDays && (
+                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border-t-2 border-gray-200 mt-3 pt-3">
+                  <span className="text-sm font-medium text-gray-700">Enstaka dagar</span>
+                  <span className="text-lg font-semibold text-green-600">{Math.round(stats.incomeByType.singleDay).toLocaleString()} SEK</span>
+                </div>
+              )}
+              {statisticsFilter.includeBoarding && (
+                <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border-t-2 border-gray-200 mt-3 pt-3">
+                  <span className="text-sm font-medium text-gray-700">Hundpensionat</span>
+                  <span className="text-lg font-semibold text-orange-600">{Math.round(stats.incomeByType.boarding).toLocaleString()} SEK</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
