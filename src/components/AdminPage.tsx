@@ -567,7 +567,7 @@ const AdminPage: React.FC = () => {
     });
     setIsDogModalOpen(false);
     setEditingDog(null);
-    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', notes: '', locations: ['staffanstorp'], type: '' });
+    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true });
   };
 
   const deleteDog = async (id: string) => {
