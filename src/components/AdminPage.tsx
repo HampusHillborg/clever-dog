@@ -152,6 +152,8 @@ const AdminPage: React.FC = () => {
   const [currentPlanningDate, setCurrentPlanningDate] = useState<string>(new Date().toISOString().split('T')[0]);
   // Search state for dog categories in planning view (location_category)
   const [planningSearch, setPlanningSearch] = useState<Record<string, string>>({});
+  // Search state for dog selection in boarding form
+  const [boardingDogSearch, setBoardingDogSearch] = useState<string>('');
   const [statisticsFilter, setStatisticsFilter] = useState<StatisticsFilter>({
     location: 'all',
     period: 'all',
@@ -685,6 +687,7 @@ const AdminPage: React.FC = () => {
     setIsBoardingModalOpen(false);
     setBoardingForm({ startDate: '', endDate: '', notes: '' });
     setSelectedDogForBoarding('');
+    setBoardingDogSearch(''); // Clear search when closing
     setEditingBoardingRecord(null);
   };
 
@@ -718,6 +721,7 @@ const AdminPage: React.FC = () => {
       setEditingBoardingRecord(null);
       setBoardingForm({ startDate: '', endDate: '', notes: '' });
       setSelectedDogForBoarding('');
+      setBoardingDogSearch(''); // Clear search when opening new
     }
     setIsBoardingModalOpen(true);
     // Store the location for use in saveBoardingRecord
@@ -4030,7 +4034,10 @@ const AdminPage: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">{editingBoardingRecord ? 'Redigera hundpensionat' : 'Lägg till hundpensionat'}</h3>
               <button
-                onClick={() => setIsBoardingModalOpen(false)}
+                onClick={() => {
+                  setIsBoardingModalOpen(false);
+                  setBoardingDogSearch(''); // Clear search when closing
+                }}
                 className="text-gray-500 hover:text-gray-900"
               >
                 ✕
@@ -4040,6 +4047,14 @@ const AdminPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Välj hund *</label>
+                {/* Search input */}
+                <input
+                  type="text"
+                  placeholder="Sök på namn eller ägare..."
+                  value={boardingDogSearch}
+                  onChange={(e) => setBoardingDogSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
                 <select
                   value={selectedDogForBoarding}
                   onChange={(e) => setSelectedDogForBoarding(e.target.value)}
@@ -4047,13 +4062,27 @@ const AdminPage: React.FC = () => {
                 >
                   <option value="">Välj hund</option>
                   {dogs
-                    .filter(dog => dog.locations.includes((window as any).currentBoardingLocation))
+                    .filter(dog => {
+                      const matchesLocation = dog.locations.includes((window as any).currentBoardingLocation);
+                      const matchesSearch = !boardingDogSearch.trim() || 
+                        dog.name.toLowerCase().includes(boardingDogSearch.toLowerCase()) ||
+                        dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
+                      return matchesLocation && matchesSearch;
+                    })
                     .map(dog => (
                       <option key={dog.id} value={dog.id}>
                         {dog.name} - {dog.owner} ({dog.locations.map(l => l === 'malmo' ? 'Malmö' : 'Staffanstorp').join(', ')})
                       </option>
                     ))}
                 </select>
+                {boardingDogSearch.trim() && dogs.filter(dog => {
+                  const matchesLocation = dog.locations.includes((window as any).currentBoardingLocation);
+                  const matchesSearch = dog.name.toLowerCase().includes(boardingDogSearch.toLowerCase()) ||
+                    dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
+                  return matchesLocation && matchesSearch;
+                }).length === 0 && (
+                  <p className="text-sm text-gray-500 mt-2">Inga hundar matchar sökningen</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Startdatum *</label>
