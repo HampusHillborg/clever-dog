@@ -773,7 +773,10 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
       .single();
 
     if (error) {
-      console.error('Error saving application:', error);
+      console.error('Error saving application to Supabase:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      console.warn('Falling back to localStorage. This application will not be visible in admin panel if Supabase is configured.');
+      
       // Fallback to localStorage
       const newApplication: Application = {
         ...application,
@@ -788,7 +791,8 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
       applications.push(newApplication);
       localStorage.setItem('cleverApplications', JSON.stringify(applications));
       
-      return newApplication;
+      // Still throw error to let caller know it failed (but localStorage fallback happened)
+      throw new Error(`Failed to save to database: ${error.message || 'Unknown error'}. Saved to localStorage as fallback.`);
     }
 
     return data as Application;
