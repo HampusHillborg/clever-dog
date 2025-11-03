@@ -652,6 +652,8 @@ export type Application = {
   owner_email: string;
   owner_phone?: string;
   owner_address?: string;
+  owner_city?: string;
+  owner_postal_code?: string;
   owner_personnummer?: string;
   
   // Dog information
@@ -720,6 +722,8 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
         owner_email: application.owner_email,
         owner_phone: application.owner_phone || null,
         owner_address: application.owner_address || null,
+        owner_city: application.owner_city || null,
+        owner_postal_code: application.owner_postal_code || null,
         owner_personnummer: application.owner_personnummer || null,
         dog_name: application.dog_name,
         dog_breed: application.dog_breed || null,
@@ -876,6 +880,8 @@ export const updateApplication = async (id: string, updates: Partial<Application
     if (updates.owner_email !== undefined) updateData.owner_email = updates.owner_email;
     if (updates.owner_phone !== undefined) updateData.owner_phone = updates.owner_phone;
     if (updates.owner_address !== undefined) updateData.owner_address = updates.owner_address;
+    if (updates.owner_city !== undefined) updateData.owner_city = updates.owner_city;
+    if (updates.owner_postal_code !== undefined) updateData.owner_postal_code = updates.owner_postal_code;
     if (updates.owner_personnummer !== undefined) updateData.owner_personnummer = updates.owner_personnummer;
     if (updates.dog_name !== undefined) updateData.dog_name = updates.dog_name;
     if (updates.dog_breed !== undefined) updateData.dog_breed = updates.dog_breed;

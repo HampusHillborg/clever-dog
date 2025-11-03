@@ -4567,6 +4567,16 @@ const AdminPage: React.FC = () => {
                     <div>
                       <span className="font-medium">Adress:</span> {selectedApplication.owner_address || 'Saknas'}
                     </div>
+                    {selectedApplication.owner_city && (
+                      <div>
+                        <span className="font-medium">Ort:</span> {selectedApplication.owner_city}
+                      </div>
+                    )}
+                    {selectedApplication.owner_postal_code && (
+                      <div>
+                        <span className="font-medium">Postnummer:</span> {selectedApplication.owner_postal_code}
+                      </div>
+                    )}
                     <div>
                       <span className="font-medium">Personnummer:</span> {selectedApplication.owner_personnummer || 'Saknas'}
                     </div>

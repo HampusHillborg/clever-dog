@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ny bokning - Malmö</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  <div style="max-width: 680px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #f97316; border-bottom: 2px solid #f97316; padding-bottom: 10px;">
+      Ny bokning - Malmö
+    </h2>
+
+    <div style="background-color: #f8f9fa; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin-top: 0;">Kontakt</h3>
+      <p><strong>Namn:</strong> {{from_name}}</p>
+      <p><strong>E-post:</strong> {{from_email}}</p>
+      {{#phone}}<p><strong>Telefon:</strong> {{phone}}</p>{{/phone}}
+      {{#location}}<p><strong>Plats:</strong> {{location}}</p>{{/location}}
+      {{#address}}<p><strong>Adress:</strong> {{address}}</p>{{/address}}
+      {{#city}}<p><strong>Ort:</strong> {{city}}</p>{{/city}}
+      {{#postal_code}}<p><strong>Postnummer:</strong> {{postal_code}}</p>{{/postal_code}}
+      {{#personnummer}}<p><strong>Personnummer:</strong> {{personnummer}}</p>{{/personnummer}}
+    </div>
+
+    <div style="background-color: #fff3cd; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin-top: 0;">Tjänst</h3>
+      <p><strong>Tjänsttyp:</strong> {{service_type}}</p>
+      {{#days_per_week}}<p><strong>Dagar per vecka:</strong> {{days_per_week}}</p>{{/days_per_week}}
+      {{#start_date}}<p><strong>Startdatum:</strong> {{start_date}}</p>{{/start_date}}
+      {{#end_date}}<p><strong>Slutdatum:</strong> {{end_date}}</p>{{/end_date}}
+    </div>
+
+    <div style="background-color: #e7f5ff; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin-top: 0;">Hund</h3>
+      {{#dog_name}}<p><strong>Namn:</strong> {{dog_name}}</p>{{/dog_name}}
+      {{#dog_breed}}<p><strong>Ras:</strong> {{dog_breed}}</p>{{/dog_breed}}
+      {{#dog_gender}}<p><strong>Kön:</strong> {{dog_gender}}</p>{{/dog_gender}}
+      {{#dog_height}}<p><strong>Mankhöjd:</strong> {{dog_height}} cm</p>{{/dog_height}}
+      {{#dog_age}}<p><strong>Ålder:</strong> {{dog_age}} år</p>{{/dog_age}}
+      {{#is_neutered}}<p><strong>Kastrerad/steriliserad:</strong> {{is_neutered}}</p>{{/is_neutered}}
+      {{#chip_number}}<p><strong>Chipnummer:</strong> {{chip_number}}</p>{{/chip_number}}
+    </div>
+
+    {{#dog_socialization}}
+    <div style="background-color: #f8f9fa; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin-top: 0;">Socialisering</h3>
+      <p>{{dog_socialization}}</p>
+    </div>
+    {{/dog_socialization}}
+
+    {{#problem_behaviors}}
+    <div style="background-color: #fff3cd; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin-top: 0;">Problematiska beteenden</h3>
+      <p>{{problem_behaviors}}</p>
+    </div>
+    {{/problem_behaviors}}
+
+    {{#allergies}}
+    <div style="background-color: #fde2e2; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin-top: 0;">Allergier</h3>
+      <p>{{allergies}}</p>
+    </div>
+    {{/allergies}}
+
+    {{#message}}
+    <div style="background-color: #e2e3e5; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin-top: 0;">Ytterligare information</h3>
+      <p>{{message}}</p>
+    </div>
+    {{/message}}
+
+    <div style="background-color: #f8f9fa; padding: 12px; border-radius: 8px; margin: 20px 0; text-align: center;">
+      <p style="margin: 0; color: #6c757d; font-size: 14px;">
+        Skickat från Clever Dog Malmö bokningsformulär
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+

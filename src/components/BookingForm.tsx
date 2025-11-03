@@ -36,6 +36,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
     partTimeDays: '',
     chipNumber: '',
     address: '',
+    city: '',
+    postalCode: '',
     personnummer: '',
   });
 
@@ -57,6 +59,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         owner_email: formData.email,
         owner_phone: formData.phone || undefined,
         owner_address: formData.address || undefined,
+        owner_city: formData.city || undefined,
+        owner_postal_code: formData.postalCode || undefined,
         owner_personnummer: formData.personnummer || undefined,
         dog_name: formData.dogName || '',
         dog_breed: formData.dogBreed || undefined,
@@ -96,6 +100,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
       part_time_days: formData.partTimeDays,
       chip_number: formData.chipNumber,
       address: formData.address,
+      city: formData.city,
+      postal_code: formData.postalCode,
       personnummer: formData.personnummer,
       additional_info: formData.additionalInfo,
       reply_to: formData.email,
@@ -151,6 +157,8 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         partTimeDays: '',
         chipNumber: '',
         address: '',
+        city: '',
+        postalCode: '',
         personnummer: '',
       });
       
@@ -285,6 +293,37 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                     required
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+                      {t('booking.form.city') || 'Ort'}
+                    </label>
+                    <input
+                      type="text"
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
+                      {t('booking.form.postalCode') || 'Postnummer'}
+                    </label>
+                    <input
+                      type="text"
+                      id="postalCode"
+                      name="postalCode"
+                      value={formData.postalCode}
+                      onChange={handleChange}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                    />
+                  </div>
                 </div>
 
                 <div>

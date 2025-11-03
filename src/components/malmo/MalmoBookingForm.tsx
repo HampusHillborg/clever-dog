@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaTimes, FaDog, FaCalendarWeek, FaQuestionCircle } from 'react-icons/fa';
+import { FaTimes, FaDog, FaCalendarWeek, FaQuestionCircle, FaBed } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
 import { saveApplication } from '../../lib/database';
 
@@ -24,11 +24,14 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
     serviceType: '',
     daysPerWeek: '',
     startDate: '',
+    endDate: '',
     dogSocialization: '',
     problemBehaviors: '',
     allergies: '',
     chipNumber: '',
     address: '',
+    city: '',
+    postalCode: '',
     personnummer: '',
     message: '',
     location: 'malmo'
@@ -39,6 +42,7 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
   const serviceOptions = [
     { value: 'daycare', label: t('malmoBooking.services.daycare'), icon: FaDog },
     { value: 'parttime', label: t('malmoBooking.services.parttime'), icon: FaCalendarWeek },
+    { value: 'boarding', label: t('malmoBooking.services.boarding') || 'Hundpensionat', icon: FaBed },
     { value: 'general', label: t('malmoBooking.services.general'), icon: FaQuestionCircle }
   ];
 
@@ -78,6 +82,8 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         owner_email: formData.email,
         owner_phone: formData.phone || undefined,
         owner_address: formData.address || undefined,
+        owner_city: formData.city || undefined,
+        owner_postal_code: formData.postalCode || undefined,
         owner_personnummer: formData.personnummer || undefined,
         dog_name: formData.dogName || '',
         dog_breed: formData.dogBreed || undefined,
@@ -89,6 +95,7 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         service_type: formData.serviceType,
         days_per_week: formData.daysPerWeek || undefined,
         start_date: formData.startDate || undefined,
+        end_date: formData.endDate || undefined,
         dog_socialization: formData.dogSocialization || undefined,
         problem_behaviors: formData.problemBehaviors || undefined,
         allergies: formData.allergies || undefined,
@@ -108,6 +115,8 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         // Nya fält som lades till
         chip_number: formData.chipNumber || '',
         address: formData.address || '',
+        city: formData.city || '',
+        postal_code: formData.postalCode || '',
         personnummer: formData.personnummer || '',
         
         // Hundinfo (endast för dagis)
@@ -118,6 +127,7 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         dog_age: formData.dogAge || '',
         is_neutered: formData.isNeutered || '',
         start_date: formData.startDate || '',
+        end_date: formData.endDate || '',
         days_per_week: formData.daysPerWeek || '',
         
         // Beteende och hälsa
@@ -158,11 +168,14 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         serviceType: '',
         daysPerWeek: '',
         startDate: '',
+        endDate: '',
         dogSocialization: '',
         problemBehaviors: '',
         allergies: '',
         chipNumber: '',
         address: '',
+        city: '',
+        postalCode: '',
         personnummer: '',
         message: '',
         location: 'malmo'
@@ -341,8 +354,37 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
             />
           </div>
 
-          {/* Dog Information (only for daycare services) */}
-          {(formData.serviceType === 'daycare' || formData.serviceType === 'parttime') && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {t('malmoBooking.city') || 'Ort'} *
+              </label>
+              <input
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {t('malmoBooking.postalCode') || 'Postnummer'} *
+              </label>
+              <input
+                type="text"
+                name="postalCode"
+                value={formData.postalCode}
+                onChange={handleInputChange}
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              />
+            </div>
+          </div>
+
+          {/* Dog Information (for daycare, parttime, and boarding services) */}
+          {(formData.serviceType === 'daycare' || formData.serviceType === 'parttime' || formData.serviceType === 'boarding') && (
             <>
               <div className="bg-orange-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -442,18 +484,49 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    {t('malmoBooking.startDate')}
-                  </label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
+                {formData.serviceType === 'boarding' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {t('malmoBooking.startDate') || 'Startdatum'} *
+                      </label>
+                      <input
+                        type="date"
+                        name="startDate"
+                        value={formData.startDate}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        {t('malmoBooking.endDate') || 'Slutdatum'} *
+                      </label>
+                      <input
+                        type="date"
+                        name="endDate"
+                        value={formData.endDate || ''}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      {t('malmoBooking.startDate')}
+                    </label>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleInputChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-4">
                   <div>
