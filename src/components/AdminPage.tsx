@@ -119,7 +119,7 @@ interface DogStatistics {
 
 type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications';
 
-type UserRole = 'admin' | 'employee';
+type UserRole = 'admin' | 'employee' | 'platschef';
 
 const AdminPage: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -397,9 +397,12 @@ const AdminPage: React.FC = () => {
     
     if (isDevelopment && !isSupabaseConfigured) {
       // Fallback for local development without Supabase
-      const devRole = email.toLowerCase().includes('employee') || email.toLowerCase().includes('anstalld') 
-        ? 'employee' 
-        : 'admin';
+      let devRole: UserRole = 'admin';
+      if (email.toLowerCase().includes('employee') || email.toLowerCase().includes('anstalld')) {
+        devRole = 'employee';
+      } else if (email.toLowerCase().includes('platschef') || email.toLowerCase().includes('location')) {
+        devRole = 'platschef';
+      }
       setEmail(''); // Clear email
       setPassword(''); // Clear password
       setUserRole(devRole);
@@ -845,7 +848,7 @@ const AdminPage: React.FC = () => {
 
   // Load applications from database
   useEffect(() => {
-    if (userRole !== 'admin') return; // Only load for admins
+    if (userRole !== 'admin' && userRole !== 'platschef') return; // Only load for admins and platschef
     
     const loadApplications = async () => {
       try {
@@ -866,9 +869,13 @@ const AdminPage: React.FC = () => {
     loadApplications();
   }, [userRole, applicationsFilter, applicationsLocationFilter]);
 
-  // Redirect employees away from restricted views
+  // Redirect employees and platschef away from restricted views
   useEffect(() => {
     if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings' || currentView === 'applications')) {
+      setCurrentView('dashboard');
+    }
+    // Platschef cannot access contracts and statistics
+    if (userRole === 'platschef' && (currentView === 'contracts' || currentView === 'statistics')) {
       setCurrentView('dashboard');
     }
   }, [userRole, currentView]);
@@ -1964,6 +1971,49 @@ const AdminPage: React.FC = () => {
                 </div>
               </div>
 
+              <div 
+                onClick={() => setCurrentView('applications')}
+                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
+                  <FaDog className="text-blue-600 text-2xl" />
+                </div>
+                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
+                <p className="text-center text-gray-600 text-sm">Granska och hantera nya ansökningar</p>
+                <div className="mt-3 text-center">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                    {applications.filter(a => a.status === 'new').length} nya
+                  </span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setCurrentView('settings')}
+                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 mx-auto">
+                  <FaEdit className="text-gray-600 text-2xl" />
+                </div>
+                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
+                <p className="text-center text-gray-600 text-sm">Hantera boxar och burar</p>
+                <div className="mt-3 text-center">
+                  <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                    Box-konfiguration
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Ansökningar & Inställningar - For platschef */}
+        {userRole === 'platschef' && (
+          <div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <FaDog className="mr-2 text-blue-600" />
+              Administration
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div 
                 onClick={() => setCurrentView('applications')}
                 className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 hover:scale-105"
@@ -3427,7 +3477,7 @@ const AdminPage: React.FC = () => {
         <h2 className="text-xl font-bold text-gray-900">
           Hundar ({dogs.length}{filteredDogs.length !== dogs.length ? `, visar ${filteredDogs.length}` : ''})
         </h2>
-        {userRole === 'admin' && (
+        {(userRole === 'admin' || userRole === 'platschef') && (
           <button
             onClick={() => openDogModal()}
             className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors"
@@ -3952,7 +4002,7 @@ const AdminPage: React.FC = () => {
   };
 
   const renderApplications = () => {
-    if (userRole !== 'admin') {
+    if (userRole !== 'admin' && userRole !== 'platschef') {
       return renderDashboard();
     }
 
@@ -4283,6 +4333,10 @@ const AdminPage: React.FC = () => {
     if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings' || currentView === 'applications')) {
       return renderDashboard();
     }
+    // Redirect platschef away from contracts and statistics
+    if (userRole === 'platschef' && (currentView === 'contracts' || currentView === 'statistics')) {
+      return renderDashboard();
+    }
 
     switch(currentView) {
       case 'dogs':
@@ -4304,9 +4358,9 @@ const AdminPage: React.FC = () => {
       case 'statistics':
         return userRole === 'admin' ? renderStatistics() : renderDashboard();
       case 'settings':
-        return userRole === 'admin' ? renderSettings() : renderDashboard();
+        return (userRole === 'admin' || userRole === 'platschef') ? renderSettings() : renderDashboard();
       case 'applications':
-        return userRole === 'admin' ? renderApplications() : renderDashboard();
+        return (userRole === 'admin' || userRole === 'platschef') ? renderApplications() : renderDashboard();
       default:
         return renderDashboard();
     }
@@ -4547,9 +4601,11 @@ const AdminPage: React.FC = () => {
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   userRole === 'admin' 
                     ? 'bg-blue-100 text-blue-800' 
+                    : userRole === 'platschef'
+                    ? 'bg-purple-100 text-purple-800'
                     : 'bg-green-100 text-green-800'
                 }`}>
-                  {userRole === 'admin' ? 'Admin' : 'Anställd'}
+                  {userRole === 'admin' ? 'Admin' : userRole === 'platschef' ? 'Platschef' : 'Anställd'}
                 </span>
               </div>
         </div>
@@ -4676,7 +4732,7 @@ const AdminPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold">
-                {userRole === 'employee' ? 'Visa hundinformation' : (editingDog ? 'Redigera hund' : 'Lägg till hund')}
+                {(userRole === 'employee') ? 'Visa hundinformation' : (editingDog ? 'Redigera hund' : 'Lägg till hund')}
               </h3>
               <button
                 onClick={() => setIsDogModalOpen(false)}
