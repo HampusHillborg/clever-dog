@@ -3504,7 +3504,7 @@ const AdminPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-12 text-center">
           <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
           <p className="text-gray-500 mb-4">Inga hundar tillagda än</p>
-          {userRole === 'admin' && (
+          {(userRole === 'admin' || userRole === 'platschef') && (
             <button
               onClick={() => openDogModal()}
               className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto"
@@ -3536,7 +3536,7 @@ const AdminPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                {userRole === 'admin' && (
+                {(userRole === 'admin' || userRole === 'platschef') && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => openDogModal(dog)}
