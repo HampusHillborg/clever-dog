@@ -58,6 +58,10 @@ interface Dog {
   locations: ('malmo' | 'staffanstorp')[]; // Which daycares the dog belongs to (can be both)
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean; // Whether the dog is active (default: true)
+  // Contract fields
+  ownerAddress?: string;
+  ownerCity?: string;
+  ownerPersonalNumber?: string;
 }
 
 interface BoardingRecord {
@@ -160,7 +164,11 @@ const AdminPage: React.FC = () => {
     notes: '',
     locations: ['staffanstorp'] as ('malmo' | 'staffanstorp')[],
     type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '',
-    isActive: true
+    isActive: true,
+    // Contract fields
+    ownerAddress: '',
+    ownerCity: '',
+    ownerPersonalNumber: ''
   });
   const [planningStaffanstorp, setPlanningStaffanstorp] = useState<Cage[]>([]);
   const [planningMalmo, setPlanningMalmo] = useState<Cage[]>([]);
@@ -170,6 +178,7 @@ const AdminPage: React.FC = () => {
   const [planningSearch, setPlanningSearch] = useState<Record<string, string>>({});
   // Search state for dog selection in boarding form
   const [boardingDogSearch, setBoardingDogSearch] = useState<string>('');
+  const [selectedDogForContract, setSelectedDogForContract] = useState<string>('');
   // Search state for dogs tab
   const [dogsTabSearch, setDogsTabSearch] = useState<string>('');
   const [dogsLocationFilter, setDogsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp' | 'both'>('all');
@@ -658,7 +667,11 @@ const AdminPage: React.FC = () => {
       type: (dogForm.type && dogForm.type.trim() !== '') 
         ? (dogForm.type as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding')
         : undefined,
-      isActive: dogForm.isActive
+      isActive: dogForm.isActive,
+      // Contract fields
+      ownerAddress: dogForm.ownerAddress || undefined,
+      ownerCity: dogForm.ownerCity || undefined,
+      ownerPersonalNumber: dogForm.ownerPersonalNumber || undefined
     };
 
     // Save to database
@@ -686,7 +699,7 @@ const AdminPage: React.FC = () => {
     });
     setIsDogModalOpen(false);
     setEditingDog(null);
-    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true });
+    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '' });
   };
 
   const deleteDog = async (id: string) => {
@@ -719,11 +732,14 @@ const AdminPage: React.FC = () => {
         notes: dog.notes || '',
         locations: dog.locations,
         type: dog.type || '',
-        isActive: dog.isActive !== undefined ? dog.isActive : true
+        isActive: dog.isActive !== undefined ? dog.isActive : true,
+        ownerAddress: dog.ownerAddress || '',
+        ownerCity: dog.ownerCity || '',
+        ownerPersonalNumber: dog.ownerPersonalNumber || ''
       });
     } else {
       setEditingDog(null);
-      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true });
+      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '' });
     }
     setIsDogModalOpen(true);
   };
@@ -4348,6 +4364,10 @@ const AdminPage: React.FC = () => {
           locations: [application.location],
           type: dogType,
           isActive: true,
+          // Contract fields from application
+          ownerAddress: application.owner_address || undefined,
+          ownerCity: application.owner_city || undefined,
+          ownerPersonalNumber: application.owner_personnummer || undefined
         };
         
         const savedDog = await saveDogToDb(newDog);
@@ -5275,10 +5295,52 @@ const AdminPage: React.FC = () => {
             </div>
             
             <div>
-              <h2 className="text-xl font-semibold mb-4 border-b pb-2">Dog Information</h2>
+              <h2 className="text-xl font-semibold mb-4 border-b pb-2">Hundinformation</h2>
+              
+              {/* Dog Selection */}
+              <div className="mb-4">
+                <label htmlFor="selectedDogForContract" className="block text-sm font-medium text-gray-700 mb-1">
+                  Välj hund (för att autofylla fält)
+                </label>
+                <select
+                  id="selectedDogForContract"
+                  value={selectedDogForContract || ''}
+                  onChange={(e) => {
+                    const selectedDogId = e.target.value;
+                    if (selectedDogId) {
+                      const dog = dogs.find(d => d.id === selectedDogId);
+                      if (dog) {
+                        setSelectedDogForContract(selectedDogId);
+                        setContractData({
+                          ...contractData,
+                          customerName: dog.owner,
+                          customerAddress: dog.ownerAddress || '',
+                          customerCity: dog.ownerCity || '',
+                          personalNumber: dog.ownerPersonalNumber || '',
+                          dogName: dog.name,
+                          dogBreed: dog.breed,
+                          dogAge: dog.age,
+                          chipNumber: '' // Chip number not stored in dog object, keep existing or empty
+                        });
+                      }
+                    } else {
+                      setSelectedDogForContract('');
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                >
+                  <option value="">-- Välj hund --</option>
+                  {dogs.filter(dog => dog.isActive !== false).map(dog => (
+                    <option key={dog.id} value={dog.id}>
+                      {dog.name} - {dog.owner}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="mb-4">
-                  <label htmlFor="dogName" className="block text-sm font-medium text-gray-700 mb-1">Dog Name</label>
+                  <label htmlFor="dogName" className="block text-sm font-medium text-gray-700 mb-1">Hundens namn</label>
                   <input
                     type="text"
                     id="dogName"

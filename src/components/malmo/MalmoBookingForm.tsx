@@ -42,7 +42,7 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
   const serviceOptions = [
     { value: 'daycare', label: t('malmoBooking.services.daycare'), icon: FaDog },
     { value: 'parttime', label: t('malmoBooking.services.parttime'), icon: FaCalendarWeek },
-    { value: 'boarding', label: t('malmoBooking.services.boarding') || 'Hundpensionat', icon: FaBed },
+    { value: 'boarding', label: t('malmoBooking.services.boarding'), icon: FaBed },
     { value: 'general', label: t('malmoBooking.services.general'), icon: FaQuestionCircle }
   ];
 
@@ -357,7 +357,7 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {t('malmoBooking.city') || 'Ort'} *
+                {t('malmoBooking.city')} *
               </label>
               <input
                 type="text"
@@ -370,7 +370,7 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                {t('malmoBooking.postalCode') || 'Postnummer'} *
+                {t('malmoBooking.postalCode')} *
               </label>
               <input
                 type="text"

@@ -298,7 +298,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                      {t('booking.form.city') || 'Ort'}
+                      {t('booking.form.city')}
                     </label>
                     <input
                       type="text"
@@ -312,7 +312,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
-                      {t('booking.form.postalCode') || 'Postnummer'}
+                      {t('booking.form.postalCode')}
                     </label>
                     <input
                       type="text"

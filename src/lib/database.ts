@@ -14,6 +14,10 @@ export type Dog = {
   locations: ('malmo' | 'staffanstorp')[];
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean;
+  // Contract fields
+  ownerAddress?: string;
+  ownerCity?: string;
+  ownerPersonalNumber?: string;
 };
 
 export type BoardingRecord = {
@@ -117,6 +121,10 @@ export const getDogs = async (): Promise<Dog[]> => {
       locations: locations,
       type: type,
       isActive: dog.is_active !== undefined ? dog.is_active : true,
+      // Contract fields
+      ownerAddress: dog.owner_address || undefined,
+      ownerCity: dog.owner_city || undefined,
+      ownerPersonalNumber: dog.owner_personal_number || undefined,
     };
   });
 };
@@ -165,9 +173,13 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
       notes: dog.notes || null,
       color: dog.color,
       locations: dog.locations,
-      type: dog.type || null,
-      is_active: dog.isActive !== undefined ? dog.isActive : true,
-    } as any, {
+        type: dog.type || null,
+        is_active: dog.isActive !== undefined ? dog.isActive : true,
+        // Contract fields
+        owner_address: dog.ownerAddress || null,
+        owner_city: dog.ownerCity || null,
+        owner_personal_number: dog.ownerPersonalNumber || null,
+      } as any, {
       onConflict: 'id'
     })
     .select()
@@ -214,6 +226,10 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     locations: locations,
     type: type,
     isActive: dbDog.is_active !== undefined ? dbDog.is_active : true,
+    // Contract fields
+    ownerAddress: dbDog.owner_address || undefined,
+    ownerCity: dbDog.owner_city || undefined,
+    ownerPersonalNumber: dbDog.owner_personal_number || undefined,
   };
   
   // If the ID changed (old format to UUID), we need to update localStorage

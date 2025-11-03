@@ -218,6 +218,7 @@
       "services": {
         "daycare": "Full-time daycare",
         "parttime": "Part-time daycare",
+        "boarding": "Dog Boarding",
         "general": "General question"
       },
       "daysPerWeek": "Days per week",
@@ -234,6 +235,8 @@
       "phone": "Phone number",
       "chipNumber": "Chip number",
       "address": "Address",
+      "city": "City",
+      "postalCode": "Postal code",
       "personnummer": "Personal number",
       "dogInfo": "Dog Information",
       "dogName": "Dog's Name",
@@ -296,6 +299,8 @@
         "email": "Email",
         "phone": "Phone",
         "address": "Address",
+        "city": "City",
+        "postalCode": "Postal code",
         "personnummer": "Personal Number",
         "chipNumber": "Chip Number",
         "dogName": "Dog's Name",

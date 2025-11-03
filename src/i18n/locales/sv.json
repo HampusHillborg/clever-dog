@@ -218,6 +218,7 @@
       "services": {
         "daycare": "Dagis fulltid",
         "parttime": "Dagis deltid",
+        "boarding": "Hundpensionat",
         "general": "Allmän fråga"
       },
       "daysPerWeek": "Antal dagar per vecka",
@@ -234,6 +235,8 @@
       "phone": "Telefonnummer",
       "chipNumber": "Chipnummer",
       "address": "Adress",
+      "city": "Ort",
+      "postalCode": "Postnummer",
       "personnummer": "Personnummer",
       "dogInfo": "Hundinformation",
       "dogName": "Hundens namn",
@@ -296,6 +299,8 @@
         "email": "E-post",
         "phone": "Telefon",
         "address": "Adress",
+        "city": "Ort",
+        "postalCode": "Postnummer",
         "personnummer": "Personnummer",
         "chipNumber": "Chipnummer",
         "dogName": "Hundens Namn",
