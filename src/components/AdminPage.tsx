@@ -2957,11 +2957,39 @@ const AdminPage: React.FC = () => {
     };
 
     const getDogsForDate = (date: string) => {
-      const dayData = locationHistory.find(p => p.date === date);
-      if (!dayData) return [];
+      const dogsForDate: Dog[] = [];
       
-      const allDogs = dayData.cages.flatMap(cage => cage.dogs || []);
-      return allDogs.map(dogId => dogs.find(d => d.id === dogId)).filter(Boolean);
+      // Get dogs from planning (cages) - includes all dogs that are planned for this date
+      const dayData = locationHistory.find(p => p.date === date);
+      if (dayData) {
+        const allDogs = dayData.cages.flatMap(cage => cage.dogs || []);
+        const plannedDogs = allDogs.map(dogId => dogs.find(d => d.id === dogId)).filter(Boolean) as Dog[];
+        dogsForDate.push(...plannedDogs);
+      }
+      
+      // Get boarding dogs for this date and location
+      const boardingDogsForDate = boardingRecords
+        .filter(record => {
+          return record.location === location &&
+                 !record.isArchived &&
+                 record.startDate <= date &&
+                 record.endDate >= date;
+        })
+        .map(record => {
+          // Find the dog by dogId or dogName
+          const dog = dogs.find(d => d.id === record.dogId || d.name === record.dogName);
+          return dog;
+        })
+        .filter((dog): dog is Dog => dog !== undefined);
+      
+      // Add boarding dogs that aren't already in the list
+      boardingDogsForDate.forEach(boardingDog => {
+        if (!dogsForDate.find(d => d.id === boardingDog.id)) {
+          dogsForDate.push(boardingDog);
+        }
+      });
+      
+      return dogsForDate;
     };
 
     return (
@@ -2993,6 +3021,7 @@ const AdminPage: React.FC = () => {
           <div className="grid grid-cols-7 gap-4">
             {weekDates.map((date, index) => {
               const dayDogs = getDogsForDate(date);
+              const dayData = locationHistory.find(p => p.date === date);
               const isToday = date === new Date().toISOString().split('T')[0];
               const isPast = new Date(date) < new Date();
               
@@ -3020,16 +3049,44 @@ const AdminPage: React.FC = () => {
                   
                   <div className="space-y-1">
                     {dayDogs.length > 0 ? (
-                      dayDogs.map((dog, dogIndex) => (
-                        <div 
-                          key={dogIndex}
-                          className={`text-xs p-1 rounded ${
-                            dog?.color || 'bg-gray-200'
-                          }`}
-                        >
-                          {dog?.name}
-                        </div>
-                      ))
+                      dayDogs.map((dog, dogIndex) => {
+                        if (!dog) return null;
+                        
+                        // Check if dog is in boarding for this date
+                        const isBoarding = boardingRecords.some(record => 
+                          record.location === location &&
+                          !record.isArchived &&
+                          record.startDate <= date &&
+                          record.endDate >= date &&
+                          (record.dogId === dog.id || record.dogName === dog.name)
+                        );
+                        
+                        // Check if dog is planned (in cages)
+                        const isPlanned = dayData?.cages.some((cage: Cage) => 
+                          cage.dogs?.includes(dog.id)
+                        );
+                        
+                        const badge = isBoarding && !isPlanned ? '🏨' : '';
+                        
+                        return (
+                          <div 
+                            key={dogIndex}
+                            className={`text-xs p-1 rounded flex items-center gap-1 ${
+                              dog?.color || 'bg-gray-200'
+                            }`}
+                            title={
+                              isBoarding && !isPlanned 
+                                ? 'Hundpensionat' 
+                                : dog.type === 'singleDay' 
+                                ? 'Enstaka dag' 
+                                : ''
+                            }
+                          >
+                            {badge && <span>{badge}</span>}
+                            <span>{dog?.name}</span>
+                          </div>
+                        );
+                      })
                     ) : (
                       <div className="text-xs text-gray-400 text-center">
                         Inga hundar
