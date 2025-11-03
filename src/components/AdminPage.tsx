@@ -1012,11 +1012,18 @@ const AdminPage: React.FC = () => {
     return filteredRecords.length * prices.boarding;
   };
 
-  // Calculate single day income from planning history - counts actual planned days per singleDay dog
+  // Calculate single day income from planning history - counts ONLY actual planned days per singleDay dog
+  // This ensures that singleDay dogs are only counted when they were actually planned, not just because they exist
+  // IMPORTANT: Only counts dogs that were planned at the SPECIFIC location, not at other locations
   const calculateSingleDayIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter, validDogsList: Dog[]): number => {
     if (!statisticsFilter.includeSingleDays) return 0;
     
-    let filteredPlanning = planningHistory.filter(p => p.location === location);
+    // CRITICAL: Filter planning history to ONLY include plans for this specific location
+    // A dog planned at Staffanstorp should NOT count for Malmö income, even if registered at both locations
+    let filteredPlanning = planningHistory.filter(p => {
+      // Double-check that the location matches exactly
+      return p.location === location && p.cages && Array.isArray(p.cages);
+    });
     
     // Filter by period
     if (filter.period === 'year' && filter.year) {
@@ -1030,15 +1037,21 @@ const AdminPage: React.FC = () => {
         return planDate.getFullYear() === filter.year && 
                planDate.getMonth() + 1 === filter.month;
       });
+    } else if (filter.period === 'all') {
+      // For 'all' period, count all planning history for this location
+      // No additional filtering needed
     }
     
-    // Count how many times each singleDay dog was planned in this specific location during the period
-    // We only count dogs that were actually planned here, regardless of their location profile
+    // Count how many times each singleDay dog was actually planned (in cages) at THIS location during the period
+    // IMPORTANT: We ONLY count dogs that appear in planning history for THIS location (were actually planned here)
+    // A singleDay dog that exists but was never planned at this location will NOT be counted
+    // A dog planned at Staffanstorp will NOT count for Malmö, even if registered at both locations
     let totalSingleDayDays = 0;
-    const processedDogs = new Set<string>(); // Track which dogs we've counted for this location
+    const processedDogs = new Set<string>(); // Track which dogs we've counted per date to avoid duplicates
     
     filteredPlanning.forEach(plan => {
-      if (!plan.cages) return;
+      // Extra safety check: ensure plan location matches
+      if (!plan.cages || !plan.date || plan.location !== location) return;
       
       plan.cages.forEach(cage => {
         if (!cage.dogs || !Array.isArray(cage.dogs)) return;
@@ -1047,8 +1060,9 @@ const AdminPage: React.FC = () => {
           // Find the dog to check if it's a singleDay dog
           const dog = validDogsList.find((d: Dog) => d.id === dogId);
           if (dog && dog.type === 'singleDay') {
-            // Use date + dogId as unique key to avoid counting same dog twice on same date
-            const key = `${plan.date}-${dogId}`;
+            // Use date + dogId + location as unique key to avoid counting same dog twice on same date
+            // The location in the key ensures we don't accidentally count a dog from another location
+            const key = `${plan.date}-${dogId}-${location}`;
             if (!processedDogs.has(key)) {
               processedDogs.add(key);
               totalSingleDayDays++;
@@ -1058,6 +1072,7 @@ const AdminPage: React.FC = () => {
       });
     });
     
+    // Multiply by price - each planned day counts as one singleDay service
     return totalSingleDayDays * PRICES[location].singleDay;
   };
 
