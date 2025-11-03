@@ -172,6 +172,9 @@ const AdminPage: React.FC = () => {
   const [boardingDogSearch, setBoardingDogSearch] = useState<string>('');
   // Search state for dogs tab
   const [dogsTabSearch, setDogsTabSearch] = useState<string>('');
+  const [dogsLocationFilter, setDogsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp' | 'both'>('all');
+  const [dogsTypeFilter, setDogsTypeFilter] = useState<'all' | 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding'>('all');
+  const [dogsActiveFilter, setDogsActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [statisticsFilter, setStatisticsFilter] = useState<StatisticsFilter>({
     location: 'all',
     period: 'month', // Default to current month
@@ -3740,14 +3743,49 @@ const AdminPage: React.FC = () => {
   };
 
   const renderDogs = () => {
-    // Filter dogs based on search
+    // Filter dogs based on search and filters
     const filteredDogs = dogs.filter(dog => {
-      if (!dogsTabSearch.trim()) return true;
-      const searchLower = dogsTabSearch.toLowerCase();
-      return dog.name.toLowerCase().includes(searchLower) ||
-             dog.owner.toLowerCase().includes(searchLower) ||
-             (dog.breed && dog.breed.toLowerCase().includes(searchLower)) ||
-             (dog.phone && dog.phone.toLowerCase().includes(searchLower));
+      // Search filter
+      if (dogsTabSearch.trim()) {
+        const searchLower = dogsTabSearch.toLowerCase();
+        const matchesSearch = dog.name.toLowerCase().includes(searchLower) ||
+                             dog.owner.toLowerCase().includes(searchLower) ||
+                             (dog.breed && dog.breed.toLowerCase().includes(searchLower)) ||
+                             (dog.phone && dog.phone.toLowerCase().includes(searchLower));
+        if (!matchesSearch) return false;
+      }
+
+      // Location filter
+      if (dogsLocationFilter !== 'all') {
+        if (dogsLocationFilter === 'both') {
+          if (!(dog.locations.includes('malmo') && dog.locations.includes('staffanstorp'))) {
+            return false;
+          }
+        } else {
+          if (!dog.locations.includes(dogsLocationFilter)) {
+            return false;
+          }
+        }
+      }
+
+      // Type filter
+      if (dogsTypeFilter !== 'all') {
+        if (dog.type !== dogsTypeFilter) {
+          return false;
+        }
+      }
+
+      // Active/Inactive filter
+      if (dogsActiveFilter !== 'all') {
+        if (dogsActiveFilter === 'active' && !dog.isActive) {
+          return false;
+        }
+        if (dogsActiveFilter === 'inactive' && dog.isActive) {
+          return false;
+        }
+      }
+
+      return true;
     });
 
     return (
@@ -3766,16 +3804,91 @@ const AdminPage: React.FC = () => {
         )}
       </div>
 
-      {/* Search input */}
+      {/* Search and Filters */}
       {dogs.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <input
-            type="text"
-            placeholder="Sök på namn, ägare, ras eller telefon..."
-            value={dogsTabSearch}
-            onChange={(e) => setDogsTabSearch(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
+        <div className="bg-white rounded-lg shadow-md p-4 space-y-4">
+          {/* Search input */}
+          <div>
+            <input
+              type="text"
+              placeholder="Sök på namn, ägare, ras eller telefon..."
+              value={dogsTabSearch}
+              onChange={(e) => setDogsTabSearch(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            />
+          </div>
+
+          {/* Filter controls */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+            {/* Location Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <FaFilter className="inline mr-1" /> Plats
+              </label>
+              <select
+                value={dogsLocationFilter}
+                onChange={(e) => setDogsLocationFilter(e.target.value as 'all' | 'malmo' | 'staffanstorp' | 'both')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value="all">Alla platser</option>
+                <option value="malmo">Malmö</option>
+                <option value="staffanstorp">Staffanstorp</option>
+                <option value="both">Båda platserna</option>
+              </select>
+            </div>
+
+            {/* Type Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Typ
+              </label>
+              <select
+                value={dogsTypeFilter}
+                onChange={(e) => setDogsTypeFilter(e.target.value as 'all' | 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value="all">Alla typer</option>
+                <option value="fulltime">Heltid</option>
+                <option value="parttime-3">Deltid 3 dagar</option>
+                <option value="parttime-2">Deltid 2 dagar</option>
+                <option value="singleDay">Enstaka dag</option>
+                <option value="boarding">Hundpensionat</option>
+              </select>
+            </div>
+
+            {/* Active/Inactive Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={dogsActiveFilter}
+                onChange={(e) => setDogsActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                <option value="all">Alla</option>
+                <option value="active">Aktiva</option>
+                <option value="inactive">Inaktiva</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Clear filters button */}
+          {(dogsTabSearch.trim() || dogsLocationFilter !== 'all' || dogsTypeFilter !== 'all' || dogsActiveFilter !== 'all') && (
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setDogsTabSearch('');
+                  setDogsLocationFilter('all');
+                  setDogsTypeFilter('all');
+                  setDogsActiveFilter('all');
+                }}
+                className="text-sm text-gray-600 hover:text-primary flex items-center gap-1"
+              >
+                <FaTimes className="text-xs" /> Rensa alla filter
+              </button>
+            </div>
+          )}
         </div>
       )}
 
