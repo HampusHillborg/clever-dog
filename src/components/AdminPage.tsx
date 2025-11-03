@@ -1077,52 +1077,76 @@ const AdminPage: React.FC = () => {
   };
 
   // Calculate boarding income with proper day count
+  // IMPORTANT: Only counts boarding records for the specified location that overlap with the filter period
   const calculateBoardingIncomeDetailed = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
     if (!statisticsFilter.includeBoarding) return 0;
     
     const prices = PRICES[location];
-    let filteredRecords = boardingRecords.filter(record => 
-      record.location === location && !record.isArchived
-    );
+    
+    // CRITICAL: First filter by location and exclude archived records
+    let filteredRecords = boardingRecords.filter(record => {
+      // Ensure location matches exactly - a boarding at Staffanstorp should NOT count for Malmö
+      return record.location === location && !record.isArchived;
+    });
     
     // Filter by period
     if (filter.period === 'year' && filter.year) {
       filteredRecords = filteredRecords.filter(record => {
-        const recordYear = new Date(record.startDate).getFullYear();
-        return recordYear === filter.year;
+        const startDate = new Date(record.startDate);
+        const endDate = new Date(record.endDate);
+        const filterStart = new Date(filter.year!, 0, 1);
+        const filterEnd = new Date(filter.year!, 11, 31);
+        
+        // Check if boarding period overlaps with filter year
+        return startDate <= filterEnd && endDate >= filterStart;
       });
     } else if (filter.period === 'month' && filter.year && filter.month) {
       filteredRecords = filteredRecords.filter(record => {
         const startDate = new Date(record.startDate);
         const endDate = new Date(record.endDate);
         const filterStart = new Date(filter.year!, filter.month! - 1, 1);
-        const filterEnd = new Date(filter.year!, filter.month!, 0);
+        const filterEnd = new Date(filter.year!, filter.month!, 0); // Last day of month
         
         // Check if boarding period overlaps with filter month
         return startDate <= filterEnd && endDate >= filterStart;
       });
     }
+    // For 'all' period, we count all records (already filtered by location)
     
-    // Calculate total days and income
+    // Calculate total days and income - only for records that actually overlap with the period
     let totalDays = 0;
     filteredRecords.forEach(record => {
       const startDate = new Date(record.startDate);
       const endDate = new Date(record.endDate);
       
       if (filter.period === 'month' && filter.year && filter.month) {
-        // Calculate days within the filtered month
+        // Calculate only days within the filtered month
         const filterStart = new Date(filter.year, filter.month - 1, 1);
-        const filterEnd = new Date(filter.year, filter.month, 0);
+        const filterEnd = new Date(filter.year, filter.month, 0); // Last day of month
         
         const actualStart = startDate > filterStart ? startDate : filterStart;
         const actualEnd = endDate < filterEnd ? endDate : filterEnd;
         
+        // Only count if there's an overlap
+        if (actualStart <= actualEnd) {
+          const daysDiff = Math.ceil((actualEnd.getTime() - actualStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+          totalDays += daysDiff;
+        }
+      } else if (filter.period === 'year' && filter.year) {
+        // Calculate only days within the filtered year
+        const filterStart = new Date(filter.year, 0, 1);
+        const filterEnd = new Date(filter.year, 11, 31);
+        
+        const actualStart = startDate > filterStart ? startDate : filterStart;
+        const actualEnd = endDate < filterEnd ? endDate : filterEnd;
+        
+        // Only count if there's an overlap
         if (actualStart <= actualEnd) {
           const daysDiff = Math.ceil((actualEnd.getTime() - actualStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
           totalDays += daysDiff;
         }
       } else {
-        // For year or all: count all days in boarding period
+        // For 'all' period: count all days in boarding period
         const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         totalDays += daysDiff;
       }
@@ -1171,13 +1195,39 @@ const AdminPage: React.FC = () => {
       return sum + income;
     }, 0);
     
-    // Calculate boarding income
-    const boardingMalmoIncome = calculateBoardingIncomeDetailed('malmo', statisticsFilter);
-    const boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
+    // Calculate boarding income - ONLY for selected location if filter is set
+    let boardingMalmoIncome = 0;
+    let boardingStaffanstorpIncome = 0;
+    if (statisticsFilter.location === 'all') {
+      // Count both locations
+      boardingMalmoIncome = calculateBoardingIncomeDetailed('malmo', statisticsFilter);
+      boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
+    } else if (statisticsFilter.location === 'malmo') {
+      // Only count Malmö
+      boardingMalmoIncome = calculateBoardingIncomeDetailed('malmo', statisticsFilter);
+      boardingStaffanstorpIncome = 0;
+    } else if (statisticsFilter.location === 'staffanstorp') {
+      // Only count Staffanstorp
+      boardingMalmoIncome = 0;
+      boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
+    }
     
-    // Calculate single day income from planning history
-    const singleDayMalmoIncome = calculateSingleDayIncome('malmo', statisticsFilter, validDogs);
-    const singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter, validDogs);
+    // Calculate single day income from planning history - ONLY for selected location if filter is set
+    let singleDayMalmoIncome = 0;
+    let singleDayStaffanstorpIncome = 0;
+    if (statisticsFilter.location === 'all') {
+      // Count both locations
+      singleDayMalmoIncome = calculateSingleDayIncome('malmo', statisticsFilter, validDogs);
+      singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter, validDogs);
+    } else if (statisticsFilter.location === 'malmo') {
+      // Only count Malmö
+      singleDayMalmoIncome = calculateSingleDayIncome('malmo', statisticsFilter, validDogs);
+      singleDayStaffanstorpIncome = 0;
+    } else if (statisticsFilter.location === 'staffanstorp') {
+      // Only count Staffanstorp
+      singleDayMalmoIncome = 0;
+      singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter, validDogs);
+    }
     
     // Total income calculations
     const totalDaycareIncome = malmoDaycareIncome + staffanstorpDaycareIncome;
