@@ -5207,9 +5207,54 @@ const AdminPage: React.FC = () => {
           </form>
   );
 
+  // Get today's meetings for admin and platschef
+  const getTodaysMeetings = () => {
+    if (userRole !== 'admin' && userRole !== 'platschef') return [];
+    const today = new Date().toISOString().split('T')[0];
+    return meetings
+      .filter(m => m.date === today)
+      .sort((a, b) => a.time.localeCompare(b.time));
+  };
+
+  const todaysMeetings = getTodaysMeetings();
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Today's Meetings Banner - Only for admin and platschef */}
+        {(userRole === 'admin' || userRole === 'platschef') && todaysMeetings.length > 0 && (
+          <div className="bg-orange-100 border-2 border-orange-400 rounded-lg p-4 mb-4 shadow-md">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-500 text-white rounded-full p-2">
+                  <FaCalendarAlt className="text-xl" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-orange-900 text-lg">
+                    Du har {todaysMeetings.length} {todaysMeetings.length === 1 ? 'möte' : 'möten'} idag
+                  </h3>
+                  <div className="text-sm text-orange-800 mt-1">
+                    {todaysMeetings.map((meeting, idx) => (
+                      <span key={meeting.id}>
+                        {meeting.time} - {meeting.name}
+                        {meeting.dogName && ` (${meeting.dogName})`}
+                        {meeting.location === 'malmo' ? ' - Malmö' : ' - Staffanstorp'}
+                        {idx < todaysMeetings.length - 1 ? ' • ' : ''}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setCurrentView('meetings')}
+                className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors font-medium flex items-center gap-2"
+              >
+                Visa alla möten
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
@@ -5234,6 +5279,7 @@ const AdminPage: React.FC = () => {
                  currentView === 'statistics' ? 'Statistik & Inkomst' :
                  currentView === 'settings' ? 'Inställningar' :
                  currentView === 'applications' ? 'Ansökningar' :
+                 currentView === 'meetings' ? 'Möten' :
                  'Dashboard'}
               </h1>
               <div className="ml-4">
