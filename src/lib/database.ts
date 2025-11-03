@@ -414,11 +414,23 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
     return planning;
   }
 
-  // Convert ID to UUID format if needed (planning IDs are often in format "location-date")
-  // For planning, we'll generate UUID but also use date+location as unique constraint
+  // First, check if a planning already exists for this date and location
+  // to reuse the existing ID (important for upsert to work correctly)
   let planningId = planning.id;
+  
+  // If ID is not a UUID, try to find existing planning to get its ID
   if (!planning.id || !planning.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-    planningId = generateUUID();
+    try {
+      const existing = await getPlanningForDate(planning.date, planning.location);
+      if (existing && existing.id) {
+        planningId = existing.id;
+      } else {
+        planningId = generateUUID();
+      }
+    } catch (error) {
+      // If we can't find existing, generate a new UUID
+      planningId = generateUUID();
+    }
   }
 
   const { data, error } = await supabase!

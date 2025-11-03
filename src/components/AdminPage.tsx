@@ -268,6 +268,11 @@ const AdminPage: React.FC = () => {
     }
 
     const loadPlanningForDate = async () => {
+      // First, clear the current planning state to avoid showing old data
+      // while loading new data for the new date
+      setPlanningStaffanstorp([]);
+      setPlanningMalmo([]);
+      
       // Try to load from database first
       try {
         // Load Staffanstorp
