@@ -1184,16 +1184,36 @@ const AdminPage: React.FC = () => {
       return dog.locations.includes('malmo') && dog.locations.includes('staffanstorp');
     });
     
-    // Calculate daycare income (monthly subscriptions)
+    // Calculate daycare income (monthly subscriptions) - ONLY for selected location if filter is set
     // For dogs with both locations, only count to the last planned location
-    const malmoDaycareIncome = malmoDogs.reduce((sum, dog) => {
-      const income = calculateDogIncome(dog, 'malmo', true);
-      return sum + income;
-    }, 0);
-    const staffanstorpDaycareIncome = staffanstorpDogs.reduce((sum, dog) => {
-      const income = calculateDogIncome(dog, 'staffanstorp', true);
-      return sum + income;
-    }, 0);
+    let malmoDaycareIncome = 0;
+    let staffanstorpDaycareIncome = 0;
+    
+    if (statisticsFilter.location === 'all') {
+      // Count both locations
+      malmoDaycareIncome = malmoDogs.reduce((sum, dog) => {
+        const income = calculateDogIncome(dog, 'malmo', true);
+        return sum + income;
+      }, 0);
+      staffanstorpDaycareIncome = staffanstorpDogs.reduce((sum, dog) => {
+        const income = calculateDogIncome(dog, 'staffanstorp', true);
+        return sum + income;
+      }, 0);
+    } else if (statisticsFilter.location === 'malmo') {
+      // Only count Malmö
+      malmoDaycareIncome = malmoDogs.reduce((sum, dog) => {
+        const income = calculateDogIncome(dog, 'malmo', true);
+        return sum + income;
+      }, 0);
+      staffanstorpDaycareIncome = 0;
+    } else if (statisticsFilter.location === 'staffanstorp') {
+      // Only count Staffanstorp
+      malmoDaycareIncome = 0;
+      staffanstorpDaycareIncome = staffanstorpDogs.reduce((sum, dog) => {
+        const income = calculateDogIncome(dog, 'staffanstorp', true);
+        return sum + income;
+      }, 0);
+    }
     
     // Calculate boarding income - ONLY for selected location if filter is set
     let boardingMalmoIncome = 0;
@@ -1236,31 +1256,52 @@ const AdminPage: React.FC = () => {
     const totalIncomeWithoutVAT = totalDaycareIncome + totalBoardingIncome + totalSingleDayIncome;
     const totalIncomeWithVAT = totalIncomeWithoutVAT * (1 + VAT_RATE);
     
-    // Income by type (monthly subscriptions)
+    // Income by type (monthly subscriptions) - respect location filter
     const incomeByType = {
       fulltime: filteredDogs
         .filter(dog => dog && dog.type === 'fulltime' && dog.locations && Array.isArray(dog.locations))
         .reduce((sum, dog) => {
-          // Use the same logic as calculateDogIncome for both locations
-          const malmoIncome = calculateDogIncome(dog, 'malmo', true);
-          const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
-          return sum + malmoIncome + staffanstorpIncome;
+          // Respect location filter
+          if (statisticsFilter.location === 'all') {
+            const malmoIncome = calculateDogIncome(dog, 'malmo', true);
+            const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
+            return sum + malmoIncome + staffanstorpIncome;
+          } else if (statisticsFilter.location === 'malmo') {
+            return sum + calculateDogIncome(dog, 'malmo', true);
+          } else if (statisticsFilter.location === 'staffanstorp') {
+            return sum + calculateDogIncome(dog, 'staffanstorp', true);
+          }
+          return sum;
         }, 0),
       parttime3: filteredDogs
         .filter(dog => dog && dog.type === 'parttime-3' && dog.locations && Array.isArray(dog.locations))
         .reduce((sum, dog) => {
-          // Use the same logic as calculateDogIncome for both locations
-          const malmoIncome = calculateDogIncome(dog, 'malmo', true);
-          const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
-          return sum + malmoIncome + staffanstorpIncome;
+          // Respect location filter
+          if (statisticsFilter.location === 'all') {
+            const malmoIncome = calculateDogIncome(dog, 'malmo', true);
+            const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
+            return sum + malmoIncome + staffanstorpIncome;
+          } else if (statisticsFilter.location === 'malmo') {
+            return sum + calculateDogIncome(dog, 'malmo', true);
+          } else if (statisticsFilter.location === 'staffanstorp') {
+            return sum + calculateDogIncome(dog, 'staffanstorp', true);
+          }
+          return sum;
         }, 0),
       parttime2: filteredDogs
         .filter(dog => dog && dog.type === 'parttime-2' && dog.locations && Array.isArray(dog.locations))
         .reduce((sum, dog) => {
-          // Use the same logic as calculateDogIncome for both locations
-          const malmoIncome = calculateDogIncome(dog, 'malmo', true);
-          const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
-          return sum + malmoIncome + staffanstorpIncome;
+          // Respect location filter
+          if (statisticsFilter.location === 'all') {
+            const malmoIncome = calculateDogIncome(dog, 'malmo', true);
+            const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
+            return sum + malmoIncome + staffanstorpIncome;
+          } else if (statisticsFilter.location === 'malmo') {
+            return sum + calculateDogIncome(dog, 'malmo', true);
+          } else if (statisticsFilter.location === 'staffanstorp') {
+            return sum + calculateDogIncome(dog, 'staffanstorp', true);
+          }
+          return sum;
         }, 0),
       singleDay: totalSingleDayIncome,
       boarding: totalBoardingIncome
