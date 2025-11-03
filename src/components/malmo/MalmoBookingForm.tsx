@@ -75,8 +75,8 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
     setSubmitStatus('idle');
 
     try {
-      // Save to Supabase first
-      await saveApplication({
+      // Save to Supabase first (with timeout to prevent hanging)
+      let savePromise = saveApplication({
         location: 'malmo',
         owner_name: formData.name,
         owner_email: formData.email,
@@ -100,6 +100,16 @@ const MalmoBookingForm: React.FC<MalmoBookingFormProps> = ({ isOpen, onClose }) 
         problem_behaviors: formData.problemBehaviors || undefined,
         allergies: formData.allergies || undefined,
         message: formData.message || undefined,
+      });
+
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database save timeout after 10 seconds')), 10000)
+      );
+
+      await Promise.race([savePromise, timeoutPromise]).catch((error) => {
+        console.warn('Database save failed or timed out, continuing with email:', error);
+        // Continue with email even if database save fails
       });
 
       // Komplett templateParams med alla fält

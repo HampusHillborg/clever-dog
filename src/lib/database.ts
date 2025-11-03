@@ -730,36 +730,45 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
 
   try {
     // Map camelCase to snake_case for database
+    // Only include owner_city and owner_postal_code if they exist (to avoid errors if columns don't exist)
+    const insertData: any = {
+      location: application.location,
+      owner_name: application.owner_name,
+      owner_email: application.owner_email,
+      owner_phone: application.owner_phone || null,
+      owner_address: application.owner_address || null,
+      owner_personnummer: application.owner_personnummer || null,
+      dog_name: application.dog_name,
+      dog_breed: application.dog_breed || null,
+      dog_gender: application.dog_gender || null,
+      dog_height: application.dog_height || null,
+      dog_age: application.dog_age || null,
+      dog_chip_number: application.dog_chip_number || null,
+      is_neutered: application.is_neutered || null,
+      service_type: application.service_type,
+      days_per_week: application.days_per_week || null,
+      start_date: application.start_date || null,
+      end_date: application.end_date || null,
+      part_time_days: application.part_time_days || null,
+      dog_socialization: application.dog_socialization || null,
+      problem_behaviors: application.problem_behaviors || null,
+      allergies: application.allergies || null,
+      additional_info: application.additional_info || null,
+      message: application.message || null,
+      status: 'new'
+    };
+
+    // Only add these if they are provided (graceful degradation if columns don't exist)
+    if (application.owner_city !== undefined) {
+      insertData.owner_city = application.owner_city || null;
+    }
+    if (application.owner_postal_code !== undefined) {
+      insertData.owner_postal_code = application.owner_postal_code || null;
+    }
+
     const { data, error } = await supabase!
       .from('applications')
-      .insert({
-        location: application.location, // Explicitly map location
-        owner_name: application.owner_name,
-        owner_email: application.owner_email,
-        owner_phone: application.owner_phone || null,
-        owner_address: application.owner_address || null,
-        owner_city: application.owner_city || null,
-        owner_postal_code: application.owner_postal_code || null,
-        owner_personnummer: application.owner_personnummer || null,
-        dog_name: application.dog_name,
-        dog_breed: application.dog_breed || null,
-        dog_gender: application.dog_gender || null,
-        dog_height: application.dog_height || null,
-        dog_age: application.dog_age || null,
-        dog_chip_number: application.dog_chip_number || null,
-        is_neutered: application.is_neutered || null,
-        service_type: application.service_type,
-        days_per_week: application.days_per_week || null,
-        start_date: application.start_date || null,
-        end_date: application.end_date || null,
-        part_time_days: application.part_time_days || null,
-        dog_socialization: application.dog_socialization || null,
-        problem_behaviors: application.problem_behaviors || null,
-        allergies: application.allergies || null,
-        additional_info: application.additional_info || null,
-        message: application.message || null,
-        status: 'new'
-      } as any)
+      .insert(insertData)
       .select()
       .single();
 
