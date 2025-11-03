@@ -766,7 +766,52 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
       insertData.owner_postal_code = application.owner_postal_code || null;
     }
 
-    const { data, error } = await supabase!
+    // Use a fresh client instance without auth session for public inserts
+    // This ensures we're using the anon key as an anonymous user
+    // Import createClient directly to avoid any auth context
+    const { createClient } = await import('@supabase/supabase-js');
+    
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase URL or Anon Key is missing');
+    }
+    
+    // Create a completely fresh client with no auth state
+    const publicClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storage: undefined, // Don't use any storage
+      },
+      global: {
+        headers: {
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`, // Explicitly set as Bearer token
+        }
+      }
+    });
+    
+    // Clear any potential session state
+    try {
+      await publicClient.auth.signOut();
+      // Also clear any local storage that might have session data
+      if (typeof window !== 'undefined') {
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.includes('supabase') || key.includes('auth')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+    } catch (signOutError) {
+      // Ignore sign out errors - we're already anonymous
+      console.log('Sign out (ensuring anonymous):', signOutError);
+    }
+
+    const { data, error } = await publicClient
       .from('applications')
       .insert(insertData)
       .select()
