@@ -88,6 +88,18 @@ I development (localhost) om Supabase inte är konfigurerad:
 - E-post som innehåller "employee" eller "anstalld" → anställd-roll
 - Annars → admin-roll
 
+## Steg 5: Bjuda in användare
+
+Se filen `SUPABASE_INVITE_GUIDE.md` för detaljerade instruktioner om hur du bjuder in användare via Supabase Dashboard.
+
+Kort sammanfattning:
+1. Konfigurera Email Templates (Authentication > Email Templates)
+2. Konfigurera SMTP eller använd Supabase's standard
+3. Sätt Site URL (Authentication > URL Configuration)
+4. Bjud in användare via Authentication > Users > "Invite user"
+5. Användaren får email med inbjudningslänk
+6. Användaren sätter lösenord och loggar in
+
 ## Användning
 
 ### Logga in
