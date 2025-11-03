@@ -1250,11 +1250,16 @@ const AdminPage: React.FC = () => {
     }
     
     // Total income calculations
+    // IMPORTANT: PRICES are INCLUSIVE of VAT (as shown on the website)
+    // So we need to calculate backwards: prices are with VAT, we need to extract VAT
     const totalDaycareIncome = malmoDaycareIncome + staffanstorpDaycareIncome;
     const totalBoardingIncome = boardingMalmoIncome + boardingStaffanstorpIncome;
     const totalSingleDayIncome = singleDayMalmoIncome + singleDayStaffanstorpIncome;
-    const totalIncomeWithoutVAT = totalDaycareIncome + totalBoardingIncome + totalSingleDayIncome;
-    const totalIncomeWithVAT = totalIncomeWithoutVAT * (1 + VAT_RATE);
+    
+    // Prices from PRICES are inclusive of VAT, so this is the total with VAT
+    const totalIncomeWithVAT = totalDaycareIncome + totalBoardingIncome + totalSingleDayIncome;
+    // Calculate income without VAT by dividing by (1 + VAT_RATE)
+    const totalIncomeWithoutVAT = totalIncomeWithVAT / (1 + VAT_RATE);
     
     // Income by type (monthly subscriptions) - respect location filter
     const incomeByType = {
@@ -3456,7 +3461,7 @@ const AdminPage: React.FC = () => {
                 {Math.round(stats.totalIncomeWithoutVAT).toLocaleString()} SEK
               </div>
               <div className="text-xs text-gray-500 mt-2">
-                Moms: {Math.round(stats.totalIncomeWithoutVAT * VAT_RATE).toLocaleString()} SEK
+                Moms: {Math.round(stats.totalIncomeWithVAT - stats.totalIncomeWithoutVAT).toLocaleString()} SEK
               </div>
             </div>
 
@@ -3476,18 +3481,31 @@ const AdminPage: React.FC = () => {
           </div>
 
           {/* Income by Location */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-gray-600 mb-1">Malmö</p>
-              <p className="text-2xl font-bold text-green-700">{Math.round(stats.malmoIncome).toLocaleString()} SEK</p>
-              <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
+          {(statisticsFilter.location === 'all' || statisticsFilter.location === 'malmo') && (
+            <div className={statisticsFilter.location === 'all' ? "grid grid-cols-2 gap-4 mb-6" : "mb-6"}>
+              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm text-gray-600 mb-1">Malmö</p>
+                <p className="text-2xl font-bold text-green-700">{Math.round(stats.malmoIncome).toLocaleString()} SEK</p>
+                <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
+              </div>
+              {statisticsFilter.location === 'all' && (
+                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <p className="text-sm text-gray-600 mb-1">Staffanstorp</p>
+                  <p className="text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
+                  <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
+                </div>
+              )}
             </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <p className="text-sm text-gray-600 mb-1">Staffanstorp</p>
-              <p className="text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
-              <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
+          )}
+          {statisticsFilter.location === 'staffanstorp' && (
+            <div className="mb-6">
+              <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-sm text-gray-600 mb-1">Staffanstorp</p>
+                <p className="text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
+                <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Warning if dogs are missing type */}
           {dogs.some(dog => !dog.type && dog.isActive !== false) && (
