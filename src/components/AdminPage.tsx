@@ -844,6 +844,16 @@ const AdminPage: React.FC = () => {
     (window as any).currentBoardingLocation = location;
   };
 
+  // Helper function to format time to HH:mm (remove seconds if present)
+  const formatTime = (time: string): string => {
+    if (!time) return '';
+    // If time includes seconds (HH:mm:ss), remove them
+    if (time.includes(':') && time.split(':').length === 3) {
+      return time.substring(0, 5); // Return HH:mm
+    }
+    return time; // Already in HH:mm format
+  };
+
 
   // Auto-archive records whenever boardingRecords changes
   useEffect(() => {
@@ -3290,10 +3300,10 @@ const AdminPage: React.FC = () => {
                           <div
                             key={meetingIndex}
                             className="text-xs p-1 rounded bg-orange-100 text-orange-800 mb-1 flex items-center gap-1"
-                            title={`Möte: ${meeting.name}${meeting.dogName ? ` - ${meeting.dogName}` : ''} kl. ${meeting.time}`}
+                            title={`Möte: ${meeting.name}${meeting.dogName ? ` - ${meeting.dogName}` : ''} kl. ${formatTime(meeting.time)}`}
                           >
                             <span>📅</span>
-                            <span className="font-medium">{meeting.time}</span>
+                            <span className="font-medium">{formatTime(meeting.time)}</span>
                             <span>{meeting.name}</span>
                           </div>
                         ))}
@@ -4754,6 +4764,9 @@ const AdminPage: React.FC = () => {
         return;
       }
 
+      // Format time to HH:mm (remove seconds if present)
+      const formattedTime = formatTime(meetingForm.time);
+
       try {
         if (editingMeeting) {
           const updated = await updateMeeting(editingMeeting.id, {
@@ -4762,7 +4775,7 @@ const AdminPage: React.FC = () => {
             phone: meetingForm.phone || undefined,
             email: meetingForm.email || undefined,
             date: meetingForm.date,
-            time: meetingForm.time,
+            time: formattedTime,
             location: meetingForm.location
           });
           setMeetings(meetings.map(m => m.id === updated.id ? updated : m));
@@ -4773,7 +4786,7 @@ const AdminPage: React.FC = () => {
             phone: meetingForm.phone || undefined,
             email: meetingForm.email || undefined,
             date: meetingForm.date,
-            time: meetingForm.time,
+            time: formattedTime,
             location: meetingForm.location
           });
           setMeetings([...meetings, newMeeting]);
@@ -4862,7 +4875,7 @@ const AdminPage: React.FC = () => {
                           <div><span className="font-medium">E-post:</span> {meeting.email}</div>
                         )}
                         <div className="font-medium text-primary">
-                          {meetingDate.toLocaleDateString('sv-SE')} kl. {meeting.time}
+                          {meetingDate.toLocaleDateString('sv-SE')} kl. {formatTime(meeting.time)}
                         </div>
                       </div>
                     </div>
@@ -4917,7 +4930,7 @@ const AdminPage: React.FC = () => {
                           <div><span className="font-medium">Hund:</span> {meeting.dogName}</div>
                         )}
                         <div className="font-medium text-gray-500">
-                          {meetingDate.toLocaleDateString('sv-SE')} kl. {meeting.time}
+                          {meetingDate.toLocaleDateString('sv-SE')} kl. {formatTime(meeting.time)}
                         </div>
                       </div>
                     </div>
@@ -5349,7 +5362,7 @@ const AdminPage: React.FC = () => {
                   <div className="text-sm text-orange-800 mt-1">
                     {todaysMeetings.map((meeting, idx) => (
                       <span key={meeting.id}>
-                        {meeting.time} - {meeting.name}
+                        {formatTime(meeting.time)} - {meeting.name}
                         {meeting.dogName && ` (${meeting.dogName})`}
                         {meeting.location === 'malmo' ? ' - Malmö' : ' - Staffanstorp'}
                         {idx < todaysMeetings.length - 1 ? ' • ' : ''}
