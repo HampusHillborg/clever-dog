@@ -2108,7 +2108,7 @@ const AdminPage: React.FC = () => {
               <FaChartBar className="mr-2 text-emerald-600" />
               Statistik & Analys
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div 
                 onClick={() => setCurrentView('statistics')}
                 className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 hover:scale-105"
@@ -2142,6 +2142,22 @@ const AdminPage: React.FC = () => {
               </div>
 
               <div 
+                onClick={() => setCurrentView('meetings')}
+                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4 mx-auto">
+                  <FaCalendarAlt className="text-orange-600 text-2xl" />
+                </div>
+                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
+                <p className="text-center text-gray-600 text-sm">Boka och hantera kundmöten</p>
+                <div className="mt-3 text-center">
+                  <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                    {meetings.length} möten
+                  </span>
+                </div>
+              </div>
+
+              <div 
                 onClick={() => setCurrentView('settings')}
                 className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 hover:scale-105"
               >
@@ -2167,7 +2183,7 @@ const AdminPage: React.FC = () => {
               <FaDog className="mr-2 text-blue-600" />
               Administration
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div 
                 onClick={() => setCurrentView('applications')}
                 className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 hover:scale-105"
@@ -2180,6 +2196,22 @@ const AdminPage: React.FC = () => {
                 <div className="mt-3 text-center">
                   <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                     {applications.filter(a => a.status === 'new').length} nya
+                  </span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setCurrentView('meetings')}
+                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4 mx-auto">
+                  <FaCalendarAlt className="text-orange-600 text-2xl" />
+                </div>
+                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
+                <p className="text-center text-gray-600 text-sm">Boka och hantera kundmöten</p>
+                <div className="mt-3 text-center">
+                  <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                    {meetings.length} möten
                   </span>
                 </div>
               </div>
