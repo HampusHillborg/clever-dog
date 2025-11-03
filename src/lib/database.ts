@@ -766,11 +766,9 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
       insertData.owner_postal_code = application.owner_postal_code || null;
     }
 
-    // Use a fresh client instance without auth session for public inserts
-    // This ensures we're using the anon key as an anonymous user
-    // Import createClient directly to avoid any auth context
-    const { createClient } = await import('@supabase/supabase-js');
-    
+    // Use REST API directly for public inserts to avoid any session issues
+    // This ensures we're making a request as an anonymous user (anon role)
+    // Bypassing the Supabase client completely for this operation
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
     
@@ -778,46 +776,34 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
       throw new Error('Supabase URL or Anon Key is missing');
     }
     
-    // Create a completely fresh client with no auth state
-    const publicClient = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-        storage: undefined, // Don't use any storage
+    // Make a direct REST API call to Supabase PostgREST
+    // This ensures we're using the anon key as Bearer token without any session
+    const response = await fetch(`${supabaseUrl}/rest/v1/applications`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
+        'Authorization': `Bearer ${supabaseAnonKey}`, // Explicit anon key as Bearer token
+        'Prefer': 'return=representation', // Return the inserted row
       },
-      global: {
-        headers: {
-          'apikey': supabaseAnonKey,
-          'Authorization': `Bearer ${supabaseAnonKey}`, // Explicitly set as Bearer token
-        }
-      }
+      body: JSON.stringify(insertData),
     });
-    
-    // Clear any potential session state
-    try {
-      await publicClient.auth.signOut();
-      // Also clear any local storage that might have session data
-      if (typeof window !== 'undefined') {
-        const keys = Object.keys(localStorage);
-        keys.forEach(key => {
-          if (key.includes('supabase') || key.includes('auth')) {
-            localStorage.removeItem(key);
-          }
-        });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorData: any;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
       }
-    } catch (signOutError) {
-      // Ignore sign out errors - we're already anonymous
-      console.log('Sign out (ensuring anonymous):', signOutError);
-    }
-
-    const { data, error } = await publicClient
-      .from('applications')
-      .insert(insertData)
-      .select()
-      .single();
-
-    if (error) {
+      
+      const error: any = {
+        message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+        status: response.status,
+        ...errorData,
+      };
+      
       console.error('Error saving application to Supabase:', error);
       console.error('Error details:', JSON.stringify(error, null, 2));
       console.warn('Falling back to localStorage. This application will not be visible in admin panel if Supabase is configured.');
@@ -840,7 +826,13 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
       throw new Error(`Failed to save to database: ${error.message || 'Unknown error'}. Saved to localStorage as fallback.`);
     }
 
-    return data as Application;
+    const data = await response.json();
+    
+    // REST API returns array, we need single object
+    const insertedData = Array.isArray(data) ? data[0] : data;
+    
+    // Transform to match Application type
+    return insertedData as Application;
   } catch (error) {
     console.error('Error saving application:', error);
     // Fallback to localStorage
