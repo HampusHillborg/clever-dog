@@ -16,8 +16,13 @@ import {
   getApplications,
   updateApplication,
   findMatchingDogs,
+  getMeetings,
+  saveMeeting,
+  updateMeeting,
+  deleteMeeting,
   type BoxSettings,
-  type Application
+  type Application,
+  type Meeting
 } from '../lib/database';
 import { PRICES, VAT_RATE } from '../lib/prices';
 import { signIn, signOut, getCurrentUser, onAuthStateChange, type AuthUser } from '../lib/auth';
@@ -117,7 +122,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings';
 
 type UserRole = 'admin' | 'employee' | 'platschef';
 
@@ -196,6 +201,20 @@ const AdminPage: React.FC = () => {
   const [applicationsLocationFilter, setApplicationsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp'>('all');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [applicationMatchingDogs, setApplicationMatchingDogs] = useState<Dog[]>([]);
+
+  // Meetings state
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
+  const [meetingForm, setMeetingForm] = useState({
+    name: '',
+    dogName: '',
+    phone: '',
+    email: '',
+    date: '',
+    time: '',
+    location: 'malmo' as 'malmo' | 'staffanstorp'
+  });
 
   // Load box settings from database on mount
   useEffect(() => {
@@ -850,6 +869,19 @@ const AdminPage: React.FC = () => {
       });
     }
   }, [boardingRecords]);
+
+  // Load meetings from database
+  useEffect(() => {
+    const loadMeetings = async () => {
+      try {
+        const loadedMeetings = await getMeetings();
+        setMeetings(loadedMeetings);
+      } catch (error) {
+        console.error('Error loading meetings:', error);
+      }
+    };
+    loadMeetings();
+  }, []);
 
   // Load applications from database
   useEffect(() => {
@@ -1887,7 +1919,13 @@ const AdminPage: React.FC = () => {
     );
   }
 
-  const renderDashboard = () => (
+  const renderDashboard = () => {
+    // Employees should only see meetings, not dashboard
+    if (userRole === 'employee') {
+      return renderMeetings();
+    }
+
+    return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
@@ -2193,7 +2231,8 @@ const AdminPage: React.FC = () => {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderContracts = () => (
     <div className="space-y-6">
@@ -3103,6 +3142,10 @@ const AdminPage: React.FC = () => {
       return dogsForDate;
     };
 
+    const getMeetingsForDate = (date: string) => {
+      return meetings.filter(m => m.date === date && m.location === location);
+    };
+
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -3132,6 +3175,7 @@ const AdminPage: React.FC = () => {
           <div className="grid grid-cols-7 gap-4">
             {weekDates.map((date, index) => {
               const dayDogs = getDogsForDate(date);
+              const dayMeetings = getMeetingsForDate(date);
               const dayData = locationHistory.find(p => p.date === date);
               const isToday = date === new Date().toISOString().split('T')[0];
               const isPast = new Date(date) < new Date();
@@ -3201,6 +3245,23 @@ const AdminPage: React.FC = () => {
                     ) : (
                       <div className="text-xs text-gray-400 text-center">
                         Inga hundar
+                      </div>
+                    )}
+                    
+                    {/* Meetings */}
+                    {dayMeetings.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-gray-300">
+                        {dayMeetings.map((meeting, meetingIndex) => (
+                          <div
+                            key={meetingIndex}
+                            className="text-xs p-1 rounded bg-orange-100 text-orange-800 mb-1 flex items-center gap-1"
+                            title={`Möte: ${meeting.name}${meeting.dogName ? ` - ${meeting.dogName}` : ''} kl. ${meeting.time}`}
+                          >
+                            <span>📅</span>
+                            <span className="font-medium">{meeting.time}</span>
+                            <span>{meeting.name}</span>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -4514,10 +4575,368 @@ const AdminPage: React.FC = () => {
     );
   };
 
+  const renderMeetings = () => {
+    const handleOpenMeetingModal = (meeting?: Meeting) => {
+      if (meeting) {
+        setEditingMeeting(meeting);
+        setMeetingForm({
+          name: meeting.name,
+          dogName: meeting.dogName || '',
+          phone: meeting.phone || '',
+          email: meeting.email || '',
+          date: meeting.date,
+          time: meeting.time,
+          location: meeting.location
+        });
+      } else {
+        setEditingMeeting(null);
+        setMeetingForm({
+          name: '',
+          dogName: '',
+          phone: '',
+          email: '',
+          date: new Date().toISOString().split('T')[0],
+          time: '',
+          location: 'malmo'
+        });
+      }
+      setIsMeetingModalOpen(true);
+    };
+
+    const handleSaveMeeting = async () => {
+      if (!meetingForm.name || !meetingForm.date || !meetingForm.time) {
+        alert('Namn, datum och tid är obligatoriska fält');
+        return;
+      }
+
+      try {
+        if (editingMeeting) {
+          const updated = await updateMeeting(editingMeeting.id, {
+            name: meetingForm.name,
+            dogName: meetingForm.dogName || undefined,
+            phone: meetingForm.phone || undefined,
+            email: meetingForm.email || undefined,
+            date: meetingForm.date,
+            time: meetingForm.time,
+            location: meetingForm.location
+          });
+          setMeetings(meetings.map(m => m.id === updated.id ? updated : m));
+        } else {
+          const newMeeting = await saveMeeting({
+            name: meetingForm.name,
+            dogName: meetingForm.dogName || undefined,
+            phone: meetingForm.phone || undefined,
+            email: meetingForm.email || undefined,
+            date: meetingForm.date,
+            time: meetingForm.time,
+            location: meetingForm.location
+          });
+          setMeetings([...meetings, newMeeting]);
+        }
+        setIsMeetingModalOpen(false);
+        setEditingMeeting(null);
+      } catch (error) {
+        console.error('Error saving meeting:', error);
+        alert('Ett fel uppstod när mötet skulle sparas');
+      }
+    };
+
+    const handleDeleteMeeting = async (id: string) => {
+      if (!confirm('Är du säker på att du vill ta bort detta möte?')) return;
+
+      try {
+        await deleteMeeting(id);
+        setMeetings(meetings.filter(m => m.id !== id));
+      } catch (error) {
+        console.error('Error deleting meeting:', error);
+        alert('Ett fel uppstod när mötet skulle tas bort');
+      }
+    };
+
+    const upcomingMeetings = meetings
+      .filter(m => new Date(m.date + 'T' + m.time) >= new Date())
+      .sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.time.localeCompare(b.time);
+      });
+
+    const pastMeetings = meetings
+      .filter(m => new Date(m.date + 'T' + m.time) < new Date())
+      .sort((a, b) => {
+        const dateCompare = b.date.localeCompare(a.date);
+        if (dateCompare !== 0) return dateCompare;
+        return b.time.localeCompare(a.time);
+      });
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">Möten ({meetings.length})</h2>
+          {userRole !== 'employee' && (
+            <button
+              onClick={() => handleOpenMeetingModal()}
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark flex items-center gap-2"
+            >
+              <FaPlus /> Nytt möte
+            </button>
+          )}
+        </div>
+
+        {/* Upcoming Meetings */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Kommande möten ({upcomingMeetings.length})
+          </h3>
+          {upcomingMeetings.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Inga kommande möten</p>
+          ) : (
+            <div className="space-y-3">
+              {upcomingMeetings.map((meeting) => {
+                const meetingDate = new Date(meeting.date + 'T' + meeting.time);
+                return (
+                  <div
+                    key={meeting.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-semibold text-gray-900">{meeting.name}</h4>
+                        <span className="text-sm text-gray-500">
+                          {meeting.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        {meeting.dogName && (
+                          <div><span className="font-medium">Hund:</span> {meeting.dogName}</div>
+                        )}
+                        {meeting.phone && (
+                          <div><span className="font-medium">Telefon:</span> {meeting.phone}</div>
+                        )}
+                        {meeting.email && (
+                          <div><span className="font-medium">E-post:</span> {meeting.email}</div>
+                        )}
+                        <div className="font-medium text-primary">
+                          {meetingDate.toLocaleDateString('sv-SE')} kl. {meeting.time}
+                        </div>
+                      </div>
+                    </div>
+                    {userRole !== 'employee' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleOpenMeetingModal(meeting)}
+                          className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-1"
+                        >
+                          <FaEdit /> Redigera
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMeeting(meeting.id)}
+                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-1"
+                        >
+                          <FaTrash /> Ta bort
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Past Meetings */}
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Tidigare möten ({pastMeetings.length})
+          </h3>
+          {pastMeetings.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Inga tidigare möten</p>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {pastMeetings.map((meeting) => {
+                const meetingDate = new Date(meeting.date + 'T' + meeting.time);
+                return (
+                  <div
+                    key={meeting.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 opacity-75"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-semibold text-gray-700">{meeting.name}</h4>
+                        <span className="text-sm text-gray-500">
+                          {meeting.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        {meeting.dogName && (
+                          <div><span className="font-medium">Hund:</span> {meeting.dogName}</div>
+                        )}
+                        <div className="font-medium text-gray-500">
+                          {meetingDate.toLocaleDateString('sv-SE')} kl. {meeting.time}
+                        </div>
+                      </div>
+                    </div>
+                    {userRole !== 'employee' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleOpenMeetingModal(meeting)}
+                          className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-1"
+                        >
+                          <FaEdit /> Redigera
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMeeting(meeting.id)}
+                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-1"
+                        >
+                          <FaTrash /> Ta bort
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Meeting Modal */}
+        {isMeetingModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingMeeting ? 'Redigera möte' : 'Nytt möte'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsMeetingModalOpen(false);
+                    setEditingMeeting(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes className="text-xl" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Namn * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={meetingForm.name}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hund
+                  </label>
+                  <input
+                    type="text"
+                    value={meetingForm.dogName}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, dogName: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={meetingForm.phone}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    E-post
+                  </label>
+                  <input
+                    type="email"
+                    value={meetingForm.email}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dag * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={meetingForm.date}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tid * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={meetingForm.time}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, time: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Plats
+                  </label>
+                  <select
+                    value={meetingForm.location}
+                    onChange={(e) => setMeetingForm({ ...meetingForm, location: e.target.value as 'malmo' | 'staffanstorp' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                  >
+                    <option value="malmo">Malmö</option>
+                    <option value="staffanstorp">Staffanstorp</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setIsMeetingModalOpen(false);
+                    setEditingMeeting(null);
+                  }}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleSaveMeeting}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                >
+                  {editingMeeting ? 'Spara ändringar' : 'Skapa möte'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderContent = () => {
-    // Redirect employees away from restricted views
-    if (userRole === 'employee' && (currentView === 'contracts' || currentView === 'statistics' || currentView === 'settings' || currentView === 'applications')) {
-      return renderDashboard();
+    // Employees can ONLY see meetings - redirect everything else to meetings
+    if (userRole === 'employee') {
+      return renderMeetings();
     }
     // Redirect platschef away from contracts and statistics
     if (userRole === 'platschef' && (currentView === 'contracts' || currentView === 'statistics')) {
@@ -4547,6 +4966,8 @@ const AdminPage: React.FC = () => {
         return (userRole === 'admin' || userRole === 'platschef') ? renderSettings() : renderDashboard();
       case 'applications':
         return (userRole === 'admin' || userRole === 'platschef') ? renderApplications() : renderDashboard();
+      case 'meetings':
+        return renderMeetings();
       default:
         return renderDashboard();
     }

@@ -995,3 +995,355 @@ export const findMatchingDogs = async (phone: string, dogName: string, email?: s
   });
 };
 
+// ============================================================================
+// MEETINGS CRUD OPERATIONS
+// ============================================================================
+
+export type Meeting = {
+  id: string;
+  name: string; // Customer name (required)
+  dogName?: string; // Dog name (optional)
+  phone?: string; // Phone number (optional)
+  email?: string; // Email (optional)
+  date: string; // YYYY-MM-DD (required)
+  time: string; // HH:mm format (required)
+  location: 'malmo' | 'staffanstorp';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const saveMeeting = async (meeting: Omit<Meeting, 'id' | 'createdAt' | 'updatedAt'>): Promise<Meeting> => {
+  if (!isSupabaseAvailable()) {
+    // Fallback to localStorage
+    const newMeeting: Meeting = {
+      ...meeting,
+      id: generateUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    const saved = localStorage.getItem('cleverMeetings');
+    const meetings = saved ? JSON.parse(saved) : [];
+    meetings.push(newMeeting);
+    localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
+    
+    return newMeeting;
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('meetings' as any)
+      .insert({
+        name: meeting.name,
+        dog_name: meeting.dogName || null,
+        phone: meeting.phone || null,
+        email: meeting.email || null,
+        date: meeting.date,
+        time: meeting.time,
+        location: meeting.location
+      } as any)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving meeting:', error);
+      // Fallback to localStorage
+      const newMeeting: Meeting = {
+        ...meeting,
+        id: generateUUID(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      const saved = localStorage.getItem('cleverMeetings');
+      const meetings = saved ? JSON.parse(saved) : [];
+      meetings.push(newMeeting);
+      localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
+      
+      return newMeeting;
+    }
+
+    // Also save to localStorage as backup
+    const saved = localStorage.getItem('cleverMeetings');
+    const meetings = saved ? JSON.parse(saved) : [];
+    const mappedMeeting: Meeting = {
+      id: (data as any).id,
+      name: (data as any).name,
+      dogName: (data as any).dog_name || undefined,
+      phone: (data as any).phone || undefined,
+      email: (data as any).email || undefined,
+      date: (data as any).date,
+      time: (data as any).time,
+      location: (data as any).location,
+      createdAt: (data as any).created_at,
+      updatedAt: (data as any).updated_at
+    };
+    meetings.push(mappedMeeting);
+    localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
+
+    return mappedMeeting;
+  } catch (error) {
+    console.error('Error saving meeting:', error);
+    // Fallback to localStorage
+    const newMeeting: Meeting = {
+      ...meeting,
+      id: generateUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    const saved = localStorage.getItem('cleverMeetings');
+    const meetings = saved ? JSON.parse(saved) : [];
+    meetings.push(newMeeting);
+    localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
+    
+    return newMeeting;
+  }
+};
+
+export const getMeetings = async (filters?: { location?: string; date?: string }): Promise<Meeting[]> => {
+  if (!isSupabaseAvailable()) {
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverMeetings');
+    let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+    
+    if (filters?.location) {
+      meetings = meetings.filter(m => m.location === filters.location);
+    }
+    if (filters?.date) {
+      meetings = meetings.filter(m => m.date === filters.date);
+    }
+    
+    return meetings.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.time.localeCompare(b.time);
+    });
+  }
+
+  try {
+    let query = supabase!
+      .from('meetings' as any)
+      .select('*')
+      .order('date', { ascending: true })
+      .order('time', { ascending: true });
+
+    if (filters?.location) {
+      query = query.eq('location', filters.location);
+    }
+    if (filters?.date) {
+      query = query.eq('date', filters.date);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching meetings:', error);
+      // Fallback to localStorage
+      const saved = localStorage.getItem('cleverMeetings');
+      let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+      
+      if (filters?.location) {
+        meetings = meetings.filter(m => m.location === filters.location);
+      }
+      if (filters?.date) {
+        meetings = meetings.filter(m => m.date === filters.date);
+      }
+      
+      return meetings.sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.time.localeCompare(b.time);
+      });
+    }
+
+    // Map snake_case to camelCase
+    return ((data as any) || []).map((meeting: any): Meeting => ({
+      id: meeting.id,
+      name: meeting.name,
+      dogName: meeting.dog_name || undefined,
+      phone: meeting.phone || undefined,
+      email: meeting.email || undefined,
+      date: meeting.date,
+      time: meeting.time,
+      location: meeting.location,
+      createdAt: meeting.created_at,
+      updatedAt: meeting.updated_at
+    }));
+  } catch (error) {
+    console.error('Error fetching meetings:', error);
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverMeetings');
+    let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+    
+    if (filters?.location) {
+      meetings = meetings.filter(m => m.location === filters.location);
+    }
+    if (filters?.date) {
+      meetings = meetings.filter(m => m.date === filters.date);
+    }
+    
+    return meetings.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.time.localeCompare(b.time);
+    });
+  }
+};
+
+export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, 'id' | 'createdAt'>>): Promise<Meeting> => {
+  if (!isSupabaseAvailable()) {
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverMeetings');
+    const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+    const index = meetings.findIndex(m => m.id === id);
+    
+    if (index >= 0) {
+      meetings[index] = {
+        ...meetings[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
+      return meetings[index];
+    }
+    
+    throw new Error('Meeting not found');
+  }
+
+  try {
+    const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.dogName !== undefined) updateData.dog_name = updates.dogName;
+    if (updates.phone !== undefined) updateData.phone = updates.phone;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.date !== undefined) updateData.date = updates.date;
+    if (updates.time !== undefined) updateData.time = updates.time;
+    if (updates.location !== undefined) updateData.location = updates.location;
+    updateData.updated_at = new Date().toISOString();
+
+    const { data, error } = await (supabase!.from('meetings' as any) as any)
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating meeting:', error);
+      // Fallback to localStorage
+      const saved = localStorage.getItem('cleverMeetings');
+      const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+      const index = meetings.findIndex(m => m.id === id);
+      
+      if (index >= 0) {
+        meetings[index] = {
+          ...meetings[index],
+          ...updates,
+          updatedAt: new Date().toISOString()
+        };
+        localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
+        return meetings[index];
+      }
+      
+      throw new Error('Meeting not found');
+    }
+
+    // Also update localStorage as backup
+    const saved = localStorage.getItem('cleverMeetings');
+    if (saved) {
+      const meetings: Meeting[] = JSON.parse(saved);
+      const index = meetings.findIndex(m => m.id === id);
+      if (index >= 0) {
+        const mappedMeeting: Meeting = {
+          id: data.id,
+          name: data.name,
+          dogName: data.dog_name || undefined,
+          phone: data.phone || undefined,
+          email: data.email || undefined,
+          date: data.date,
+          time: data.time,
+          location: data.location,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at
+        };
+        meetings[index] = mappedMeeting;
+        localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
+      }
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      dogName: data.dog_name || undefined,
+      phone: data.phone || undefined,
+      email: data.email || undefined,
+      date: data.date,
+      time: data.time,
+      location: data.location,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+  } catch (error) {
+    console.error('Error updating meeting:', error);
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverMeetings');
+    const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+    const index = meetings.findIndex(m => m.id === id);
+    
+    if (index >= 0) {
+      meetings[index] = {
+        ...meetings[index],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
+      return meetings[index];
+    }
+    
+    throw error;
+  }
+};
+
+export const deleteMeeting = async (id: string): Promise<void> => {
+  if (!isSupabaseAvailable()) {
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverMeetings');
+    const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+    const filtered = meetings.filter(m => m.id !== id);
+    localStorage.setItem('cleverMeetings', JSON.stringify(filtered));
+    return;
+  }
+
+  try {
+    const { error } = await supabase!
+      .from('meetings' as any)
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting meeting:', error);
+      // Fallback to localStorage
+      const saved = localStorage.getItem('cleverMeetings');
+      const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+      const filtered = meetings.filter(m => m.id !== id);
+      localStorage.setItem('cleverMeetings', JSON.stringify(filtered));
+      return;
+    }
+
+    // Also delete from localStorage
+    const saved = localStorage.getItem('cleverMeetings');
+    if (saved) {
+      const meetings: Meeting[] = JSON.parse(saved);
+      const filtered = meetings.filter(m => m.id !== id);
+      localStorage.setItem('cleverMeetings', JSON.stringify(filtered));
+    }
+  } catch (error) {
+    console.error('Error deleting meeting:', error);
+    // Fallback to localStorage
+    const saved = localStorage.getItem('cleverMeetings');
+    const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
+    const filtered = meetings.filter(m => m.id !== id);
+    localStorage.setItem('cleverMeetings', JSON.stringify(filtered));
+  }
+};
+
