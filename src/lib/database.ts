@@ -778,16 +778,23 @@ export const saveApplication = async (application: Omit<Application, 'id' | 'sta
     
     // Make a direct REST API call to Supabase PostgREST
     // This ensures we're using the anon key as Bearer token without any session
+    // Important: Use 'Authorization' header with anon key, and 'apikey' header
+    // This tells Supabase to treat this as an anonymous (anon) user
     const response = await fetch(`${supabaseUrl}/rest/v1/applications`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`, // Explicit anon key as Bearer token
+        'apikey': supabaseAnonKey, // Required for PostgREST
+        'Authorization': `Bearer ${supabaseAnonKey}`, // This makes it an 'anon' role request
         'Prefer': 'return=representation', // Return the inserted row
       },
       body: JSON.stringify(insertData),
     });
+    
+    // Debug: Log the request details (remove in production)
+    console.log('Inserting application with data:', JSON.stringify(insertData, null, 2));
+    console.log('Supabase URL:', supabaseUrl);
+    console.log('Using anon key (first 10 chars):', supabaseAnonKey.substring(0, 10) + '...');
 
     if (!response.ok) {
       const errorText = await response.text();
