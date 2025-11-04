@@ -1,10 +1,10 @@
--- Drop and recreate applications table with correct RLS policies
--- This ensures a clean setup for public form submissions
+-- Applications table for storing booking applications
+-- This is a clean, simple schema for the application system
 
--- Step 1: Drop the table (cascade will remove dependencies)
+-- Drop existing table if needed (for recreation)
 DROP TABLE IF EXISTS applications CASCADE;
 
--- Step 2: Create the table with all fields
+-- Create the applications table
 CREATE TABLE applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   location TEXT NOT NULL CHECK (location IN ('malmo', 'staffanstorp')),
@@ -28,7 +28,7 @@ CREATE TABLE applications (
   is_neutered TEXT,
   
   -- Service information
-  service_type TEXT NOT NULL, -- 'daycare', 'parttime', 'general', 'boarding', 'singleDay', 'socialWalk', 'question'
+  service_type TEXT NOT NULL,
   days_per_week TEXT,
   start_date DATE,
   end_date DATE,
@@ -55,26 +55,31 @@ CREATE TABLE applications (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Step 3: Grant permissions FIRST (before enabling RLS)
--- anon can INSERT (for public forms)
-GRANT INSERT ON applications TO anon;
--- authenticated can SELECT, UPDATE, DELETE (for admin users)
-GRANT SELECT, UPDATE, DELETE ON applications TO authenticated;
+-- Create index for faster queries
+CREATE INDEX idx_applications_status ON applications(status);
+CREATE INDEX idx_applications_location ON applications(location);
+CREATE INDEX idx_applications_created_at ON applications(created_at DESC);
 
--- Step 4: Enable Row Level Security
+-- Enable Row Level Security
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 
--- Step 5: Create RLS policies
--- Policy 1: Anonymous users can INSERT applications (for public booking forms)
--- This policy is very permissive - anyone can insert, no checks needed
+-- Grant permissions
+-- Anonymous users can INSERT (for public forms)
+GRANT INSERT ON applications TO anon;
+-- Authenticated users can SELECT, UPDATE, DELETE (for admin)
+GRANT SELECT, UPDATE, DELETE ON applications TO authenticated;
+
+-- RLS Policies
+
+-- Policy 1: Allow anonymous users to insert applications (for public booking forms)
 CREATE POLICY "anon_insert_applications"
   ON applications
   FOR INSERT
   TO anon
   WITH CHECK (true);
 
--- Policy 2: Admin and platschef can SELECT all applications
-CREATE POLICY "admin_select_applications"
+-- Policy 2: Allow authenticated admin/platschef users to read all applications
+CREATE POLICY "authenticated_read_applications"
   ON applications
   FOR SELECT
   TO authenticated
@@ -86,8 +91,8 @@ CREATE POLICY "admin_select_applications"
     )
   );
 
--- Policy 3: Admin and platschef can UPDATE applications
-CREATE POLICY "admin_update_applications"
+-- Policy 3: Allow authenticated admin/platschef users to update applications
+CREATE POLICY "authenticated_update_applications"
   ON applications
   FOR UPDATE
   TO authenticated
@@ -106,8 +111,8 @@ CREATE POLICY "admin_update_applications"
     )
   );
 
--- Policy 4: Admin and platschef can DELETE applications
-CREATE POLICY "admin_delete_applications"
+-- Policy 4: Allow authenticated admin/platschef users to delete applications
+CREATE POLICY "authenticated_delete_applications"
   ON applications
   FOR DELETE
   TO authenticated
@@ -119,13 +124,7 @@ CREATE POLICY "admin_delete_applications"
     )
   );
 
--- Step 6: Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_applications_status ON applications(status);
-CREATE INDEX IF NOT EXISTS idx_applications_location ON applications(location);
-CREATE INDEX IF NOT EXISTS idx_applications_created_at ON applications(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_applications_owner_phone_dog_name ON applications(owner_phone, dog_name);
-
--- Step 7: Create function to update updated_at timestamp
+-- Create trigger to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_applications_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -134,27 +133,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Step 8: Create trigger to automatically update updated_at
-CREATE TRIGGER update_applications_updated_at
+CREATE TRIGGER applications_updated_at
   BEFORE UPDATE ON applications
   FOR EACH ROW
   EXECUTE FUNCTION update_applications_updated_at();
-
--- Step 9: Verify the setup
-SELECT 
-  policyname,
-  cmd,
-  roles,
-  with_check
-FROM pg_policies 
-WHERE tablename = 'applications'
-ORDER BY policyname;
-
--- Verify permissions
-SELECT 
-  grantee,
-  privilege_type
-FROM information_schema.role_table_grants
-WHERE table_name = 'applications'
-ORDER BY grantee, privilege_type;
 

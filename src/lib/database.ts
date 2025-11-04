@@ -709,334 +709,181 @@ export type Application = {
   updated_at: string;
 };
 
-export const saveApplication = async (application: Omit<Application, 'id' | 'status' | 'created_at' | 'updated_at' | 'matched_dog_id' | 'matched_by' | 'matched_at' | 'admin_notes'>): Promise<Application> => {
-  if (!isSupabaseAvailable()) {
-    // Fallback to localStorage
-    const newApplication: Application = {
-      ...application,
-      id: generateUUID(),
-      status: 'new',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    const saved = localStorage.getItem('cleverApplications');
-    const applications = saved ? JSON.parse(saved) : [];
-    applications.push(newApplication);
-    localStorage.setItem('cleverApplications', JSON.stringify(applications));
-    
-    return newApplication;
-  }
+// Input type for creating a new application (excludes auto-generated fields)
+export type ApplicationInput = Omit<Application, 'id' | 'status' | 'created_at' | 'updated_at' | 'matched_dog_id' | 'matched_by' | 'matched_at' | 'admin_notes'>;
 
-  try {
-    // Map camelCase to snake_case for database
-    // Only include owner_city and owner_postal_code if they exist (to avoid errors if columns don't exist)
-    const insertData: any = {
-      location: application.location,
-      owner_name: application.owner_name,
-      owner_email: application.owner_email,
-      owner_phone: application.owner_phone || null,
-      owner_address: application.owner_address || null,
-      owner_personnummer: application.owner_personnummer || null,
-      dog_name: application.dog_name,
-      dog_breed: application.dog_breed || null,
-      dog_gender: application.dog_gender || null,
-      dog_height: application.dog_height || null,
-      dog_age: application.dog_age || null,
-      dog_chip_number: application.dog_chip_number || null,
-      is_neutered: application.is_neutered || null,
-      service_type: application.service_type,
-      days_per_week: application.days_per_week || null,
-      start_date: application.start_date || null,
-      end_date: application.end_date || null,
-      part_time_days: application.part_time_days || null,
-      dog_socialization: application.dog_socialization || null,
-      problem_behaviors: application.problem_behaviors || null,
-      allergies: application.allergies || null,
-      additional_info: application.additional_info || null,
-      message: application.message || null,
-      status: 'new'
-    };
+// Save a new application
+export const saveApplication = async (input: ApplicationInput): Promise<Application> => {
+  const now = new Date().toISOString();
+  const newApplication: Application = {
+    ...input,
+    id: generateUUID(),
+    status: 'new',
+    created_at: now,
+    updated_at: now
+  };
 
-    // Only add these if they are provided (graceful degradation if columns don't exist)
-    if (application.owner_city !== undefined) {
-      insertData.owner_city = application.owner_city || null;
-    }
-    if (application.owner_postal_code !== undefined) {
-      insertData.owner_postal_code = application.owner_postal_code || null;
-    }
+  // Always save to localStorage first as backup
+  const saved = localStorage.getItem('cleverApplications');
+  const applications: Application[] = saved ? JSON.parse(saved) : [];
+  applications.push(newApplication);
+  localStorage.setItem('cleverApplications', JSON.stringify(applications));
 
-    // Use REST API directly for public inserts to avoid any session issues
-    // This ensures we're making a request as an anonymous user (anon role)
-    // Bypassing the Supabase client completely for this operation
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-    
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Supabase URL or Anon Key is missing');
-    }
-    
-    // Make a direct REST API call to Supabase PostgREST
-    // This ensures we're using the anon key as Bearer token without any session
-    // Important: Use 'Authorization' header with anon key, and 'apikey' header
-    // This tells Supabase to treat this as an anonymous (anon) user
-    const response = await fetch(`${supabaseUrl}/rest/v1/applications`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey, // Required for PostgREST
-        'Authorization': `Bearer ${supabaseAnonKey}`, // This makes it an 'anon' role request
-        'Prefer': 'return=representation', // Return the inserted row
-      },
-      body: JSON.stringify(insertData),
-    });
-    
-    // Debug: Log the request details (remove in production)
-    console.log('Inserting application with data:', JSON.stringify(insertData, null, 2));
-    console.log('Supabase URL:', supabaseUrl);
-    console.log('Using anon key (first 10 chars):', supabaseAnonKey.substring(0, 10) + '...');
+  // Try to save to Supabase if available
+  if (isSupabaseAvailable()) {
+    try {
+      const insertData: any = {
+        location: input.location,
+        owner_name: input.owner_name,
+        owner_email: input.owner_email,
+        owner_phone: input.owner_phone || null,
+        owner_address: input.owner_address || null,
+        owner_city: input.owner_city || null,
+        owner_postal_code: input.owner_postal_code || null,
+        owner_personnummer: input.owner_personnummer || null,
+        dog_name: input.dog_name,
+        dog_breed: input.dog_breed || null,
+        dog_gender: input.dog_gender || null,
+        dog_height: input.dog_height || null,
+        dog_age: input.dog_age || null,
+        dog_chip_number: input.dog_chip_number || null,
+        is_neutered: input.is_neutered || null,
+        service_type: input.service_type,
+        days_per_week: input.days_per_week || null,
+        start_date: input.start_date || null,
+        end_date: input.end_date || null,
+        part_time_days: input.part_time_days || null,
+        dog_socialization: input.dog_socialization || null,
+        problem_behaviors: input.problem_behaviors || null,
+        allergies: input.allergies || null,
+        additional_info: input.additional_info || null,
+        message: input.message || null,
+        status: 'new'
+      };
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorData: any;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { message: errorText };
+      const { data, error } = await supabase!
+        .from('applications')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (!error && data) {
+        // Update localStorage with the server response (includes server-generated ID and timestamps)
+        const index = applications.findIndex(a => a.id === newApplication.id);
+        if (index >= 0) {
+          applications[index] = data as Application;
+          localStorage.setItem('cleverApplications', JSON.stringify(applications));
+          return data as Application;
+        }
+      } else {
+        console.warn('Failed to save application to database, using localStorage version:', error);
       }
-      
-      const error: any = {
-        message: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-        status: response.status,
-        ...errorData,
-      };
-      
-      console.error('Error saving application to Supabase:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
-      console.warn('Falling back to localStorage. This application will not be visible in admin panel if Supabase is configured.');
-      
-      // Fallback to localStorage
-      const newApplication: Application = {
-        ...application,
-        id: generateUUID(),
-        status: 'new',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      const saved = localStorage.getItem('cleverApplications');
-      const applications = saved ? JSON.parse(saved) : [];
-      applications.push(newApplication);
-      localStorage.setItem('cleverApplications', JSON.stringify(applications));
-      
-      // Still throw error to let caller know it failed (but localStorage fallback happened)
-      throw new Error(`Failed to save to database: ${error.message || 'Unknown error'}. Saved to localStorage as fallback.`);
+    } catch (error) {
+      console.warn('Error saving application to database, using localStorage version:', error);
     }
-
-    const data = await response.json();
-    
-    // REST API returns array, we need single object
-    const insertedData = Array.isArray(data) ? data[0] : data;
-    
-    // Transform to match Application type
-    return insertedData as Application;
-  } catch (error) {
-    console.error('Error saving application:', error);
-    // Fallback to localStorage
-    const newApplication: Application = {
-      ...application,
-      id: generateUUID(),
-      status: 'new',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    const saved = localStorage.getItem('cleverApplications');
-    const applications = saved ? JSON.parse(saved) : [];
-    applications.push(newApplication);
-    localStorage.setItem('cleverApplications', JSON.stringify(applications));
-    
-    return newApplication;
   }
+
+  return newApplication;
 };
 
+// Get all applications with optional filters
 export const getApplications = async (filters?: { status?: string; location?: string }): Promise<Application[]> => {
-  if (!isSupabaseAvailable()) {
-    // Fallback to localStorage
-    const saved = localStorage.getItem('cleverApplications');
-    let applications: Application[] = saved ? JSON.parse(saved) : [];
-    
-    if (filters?.status) {
-      applications = applications.filter(a => a.status === filters.status);
-    }
-    if (filters?.location) {
-      applications = applications.filter(a => a.location === filters.location);
-    }
-    
-    return applications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }
+  let applications: Application[] = [];
 
-  try {
-    let query = supabase!
-      .from('applications')
-      .select('*')
-      .order('created_at', { ascending: false });
+  // Try Supabase first
+  if (isSupabaseAvailable()) {
+    try {
+      let query = supabase!
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (filters?.status) {
-      query = query.eq('status', filters.status);
-    }
-    if (filters?.location) {
-      query = query.eq('location', filters.location);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Error fetching applications:', error);
-      // Fallback to localStorage
-      const saved = localStorage.getItem('cleverApplications');
-      let applications: Application[] = saved ? JSON.parse(saved) : [];
-      
       if (filters?.status) {
-        applications = applications.filter(a => a.status === filters.status);
+        query = query.eq('status', filters.status);
       }
       if (filters?.location) {
-        applications = applications.filter(a => a.location === filters.location);
+        query = query.eq('location', filters.location);
       }
-      
-      return applications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    }
 
-    return ((data as any) || []) as Application[];
-  } catch (error) {
-    console.error('Error fetching applications:', error);
-    // Fallback to localStorage
-    const saved = localStorage.getItem('cleverApplications');
-    let applications: Application[] = saved ? JSON.parse(saved) : [];
-    
-    if (filters?.status) {
-      applications = applications.filter(a => a.status === filters.status);
+      const { data, error } = await query;
+
+      if (!error && data) {
+        // Also sync to localStorage as backup
+        localStorage.setItem('cleverApplications', JSON.stringify(data as Application[]));
+        return (data as any) as Application[];
+      } else {
+        console.warn('Error fetching from database, falling back to localStorage:', error);
+      }
+    } catch (error) {
+      console.warn('Error fetching from database, falling back to localStorage:', error);
     }
-    if (filters?.location) {
-      applications = applications.filter(a => a.location === filters.location);
-    }
-    
-    return applications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
+
+  // Fallback to localStorage
+  const saved = localStorage.getItem('cleverApplications');
+  applications = saved ? JSON.parse(saved) : [];
+
+  // Apply filters
+  if (filters?.status) {
+    applications = applications.filter(a => a.status === filters.status);
+  }
+  if (filters?.location) {
+    applications = applications.filter(a => a.location === filters.location);
+  }
+
+  return applications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 };
 
+// Update an existing application
 export const updateApplication = async (id: string, updates: Partial<Application>): Promise<Application> => {
-  if (!isSupabaseAvailable()) {
-    // Fallback to localStorage
-    const saved = localStorage.getItem('cleverApplications');
-    const applications: Application[] = saved ? JSON.parse(saved) : [];
-    const index = applications.findIndex(a => a.id === id);
-    
-    if (index >= 0) {
-      applications[index] = {
-        ...applications[index],
-        ...updates,
-        updated_at: new Date().toISOString()
-      };
-      localStorage.setItem('cleverApplications', JSON.stringify(applications));
-      return applications[index];
-    }
-    
+  const saved = localStorage.getItem('cleverApplications');
+  const applications: Application[] = saved ? JSON.parse(saved) : [];
+  const index = applications.findIndex(a => a.id === id);
+
+  if (index < 0) {
     throw new Error('Application not found');
   }
 
-  try {
-    // Map updates to snake_case format for database
-    const updateData: any = {};
-    if (updates.location) updateData.location = updates.location;
-    if (updates.owner_name !== undefined) updateData.owner_name = updates.owner_name;
-    if (updates.owner_email !== undefined) updateData.owner_email = updates.owner_email;
-    if (updates.owner_phone !== undefined) updateData.owner_phone = updates.owner_phone;
-    if (updates.owner_address !== undefined) updateData.owner_address = updates.owner_address;
-    if (updates.owner_city !== undefined) updateData.owner_city = updates.owner_city;
-    if (updates.owner_postal_code !== undefined) updateData.owner_postal_code = updates.owner_postal_code;
-    if (updates.owner_personnummer !== undefined) updateData.owner_personnummer = updates.owner_personnummer;
-    if (updates.dog_name !== undefined) updateData.dog_name = updates.dog_name;
-    if (updates.dog_breed !== undefined) updateData.dog_breed = updates.dog_breed;
-    if (updates.dog_gender !== undefined) updateData.dog_gender = updates.dog_gender;
-    if (updates.dog_height !== undefined) updateData.dog_height = updates.dog_height;
-    if (updates.dog_age !== undefined) updateData.dog_age = updates.dog_age;
-    if (updates.dog_chip_number !== undefined) updateData.dog_chip_number = updates.dog_chip_number;
-    if (updates.is_neutered !== undefined) updateData.is_neutered = updates.is_neutered;
-    if (updates.service_type !== undefined) updateData.service_type = updates.service_type;
-    if (updates.days_per_week !== undefined) updateData.days_per_week = updates.days_per_week;
-    if (updates.start_date !== undefined) updateData.start_date = updates.start_date;
-    if (updates.end_date !== undefined) updateData.end_date = updates.end_date;
-    if (updates.part_time_days !== undefined) updateData.part_time_days = updates.part_time_days;
-    if (updates.dog_socialization !== undefined) updateData.dog_socialization = updates.dog_socialization;
-    if (updates.problem_behaviors !== undefined) updateData.problem_behaviors = updates.problem_behaviors;
-    if (updates.allergies !== undefined) updateData.allergies = updates.allergies;
-    if (updates.additional_info !== undefined) updateData.additional_info = updates.additional_info;
-    if (updates.message !== undefined) updateData.message = updates.message;
-    if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.matched_dog_id !== undefined) updateData.matched_dog_id = updates.matched_dog_id;
-    if (updates.matched_by !== undefined) updateData.matched_by = updates.matched_by;
-    if (updates.matched_at !== undefined) updateData.matched_at = updates.matched_at;
-    if (updates.admin_notes !== undefined) updateData.admin_notes = updates.admin_notes;
-    updateData.updated_at = new Date().toISOString();
+  // Update local copy
+  const updated = {
+    ...applications[index],
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
+  applications[index] = updated;
+  localStorage.setItem('cleverApplications', JSON.stringify(applications));
 
-    const { data, error } = await (supabase!.from('applications' as any) as any)
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single();
+  // Try to update in Supabase
+  if (isSupabaseAvailable()) {
+    try {
+      const updateData: Record<string, any> = {};
+      Object.keys(updates).forEach(key => {
+        if (key !== 'id' && key !== 'created_at') {
+          updateData[key] = (updates as any)[key];
+        }
+      });
+      updateData.updated_at = new Date().toISOString();
 
-    if (error) {
-      console.error('Error updating application:', error);
-      // Fallback to localStorage
-      const saved = localStorage.getItem('cleverApplications');
-      const applications: Application[] = saved ? JSON.parse(saved) : [];
-      const index = applications.findIndex(a => a.id === id);
-      
-      if (index >= 0) {
-        applications[index] = {
-          ...applications[index],
-          ...updates,
-          updated_at: new Date().toISOString()
-        };
-        localStorage.setItem('cleverApplications', JSON.stringify(applications));
-        return applications[index];
-      }
-      
-      throw new Error('Application not found');
-    }
+      const { data, error } = await (supabase!.from('applications' as any) as any)
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
 
-    // Also update localStorage as backup
-    const saved = localStorage.getItem('cleverApplications');
-    if (saved) {
-      const applications: Application[] = JSON.parse(saved);
-      const index = applications.findIndex(a => a.id === id);
-      if (index >= 0) {
+      if (!error && data) {
+        // Update localStorage with server response
         applications[index] = data as Application;
         localStorage.setItem('cleverApplications', JSON.stringify(applications));
+        return data as Application;
+      } else {
+        console.warn('Failed to update application in database:', error);
       }
+    } catch (error) {
+      console.warn('Error updating application in database:', error);
     }
-
-    return data as Application;
-  } catch (error) {
-    console.error('Error updating application:', error);
-    // Fallback to localStorage
-    const saved = localStorage.getItem('cleverApplications');
-    const applications: Application[] = saved ? JSON.parse(saved) : [];
-    const index = applications.findIndex(a => a.id === id);
-    
-    if (index >= 0) {
-      applications[index] = {
-        ...applications[index],
-        ...updates,
-        updated_at: new Date().toISOString()
-      };
-      localStorage.setItem('cleverApplications', JSON.stringify(applications));
-      return applications[index];
-    }
-    
-    throw error;
   }
+
+  return updated;
 };
 
 // Find potential matching dogs based on phone number, email, and dog name
