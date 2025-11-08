@@ -867,66 +867,93 @@ const AdminPage: React.FC = () => {
         }
 
         // Call Netlify Function to create user
-        const response = await fetch('/.netlify/functions/create-staff-user', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            email: employeeForm.email,
-            password: employeeForm.password,
+        // Convert empty string to null for location
+        const locationValue = employeeForm.location && employeeForm.location.trim() ? employeeForm.location : null;
+        
+        try {
+          const response = await fetch('/.netlify/functions/create-staff-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              email: employeeForm.email,
+              password: employeeForm.password,
+              name: employeeForm.name,
+              phone: employeeForm.phone || null,
+              location: locationValue,
+              role: employeeForm.role,
+            }),
+          });
+
+          let result;
+          const responseText = await response.text();
+          try {
+            result = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('Failed to parse response:', responseText);
+            setEmployeeError('Kunde inte skapa användare: Ogiltigt svar från servern');
+            setIsSavingEmployee(false);
+            return;
+          }
+
+          if (!response.ok) {
+            console.error('Error response:', result);
+            setEmployeeError(result.error || `Kunde inte skapa användare (${response.status})`);
+            setIsSavingEmployee(false);
+            return;
+          }
+
+          // User created successfully, continue with saving employee record
+          if (!result.user || !result.user.id) {
+            setEmployeeError('Användare skapades men fick inget ID tillbaka');
+            setIsSavingEmployee(false);
+            return;
+          }
+
+          // User created successfully, now save employee record
+          const savedEmployee = await saveEmployee({
+            id: result.user.id,
             name: employeeForm.name,
-            phone: employeeForm.phone || null,
-            location: employeeForm.location || null,
+            email: employeeForm.email,
+            phone: employeeForm.phone || undefined,
+            location: employeeForm.location || undefined,
             role: employeeForm.role,
-          }),
-        });
+            position: employeeForm.position || undefined,
+            hire_date: employeeForm.hire_date || undefined,
+            notes: employeeForm.notes || undefined,
+            is_active: true,
+          });
 
-        const result = await response.json();
+          setEmployees(prev => {
+            const existing = prev.find(e => e.id === savedEmployee.id);
+            if (existing) {
+              return prev.map(e => e.id === savedEmployee.id ? savedEmployee : e);
+            }
+            return [...prev, savedEmployee];
+          });
 
-        if (!response.ok) {
-          setEmployeeError(result.error || 'Kunde inte skapa användare');
+          setIsEmployeeModalOpen(false);
+          setEmployeeForm({
+            name: '',
+            email: '',
+            phone: '',
+            location: '',
+            role: 'employee',
+            position: '',
+            hire_date: '',
+            notes: '',
+            password: '',
+          });
+          setIsSavingEmployee(false);
+          return;
+        } catch (fetchError: any) {
+          console.error('Error calling create-staff-user function:', fetchError);
+          setEmployeeError(fetchError.message || 'Kunde inte ansluta till servern. Kontrollera att Netlify-funktionen är konfigurerad.');
           setIsSavingEmployee(false);
           return;
         }
-
-        // User created successfully, now save employee record
-        const savedEmployee = await saveEmployee({
-          id: result.user.id,
-          name: employeeForm.name,
-          email: employeeForm.email,
-          phone: employeeForm.phone || undefined,
-          location: employeeForm.location || undefined,
-          role: employeeForm.role,
-          position: employeeForm.position || undefined,
-          hire_date: employeeForm.hire_date || undefined,
-          notes: employeeForm.notes || undefined,
-          is_active: true,
-        });
-
-        setEmployees(prev => {
-          const existing = prev.find(e => e.id === savedEmployee.id);
-          if (existing) {
-            return prev.map(e => e.id === savedEmployee.id ? savedEmployee : e);
-          }
-          return [...prev, savedEmployee];
-        });
-
-        setIsEmployeeModalOpen(false);
-        setEmployeeForm({
-          name: '',
-          email: '',
-          phone: '',
-          location: '',
-          role: 'employee',
-          position: '',
-          hire_date: '',
-          notes: '',
-          password: '',
-        });
-        setIsSavingEmployee(false);
-        return;
       }
 
       // If editing existing employee or linking to existing account (no password)

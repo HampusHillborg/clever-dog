@@ -152,10 +152,10 @@ exports.handler = async function(event, context) {
     }
 
     // Validate location if provided
-    if (location && !['malmo', 'staffanstorp'].includes(location)) {
+    if (location && !['malmo', 'staffanstorp', 'both'].includes(location)) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Location must be either "malmo" or "staffanstorp"' }),
+        body: JSON.stringify({ error: 'Location must be either "malmo", "staffanstorp", or "both"' }),
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Content-Type': 'application/json',
