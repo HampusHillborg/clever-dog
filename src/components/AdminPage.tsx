@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes } from 'react-icons/fa';
+import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
 import { 
   getDogs as fetchDogs, 
@@ -139,6 +139,7 @@ const AdminPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [contracts] = useState<ContractData[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [editingDog, setEditingDog] = useState<Dog | null>(null);
@@ -2100,32 +2101,32 @@ const AdminPage: React.FC = () => {
     }
 
     return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-8">
       {/* Header */}
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Välkommen till CleverDog Admin</h2>
-        <p className="text-gray-600">Hantera hundar, planering och pensionat</p>
+      <div className="text-center px-2">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Välkommen till CleverDog Admin</h2>
+        <p className="text-sm sm:text-base text-gray-600">Hantera hundar, planering och pensionat</p>
       </div>
 
       {/* Main Categories */}
-      <div className="space-y-8">
+      <div className="space-y-4 sm:space-y-8">
         {/* Hundar & Kontrakt */}
         <div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
             <FaDog className="mr-2 text-blue-600" />
             Hundar & Kontrakt
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
             <div 
               onClick={() => setCurrentView('dogs')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 hover:scale-105"
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
             >
-              <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
-                <FaDog className="text-blue-600 text-2xl" />
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                <FaDog className="text-blue-600 text-xl sm:text-2xl" />
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Hundar</h4>
-              <p className="text-center text-gray-600 text-sm">Hantera hundregister och information</p>
-              <div className="mt-3 text-center">
+              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Hundar</h4>
+              <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera hundregister och information</p>
+              <div className="mt-2 sm:mt-3 text-center">
                 <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                   {dogs.length} hundar registrerade
                 </span>
@@ -2135,14 +2136,14 @@ const AdminPage: React.FC = () => {
             {userRole === 'admin' && (
               <div 
                 onClick={() => setCurrentView('contracts')}
-                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-green-200 hover:scale-105"
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-green-200 active:scale-95 sm:hover:scale-105"
               >
-                <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4 mx-auto">
-                  <FaFilePdf className="text-green-600 text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaFilePdf className="text-green-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Kontrakt</h4>
-                <p className="text-center text-gray-600 text-sm">Skapa och hantera dagiskontrakt</p>
-                <div className="mt-3 text-center">
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kontrakt</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Skapa och hantera dagiskontrakt</p>
+                <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                     PDF-generator
                   </span>
@@ -2154,21 +2155,21 @@ const AdminPage: React.FC = () => {
 
         {/* Dagisplanering */}
         <div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
             <FaCalendarAlt className="mr-2 text-purple-600" />
             Dagisplanering
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
             <div 
               onClick={() => setCurrentView('planning-malmo')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 hover:scale-105"
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
             >
-              <div className="flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4 mx-auto">
-                <FaCalendarAlt className="text-purple-600 text-2xl" />
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                <FaCalendarAlt className="text-purple-600 text-xl sm:text-2xl" />
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Planering Malmö</h4>
-              <p className="text-center text-gray-600 text-sm">Drag & drop planering för Malmö</p>
-              <div className="mt-3 text-center">
+              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Planering Malmö</h4>
+              <p className="text-center text-gray-600 text-xs sm:text-sm">Drag & drop planering för Malmö</p>
+              <div className="mt-2 sm:mt-3 text-center">
                 <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
                   Live planering
                 </span>
@@ -2177,14 +2178,14 @@ const AdminPage: React.FC = () => {
 
             <div 
               onClick={() => setCurrentView('planning-staffanstorp')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 hover:scale-105"
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
             >
-              <div className="flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4 mx-auto">
-                <FaCalendarAlt className="text-purple-600 text-2xl" />
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                <FaCalendarAlt className="text-purple-600 text-xl sm:text-2xl" />
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Planering Staffanstorp</h4>
-              <p className="text-center text-gray-600 text-sm">Drag & drop planering för Staffanstorp</p>
-              <div className="mt-3 text-center">
+              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Planering Staffanstorp</h4>
+              <p className="text-center text-gray-600 text-xs sm:text-sm">Drag & drop planering för Staffanstorp</p>
+              <div className="mt-2 sm:mt-3 text-center">
                 <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
                   Live planering
                 </span>
@@ -2195,21 +2196,21 @@ const AdminPage: React.FC = () => {
 
         {/* Kalender & Historik */}
         <div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
             <FaCalendarAlt className="mr-2 text-indigo-600" />
             Kalender & Historik
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
             <div 
               onClick={() => setCurrentView('calendar-malmo')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 hover:scale-105"
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 active:scale-95 sm:hover:scale-105"
             >
-              <div className="flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4 mx-auto">
-                <FaCalendarAlt className="text-indigo-600 text-2xl" />
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                <FaCalendarAlt className="text-indigo-600 text-xl sm:text-2xl" />
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Kalender Malmö</h4>
-              <p className="text-center text-gray-600 text-sm">Planeringshistorik och kalendervy</p>
-              <div className="mt-3 text-center">
+              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kalender Malmö</h4>
+              <p className="text-center text-gray-600 text-xs sm:text-sm">Planeringshistorik och kalendervy</p>
+              <div className="mt-2 sm:mt-3 text-center">
                 <span className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
                   Veckovy
                 </span>
@@ -2218,14 +2219,14 @@ const AdminPage: React.FC = () => {
 
             <div 
               onClick={() => setCurrentView('calendar-staffanstorp')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 hover:scale-105"
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 active:scale-95 sm:hover:scale-105"
             >
-              <div className="flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4 mx-auto">
-                <FaCalendarAlt className="text-indigo-600 text-2xl" />
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                <FaCalendarAlt className="text-indigo-600 text-xl sm:text-2xl" />
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Kalender Staffanstorp</h4>
-              <p className="text-center text-gray-600 text-sm">Planeringshistorik och kalendervy</p>
-              <div className="mt-3 text-center">
+              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kalender Staffanstorp</h4>
+              <p className="text-center text-gray-600 text-xs sm:text-sm">Planeringshistorik och kalendervy</p>
+              <div className="mt-2 sm:mt-3 text-center">
                 <span className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
                   Veckovy
                 </span>
@@ -2236,21 +2237,21 @@ const AdminPage: React.FC = () => {
 
         {/* Hundpensionat */}
         <div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
             <FaDog className="mr-2 text-red-600" />
             Hundpensionat
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
             <div 
               onClick={() => setCurrentView('boarding-malmo')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 hover:scale-105"
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 active:scale-95 sm:hover:scale-105"
             >
-              <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4 mx-auto">
-                <FaDog className="text-red-600 text-2xl" />
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                <FaDog className="text-red-600 text-xl sm:text-2xl" />
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Pensionat Malmö</h4>
-              <p className="text-center text-gray-600 text-sm">Hundpensionat registreringar</p>
-              <div className="mt-3 text-center">
+              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Pensionat Malmö</h4>
+              <p className="text-center text-gray-600 text-xs sm:text-sm">Hundpensionat registreringar</p>
+              <div className="mt-2 sm:mt-3 text-center">
                 <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
                   {boardingRecords.filter(r => r.location === 'malmo').length} registreringar
                 </span>
@@ -2259,14 +2260,14 @@ const AdminPage: React.FC = () => {
 
             <div 
               onClick={() => setCurrentView('boarding-staffanstorp')}
-              className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 hover:scale-105"
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 active:scale-95 sm:hover:scale-105"
             >
-              <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4 mx-auto">
-                <FaDog className="text-red-600 text-2xl" />
+              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                <FaDog className="text-red-600 text-xl sm:text-2xl" />
               </div>
-              <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Pensionat Staffanstorp</h4>
-              <p className="text-center text-gray-600 text-sm">Hundpensionat registreringar</p>
-              <div className="mt-3 text-center">
+              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Pensionat Staffanstorp</h4>
+              <p className="text-center text-gray-600 text-xs sm:text-sm">Hundpensionat registreringar</p>
+              <div className="mt-2 sm:mt-3 text-center">
                 <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
                   {boardingRecords.filter(r => r.location === 'staffanstorp').length} registreringar
                 </span>
@@ -2278,21 +2279,21 @@ const AdminPage: React.FC = () => {
         {/* Statistik & Analys - Only for admin */}
         {userRole === 'admin' && (
           <div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
               <FaChartBar className="mr-2 text-emerald-600" />
               Statistik & Analys
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-2">
               <div 
                 onClick={() => setCurrentView('statistics')}
-                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 hover:scale-105"
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 active:scale-95 sm:hover:scale-105"
               >
-                <div className="flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-4 mx-auto">
-                  <FaChartBar className="text-emerald-600 text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaChartBar className="text-emerald-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Statistik & Inkomst</h4>
-                <p className="text-center text-gray-600 text-sm">Detaljerad statistik och inkomstanalys</p>
-                <div className="mt-3 text-center">
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Statistik & Inkomst</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Detaljerad statistik och inkomstanalys</p>
+                <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
                     Filtrerbar statistik
                   </span>
@@ -2301,14 +2302,14 @@ const AdminPage: React.FC = () => {
 
               <div 
                 onClick={() => setCurrentView('applications')}
-                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 hover:scale-105"
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
               >
-                <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
-                  <FaDog className="text-blue-600 text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaDog className="text-blue-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
-                <p className="text-center text-gray-600 text-sm">Granska och hantera nya ansökningar</p>
-                <div className="mt-3 text-center">
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Granska och hantera nya ansökningar</p>
+                <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                     {applications.filter(a => a.status === 'new').length} nya
                   </span>
@@ -2317,14 +2318,14 @@ const AdminPage: React.FC = () => {
 
               <div 
                 onClick={() => setCurrentView('meetings')}
-                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 hover:scale-105"
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 active:scale-95 sm:hover:scale-105"
               >
-                <div className="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4 mx-auto">
-                  <FaCalendarAlt className="text-orange-600 text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaCalendarAlt className="text-orange-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
-                <p className="text-center text-gray-600 text-sm">Boka och hantera kundmöten</p>
-                <div className="mt-3 text-center">
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Boka och hantera kundmöten</p>
+                <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
                     {meetings.length} möten
                   </span>
@@ -2333,14 +2334,14 @@ const AdminPage: React.FC = () => {
 
               <div 
                 onClick={() => setCurrentView('settings')}
-                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 hover:scale-105"
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 active:scale-95 sm:hover:scale-105"
               >
-                <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 mx-auto">
-                  <FaEdit className="text-gray-600 text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaEdit className="text-gray-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
-                <p className="text-center text-gray-600 text-sm">Hantera boxar och burar</p>
-                <div className="mt-3 text-center">
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera boxar och burar</p>
+                <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
                     Box-konfiguration
                   </span>
@@ -2353,21 +2354,21 @@ const AdminPage: React.FC = () => {
         {/* Ansökningar & Inställningar - For platschef */}
         {userRole === 'platschef' && (
           <div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
               <FaDog className="mr-2 text-blue-600" />
               Administration
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-2">
               <div 
                 onClick={() => setCurrentView('applications')}
-                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 hover:scale-105"
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
               >
-                <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
-                  <FaDog className="text-blue-600 text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaDog className="text-blue-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
-                <p className="text-center text-gray-600 text-sm">Granska och hantera nya ansökningar</p>
-                <div className="mt-3 text-center">
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Granska och hantera nya ansökningar</p>
+                <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                     {applications.filter(a => a.status === 'new').length} nya
                   </span>
@@ -2376,14 +2377,14 @@ const AdminPage: React.FC = () => {
 
               <div 
                 onClick={() => setCurrentView('meetings')}
-                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 hover:scale-105"
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 active:scale-95 sm:hover:scale-105"
               >
-                <div className="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4 mx-auto">
-                  <FaCalendarAlt className="text-orange-600 text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaCalendarAlt className="text-orange-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
-                <p className="text-center text-gray-600 text-sm">Boka och hantera kundmöten</p>
-                <div className="mt-3 text-center">
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Boka och hantera kundmöten</p>
+                <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
                     {meetings.length} möten
                   </span>
@@ -2392,14 +2393,14 @@ const AdminPage: React.FC = () => {
 
               <div 
                 onClick={() => setCurrentView('settings')}
-                className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 hover:scale-105"
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 active:scale-95 sm:hover:scale-105"
               >
-                <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4 mx-auto">
-                  <FaEdit className="text-gray-600 text-2xl" />
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaEdit className="text-gray-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
-                <p className="text-center text-gray-600 text-sm">Hantera boxar och burar</p>
-                <div className="mt-3 text-center">
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera boxar och burar</p>
+                <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
                     Box-konfiguration
                   </span>
@@ -2411,28 +2412,28 @@ const AdminPage: React.FC = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Snabbstatistik</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 sm:p-6 border border-blue-200 mx-2 sm:mx-0">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Snabbstatistik</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{dogs.length}</div>
-            <div className="text-sm text-gray-600">Registrerade hundar</div>
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">{dogs.length}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Registrerade hundar</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-xl sm:text-2xl font-bold text-purple-600">
               {planningHistory.filter(p => p.location === 'malmo').length + planningHistory.filter(p => p.location === 'staffanstorp').length}
             </div>
-            <div className="text-sm text-gray-600">Planerade dagar</div>
+            <div className="text-xs sm:text-sm text-gray-600">Planerade dagar</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-red-600">{boardingRecords.length}</div>
-            <div className="text-sm text-gray-600">Pensionatsregistreringar</div>
+            <div className="text-xl sm:text-2xl font-bold text-red-600">{boardingRecords.length}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Pensionatsregistreringar</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">
               {dogs.filter(d => d.locations.includes('malmo') && d.locations.includes('staffanstorp')).length}
             </div>
-            <div className="text-sm text-gray-600">Hundar på båda dagisen</div>
+            <div className="text-xs sm:text-sm text-gray-600">Hundar på båda dagisen</div>
           </div>
         </div>
       </div>
@@ -2441,9 +2442,9 @@ const AdminPage: React.FC = () => {
   };
 
   const renderContracts = () => (
-    <div className="space-y-6">
-          <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Kontrakt</h2>
+    <div className="space-y-3 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Kontrakt</h2>
             <button
           onClick={() => setContractData({
             customerName: '',
@@ -2460,31 +2461,31 @@ const AdminPage: React.FC = () => {
             contractType: 'daycare',
             daysPerWeek: ''
           })}
-          className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors"
+          className="bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
         >
           Nytt kontrakt
             </button>
           </div>
           
       {contracts.length > 0 && (
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h3 className="text-lg font-semibold mb-4">Befintliga kontrakt</h3>
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 mb-4 sm:mb-6">
+          <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Befintliga kontrakt</h3>
           <div className="space-y-2">
             {contracts.map((contract, index) => (
-              <div key={index} className="flex justify-between items-center p-3 border-b">
-                <div>
-                  <p className="font-semibold">{contract.customerName} - {contract.dogName}</p>
-                  <p className="text-sm text-gray-600">{contract.contractType} | {contract.startDate} - {contract.endDate}</p>
+              <div key={index} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 p-3 border-b">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm sm:text-base truncate">{contract.customerName} - {contract.dogName}</p>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">{contract.contractType} | {contract.startDate} - {contract.endDate}</p>
                 </div>
-                <button className="text-primary hover:text-primary-dark">Visa</button>
+                <button className="text-primary hover:text-primary-dark text-sm sm:text-base whitespace-nowrap">Visa</button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">Skapa nytt kontrakt</h3>
+      <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Skapa nytt kontrakt</h3>
         {renderContractForm()}
       </div>
     </div>
@@ -2707,63 +2708,65 @@ const AdminPage: React.FC = () => {
     const isToday = currentPlanningDate === new Date().toISOString().split('T')[0];
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-6">
         {/* Date Selector and Reset Button */}
-        <div className="bg-white rounded-xl shadow-md p-4 border border-gray-200">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-semibold text-gray-700">Datum:</label>
+        <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 border border-gray-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <label className="text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">Datum:</label>
                 <input
                   type="date"
                   value={currentPlanningDate}
                   onChange={(e) => setCurrentPlanningDate(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="flex-1 sm:flex-none px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg bg-white text-gray-800 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
               
               {/* Date Navigation */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => navigateWeek('prev')}
-                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg hover:bg-gray-300 transition-colors"
                   title="Föregående vecka"
                 >
-                  ← Vecka
+                  <span className="hidden sm:inline">← Vecka</span>
+                  <span className="sm:hidden">← V</span>
                 </button>
                 <button
                   onClick={() => navigateDate(-1)}
-                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg hover:bg-gray-300 transition-colors"
                   title="Föregående dag"
                 >
                   ←
                 </button>
                 <button
                   onClick={() => setCurrentPlanningDate(new Date().toISOString().split('T')[0])}
-                  className={`px-3 py-2 rounded-lg transition-colors ${isToday ? 'bg-primary text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
+                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${isToday ? 'bg-primary text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
                   title="Gå till idag"
                 >
                   Idag
                 </button>
                 <button
                   onClick={() => navigateDate(1)}
-                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg hover:bg-gray-300 transition-colors"
                   title="Nästa dag"
                 >
                   →
                 </button>
                 <button
                   onClick={() => navigateWeek('next')}
-                  className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg hover:bg-gray-300 transition-colors"
                   title="Nästa vecka"
                 >
-                  Vecka →
+                  <span className="hidden sm:inline">Vecka →</span>
+                  <span className="sm:hidden">V →</span>
                 </button>
               </div>
 
               {/* Date Display */}
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-primary">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <span className="text-base sm:text-lg font-bold text-primary">
                   {formatDateDisplay(currentPlanningDate)}
                 </span>
                 {isToday && (
@@ -2774,33 +2777,35 @@ const AdminPage: React.FC = () => {
               </div>
 
               {/* Planned Dogs Counter */}
-              <div className="flex items-center gap-2 bg-blue-50 border-2 border-blue-300 rounded-lg px-4 py-2">
-                <span className="text-sm font-semibold text-gray-700">Inplanerade hundar:</span>
-                <span className="text-xl font-bold text-blue-700">{plannedDogsCount}</span>
+              <div className="flex items-center gap-2 bg-blue-50 border-2 border-blue-300 rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 w-full sm:w-auto">
+                <span className="text-xs sm:text-sm font-semibold text-gray-700">Inplanerade hundar:</span>
+                <span className="text-lg sm:text-xl font-bold text-blue-700">{plannedDogsCount}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setIsCopyModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
               >
-                <FaCopy className="text-sm" />
-                Kopiera planering
+                <FaCopy className="text-xs sm:text-sm" />
+                <span className="hidden sm:inline">Kopiera planering</span>
+                <span className="sm:hidden">Kopiera</span>
               </button>
               <button
                 onClick={() => resetCages(location)}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-500 text-white text-xs sm:text-sm rounded-lg hover:bg-red-600 transition-colors shadow-sm"
               >
-                <FaTrash className="text-sm" />
-                Återställ burar
+                <FaTrash className="text-xs sm:text-sm" />
+                <span className="hidden sm:inline">Återställ burar</span>
+                <span className="sm:hidden">Återställ</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
           {/* Left Column: Dogs Lists - Categorized */}
-          <div className="lg:col-span-1 space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-2">
+          <div className="lg:col-span-1 space-y-3 max-h-[calc(100vh-200px)] sm:max-h-[calc(100vh-250px)] overflow-y-auto pr-2">
             {/* Fulltime */}
             {renderDogCategory(
               'Heltid',
@@ -2948,8 +2953,8 @@ const AdminPage: React.FC = () => {
 
           {/* Cages and Free Areas */}
           <div className="lg:col-span-2">
-            <h3 className="text-xl font-bold text-gray-800 mb-5">Burar och ytor</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-5">Burar och ytor</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {planning.map(cage => {
                 const cageDogs = (cage.dogs || []).map(id => getDogById(id)).filter(Boolean) as Dog[];
                 return (
@@ -3063,18 +3068,18 @@ const AdminPage: React.FC = () => {
   };
 
   const renderPlanningMalmo = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Planering Malmö</h2>
+    <div className="space-y-3 sm:space-y-6">
+      <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Planering Malmö</h2>
         {renderPlanning(planningMalmo, 'malmo')}
       </div>
     </div>
   );
 
   const renderPlanningStaffanstorp = () => (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Planering Staffanstorp</h2>
+    <div className="space-y-3 sm:space-y-6">
+      <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Planering Staffanstorp</h2>
         {renderPlanning(planningStaffanstorp, 'staffanstorp')}
       </div>
     </div>
@@ -3099,28 +3104,28 @@ const AdminPage: React.FC = () => {
     const categorizedRecords = categorizeBoardingRecords(locationRecords);
     
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-900">
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             Hundpensionat {location === 'malmo' ? 'Malmö' : 'Staffanstorp'} ({filteredRecords.length})
           </h2>
           <button
             onClick={() => openBoardingModal(location)}
-            className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors"
+            className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
           >
             <FaPlus className="mr-2" /> Lägg till pensionat
           </button>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Visa:</label>
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-4 border border-gray-200">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 items-start sm:items-center">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <label className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">Visa:</label>
               <select
                 value={boardingFilter}
                 onChange={(e) => setBoardingFilter(e.target.value as 'all' | 'current' | 'archived' | 'future' | 'ongoing')}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-1 border border-gray-300 rounded-md text-xs sm:text-sm"
               >
                 <option value="all">Alla</option>
                 <option value="future">Framtida</option>
@@ -3129,12 +3134,12 @@ const AdminPage: React.FC = () => {
               </select>
             </div>
             
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">År:</label>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <label className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">År:</label>
               <select
                 value={boardingYearFilter}
                 onChange={(e) => setBoardingYearFilter(e.target.value)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-1 border border-gray-300 rounded-md text-xs sm:text-sm"
               >
                 {Array.from({ length: 5 }, (_, i) => {
                   const year = new Date().getFullYear() - i;
@@ -3151,11 +3156,11 @@ const AdminPage: React.FC = () => {
 
         {boardingFilter === 'all' ? (
           // Show categorized view for 'all'
-          <div className="space-y-8">
+          <div className="space-y-4 sm:space-y-8">
             {/* Ongoing Records */}
             {categorizedRecords.ongoing.length > 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-bold text-blue-700 mb-4 border-b border-blue-200 pb-2">
+              <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+                <h3 className="text-base sm:text-lg font-bold text-blue-700 mb-3 sm:mb-4 border-b border-blue-200 pb-2">
                   ⏳ Pågående registreringar ({categorizedRecords.ongoing.length})
                 </h3>
                 {renderRecordsByMonth(categorizedRecords.ongoing, location)}
@@ -3164,8 +3169,8 @@ const AdminPage: React.FC = () => {
 
             {/* Future Records */}
             {categorizedRecords.future.length > 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-bold text-green-700 mb-4 border-b border-green-200 pb-2">
+              <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+                <h3 className="text-base sm:text-lg font-bold text-green-700 mb-3 sm:mb-4 border-b border-green-200 pb-2">
                   🔮 Framtida registreringar ({categorizedRecords.future.length})
                 </h3>
                 {renderRecordsByMonth(categorizedRecords.future, location)}
@@ -3174,8 +3179,8 @@ const AdminPage: React.FC = () => {
 
             {/* Archived Records */}
             {categorizedRecords.archived.length > 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-bold text-gray-600 mb-4 border-b border-gray-200 pb-2">
+              <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+                <h3 className="text-base sm:text-lg font-bold text-gray-600 mb-3 sm:mb-4 border-b border-gray-200 pb-2">
                   📦 Arkiverade registreringar ({categorizedRecords.archived.length})
                 </h3>
                 {renderRecordsByMonth(categorizedRecords.archived, location)}
@@ -3183,12 +3188,12 @@ const AdminPage: React.FC = () => {
             )}
 
             {categorizedRecords.future.length === 0 && categorizedRecords.ongoing.length === 0 && categorizedRecords.archived.length === 0 && (
-              <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-                <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-500 mb-4">Inga pensionatsregistreringar än</p>
+              <div className="bg-white rounded-lg shadow-lg p-6 sm:p-12 text-center">
+                <FaDog className="text-4xl sm:text-6xl mx-auto mb-4 text-gray-300" />
+                <p className="text-sm sm:text-base text-gray-500 mb-4">Inga pensionatsregistreringar än</p>
                 <button
                   onClick={() => openBoardingModal(location)}
-                  className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto"
+                  className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto text-sm sm:text-base"
                 >
                   <FaPlus className="mr-2" /> Lägg till första registreringen
                 </button>
@@ -3198,9 +3203,9 @@ const AdminPage: React.FC = () => {
         ) : (
           // Show filtered view for specific categories
           filteredRecords.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-              <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500 mb-4">
+            <div className="bg-white rounded-lg shadow-lg p-6 sm:p-12 text-center">
+              <FaDog className="text-4xl sm:text-6xl mx-auto mb-4 text-gray-300" />
+              <p className="text-sm sm:text-base text-gray-500 mb-4">
                 {boardingFilter === 'archived' ? 'Inga arkiverade registreringar' : 
                  boardingFilter === 'future' ? 'Inga framtida registreringar' :
                  boardingFilter === 'ongoing' ? 'Inga pågående registreringar' : 
@@ -3209,7 +3214,7 @@ const AdminPage: React.FC = () => {
               {boardingFilter !== 'archived' && (
                 <button
                   onClick={() => openBoardingModal(location)}
-                  className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto"
+                  className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto text-sm sm:text-base"
                 >
                   <FaPlus className="mr-2" /> Lägg till första registreringen
                 </button>
@@ -3228,17 +3233,17 @@ const AdminPage: React.FC = () => {
     const sortedMonths = Object.keys(recordsByMonth).sort((a, b) => b.localeCompare(a));
     
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {sortedMonths.map(monthKey => (
-          <div key={monthKey} className="bg-gray-50 rounded-lg p-4">
-            <h4 className="text-md font-semibold text-gray-800 mb-3">
+          <div key={monthKey} className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            <h4 className="text-sm sm:text-md font-semibold text-gray-800 mb-2 sm:mb-3">
               {getMonthName(monthKey)} {boardingYearFilter}
-              <span className="text-sm font-normal text-gray-500 ml-2">
+              <span className="text-xs sm:text-sm font-normal text-gray-500 ml-2">
                 ({recordsByMonth[monthKey].length} registreringar)
               </span>
             </h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {recordsByMonth[monthKey].map((record) => {
                 const dog = dogs.find(d => d.id === record.dogId);
                 const isPast = new Date(record.endDate) < new Date();
@@ -3248,7 +3253,7 @@ const AdminPage: React.FC = () => {
                 return (
                   <div 
                     key={record.id} 
-                    className={`p-4 rounded-lg border-l-4 ${
+                    className={`p-3 sm:p-4 rounded-lg border-l-4 ${
                       isPast 
                         ? 'border-gray-400 bg-gray-50' 
                         : isFuture
@@ -3258,9 +3263,9 @@ const AdminPage: React.FC = () => {
                         : 'border-primary bg-white'
                     }`}
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className={`font-bold text-lg ${
+                    <div className="flex justify-between items-start mb-2 sm:mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-bold text-base sm:text-lg ${
                           isPast ? 'text-gray-600' : 
                           isFuture ? 'text-green-800' :
                           isOngoing ? 'text-blue-800' :
@@ -3283,24 +3288,24 @@ const AdminPage: React.FC = () => {
                           {isOngoing && '(Pågående)'}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 ml-2">
                         <button
                           onClick={() => openBoardingModal(location, record)}
-                          className="text-gray-600 hover:text-blue-600"
+                          className="text-gray-600 hover:text-blue-600 text-sm sm:text-base"
                           title="Redigera"
                         >
                           <FaEdit />
                         </button>
                         <button
                           onClick={() => deleteBoardingRecord(record.id)}
-                          className="text-gray-600 hover:text-red-600"
+                          className="text-gray-600 hover:text-red-600 text-sm sm:text-base"
                           title="Ta bort"
                         >
                           <FaTrash />
                         </button>
                       </div>
                     </div>
-                    <div className="space-y-1 text-sm">
+                    <div className="space-y-1 text-xs sm:text-sm">
                       <p><strong>Från:</strong> {new Date(record.startDate).toLocaleDateString('sv-SE')}</p>
                       <p><strong>Till:</strong> {new Date(record.endDate).toLocaleDateString('sv-SE')}</p>
                       <p><strong>Antal dagar:</strong> {Math.ceil((new Date(record.endDate).getTime() - new Date(record.startDate).getTime()) / (1000 * 60 * 60 * 24))}</p>
@@ -3311,7 +3316,7 @@ const AdminPage: React.FC = () => {
                         </>
                       )}
                       {record.notes && (
-                        <p className="text-gray-600 italic">{record.notes}</p>
+                        <p className="text-gray-600 italic break-words">{record.notes}</p>
                       )}
                     </div>
                   </div>
@@ -3394,32 +3399,34 @@ const AdminPage: React.FC = () => {
     };
 
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-900">
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
             Kalender {location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
           </h2>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <button
               onClick={() => navigateWeek('prev')}
-              className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-xs sm:text-sm"
             >
-              ← Föregående vecka
+              <span className="hidden sm:inline">← Föregående vecka</span>
+              <span className="sm:hidden">← V</span>
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">
               Vecka {Math.ceil(new Date(currentPlanningDate).getDate() / 7)}
             </span>
             <button
               onClick={() => navigateWeek('next')}
-              className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-xs sm:text-sm"
             >
-              Nästa vecka →
+              <span className="hidden sm:inline">Nästa vecka →</span>
+              <span className="sm:hidden">V →</span>
             </button>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="grid grid-cols-7 gap-4">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 overflow-x-auto">
+          <div className="grid grid-cols-7 gap-2 sm:gap-4 min-w-[700px] sm:min-w-0">
             {weekDates.map((date, index) => {
               const dayDogs = getDogsForDate(date);
               const dayMeetings = getMeetingsForDate(date);
@@ -3430,17 +3437,17 @@ const AdminPage: React.FC = () => {
               return (
                 <div 
                   key={date}
-                  className={`border rounded-lg p-3 ${
+                  className={`border rounded-lg p-2 sm:p-3 ${
                     isToday ? 'border-blue-500 bg-blue-50' : 
                     isPast ? 'border-gray-300 bg-gray-50' : 
                     'border-gray-200 bg-white'
                   }`}
                 >
-                  <div className="text-center mb-2">
-                    <div className="text-sm font-medium text-gray-600">
+                  <div className="text-center mb-1 sm:mb-2">
+                    <div className="text-xs sm:text-sm font-medium text-gray-600">
                       {dayNames[index]}
                     </div>
-                    <div className={`text-lg font-bold ${
+                    <div className={`text-base sm:text-lg font-bold ${
                       isToday ? 'text-blue-700' : 
                       isPast ? 'text-gray-500' : 
                       'text-gray-900'
@@ -3449,7 +3456,7 @@ const AdminPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="space-y-1">
+                  <div className="space-y-0.5 sm:space-y-1">
                     {dayDogs.length > 0 ? (
                       dayDogs.map((dog, dogIndex) => {
                         if (!dog) return null;
@@ -3473,7 +3480,7 @@ const AdminPage: React.FC = () => {
                         return (
                           <div 
                             key={dogIndex}
-                            className={`text-xs p-1 rounded flex items-center gap-1 bg-gray-100 text-gray-800`}
+                            className={`text-xs p-0.5 sm:p-1 rounded flex items-center gap-1 bg-gray-100 text-gray-800 truncate`}
                             title={
                               isBoarding && !isPlanned 
                                 ? 'Hundpensionat' 
@@ -3483,7 +3490,7 @@ const AdminPage: React.FC = () => {
                             }
                           >
                             {badge && <span>{badge}</span>}
-                            <span>{dog?.name}</span>
+                            <span className="truncate">{dog?.name}</span>
                           </div>
                         );
                       })
@@ -3495,23 +3502,23 @@ const AdminPage: React.FC = () => {
                     
                     {/* Meetings */}
                     {dayMeetings.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-gray-300">
+                      <div className="mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-gray-300">
                         {dayMeetings.map((meeting, meetingIndex) => (
                           <div
                             key={meetingIndex}
-                            className="text-xs p-1 rounded bg-orange-100 text-orange-800 mb-1 flex items-center gap-1"
+                            className="text-xs p-0.5 sm:p-1 rounded bg-orange-100 text-orange-800 mb-0.5 sm:mb-1 flex items-center gap-1 truncate"
                             title={`Möte: ${meeting.name}${meeting.dogName ? ` - ${meeting.dogName}` : ''} kl. ${formatTime(meeting.time)}`}
                           >
                             <span>📅</span>
                             <span className="font-medium">{formatTime(meeting.time)}</span>
-                            <span>{meeting.name}</span>
+                            <span className="truncate">{meeting.name}</span>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
                   
-                  <div className="mt-2 text-center">
+                  <div className="mt-1 sm:mt-2 text-center">
                     <button
                       onClick={() => {
                         setCurrentPlanningDate(date);
@@ -3586,18 +3593,18 @@ const AdminPage: React.FC = () => {
     ];
 
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-900">Statistik & Inkomst</h2>
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Statistik & Inkomst</h2>
         </div>
 
         {/* Filter Controls */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
             <FaFilter className="mr-2 text-blue-500" />
             Filtrera statistik
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
             {/* Location Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Plats</label>
@@ -3660,8 +3667,8 @@ const AdminPage: React.FC = () => {
           </div>
 
           {/* Additional Filters */}
-          <div className="border-t pt-4 mt-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="border-t pt-3 sm:pt-4 mt-3 sm:mt-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -3669,7 +3676,7 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setStatisticsFilter(prev => ({ ...prev, includeActive: e.target.checked }))}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
-                <span className="text-sm text-gray-700">Aktiva hundar</span>
+                <span className="text-xs sm:text-sm text-gray-700">Aktiva hundar</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -3678,7 +3685,7 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setStatisticsFilter(prev => ({ ...prev, includeInactive: e.target.checked }))}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
-                <span className="text-sm text-gray-700">Inaktiva hundar</span>
+                <span className="text-xs sm:text-sm text-gray-700">Inaktiva hundar</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -3687,7 +3694,7 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setStatisticsFilter(prev => ({ ...prev, includeBoarding: e.target.checked }))}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
-                <span className="text-sm text-gray-700">Hundpensionat</span>
+                <span className="text-xs sm:text-sm text-gray-700">Hundpensionat</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -3696,74 +3703,74 @@ const AdminPage: React.FC = () => {
                   onChange={(e) => setStatisticsFilter(prev => ({ ...prev, includeSingleDays: e.target.checked }))}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
-                <span className="text-sm text-gray-700">Enstaka dagar</span>
+                <span className="text-xs sm:text-sm text-gray-700">Enstaka dagar</span>
               </label>
             </div>
           </div>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {/* Total Dogs */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border-l-4 border-blue-500">
             <div className="flex items-center">
-              <FaDog className="text-blue-500 text-2xl mr-3" />
+              <FaDog className="text-blue-500 text-xl sm:text-2xl mr-2 sm:mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Totalt antal hundar</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalDogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Totalt antal hundar</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.totalDogs}</p>
               </div>
             </div>
           </div>
 
           {/* Malmö Dogs */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border-l-4 border-green-500">
             <div className="flex items-center">
-              <FaDog className="text-green-500 text-2xl mr-3" />
+              <FaDog className="text-green-500 text-xl sm:text-2xl mr-2 sm:mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Malmö hundar</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.malmoDogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Malmö hundar</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.malmoDogs}</p>
               </div>
             </div>
           </div>
 
           {/* Staffanstorp Dogs */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border-l-4 border-orange-500">
             <div className="flex items-center">
-              <FaDog className="text-orange-500 text-2xl mr-3" />
+              <FaDog className="text-orange-500 text-xl sm:text-2xl mr-2 sm:mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Staffanstorp hundar</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.staffanstorpDogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Staffanstorp hundar</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.staffanstorpDogs}</p>
               </div>
             </div>
           </div>
 
           {/* Both Locations */}
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border-l-4 border-purple-500">
             <div className="flex items-center">
-              <FaDog className="text-purple-500 text-2xl mr-3" />
+              <FaDog className="text-purple-500 text-xl sm:text-2xl mr-2 sm:mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Båda platser</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.bothLocationDogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Båda platser</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.bothLocationDogs}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Expected Income */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-md p-6 border-2 border-green-200">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-md p-4 sm:p-6 border-2 border-green-200">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
             <FaChartBar className="mr-2 text-green-600" />
             Förväntad inkomst
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
             {/* Without VAT */}
-            <div className="bg-white rounded-lg p-5 border-2 border-gray-200">
+            <div className="bg-white rounded-lg p-4 sm:p-5 border-2 border-gray-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Exklusive moms (25%)</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-600">Exklusive moms (25%)</span>
                 <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">Exkl. moms</span>
               </div>
-              <div className="text-4xl font-bold text-gray-800 mb-1">
+              <div className="text-2xl sm:text-4xl font-bold text-gray-800 mb-1">
                 {Math.round(stats.totalIncomeWithoutVAT).toLocaleString()} SEK
               </div>
               <div className="text-xs text-gray-500 mt-2">
@@ -3772,12 +3779,12 @@ const AdminPage: React.FC = () => {
             </div>
 
             {/* With VAT */}
-            <div className="bg-white rounded-lg p-5 border-2 border-green-300">
+            <div className="bg-white rounded-lg p-4 sm:p-5 border-2 border-green-300">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-600">Inklusive moms (25%)</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-600">Inklusive moms (25%)</span>
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Inkl. moms</span>
               </div>
-              <div className="text-4xl font-bold text-green-600 mb-1">
+              <div className="text-2xl sm:text-4xl font-bold text-green-600 mb-1">
                 {Math.round(stats.totalIncomeWithVAT).toLocaleString()} SEK
               </div>
               <div className="text-xs text-gray-500 mt-2">
@@ -3788,16 +3795,16 @@ const AdminPage: React.FC = () => {
 
           {/* Income by Location */}
           {(statisticsFilter.location === 'all' || statisticsFilter.location === 'malmo') && (
-            <div className={statisticsFilter.location === 'all' ? "grid grid-cols-2 gap-4 mb-6" : "mb-6"}>
-              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm text-gray-600 mb-1">Malmö</p>
-                <p className="text-2xl font-bold text-green-700">{Math.round(stats.malmoIncome).toLocaleString()} SEK</p>
+            <div className={statisticsFilter.location === 'all' ? "grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6" : "mb-4 sm:mb-6"}>
+              <div className="text-center p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-xs sm:text-sm text-gray-600 mb-1">Malmö</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-700">{Math.round(stats.malmoIncome).toLocaleString()} SEK</p>
                 <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
               </div>
               {statisticsFilter.location === 'all' && (
-                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                  <p className="text-sm text-gray-600 mb-1">Staffanstorp</p>
-                  <p className="text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
+                <div className="text-center p-3 sm:p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Staffanstorp</p>
+                  <p className="text-xl sm:text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
                   <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
                 </div>
               )}
@@ -3999,15 +4006,15 @@ const AdminPage: React.FC = () => {
     });
 
     return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <h2 className="text-xl font-bold text-gray-900">
+    <div className="space-y-3 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900">
           Hundar ({dogs.length}{filteredDogs.length !== dogs.length ? `, visar ${filteredDogs.length}` : ''})
         </h2>
         {(userRole === 'admin' || userRole === 'platschef') && (
           <button
             onClick={() => openDogModal()}
-            className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors"
+            className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
           >
             <FaPlus className="mr-2" /> Lägg till hund
           </button>
@@ -4016,7 +4023,7 @@ const AdminPage: React.FC = () => {
 
       {/* Search and Filters */}
       {dogs.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-4 space-y-4">
+        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 space-y-3 sm:space-y-4">
           {/* Search input */}
           <div>
             <input
@@ -4024,12 +4031,12 @@ const AdminPage: React.FC = () => {
               placeholder="Sök på namn, ägare, ras eller telefon..."
               value={dogsTabSearch}
               onChange={(e) => setDogsTabSearch(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
             />
           </div>
 
           {/* Filter controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-gray-200">
             {/* Location Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -4122,9 +4129,9 @@ const AdminPage: React.FC = () => {
           <p className="text-sm text-gray-400">Försök med en annan sökterm</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filteredDogs.map((dog) => (
-            <div key={dog.id} className="bg-white rounded-lg shadow-lg p-4 border-l-4 border-primary">
+            <div key={dog.id} className="bg-white rounded-lg shadow-lg p-3 sm:p-4 border-l-4 border-primary">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <div className={`px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800 inline-block`}>
@@ -4262,17 +4269,17 @@ const AdminPage: React.FC = () => {
     };
 
     return (
-      <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Box-inställningar</h2>
+      <div className="space-y-3 sm:space-y-6">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Box-inställningar</h2>
           
           {/* Location Selector */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Välj plats</label>
-            <div className="flex gap-4">
+            <div className="flex gap-2 sm:gap-4">
               <button
                 onClick={() => setSettingsLocation('staffanstorp')}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${
                   settingsLocation === 'staffanstorp'
                     ? 'bg-green-500 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -4282,7 +4289,7 @@ const AdminPage: React.FC = () => {
               </button>
               <button
                 onClick={() => setSettingsLocation('malmo')}
-                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${
                   settingsLocation === 'malmo'
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -4294,17 +4301,17 @@ const AdminPage: React.FC = () => {
           </div>
 
           {/* Cages Section */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">Burar</h3>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Burar</h3>
               <button
                 onClick={handleAddCage}
-                className="flex items-center bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                className="flex items-center justify-center bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-600 transition-colors text-sm sm:text-base w-full sm:w-auto"
               >
                 <FaPlus className="mr-2" /> Lägg till bur
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {currentSettings.cages.map((cage, index) => (
                 <div
                   key={index}
@@ -4372,16 +4379,16 @@ const AdminPage: React.FC = () => {
 
           {/* Free Areas Section */}
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">Fria ytor</h3>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Fria ytor</h3>
               <button
                 onClick={handleAddFreeArea}
-                className="flex items-center bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
+                className="flex items-center justify-center bg-green-500 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-green-600 transition-colors text-sm sm:text-base w-full sm:w-auto"
               >
                 <FaPlus className="mr-2" /> Lägg till fri yta
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {currentSettings.freeAreas.map((area, index) => (
                 <div
                   key={index}
@@ -4643,16 +4650,16 @@ const AdminPage: React.FC = () => {
     };
 
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <h2 className="text-xl font-bold text-gray-900">Ansökningar ({filteredApplications.length})</h2>
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Ansökningar ({filteredApplications.length})</h2>
           
           {/* Filters */}
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
             <select
               value={applicationsFilter}
               onChange={(e) => setApplicationsFilter(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+              className="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
             >
               <option value="all">Alla statusar</option>
               <option value="new">Nya</option>
@@ -4666,7 +4673,7 @@ const AdminPage: React.FC = () => {
             <select
               value={applicationsLocationFilter}
               onChange={(e) => setApplicationsLocationFilter(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+              className="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
             >
               <option value="all">Alla platser</option>
               <option value="malmo">Malmö</option>
@@ -4678,7 +4685,7 @@ const AdminPage: React.FC = () => {
         {/* Applications List */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           {filteredApplications.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-6 sm:p-8 text-center text-gray-500 text-sm sm:text-base">
               Inga ansökningar hittades
             </div>
           ) : (
@@ -4686,23 +4693,23 @@ const AdminPage: React.FC = () => {
               {filteredApplications.map((application) => (
                 <div
                   key={application.id}
-                  className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                  className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
                     selectedApplication?.id === application.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                   }`}
                   onClick={() => handleSelectApplication(application)}
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-2 sm:gap-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                           {application.dog_name}
                         </h3>
                         {getStatusBadge(application.status)}
-                        <span className="text-sm text-gray-500">
+                        <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
                           {application.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm text-gray-600">
                         <div>
                           <span className="font-medium">Ägare:</span> {application.owner_name}
                         </div>
@@ -4710,7 +4717,7 @@ const AdminPage: React.FC = () => {
                           <span className="font-medium">Telefon:</span> {application.owner_phone || 'Saknas'}
                         </div>
                         <div>
-                          <span className="font-medium">E-post:</span> {application.owner_email}
+                          <span className="font-medium">E-post:</span> <span className="truncate block">{application.owner_email}</span>
                         </div>
                         <div>
                           <span className="font-medium">Tjänst:</span> {application.service_type}
@@ -5061,13 +5068,13 @@ const AdminPage: React.FC = () => {
       });
 
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-900">Möten ({meetings.length})</h2>
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">Möten ({meetings.length})</h2>
           {userRole !== 'employee' && (
             <button
               onClick={() => handleOpenMeetingModal()}
-              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark flex items-center gap-2"
+              className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark text-sm sm:text-base w-full sm:w-auto"
             >
               <FaPlus /> Nytt möte
             </button>
@@ -5075,29 +5082,29 @@ const AdminPage: React.FC = () => {
         </div>
 
         {/* Upcoming Meetings */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             Kommande möten ({upcomingMeetings.length})
           </h3>
           {upcomingMeetings.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">Inga kommande möten</p>
+            <p className="text-gray-500 text-center py-6 sm:py-8 text-sm sm:text-base">Inga kommande möten</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {upcomingMeetings.map((meeting) => {
                 const meetingDate = new Date(meeting.date + 'T' + meeting.time);
                 return (
                   <div
                     key={meeting.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h4 className="font-semibold text-gray-900">{meeting.name}</h4>
-                        <span className="text-sm text-gray-500">
+                    <div className="flex-1 min-w-0 w-full sm:w-auto">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                        <h4 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{meeting.name}</h4>
+                        <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
                           {meeting.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 space-y-1">
+                      <div className="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
                         {meeting.dogName && (
                           <div><span className="font-medium">Hund:</span> {meeting.dogName}</div>
                         )}
@@ -5105,7 +5112,7 @@ const AdminPage: React.FC = () => {
                           <div><span className="font-medium">Telefon:</span> {meeting.phone}</div>
                         )}
                         {meeting.email && (
-                          <div><span className="font-medium">E-post:</span> {meeting.email}</div>
+                          <div><span className="font-medium">E-post:</span> <span className="truncate block">{meeting.email}</span></div>
                         )}
                         <div className="font-medium text-primary">
                           {meetingDate.toLocaleDateString('sv-SE')} kl. {formatTime(meeting.time)}
@@ -5113,18 +5120,18 @@ const AdminPage: React.FC = () => {
                       </div>
                     </div>
                     {userRole !== 'employee' && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 w-full sm:w-auto">
                         <button
                           onClick={() => handleOpenMeetingModal(meeting)}
-                          className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-1"
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm"
                         >
-                          <FaEdit /> Redigera
+                          <FaEdit /> <span className="hidden sm:inline">Redigera</span><span className="sm:hidden">Red</span>
                         </button>
                         <button
                           onClick={() => handleDeleteMeeting(meeting.id)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-1"
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm"
                         >
-                          <FaTrash /> Ta bort
+                          <FaTrash /> <span className="hidden sm:inline">Ta bort</span><span className="sm:hidden">Ta bort</span>
                         </button>
                       </div>
                     )}
@@ -5136,29 +5143,29 @@ const AdminPage: React.FC = () => {
         </div>
 
         {/* Past Meetings */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             Tidigare möten ({pastMeetings.length})
           </h3>
           {pastMeetings.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">Inga tidigare möten</p>
+            <p className="text-gray-500 text-center py-6 sm:py-8 text-sm sm:text-base">Inga tidigare möten</p>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-2 sm:space-y-3 max-h-96 overflow-y-auto">
               {pastMeetings.map((meeting) => {
                 const meetingDate = new Date(meeting.date + 'T' + meeting.time);
                 return (
                   <div
                     key={meeting.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 opacity-75"
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200 opacity-75"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h4 className="font-semibold text-gray-700">{meeting.name}</h4>
-                        <span className="text-sm text-gray-500">
+                    <div className="flex-1 min-w-0 w-full sm:w-auto">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                        <h4 className="font-semibold text-sm sm:text-base text-gray-700 truncate">{meeting.name}</h4>
+                        <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
                           {meeting.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 space-y-1">
+                      <div className="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
                         {meeting.dogName && (
                           <div><span className="font-medium">Hund:</span> {meeting.dogName}</div>
                         )}
@@ -5168,18 +5175,18 @@ const AdminPage: React.FC = () => {
                       </div>
                     </div>
                     {userRole !== 'employee' && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 w-full sm:w-auto">
                         <button
                           onClick={() => handleOpenMeetingModal(meeting)}
-                          className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center gap-1"
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm"
                         >
-                          <FaEdit /> Redigera
+                          <FaEdit /> <span className="hidden sm:inline">Redigera</span><span className="sm:hidden">Red</span>
                         </button>
                         <button
                           onClick={() => handleDeleteMeeting(meeting.id)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-1"
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm"
                         >
-                          <FaTrash /> Ta bort
+                          <FaTrash /> <span className="hidden sm:inline">Ta bort</span><span className="sm:hidden">Ta bort</span>
                         </button>
                       </div>
                     )}
@@ -5192,10 +5199,10 @@ const AdminPage: React.FC = () => {
 
         {/* Meeting Modal */}
         {isMeetingModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
                   {editingMeeting ? 'Redigera möte' : 'Nytt möte'}
                 </h3>
                 <button
@@ -5205,11 +5212,11 @@ const AdminPage: React.FC = () => {
                   }}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <FaTimes className="text-xl" />
+                  <FaTimes className="text-lg sm:text-xl" />
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Namn * <span className="text-red-500">(obligatoriskt)</span>
@@ -5218,7 +5225,7 @@ const AdminPage: React.FC = () => {
                     type="text"
                     value={meetingForm.name}
                     onChange={(e) => setMeetingForm({ ...meetingForm, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -5231,7 +5238,7 @@ const AdminPage: React.FC = () => {
                     type="text"
                     value={meetingForm.dogName}
                     onChange={(e) => setMeetingForm({ ...meetingForm, dogName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                   />
                 </div>
 
@@ -5243,7 +5250,7 @@ const AdminPage: React.FC = () => {
                     type="tel"
                     value={meetingForm.phone}
                     onChange={(e) => setMeetingForm({ ...meetingForm, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                   />
                 </div>
 
@@ -5255,7 +5262,7 @@ const AdminPage: React.FC = () => {
                     type="email"
                     value={meetingForm.email}
                     onChange={(e) => setMeetingForm({ ...meetingForm, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                   />
                 </div>
 
@@ -5267,7 +5274,7 @@ const AdminPage: React.FC = () => {
                     type="date"
                     value={meetingForm.date}
                     onChange={(e) => setMeetingForm({ ...meetingForm, date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -5280,7 +5287,7 @@ const AdminPage: React.FC = () => {
                     type="time"
                     value={meetingForm.time}
                     onChange={(e) => setMeetingForm({ ...meetingForm, time: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     required
                   />
                 </div>
@@ -5292,7 +5299,7 @@ const AdminPage: React.FC = () => {
                   <select
                     value={meetingForm.location}
                     onChange={(e) => setMeetingForm({ ...meetingForm, location: e.target.value as 'malmo' | 'staffanstorp' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                   >
                     <option value="malmo">Malmö</option>
                     <option value="staffanstorp">Staffanstorp</option>
@@ -5300,19 +5307,19 @@ const AdminPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
                 <button
                   onClick={() => {
                     setIsMeetingModalOpen(false);
                     setEditingMeeting(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                  className="w-full sm:w-auto px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm sm:text-base"
                 >
                   Avbryt
                 </button>
                 <button
                   onClick={handleSaveMeeting}
-                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                  className="w-full sm:w-auto px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark text-sm sm:text-base"
                 >
                   {editingMeeting ? 'Spara ändringar' : 'Skapa möte'}
                 </button>
@@ -5365,18 +5372,18 @@ const AdminPage: React.FC = () => {
   };
 
   const renderContractForm = () => (
-    <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <form className="space-y-4 sm:space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <h2 className="text-xl font-semibold mb-4 border-b pb-2">Contract Type</h2>
-                <div className="mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Contract Type</h2>
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="contractType" className="block text-sm font-medium text-gray-700 mb-1">Contract Type</label>
                   <select
                     id="contractType"
                     name="contractType"
                     value={contractData.contractType}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                   >
                     <option value="daycare">Hunddagis (Full-time)</option>
                     <option value="partTime">Hunddagis (Part-time)</option>
@@ -5387,7 +5394,7 @@ const AdminPage: React.FC = () => {
                 </div>
                 
                 {contractData.contractType === 'partTime' && (
-                  <div className="mb-4">
+                  <div className="mb-3 sm:mb-4">
                     <label htmlFor="daysPerWeek" className="block text-sm font-medium text-gray-700 mb-1">Days Per Week</label>
                     <input
                       type="text"
@@ -5395,13 +5402,13 @@ const AdminPage: React.FC = () => {
                       name="daysPerWeek"
                       value={contractData.daysPerWeek}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                       placeholder="e.g., 2-3"
                     />
                   </div>
                 )}
                 
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Price (SEK)</label>
                   <input
                     type="text"
@@ -5409,13 +5416,13 @@ const AdminPage: React.FC = () => {
                     name="price"
                     value={contractData.price}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., 2500"
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <div className="mb-3 sm:mb-4">
                     <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
                     <input
                       type="date"
@@ -5423,11 +5430,11 @@ const AdminPage: React.FC = () => {
                       name="startDate"
                       value={contractData.startDate}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     />
                   </div>
                   
-                  <div className="mb-4">
+                  <div className="mb-3 sm:mb-4">
                     <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
                     <input
                       type="date"
@@ -5435,15 +5442,15 @@ const AdminPage: React.FC = () => {
                       name="endDate"
                       value={contractData.endDate}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     />
                   </div>
                 </div>
               </div>
               
               <div>
-                <h2 className="text-xl font-semibold mb-4 border-b pb-2">Owner Information</h2>
-                <div className="mb-4">
+                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Owner Information</h2>
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
                   <input
                     type="text"
@@ -5451,12 +5458,12 @@ const AdminPage: React.FC = () => {
                     name="customerName"
                     value={contractData.customerName}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., Tina Eriksson"
                   />
                 </div>
                 
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                   <input
                     type="text"
@@ -5464,12 +5471,12 @@ const AdminPage: React.FC = () => {
                     name="customerAddress"
                     value={contractData.customerAddress}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., Storabackegatan 15d"
                   />
                 </div>
                 
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="customerCity" className="block text-sm font-medium text-gray-700 mb-1">City</label>
                   <input
                     type="text"
@@ -5477,12 +5484,12 @@ const AdminPage: React.FC = () => {
                     name="customerCity"
                     value={contractData.customerCity}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., Malmö"
                   />
                 </div>
                 
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="personalNumber" className="block text-sm font-medium text-gray-700 mb-1">Personal Number</label>
                   <input
                     type="text"
@@ -5490,7 +5497,7 @@ const AdminPage: React.FC = () => {
                     name="personalNumber"
                     value={contractData.personalNumber}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., 19711216-3907"
                   />
                 </div>
@@ -5498,7 +5505,7 @@ const AdminPage: React.FC = () => {
             </div>
             
             <div>
-              <h2 className="text-xl font-semibold mb-4 border-b pb-2">Hundinformation</h2>
+              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Hundinformation</h2>
               
               {/* Dog Selection - Searchable Dropdown */}
               <div className="mb-4 relative contract-dog-dropdown">
@@ -5592,8 +5599,8 @@ const AdminPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="dogName" className="block text-sm font-medium text-gray-700 mb-1">Hundens namn</label>
                   <input
                     type="text"
@@ -5601,12 +5608,12 @@ const AdminPage: React.FC = () => {
                     name="dogName"
                     value={contractData.dogName}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., Morris"
                   />
                 </div>
                 
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="dogBreed" className="block text-sm font-medium text-gray-700 mb-1">Dog Breed</label>
                   <input
                     type="text"
@@ -5614,12 +5621,12 @@ const AdminPage: React.FC = () => {
                     name="dogBreed"
                     value={contractData.dogBreed}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., Labradoodle"
                   />
                 </div>
                 
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="dogAge" className="block text-sm font-medium text-gray-700 mb-1">Dog Age (years)</label>
                   <input
                     type="text"
@@ -5627,12 +5634,12 @@ const AdminPage: React.FC = () => {
                     name="dogAge"
                     value={contractData.dogAge}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., 10"
                   />
                 </div>
                 
-                <div className="mb-4">
+                <div className="mb-3 sm:mb-4">
                   <label htmlFor="chipNumber" className="block text-sm font-medium text-gray-700 mb-1">Microchip/Tattoo Number</label>
                   <input
                     type="text"
@@ -5640,18 +5647,18 @@ const AdminPage: React.FC = () => {
                     name="chipNumber"
                     value={contractData.chipNumber}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
                     placeholder="e.g., 941000016851106"
                   />
                 </div>
               </div>
             </div>
             
-            <div className="flex justify-center mt-8">
+            <div className="flex justify-center mt-6 sm:mt-8">
               <button
                 type="button"
                 onClick={generatePDF}
-                className="flex items-center bg-primary text-white py-3 px-6 rounded-md hover:bg-primary-dark transition-colors text-lg"
+                className="flex items-center justify-center bg-primary text-white py-2 sm:py-3 px-4 sm:px-6 rounded-md hover:bg-primary-dark transition-colors text-base sm:text-lg w-full sm:w-auto"
               >
                 <FaFilePdf className="mr-2" /> Generera kontrakt PDF
               </button>
@@ -5671,8 +5678,8 @@ const AdminPage: React.FC = () => {
   const todaysMeetings = getTodaysMeetings();
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-100 p-2 sm:p-4 lg:p-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         {/* Today's Meetings Banner - Only for admin and platschef */}
         {(userRole === 'admin' || userRole === 'platschef') && todaysMeetings.length > 0 && (
           <div className="bg-orange-100 border-2 border-orange-400 rounded-lg p-4 mb-4 shadow-md">
@@ -5707,18 +5714,27 @@ const AdminPage: React.FC = () => {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                aria-label="Toggle menu"
+              >
+                <FaBars className="text-xl" />
+              </button>
+              
               {currentView !== 'dashboard' && (
                 <button
                   onClick={() => setCurrentView('dashboard')}
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-gray-600 hover:text-gray-900 text-sm sm:text-base"
                 >
                   ← Tillbaka
                 </button>
               )}
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate flex-1 sm:flex-none">
                 {currentView === 'dashboard' ? 'CleverDog Admin' : 
                  currentView === 'dogs' ? 'Hundar' :
                  currentView === 'contracts' ? 'Kontrakt' :
@@ -5734,8 +5750,8 @@ const AdminPage: React.FC = () => {
                  currentView === 'meetings' ? 'Möten' :
                  'Dashboard'}
               </h1>
-              <div className="ml-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              <div className="ml-auto sm:ml-4">
+                <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${
                   userRole === 'admin' 
                     ? 'bg-blue-100 text-blue-800' 
                     : userRole === 'platschef'
@@ -5745,46 +5761,172 @@ const AdminPage: React.FC = () => {
                   {userRole === 'admin' ? 'Admin' : userRole === 'platschef' ? 'Platschef' : 'Anställd'}
                 </span>
               </div>
-        </div>
+            </div>
             <button
               onClick={handleLogout}
-              className="flex items-center bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 transition-colors"
+              className="flex items-center justify-center bg-red-500 text-white py-2 px-3 sm:px-4 rounded-md hover:bg-red-600 transition-colors text-sm sm:text-base w-full sm:w-auto"
             >
-              <FaSignOutAlt className="mr-2" /> Logout
+              <FaSignOutAlt className="mr-2" /> <span className="hidden sm:inline">Logout</span><span className="sm:hidden">Logga ut</span>
             </button>
-      </div>
+          </div>
           
-          {renderContent()}
+          {/* Mobile Navigation Menu */}
+          {isMobileMenuOpen && (
+            <div className="lg:hidden border-t border-gray-200 pt-4 mt-4">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    setCurrentView('dogs');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`p-3 text-left rounded-lg transition-colors ${
+                    currentView === 'dogs' ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-semibold">Hundar</div>
+                  <div className="text-xs text-gray-600">{dogs.length} registrerade</div>
+                </button>
+                {userRole === 'admin' && (
+                  <button
+                    onClick={() => {
+                      setCurrentView('contracts');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`p-3 text-left rounded-lg transition-colors ${
+                      currentView === 'contracts' ? 'bg-green-100 text-green-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="font-semibold">Kontrakt</div>
+                    <div className="text-xs text-gray-600">PDF-generator</div>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setCurrentView('planning-malmo');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`p-3 text-left rounded-lg transition-colors ${
+                    currentView === 'planning-malmo' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-semibold">Planering Malmö</div>
+                  <div className="text-xs text-gray-600">Drag & drop</div>
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentView('planning-staffanstorp');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`p-3 text-left rounded-lg transition-colors ${
+                    currentView === 'planning-staffanstorp' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-semibold">Planering Staffanstorp</div>
+                  <div className="text-xs text-gray-600">Drag & drop</div>
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentView('boarding-malmo');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`p-3 text-left rounded-lg transition-colors ${
+                    currentView === 'boarding-malmo' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-semibold">Pensionat Malmö</div>
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentView('boarding-staffanstorp');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`p-3 text-left rounded-lg transition-colors ${
+                    currentView === 'boarding-staffanstorp' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-semibold">Pensionat Staffanstorp</div>
+                </button>
+                {userRole === 'admin' && (
+                  <button
+                    onClick={() => {
+                      setCurrentView('statistics');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`p-3 text-left rounded-lg transition-colors ${
+                      currentView === 'statistics' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="font-semibold">Statistik</div>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setCurrentView('applications');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`p-3 text-left rounded-lg transition-colors ${
+                    currentView === 'applications' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-semibold">Ansökningar</div>
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentView('meetings');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`p-3 text-left rounded-lg transition-colors ${
+                    currentView === 'meetings' ? 'bg-pink-100 text-pink-800' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-semibold">Möten</div>
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentView('settings');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`p-3 text-left rounded-lg transition-colors ${
+                    currentView === 'settings' ? 'bg-gray-100 text-gray-800' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="font-semibold">Inställningar</div>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+          
+        {renderContent()}
       </div>
 
       {/* Boarding Modal - Global, should appear in all views */}
       {isBoardingModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">{editingBoardingRecord ? 'Redigera hundpensionat' : 'Lägg till hundpensionat'}</h3>
+          <div className="bg-white rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-bold">{editingBoardingRecord ? 'Redigera hundpensionat' : 'Lägg till hundpensionat'}</h3>
               <button
                 onClick={() => {
                   setIsBoardingModalOpen(false);
                   setBoardingDogSearch(''); // Clear search when closing
                   setIsBoardingDogDropdownOpen(false); // Close dropdown when closing modal
                 }}
-                className="text-gray-500 hover:text-gray-900"
+                className="text-gray-500 hover:text-gray-900 text-lg sm:text-xl"
               >
                 ✕
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div className="md:col-span-2 relative boarding-dog-dropdown">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Välj hund *</label>
                 <div className="relative">
                   <div
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary focus-within:border-primary cursor-pointer bg-white flex items-center justify-between"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary focus-within:border-primary cursor-pointer bg-white flex items-center justify-between text-sm sm:text-base"
                     onClick={() => setIsBoardingDogDropdownOpen(!isBoardingDogDropdownOpen)}
                   >
-                    <span className={selectedDogForBoarding ? "text-gray-900" : "text-gray-500"}>
+                    <span className={`truncate ${selectedDogForBoarding ? "text-gray-900" : "text-gray-500"}`}>
                       {selectedDogForBoarding ? (
                         `${dogs.find(d => d.id === selectedDogForBoarding)?.name} - ${dogs.find(d => d.id === selectedDogForBoarding)?.owner}`
                       ) : (
@@ -5792,7 +5934,7 @@ const AdminPage: React.FC = () => {
                       )}
                     </span>
                     <svg 
-                      className={`w-5 h-5 text-gray-400 transition-transform ${isBoardingDogDropdownOpen ? 'transform rotate-180' : ''}`}
+                      className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ml-2 ${isBoardingDogDropdownOpen ? 'transform rotate-180' : ''}`}
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -5809,7 +5951,7 @@ const AdminPage: React.FC = () => {
                           value={boardingDogSearch}
                           onChange={(e) => setBoardingDogSearch(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
                           autoFocus
                         />
                       </div>
@@ -5832,9 +5974,7 @@ const AdminPage: React.FC = () => {
                                 setIsBoardingDogDropdownOpen(false);
                                 setBoardingDogSearch('');
                               }}
-                              className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                                selectedDogForBoarding === dog.id ? 'bg-blue-50' : ''
-                              }`}
+                              className={`px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm sm:text-base ${selectedDogForBoarding === dog.id ? 'bg-blue-50' : ''}`}
                             >
                               {dog.name} - {dog.owner}
                             </div>
@@ -5846,7 +5986,7 @@ const AdminPage: React.FC = () => {
                             dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
                           return matchesLocation && matchesActive && matchesSearch;
                         }).length === 0 && (
-                          <div className="px-3 py-2 text-sm text-gray-500">
+                          <div className="px-3 py-2 text-xs sm:text-sm text-gray-500">
                             Inga hundar matchar sökningen
                           </div>
                         )}
@@ -5861,7 +6001,7 @@ const AdminPage: React.FC = () => {
                   type="date"
                   value={boardingForm.startDate}
                   onChange={(e) => setBoardingForm({ ...boardingForm, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm sm:text-base"
                 />
               </div>
               <div>
@@ -5870,15 +6010,15 @@ const AdminPage: React.FC = () => {
                   type="date"
                   value={boardingForm.endDate}
                   onChange={(e) => setBoardingForm({ ...boardingForm, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm sm:text-base"
                 />
               </div>
             </div>
             
             {/* Expected Cost Calculation */}
             {boardingForm.startDate && boardingForm.endDate && (window as any).currentBoardingLocation && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                <h4 className="text-sm font-semibold text-gray-800 mb-2">Förväntad kostnad</h4>
+              <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <h4 className="text-xs sm:text-sm font-semibold text-gray-800 mb-2">Förväntad kostnad</h4>
                 {(() => {
                   const location = (window as any).currentBoardingLocation as 'malmo' | 'staffanstorp';
                   const cost = calculateBoardingCost(
@@ -5889,7 +6029,7 @@ const AdminPage: React.FC = () => {
                   const prices = PRICES[location];
                   
                   return (
-                    <div className="space-y-1 text-sm">
+                    <div className="space-y-1 text-xs sm:text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Vanliga dagar ({cost.regularDays} dagar):</span>
                         <span className="font-medium">{cost.regularDays} × {prices.boarding} kr = {cost.regularCost.toLocaleString('sv-SE')} kr</span>
@@ -5902,7 +6042,7 @@ const AdminPage: React.FC = () => {
                       )}
                       <div className="flex justify-between pt-2 border-t border-blue-200">
                         <span className="font-semibold text-gray-800">Totalt:</span>
-                        <span className="font-bold text-lg text-blue-600">{cost.total.toLocaleString('sv-SE')} kr</span>
+                        <span className="font-bold text-base sm:text-lg text-blue-600">{cost.total.toLocaleString('sv-SE')} kr</span>
                       </div>
                     </div>
                   );
@@ -5910,31 +6050,31 @@ const AdminPage: React.FC = () => {
               </div>
             )}
             
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
               <textarea
                 value={boardingForm.notes}
                 onChange={(e) => setBoardingForm({ ...boardingForm, notes: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm sm:text-base"
                 rows={3}
                 placeholder="Extra information om pensionatet..."
               />
             </div>
             
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2 mt-4 sm:mt-6">
               <button
                 onClick={() => {
                   setIsBoardingModalOpen(false);
                   setBoardingDogSearch('');
                   setIsBoardingDogDropdownOpen(false);
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm sm:text-base"
               >
                 Avbryt
               </button>
               <button
                 onClick={() => saveBoardingRecord((window as any).currentBoardingLocation)}
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                className="w-full sm:w-auto px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark text-sm sm:text-base"
               >
                 {editingBoardingRecord ? 'Uppdatera' : 'Spara'}
               </button>
@@ -5947,28 +6087,28 @@ const AdminPage: React.FC = () => {
       {isDogModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h3 className="text-xl font-bold">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+              <h3 className="text-lg sm:text-xl font-bold">
                 {(userRole === 'employee') ? 'Visa hundinformation' : (editingDog ? 'Redigera hund' : 'Lägg till hund')}
               </h3>
               <button
                 onClick={() => setIsDogModalOpen(false)}
-                className="text-gray-500 hover:text-gray-900"
+                className="text-gray-500 hover:text-gray-900 text-lg sm:text-xl"
               >
                 ✕
               </button>
             </div>
             
-            <div className="overflow-y-auto flex-1 p-6">
+            <div className="overflow-y-auto flex-1 p-4 sm:p-6">
               {userRole === 'employee' && (
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <p className="text-sm text-yellow-800">
+                  <p className="text-xs sm:text-sm text-yellow-800">
                     Du har endast läsbehörighet. Du kan inte redigera eller lägga till hundar.
                   </p>
                 </div>
               )}
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hundens namn *</label>
                 <input
