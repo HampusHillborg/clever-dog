@@ -874,6 +874,106 @@ const AdminPage: React.FC = () => {
     return time; // Already in HH:mm format
   };
 
+  // Calculate Easter date (using algorithm for Gregorian calendar)
+  const getEasterDate = (year: number): Date => {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+  };
+
+  // Check if a date is a Swedish red day (helgdag)
+  const isSwedishRedDay = (date: Date): boolean => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    const dayOfWeek = date.getDay();
+
+    // Fixed red days
+    if (month === 0 && day === 1) return true; // Nyårsdagen (New Year's Day)
+    if (month === 0 && day === 6) return true; // Trettondedag jul (Epiphany)
+    if (month === 4 && day === 1) return true; // Första maj (Labour Day)
+    if (month === 5 && day === 6) return true; // Nationaldagen (National Day)
+    if (month === 11 && day === 25) return true; // Juldagen (Christmas Day)
+    if (month === 11 && day === 26) return true; // Annandag jul (Boxing Day)
+
+    // Calculate Easter
+    const easter = getEasterDate(year);
+    const easterTime = easter.getTime();
+    const dateTime = date.getTime();
+    const daysDiff = Math.floor((dateTime - easterTime) / (1000 * 60 * 60 * 24));
+
+    // Easter-related red days
+    if (daysDiff === 0) return true; // Påskdagen (Easter Sunday)
+    if (daysDiff === 1) return true; // Annandag påsk (Easter Monday)
+    if (daysDiff === 39) return true; // Kristi himmelsfärdsdag (Ascension Day)
+    if (daysDiff === 49) return true; // Pingstdagen (Whit Sunday)
+    if (daysDiff === 50) return true; // Annandag pingst (Whit Monday)
+
+    // Midsummer (Saturday between June 20-26)
+    if (month === 5) { // June
+      const midsummerDate = new Date(year, 5, 20); // June 20
+      const midsummerDay = midsummerDate.getDay();
+      const daysToSaturday = (6 - midsummerDay + 7) % 7;
+      const midsummerSaturday = 20 + daysToSaturday;
+      if (day === midsummerSaturday) return true;
+    }
+
+    // All Saints' Day (Saturday between October 31 - November 6)
+    if (month === 10) { // November
+      const allSaintsDate = new Date(year, 10, 1); // November 1
+      const allSaintsDay = allSaintsDate.getDay();
+      const daysToSaturday = (6 - allSaintsDay + 7) % 7;
+      const allSaintsSaturday = 1 + daysToSaturday;
+      if (day === allSaintsSaturday) return true;
+    }
+
+    return false;
+  };
+
+  // Calculate expected boarding cost with red days
+  const calculateBoardingCost = (startDate: string, endDate: string, location: 'malmo' | 'staffanstorp'): { total: number; regularDays: number; redDays: number; regularCost: number; redDaysCost: number } => {
+    if (!startDate || !endDate) {
+      return { total: 0, regularDays: 0, redDays: 0, regularCost: 0, redDaysCost: 0 };
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const prices = PRICES[location];
+
+    let regularDays = 0;
+    let redDays = 0;
+
+    // Iterate through each day in the range (inclusive)
+    const currentDate = new Date(start);
+    while (currentDate <= end) {
+      if (isSwedishRedDay(currentDate)) {
+        redDays++;
+      } else {
+        regularDays++;
+      }
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    const regularCost = regularDays * prices.boarding;
+    const redDaysCost = redDays * prices.boardingHoliday;
+    const total = regularCost + redDaysCost;
+
+    return { total, regularDays, redDays, regularCost, redDaysCost };
+  };
+
 
   // Auto-archive records whenever boardingRecords changes
   useEffect(() => {
@@ -5731,6 +5831,42 @@ const AdminPage: React.FC = () => {
                 />
               </div>
             </div>
+            
+            {/* Expected Cost Calculation */}
+            {boardingForm.startDate && boardingForm.endDate && (window as any).currentBoardingLocation && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <h4 className="text-sm font-semibold text-gray-800 mb-2">Förväntad kostnad</h4>
+                {(() => {
+                  const location = (window as any).currentBoardingLocation as 'malmo' | 'staffanstorp';
+                  const cost = calculateBoardingCost(
+                    boardingForm.startDate,
+                    boardingForm.endDate,
+                    location
+                  );
+                  const prices = PRICES[location];
+                  
+                  return (
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Vanliga dagar ({cost.regularDays} dagar):</span>
+                        <span className="font-medium">{cost.regularDays} × {prices.boarding} kr = {cost.regularCost.toLocaleString('sv-SE')} kr</span>
+                      </div>
+                      {cost.redDays > 0 && (
+                        <div className="flex justify-between text-red-600">
+                          <span>Röda dagar ({cost.redDays} dagar):</span>
+                          <span className="font-medium">{cost.redDays} × {prices.boardingHoliday} kr = {cost.redDaysCost.toLocaleString('sv-SE')} kr</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-2 border-t border-blue-200">
+                        <span className="font-semibold text-gray-800">Totalt:</span>
+                        <span className="font-bold text-lg text-blue-600">{cost.total.toLocaleString('sv-SE')} kr</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+            
             <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
               <textarea
