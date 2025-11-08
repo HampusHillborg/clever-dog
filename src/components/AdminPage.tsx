@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars } from 'react-icons/fa';
+import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars, FaClock } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
 import { 
   getDogs as fetchDogs, 
@@ -140,7 +140,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences';
 
 type UserRole = 'admin' | 'employee' | 'platschef';
 
@@ -277,6 +277,32 @@ const AdminPage: React.FC = () => {
     loadEmployees();
   }, []);
 
+  // Load staff schedules and absences
+  useEffect(() => {
+    const loadStaffData = async () => {
+      try {
+        if (userRole === 'employee' && currentUser?.id) {
+          // Employees see only their own data
+          const schedules = await getStaffSchedules(currentUser.id);
+          const absences = await getStaffAbsences(currentUser.id);
+          setStaffSchedules(schedules);
+          setStaffAbsences(absences);
+        } else if (userRole === 'admin' || userRole === 'platschef') {
+          // Admin/platschef see all data
+          const schedules = await getStaffSchedules();
+          const absences = await getStaffAbsences();
+          setStaffSchedules(schedules);
+          setStaffAbsences(absences);
+        }
+      } catch (error) {
+        console.error('Error loading staff data:', error);
+      }
+    };
+    if (isLoggedIn && currentUser) {
+      loadStaffData();
+    }
+  }, [isLoggedIn, currentUser, userRole]);
+
   // Save box settings to database and state
   const saveBoxSettings = async (settings: BoxSettings) => {
     setBoxSettings(settings);
@@ -313,6 +339,33 @@ const AdminPage: React.FC = () => {
   });
   const [employeeError, setEmployeeError] = useState('');
   const [isSavingEmployee, setIsSavingEmployee] = useState(false);
+
+  // Staff scheduling state
+  const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
+  const [staffAbsences, setStaffAbsences] = useState<StaffAbsence[]>([]);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<StaffSchedule | null>(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    employee_id: '',
+    date: '',
+    start_time: '',
+    end_time: '',
+    location: '' as '' | 'malmo' | 'staffanstorp',
+    notes: '',
+  });
+  const [absenceForm, setAbsenceForm] = useState({
+    start_date: '',
+    end_date: '',
+    type: 'sick' as 'sick' | 'vacation' | 'personal' | 'other',
+    reason: '',
+  });
+  const [scheduleError, setScheduleError] = useState('');
+  const [absenceError, setAbsenceError] = useState('');
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+  const [isSavingAbsence, setIsSavingAbsence] = useState(false);
+  const [scheduleViewDate, setScheduleViewDate] = useState(new Date().toISOString().split('T')[0]);
+  const [hoursViewMonth, setHoursViewMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM format
 
   // Initialize currentPlanningDate to today when entering planning view (but not if coming from calendar)
   useEffect(() => {
@@ -581,6 +634,172 @@ const AdminPage: React.FC = () => {
       setCurrentUser(null);
       setEmail('');
       setPassword('');
+    }
+  };
+
+  // Staff scheduling functions
+  const openScheduleModal = (schedule?: StaffSchedule, employeeId?: string, date?: string) => {
+    if (schedule) {
+      setEditingSchedule(schedule);
+      setScheduleForm({
+        employee_id: schedule.employee_id,
+        date: schedule.date,
+        start_time: schedule.start_time || '',
+        end_time: schedule.end_time || '',
+        location: schedule.location,
+        notes: schedule.notes || '',
+      });
+    } else {
+      setEditingSchedule(null);
+      setScheduleForm({
+        employee_id: employeeId || '',
+        date: date || scheduleViewDate,
+        start_time: '',
+        end_time: '',
+        location: '' as '' | 'malmo' | 'staffanstorp',
+        notes: '',
+      });
+    }
+    setScheduleError('');
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleSaveSchedule = async () => {
+    setScheduleError('');
+    setIsSavingSchedule(true);
+
+    if (!scheduleForm.employee_id || !scheduleForm.date || !scheduleForm.start_time || !scheduleForm.end_time || !scheduleForm.location) {
+      setScheduleError('Alla fält måste fyllas i');
+      setIsSavingSchedule(false);
+      return;
+    }
+
+    try {
+      const scheduleData: Omit<StaffSchedule, 'created_at' | 'updated_at'> = {
+        id: editingSchedule?.id || '',
+        employee_id: scheduleForm.employee_id,
+        date: scheduleForm.date,
+        start_time: scheduleForm.start_time,
+        end_time: scheduleForm.end_time,
+        location: scheduleForm.location,
+        notes: scheduleForm.notes || undefined,
+      };
+
+      const savedSchedule = await saveStaffSchedule(scheduleData);
+      
+      setStaffSchedules(prev => {
+        const existing = prev.find(s => s.id === savedSchedule.id);
+        if (existing) {
+          return prev.map(s => s.id === savedSchedule.id ? savedSchedule : s);
+        }
+        return [...prev, savedSchedule];
+      });
+
+      setIsScheduleModalOpen(false);
+      setScheduleForm({
+        employee_id: '',
+        date: '',
+        start_time: '',
+        end_time: '',
+        location: '' as '' | 'malmo' | 'staffanstorp',
+        notes: '',
+      });
+      setIsSavingSchedule(false);
+    } catch (error: any) {
+      setScheduleError(error.message || 'Kunde inte spara schema');
+      setIsSavingSchedule(false);
+    }
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    if (!confirm('Är du säker på att du vill ta bort detta schema?')) return;
+    
+    try {
+      await deleteStaffSchedule(id);
+      setStaffSchedules(prev => prev.filter(s => s.id !== id));
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      alert('Kunde inte ta bort schema');
+    }
+  };
+
+  const openAbsenceModal = () => {
+    setAbsenceForm({
+      start_date: '',
+      end_date: '',
+      type: 'sick',
+      reason: '',
+    });
+    setAbsenceError('');
+    setIsAbsenceModalOpen(true);
+  };
+
+  const handleSaveAbsence = async () => {
+    setAbsenceError('');
+    setIsSavingAbsence(true);
+
+    if (!absenceForm.start_date || !absenceForm.end_date) {
+      setAbsenceError('Start- och slutdatum måste anges');
+      setIsSavingAbsence(false);
+      return;
+    }
+
+    if (!currentUser?.id) {
+      setAbsenceError('Du måste vara inloggad');
+      setIsSavingAbsence(false);
+      return;
+    }
+
+    try {
+      const absenceData: Omit<StaffAbsence, 'created_at' | 'updated_at' | 'reviewed_at' | 'reviewed_by'> = {
+        id: '',
+        employee_id: currentUser.id,
+        start_date: absenceForm.start_date,
+        end_date: absenceForm.end_date,
+        type: absenceForm.type,
+        reason: absenceForm.reason || undefined,
+        status: 'pending',
+      };
+
+      const savedAbsence = await saveStaffAbsence(absenceData);
+      
+      setStaffAbsences(prev => [...prev, savedAbsence]);
+
+      setIsAbsenceModalOpen(false);
+      setAbsenceForm({
+        start_date: '',
+        end_date: '',
+        type: 'sick',
+        reason: '',
+      });
+      setIsSavingAbsence(false);
+    } catch (error: any) {
+      setAbsenceError(error.message || 'Kunde inte spara frånvaro');
+      setIsSavingAbsence(false);
+    }
+  };
+
+  const handleApproveAbsence = async (id: string) => {
+    if (!currentUser?.id) return;
+    
+    try {
+      const updated = await updateAbsenceStatus(id, 'approved', currentUser.id);
+      setStaffAbsences(prev => prev.map(a => a.id === id ? updated : a));
+    } catch (error) {
+      console.error('Error approving absence:', error);
+      alert('Kunde inte godkänna frånvaro');
+    }
+  };
+
+  const handleRejectAbsence = async (id: string) => {
+    if (!currentUser?.id) return;
+    
+    try {
+      const updated = await updateAbsenceStatus(id, 'rejected', currentUser.id);
+      setStaffAbsences(prev => prev.map(a => a.id === id ? updated : a));
+    } catch (error) {
+      console.error('Error rejecting absence:', error);
+      alert('Kunde inte avvisa frånvaro');
     }
   };
 
@@ -2712,6 +2931,54 @@ const AdminPage: React.FC = () => {
                   </span>
                 </div>
               </div>
+
+              <div 
+                onClick={() => setCurrentView('staff-schedules')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-teal-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaCalendarAlt className="text-teal-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Personal Scheman</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Schemalägg anställda</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
+                    Schemaläggning
+                  </span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setCurrentView('staff-absences')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaInfoCircle className="text-yellow-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Frånvaro</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Godkänn frånvaroanmälningar</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                    {staffAbsences.filter(a => a.status === 'pending').length} väntande
+                  </span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setCurrentView('staff-hours')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaClock className="text-purple-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Arbetade Timmar</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Se arbetade timmar per månad</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                    Timmar
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -2768,6 +3035,54 @@ const AdminPage: React.FC = () => {
                 <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
                     Box-konfiguration
+                  </span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setCurrentView('staff-schedules')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-teal-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaCalendarAlt className="text-teal-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Personal Scheman</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Schemalägg anställda</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
+                    Schemaläggning
+                  </span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setCurrentView('staff-absences')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaInfoCircle className="text-yellow-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Frånvaro</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Godkänn frånvaroanmälningar</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                    {staffAbsences.filter(a => a.status === 'pending').length} väntande
+                  </span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => setCurrentView('staff-hours')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaClock className="text-purple-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Arbetade Timmar</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Se arbetade timmar per månad</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                    Timmar
                   </span>
                 </div>
               </div>
@@ -3432,112 +3747,6 @@ const AdminPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Employee Management Section - Only for admin and platschef */}
-        {(userRole === 'admin' || userRole === 'platschef') && (
-          <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Anställda</h2>
-              <button
-                onClick={() => openEmployeeModal()}
-                className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
-              >
-                <FaPlus className="mr-2" /> Lägg till anställd
-              </button>
-            </div>
-
-            {userRole === 'admin' && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <p className="text-sm text-blue-800">
-                  <FaInfoCircle className="inline mr-2" />
-                  Som admin kan du skapa nya inloggningskonton för anställda genom att ange ett lösenord när du skapar en ny anställd.
-                </p>
-              </div>
-            )}
-
-            {userRole === 'platschef' && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-sm text-yellow-800">
-                  <FaInfoCircle className="inline mr-2" />
-                  Som platschef kan du länka till befintliga konton genom att ange e-postadressen. Endast admin kan skapa nya konton.
-                </p>
-              </div>
-            )}
-
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Namn</th>
-                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">E-post</th>
-                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Telefon</th>
-                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Plats</th>
-                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Roll</th>
-                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Status</th>
-                    <th className="text-right py-2 px-3 text-sm font-semibold text-gray-700">Åtgärder</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {employees.map((employee) => (
-                    <tr key={employee.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-2 px-3 text-sm">{employee.name}</td>
-                      <td className="py-2 px-3 text-sm">{employee.email}</td>
-                      <td className="py-2 px-3 text-sm">{employee.phone || '-'}</td>
-                      <td className="py-2 px-3 text-sm">
-                        {employee.location === 'malmo' ? 'Malmö' : 
-                         employee.location === 'staffanstorp' ? 'Staffanstorp' : 
-                         employee.location === 'both' ? 'Båda' : '-'}
-                      </td>
-                      <td className="py-2 px-3 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          employee.role === 'platschef' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {employee.role === 'platschef' ? 'Platschef' : 'Anställd'}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          employee.is_active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {employee.is_active ? 'Aktiv' : 'Inaktiv'}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 text-sm text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => openEmployeeModal(employee)}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Redigera"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEmployee(employee.id)}
-                            className="text-red-600 hover:text-red-800"
-                            title="Ta bort"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {employees.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-gray-400 text-sm">
-                        Inga anställda registrerade
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
@@ -4745,6 +4954,112 @@ const AdminPage: React.FC = () => {
 
     return (
       <div className="space-y-3 sm:space-y-6">
+        {/* Employee Management Section - Only for admin and platschef - MOVED TO TOP */}
+        {(userRole === 'admin' || userRole === 'platschef') && (
+          <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Anställda</h2>
+              <button
+                onClick={() => openEmployeeModal()}
+                className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
+              >
+                <FaPlus className="mr-2" /> Lägg till anställd
+              </button>
+            </div>
+
+            {userRole === 'admin' && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <FaInfoCircle className="inline mr-2" />
+                  Som admin kan du skapa nya inloggningskonton för anställda genom att ange ett lösenord när du skapar en ny anställd.
+                </p>
+              </div>
+            )}
+
+            {userRole === 'platschef' && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <FaInfoCircle className="inline mr-2" />
+                  Som platschef kan du länka till befintliga konton genom att ange e-postadressen. Endast admin kan skapa nya konton.
+                </p>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Namn</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">E-post</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Telefon</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Plats</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Roll</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Status</th>
+                    <th className="text-right py-2 px-3 text-sm font-semibold text-gray-700">Åtgärder</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employees.map((employee) => (
+                    <tr key={employee.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-2 px-3 text-sm">{employee.name}</td>
+                      <td className="py-2 px-3 text-sm">{employee.email}</td>
+                      <td className="py-2 px-3 text-sm">{employee.phone || '-'}</td>
+                      <td className="py-2 px-3 text-sm">
+                        {employee.location === 'malmo' ? 'Malmö' : 
+                         employee.location === 'staffanstorp' ? 'Staffanstorp' : 
+                         employee.location === 'both' ? 'Båda' : '-'}
+                      </td>
+                      <td className="py-2 px-3 text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          employee.role === 'platschef' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {employee.role === 'platschef' ? 'Platschef' : 'Anställd'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          employee.is_active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {employee.is_active ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-sm text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => openEmployeeModal(employee)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Redigera"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEmployee(employee.id)}
+                            className="text-red-600 hover:text-red-800"
+                            title="Ta bort"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {employees.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-gray-400 text-sm">
+                        Inga anställda registrerade
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Box-inställningar</h2>
           
@@ -5445,6 +5760,651 @@ const AdminPage: React.FC = () => {
     );
   };
 
+  // Render staff schedules view (for admin/platschef)
+  const renderStaffSchedules = () => {
+    // Filter schedules by date range (current week)
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    
+    const startDateStr = startOfWeek.toISOString().split('T')[0];
+    const endDateStr = endOfWeek.toISOString().split('T')[0];
+    
+    const weekSchedules = staffSchedules.filter(s => s.date >= startDateStr && s.date <= endDateStr);
+    
+    // Group by date
+    const schedulesByDate: { [date: string]: StaffSchedule[] } = {};
+    weekSchedules.forEach(schedule => {
+      if (!schedulesByDate[schedule.date]) {
+        schedulesByDate[schedule.date] = [];
+      }
+      schedulesByDate[schedule.date].push(schedule);
+    });
+
+    return (
+      <div className="space-y-3 sm:space-y-6">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Personal Scheman</h2>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <input
+                type="date"
+                value={scheduleViewDate}
+                onChange={(e) => setScheduleViewDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+              <button
+                onClick={() => openScheduleModal(undefined, undefined, scheduleViewDate)}
+                className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
+              >
+                <FaPlus className="mr-2" /> Lägg till schema
+              </button>
+            </div>
+          </div>
+
+          {/* Week view */}
+          <div className="space-y-4">
+            {Object.keys(schedulesByDate).sort().map(date => {
+              const daySchedules = schedulesByDate[date];
+              const dateObj = new Date(date);
+              const dayName = dateObj.toLocaleDateString('sv-SE', { weekday: 'long' });
+              
+              return (
+                <div key={date} className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3">
+                    {dayName} {dateObj.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })}
+                  </h3>
+                  <div className="space-y-2">
+                    {daySchedules.map(schedule => {
+                      const employee = employees.find(e => e.id === schedule.employee_id);
+                      return (
+                        <div key={schedule.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                          <div className="flex-1">
+                            <div className="font-medium">{employee?.name || 'Okänd anställd'}</div>
+                            <div className="text-sm text-gray-600">
+                              {schedule.start_time} - {schedule.end_time} | {schedule.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                              {schedule.notes && ` | ${schedule.notes}`}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openScheduleModal(schedule)}
+                              className="text-blue-600 hover:text-blue-800"
+                              title="Redigera"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSchedule(schedule.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Ta bort"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            {Object.keys(schedulesByDate).length === 0 && (
+              <p className="text-center text-gray-400 py-8">Inga scheman för denna vecka</p>
+            )}
+          </div>
+        </div>
+
+        {/* Schedule Modal */}
+        {isScheduleModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+                <h3 className="text-lg sm:text-xl font-bold">
+                  {editingSchedule ? 'Redigera schema' : 'Lägg till schema'}
+                </h3>
+                <button
+                  onClick={() => setIsScheduleModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes className="text-lg sm:text-xl" />
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-6 space-y-4">
+                {scheduleError && (
+                  <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-md text-sm">
+                    {scheduleError}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Anställd *</label>
+                  <select
+                    value={scheduleForm.employee_id}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, employee_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    disabled={!!editingSchedule}
+                  >
+                    <option value="">Välj anställd</option>
+                    {employees.filter(e => e.is_active).map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Datum *</label>
+                  <input
+                    type="date"
+                    value={scheduleForm.date}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Starttid *</label>
+                    <input
+                      type="time"
+                      value={scheduleForm.start_time}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, start_time: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sluttid *</label>
+                    <input
+                      type="time"
+                      value={scheduleForm.end_time}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, end_time: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Plats *</label>
+                  <select
+                    value={scheduleForm.location}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value as 'malmo' | 'staffanstorp' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">Välj plats</option>
+                    <option value="malmo">Malmö</option>
+                    <option value="staffanstorp">Staffanstorp</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
+                  <textarea
+                    value={scheduleForm.notes}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 p-4 sm:p-6 border-t border-gray-200">
+                <button
+                  onClick={() => setIsScheduleModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  disabled={isSavingSchedule}
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleSaveSchedule}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                  disabled={isSavingSchedule}
+                >
+                  {isSavingSchedule ? 'Sparar...' : editingSchedule ? 'Uppdatera' : 'Spara'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Calculate hours worked for an employee in a given month
+  const calculateHoursForMonth = (employeeId: string, yearMonth: string): number => {
+    const [year, month] = yearMonth.split('-').map(Number);
+    const startDate = `${yearMonth}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${yearMonth}-${lastDay.toString().padStart(2, '0')}`;
+    
+    const monthSchedules = staffSchedules.filter(s => 
+      s.employee_id === employeeId && 
+      s.date >= startDate && 
+      s.date <= endDate &&
+      s.start_time &&
+      s.end_time
+    );
+    
+    let totalHours = 0;
+    monthSchedules.forEach(schedule => {
+      const start = new Date(`2000-01-01T${schedule.start_time}`);
+      const end = new Date(`2000-01-01T${schedule.end_time}`);
+      // Handle overnight shifts (end time < start time)
+      if (end < start) {
+        end.setDate(end.getDate() + 1);
+      }
+      const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+      totalHours += hours;
+    });
+    
+    return Math.round(totalHours * 100) / 100; // Round to 2 decimals
+  };
+
+  // Render staff hours view (for admin/platschef)
+  const renderStaffHours = () => {
+    const [year, month] = hoursViewMonth.split('-').map(Number);
+    const monthName = new Date(year, month - 1, 1).toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
+    
+    // Calculate hours for each employee
+    const employeeHours = employees
+      .filter(e => e.is_active)
+      .map(employee => ({
+        employee,
+        hours: calculateHoursForMonth(employee.id, hoursViewMonth),
+      }))
+      .sort((a, b) => b.hours - a.hours); // Sort by hours descending
+    
+    const totalHours = employeeHours.reduce((sum, eh) => sum + eh.hours, 0);
+
+    return (
+      <div className="space-y-3 sm:space-y-6">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Arbetade Timmar</h2>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">Månad:</label>
+              <input
+                type="month"
+                value={hoursViewMonth}
+                onChange={(e) => setHoursViewMonth(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="text-lg font-semibold text-blue-900">
+              Totalt arbetade timmar för {monthName}: <span className="text-2xl">{totalHours.toFixed(2)}</span> timmar
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Anställd
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Plats
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Timmar ({monthName})
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {employeeHours.map(({ employee, hours }) => (
+                  <tr key={employee.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+                      {employee.email && (
+                        <div className="text-sm text-gray-500">{employee.email}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {employee.location === 'malmo' ? 'Malmö' : 
+                         employee.location === 'staffanstorp' ? 'Staffanstorp' : 
+                         employee.location === 'both' ? 'Båda' : '-'}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <div className="text-sm font-semibold text-gray-900">
+                        {hours.toFixed(2)} timmar
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {employeeHours.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-8 text-center text-gray-400">
+                      Inga scheman registrerade för denna månad
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render staff absences view (for admin/platschef)
+  const renderStaffAbsences = () => {
+    const pendingAbsences = staffAbsences.filter(a => a.status === 'pending');
+    const approvedAbsences = staffAbsences.filter(a => a.status === 'approved');
+    const rejectedAbsences = staffAbsences.filter(a => a.status === 'rejected');
+
+    return (
+      <div className="space-y-3 sm:space-y-6">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Frånvaroanmälningar</h2>
+
+          {/* Pending absences */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Väntar på godkännande ({pendingAbsences.length})
+            </h3>
+            {pendingAbsences.length === 0 ? (
+              <p className="text-gray-400 text-sm">Inga väntande anmälningar</p>
+            ) : (
+              <div className="space-y-2">
+                {pendingAbsences.map(absence => {
+                  const employee = employees.find(e => e.id === absence.employee_id);
+                  return (
+                    <div key={absence.id} className="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium">{employee?.name || 'Okänd anställd'}</div>
+                          <div className="text-sm text-gray-600">
+                            {new Date(absence.start_date).toLocaleDateString('sv-SE')} - {new Date(absence.end_date).toLocaleDateString('sv-SE')}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Typ: {absence.type === 'sick' ? 'Sjuk' : absence.type === 'vacation' ? 'Semester' : absence.type === 'personal' ? 'Personligt' : 'Annat'}
+                            {absence.reason && ` | ${absence.reason}`}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleApproveAbsence(absence.id)}
+                            className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm"
+                          >
+                            Godkänn
+                          </button>
+                          <button
+                            onClick={() => handleRejectAbsence(absence.id)}
+                            className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
+                          >
+                            Avvisa
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Approved absences */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Godkända ({approvedAbsences.length})
+            </h3>
+            {approvedAbsences.length === 0 ? (
+              <p className="text-gray-400 text-sm">Inga godkända anmälningar</p>
+            ) : (
+              <div className="space-y-2">
+                {approvedAbsences.map(absence => {
+                  const employee = employees.find(e => e.id === absence.employee_id);
+                  return (
+                    <div key={absence.id} className="border border-green-200 bg-green-50 rounded-lg p-4">
+                      <div className="font-medium">{employee?.name || 'Okänd anställd'}</div>
+                      <div className="text-sm text-gray-600">
+                        {new Date(absence.start_date).toLocaleDateString('sv-SE')} - {new Date(absence.end_date).toLocaleDateString('sv-SE')}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Typ: {absence.type === 'sick' ? 'Sjuk' : absence.type === 'vacation' ? 'Semester' : absence.type === 'personal' ? 'Personligt' : 'Annat'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Rejected absences */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              Avvisade ({rejectedAbsences.length})
+            </h3>
+            {rejectedAbsences.length === 0 ? (
+              <p className="text-gray-400 text-sm">Inga avvisade anmälningar</p>
+            ) : (
+              <div className="space-y-2">
+                {rejectedAbsences.map(absence => {
+                  const employee = employees.find(e => e.id === absence.employee_id);
+                  return (
+                    <div key={absence.id} className="border border-red-200 bg-red-50 rounded-lg p-4">
+                      <div className="font-medium">{employee?.name || 'Okänd anställd'}</div>
+                      <div className="text-sm text-gray-600">
+                        {new Date(absence.start_date).toLocaleDateString('sv-SE')} - {new Date(absence.end_date).toLocaleDateString('sv-SE')}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Typ: {absence.type === 'sick' ? 'Sjuk' : absence.type === 'vacation' ? 'Semester' : absence.type === 'personal' ? 'Personligt' : 'Annat'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render my schedule view (for employees)
+  const renderMySchedule = () => {
+    const mySchedules = staffSchedules.filter(s => s.date >= new Date().toISOString().split('T')[0]);
+    const schedulesByDate: { [date: string]: StaffSchedule[] } = {};
+    mySchedules.forEach(schedule => {
+      if (!schedulesByDate[schedule.date]) {
+        schedulesByDate[schedule.date] = [];
+      }
+      schedulesByDate[schedule.date].push(schedule);
+    });
+
+    return (
+      <div className="space-y-3 sm:space-y-6">
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Mitt Schema</h2>
+
+          <div className="space-y-4">
+            {Object.keys(schedulesByDate).sort().map(date => {
+              const daySchedules = schedulesByDate[date];
+              const dateObj = new Date(date);
+              const dayName = dateObj.toLocaleDateString('sv-SE', { weekday: 'long' });
+              
+              return (
+                <div key={date} className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-800 mb-3">
+                    {dayName} {dateObj.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })}
+                  </h3>
+                  <div className="space-y-2">
+                    {daySchedules.map(schedule => (
+                      <div key={schedule.id} className="p-3 bg-gray-50 rounded-md">
+                        <div className="font-medium">
+                          {schedule.start_time} - {schedule.end_time}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {schedule.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                          {schedule.notes && ` | ${schedule.notes}`}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            {Object.keys(schedulesByDate).length === 0 && (
+              <p className="text-center text-gray-400 py-8">Inga scheman inplanerade</p>
+            )}
+          </div>
+        </div>
+
+        {/* My Absences Section */}
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Mina Frånvaroanmälningar</h2>
+            <button
+              onClick={openAbsenceModal}
+              className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
+            >
+              <FaPlus className="mr-2" /> Anmäl frånvaro
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {staffAbsences.map(absence => (
+              <div
+                key={absence.id}
+                className={`border rounded-lg p-4 ${
+                  absence.status === 'pending' ? 'border-yellow-200 bg-yellow-50' :
+                  absence.status === 'approved' ? 'border-green-200 bg-green-50' :
+                  'border-red-200 bg-red-50'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-medium">
+                      {new Date(absence.start_date).toLocaleDateString('sv-SE')} - {new Date(absence.end_date).toLocaleDateString('sv-SE')}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Typ: {absence.type === 'sick' ? 'Sjuk' : absence.type === 'vacation' ? 'Semester' : absence.type === 'personal' ? 'Personligt' : 'Annat'}
+                      {absence.reason && ` | ${absence.reason}`}
+                    </div>
+                    <div className="text-sm mt-1">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        absence.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        absence.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {absence.status === 'pending' ? 'Väntar på godkännande' :
+                         absence.status === 'approved' ? 'Godkänd' : 'Avvisad'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {staffAbsences.length === 0 && (
+              <p className="text-center text-gray-400 py-8">Inga frånvaroanmälningar</p>
+            )}
+          </div>
+        </div>
+
+        {/* Absence Modal */}
+        {isAbsenceModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+                <h3 className="text-lg sm:text-xl font-bold">Anmäl frånvaro</h3>
+                <button
+                  onClick={() => setIsAbsenceModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes className="text-lg sm:text-xl" />
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-6 space-y-4">
+                {absenceError && (
+                  <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-md text-sm">
+                    {absenceError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Startdatum *</label>
+                    <input
+                      type="date"
+                      value={absenceForm.start_date}
+                      onChange={(e) => setAbsenceForm({ ...absenceForm, start_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Slutdatum *</label>
+                    <input
+                      type="date"
+                      value={absenceForm.end_date}
+                      onChange={(e) => setAbsenceForm({ ...absenceForm, end_date: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Typ *</label>
+                  <select
+                    value={absenceForm.type}
+                    onChange={(e) => setAbsenceForm({ ...absenceForm, type: e.target.value as 'sick' | 'vacation' | 'personal' | 'other' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="sick">Sjuk</option>
+                    <option value="vacation">Semester</option>
+                    <option value="personal">Personligt</option>
+                    <option value="other">Annat</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Anledning</label>
+                  <textarea
+                    value={absenceForm.reason}
+                    onChange={(e) => setAbsenceForm({ ...absenceForm, reason: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    rows={3}
+                    placeholder="Beskriv anledningen till frånvaron..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 p-4 sm:p-6 border-t border-gray-200">
+                <button
+                  onClick={() => setIsAbsenceModalOpen(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  disabled={isSavingAbsence}
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleSaveAbsence}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                  disabled={isSavingAbsence}
+                >
+                  {isSavingAbsence ? 'Sparar...' : 'Skicka anmälan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render my absences view (for employees) - same as renderMySchedule but focused on absences
+  const renderMyAbsences = () => {
+    return renderMySchedule(); // Same view, just different navigation
+  };
+
   const renderMeetings = () => {
     const handleOpenMeetingModal = (meeting?: Meeting) => {
       if (meeting) {
@@ -5807,9 +6767,15 @@ const AdminPage: React.FC = () => {
   };
 
   const renderContent = () => {
-    // Employees can ONLY see meetings - redirect everything else to meetings
+    // Employees can see their schedule and report absences
     if (userRole === 'employee') {
-      return renderMeetings();
+      if (currentView === 'my-schedule') {
+        return renderMySchedule();
+      } else if (currentView === 'my-absences') {
+        return renderMyAbsences();
+      }
+      // Default for employees: show schedule
+      return renderMySchedule();
     }
     // Redirect platschef away from contracts and statistics
     if (userRole === 'platschef' && (currentView === 'contracts' || currentView === 'statistics')) {
@@ -5841,6 +6807,12 @@ const AdminPage: React.FC = () => {
         return (userRole === 'admin' || userRole === 'platschef') ? renderApplications() : renderDashboard();
       case 'meetings':
         return renderMeetings();
+      case 'staff-schedules':
+        return (userRole === 'admin' || userRole === 'platschef') ? renderStaffSchedules() : renderDashboard();
+      case 'staff-absences':
+        return (userRole === 'admin' || userRole === 'platschef') ? renderStaffAbsences() : renderDashboard();
+      case 'staff-hours':
+        return (userRole === 'admin' || userRole === 'platschef') ? renderStaffHours() : renderDashboard();
       default:
         return renderDashboard();
     }
