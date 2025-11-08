@@ -1163,10 +1163,11 @@ const AdminPage: React.FC = () => {
     
     const prices = PRICES[location];
     
-    // CRITICAL: First filter by location and exclude archived records
+    // CRITICAL: First filter by location only (don't exclude archived records for statistics)
+    // Archived records should still be counted in statistics for past periods
     let filteredRecords = boardingRecords.filter(record => {
       // Ensure location matches exactly - a boarding at Staffanstorp should NOT count for Malmö
-      return record.location === location && !record.isArchived;
+      return record.location === location;
     });
     
     // Filter by period
