@@ -177,6 +177,8 @@ const AdminPage: React.FC = () => {
   const [currentPlanningDate, setCurrentPlanningDate] = useState<string>(new Date().toISOString().split('T')[0]);
   // Search state for dog categories in planning view (location_category)
   const [planningSearch, setPlanningSearch] = useState<Record<string, string>>({});
+  // Collapsed state for dog categories in planning view (location_category)
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
   // Search state for dog selection in boarding form
   const [boardingDogSearch, setBoardingDogSearch] = useState<string>('');
   const [selectedDogForContract, setSelectedDogForContract] = useState<string>('');
@@ -2532,70 +2534,87 @@ const AdminPage: React.FC = () => {
   ) => {
     const searchQuery = getSearchValue(searchKey.split('_')[0], searchKey.split('_')[1]);
     const filteredDogs = filterBySearch(dogs, searchQuery);
+    const isCollapsed = collapsedCategories[searchKey] ?? false;
     
     // Hide category if no dogs and no active search
     if (dogs.length === 0 && !searchQuery.trim()) return null;
 
+    const toggleCollapse = () => {
+      setCollapsedCategories(prev => ({
+        ...prev,
+        [searchKey]: !prev[searchKey]
+      }));
+    };
+
     return (
-      <div className={`bg-gradient-to-br ${bgColor} rounded-xl shadow-lg p-5 border-2 ${borderColor}`}>
-        <div className="flex items-center justify-between mb-4">
+      <div className={`bg-gradient-to-br ${bgColor} rounded-xl shadow-lg border-2 ${borderColor}`}>
+        <div 
+          className="flex items-center justify-between p-4 cursor-pointer hover:bg-opacity-80 transition-colors"
+          onClick={toggleCollapse}
+        >
           <div className="flex items-center gap-2">
             <span className="text-xl">{icon}</span>
             <h3 className="text-lg font-bold text-gray-800">{title}</h3>
           </div>
-          <span className={`${badgeColor} text-sm font-semibold px-3 py-1 rounded-full`}>
-            {filteredDogs.length}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`${badgeColor} text-sm font-semibold px-3 py-1 rounded-full`}>
+              {filteredDogs.length}
+            </span>
+            <svg 
+              className={`w-5 h-5 text-gray-600 transition-transform ${isCollapsed ? '' : 'transform rotate-180'}`}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
         </div>
         
-        {/* Search input */}
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder={`Sök ${title.toLowerCase()}...`}
-            value={getSearchValue(searchKey.split('_')[0], searchKey.split('_')[1])}
-            onChange={(e) => setSearchValue(searchKey.split('_')[0], searchKey.split('_')[1], e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-        </div>
-
-        {/* Dogs list */}
-        <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
-          {filteredDogs.map(dog => (
-            <div
-              key={dog.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, dog)}
-              onDragEnd={handleDragEnd}
-              className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 bg-gray-100 text-gray-800 relative group border-2 border-transparent hover:border-primary`}
-              title="Dra för att flytta"
-            >
-              <button
-                onClick={(e) => handleInfoClick(e, dog)}
-                onMouseDown={(e) => e.stopPropagation()}
-                onDragStart={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                }}
-                className="absolute top-3 right-3 text-gray-500 hover:text-primary z-30 transition-colors"
-                title="Visa info"
-              >
-                <FaInfoCircle className="text-lg" />
-              </button>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">🐕</span>
-                <div className="font-bold text-base">{dog.name}</div>
-              </div>
-              <div className="text-xs text-gray-600 mb-2">👤 {dog.owner}</div>
-              <div className="flex gap-1 mt-1">
-                {dog.locations.map(loc => (
-                  <span key={loc} className={`text-xs px-2 py-1 rounded ${loc === 'malmo' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'}`}>
-                    {loc === 'malmo' ? '📍 Malmö' : '📍 Staffanstorp'}
-                  </span>
-                ))}
-              </div>
+        {!isCollapsed && (
+          <div className="px-4 pb-4">
+            {/* Search input */}
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder={`Sök ${title.toLowerCase()}...`}
+                value={getSearchValue(searchKey.split('_')[0], searchKey.split('_')[1])}
+                onChange={(e) => setSearchValue(searchKey.split('_')[0], searchKey.split('_')[1], e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
             </div>
-          ))}
+
+            {/* Dogs list - no scroll, just space-y */}
+            <div className="space-y-2">
+              {filteredDogs.map(dog => (
+                <div
+                  key={dog.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, dog)}
+                  onDragEnd={handleDragEnd}
+                  className="p-3 rounded-lg cursor-move hover:shadow-md transition-all duration-200 bg-white text-gray-800 relative group border border-gray-200 hover:border-primary hover:bg-gray-50"
+                  title="Dra för att flytta"
+                >
+                  <button
+                    onClick={(e) => handleInfoClick(e, dog)}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onDragStart={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-primary z-30 transition-colors"
+                    title="Visa info"
+                  >
+                    <FaInfoCircle className="text-sm" />
+                  </button>
+                  <div className="flex items-center gap-2 mb-1 pr-6">
+                    <span className="text-lg">🐕</span>
+                    <div className="font-semibold text-sm truncate">{dog.name}</div>
+                  </div>
+                  <div className="text-xs text-gray-600 truncate">👤 {dog.owner}</div>
+                </div>
+              ))}
           {filteredDogs.length === 0 && dogs.length > 0 && (
             <div className="text-center py-4 text-gray-400 text-sm">
               <p>Inga hundar matchar sökningen</p>
@@ -2606,7 +2625,9 @@ const AdminPage: React.FC = () => {
               <p>Inga hundar i denna kategori</p>
             </div>
           )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -2779,7 +2800,7 @@ const AdminPage: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Dogs Lists - Categorized */}
-          <div className="lg:col-span-1 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto pr-2">
+          <div className="lg:col-span-1 space-y-3 max-h-[calc(100vh-250px)] overflow-y-auto pr-2">
             {/* Fulltime */}
             {renderDogCategory(
               'Heltid',
@@ -2825,82 +2846,104 @@ const AdminPage: React.FC = () => {
             )}
 
             {/* Dogs on Active Boarding */}
-            {boardingDogs.length > 0 && (
-              <div className={`bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg p-5 border-2 border-orange-300`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🏨</span>
-                    <h3 className="text-lg font-bold text-gray-800">Hundpensionat</h3>
+            {boardingDogs.length > 0 && (() => {
+              const boardingSearchKey = `${location}_boarding`;
+              const isCollapsed = collapsedCategories[boardingSearchKey] ?? false;
+              const toggleCollapse = () => {
+                setCollapsedCategories(prev => ({
+                  ...prev,
+                  [boardingSearchKey]: !prev[boardingSearchKey]
+                }));
+              };
+              
+              return (
+                <div className={`bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300`}>
+                  <div 
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-opacity-80 transition-colors"
+                    onClick={toggleCollapse}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">🏨</span>
+                      <h3 className="text-lg font-bold text-gray-800">Hundpensionat</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-orange-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
+                        {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).length}
+                      </span>
+                      <svg 
+                        className={`w-5 h-5 text-gray-600 transition-transform ${isCollapsed ? '' : 'transform rotate-180'}`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
                   </div>
-                  <span className="bg-orange-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
-                    {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).length}
-                  </span>
-                </div>
-                
-                {/* Search input */}
-                <div className="mb-4">
-                  <input
-                    type="text"
-                    placeholder="Sök hundpensionat..."
-                    value={getSearchValue(location, 'boarding')}
-                    onChange={(e) => setSearchValue(location, 'boarding', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
+                  
+                  {!isCollapsed && (
+                    <div className="px-4 pb-4">
+                      {/* Search input */}
+                      <div className="mb-4">
+                        <input
+                          type="text"
+                          placeholder="Sök hundpensionat..."
+                          value={getSearchValue(location, 'boarding')}
+                          onChange={(e) => setSearchValue(location, 'boarding', e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        />
+                      </div>
 
-                {/* Dogs list */}
-                <div className="space-y-3 max-h-64 overflow-y-auto pr-2">
+                      {/* Dogs list */}
+                      <div className="space-y-2">
                   {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).map(dog => {
                     const boardingRecord = boardingRecords.find(r => r.dogId === dog.id && r.location === location);
                     return (
-                      <div
-                        key={dog.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, dog)}
-                        onDragEnd={handleDragEnd}
-                        className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 bg-gray-100 text-gray-800 relative group border-2 border-orange-400 hover:border-orange-500`}
-                        title="Dra för att flytta"
-                      >
-                        <button
-                          onClick={(e) => handleInfoClick(e, dog)}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onDragStart={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                          }}
-                          className="absolute top-3 right-3 text-gray-500 hover:text-primary z-30 transition-colors"
-                          title="Visa info"
+                        <div
+                          key={dog.id}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, dog)}
+                          onDragEnd={handleDragEnd}
+                          className="p-3 rounded-lg cursor-move hover:shadow-md transition-all duration-200 bg-white text-gray-800 relative group border border-orange-300 hover:border-orange-500 hover:bg-orange-50"
+                          title="Dra för att flytta"
                         >
-                          <FaInfoCircle className="text-lg" />
-                        </button>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-2xl">🏨</span>
-                          <div className="font-bold text-base">{dog.name}</div>
-                        </div>
-                        <div className="text-xs text-gray-600 mb-2">👤 {dog.owner}</div>
-                        {boardingRecord && (
-                          <div className="text-xs text-orange-700 mb-2 font-semibold">
-                            Pensionat: {new Date(boardingRecord.startDate).toLocaleDateString('sv-SE')} - {new Date(boardingRecord.endDate).toLocaleDateString('sv-SE')}
+                          <button
+                            onClick={(e) => handleInfoClick(e, dog)}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onDragStart={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                            }}
+                            className="absolute top-2 right-2 text-gray-400 hover:text-primary z-30 transition-colors"
+                            title="Visa info"
+                          >
+                            <FaInfoCircle className="text-sm" />
+                          </button>
+                          <div className="flex items-center gap-2 mb-1 pr-6">
+                            <span className="text-lg">🏨</span>
+                            <div className="font-semibold text-sm truncate">{dog.name}</div>
                           </div>
-                        )}
-                        <div className="flex gap-1 mt-1">
-                          {dog.locations.map(loc => (
-                            <span key={loc} className={`text-xs px-2 py-1 rounded ${loc === 'malmo' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'}`}>
-                              {loc === 'malmo' ? '📍 Malmö' : '📍 Staffanstorp'}
-                            </span>
-                          ))}
+                          <div className="text-xs text-gray-600 truncate mb-1">👤 {dog.owner}</div>
+                          {boardingRecord && (
+                            <div className="text-xs text-orange-700 font-semibold truncate">
+                              {new Date(boardingRecord.startDate).toLocaleDateString('sv-SE')} - {new Date(boardingRecord.endDate).toLocaleDateString('sv-SE')}
+                            </div>
+                          )}
                         </div>
-                      </div>
                     );
                   })}
-                  {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).length === 0 && boardingDogs.length > 0 && (
-                    <div className="text-center py-4 text-gray-400 text-sm">
-                      <p>Inga hundar matchar sökningen</p>
+                        {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).length === 0 && boardingDogs.length > 0 && (
+                          <div className="text-center py-4 text-gray-400 text-sm">
+                            <p>Inga hundar matchar sökningen</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* Cages and Free Areas */}
