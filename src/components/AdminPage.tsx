@@ -182,6 +182,7 @@ const AdminPage: React.FC = () => {
   const [boardingDogSearch, setBoardingDogSearch] = useState<string>('');
   const [selectedDogForContract, setSelectedDogForContract] = useState<string>('');
   const [contractDogSearch, setContractDogSearch] = useState<string>('');
+  const [isContractDogDropdownOpen, setIsContractDogDropdownOpen] = useState<boolean>(false);
   // Search state for dogs tab
   const [dogsTabSearch, setDogsTabSearch] = useState<string>('');
   const [dogsLocationFilter, setDogsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp' | 'both'>('all');
@@ -950,6 +951,25 @@ const AdminPage: React.FC = () => {
       setCurrentView('dashboard');
     }
   }, [userRole, currentView]);
+
+  // Close contract dog dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isContractDogDropdownOpen && !target.closest('.contract-dog-dropdown')) {
+        setIsContractDogDropdownOpen(false);
+        setContractDogSearch('');
+      }
+    };
+
+    if (isContractDogDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isContractDogDropdownOpen]);
 
   const getBoardingRecordsByMonth = (records: BoardingRecord[], year: string) => {
     const recordsByMonth: { [key: string]: BoardingRecord[] } = {};
@@ -5302,69 +5322,96 @@ const AdminPage: React.FC = () => {
             <div>
               <h2 className="text-xl font-semibold mb-4 border-b pb-2">Hundinformation</h2>
               
-              {/* Dog Selection */}
-              <div className="mb-4">
+              {/* Dog Selection - Searchable Dropdown */}
+              <div className="mb-4 relative contract-dog-dropdown">
                 <label htmlFor="selectedDogForContract" className="block text-sm font-medium text-gray-700 mb-1">
                   Välj hund (för att autofylla fält)
                 </label>
-                {/* Search input */}
-                <input
-                  type="text"
-                  placeholder="Sök på hund eller ägare namn..."
-                  value={contractDogSearch}
-                  onChange={(e) => setContractDogSearch(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                <select
-                  id="selectedDogForContract"
-                  value={selectedDogForContract || ''}
-                  onChange={(e) => {
-                    const selectedDogId = e.target.value;
-                    if (selectedDogId) {
-                      const dog = dogs.find(d => d.id === selectedDogId);
-                      if (dog) {
-                        setSelectedDogForContract(selectedDogId);
-                        setContractData({
-                          ...contractData,
-                          customerName: dog.owner,
-                          customerAddress: dog.ownerAddress || '',
-                          customerCity: dog.ownerCity || '',
-                          personalNumber: dog.ownerPersonalNumber || '',
-                          dogName: dog.name,
-                          dogBreed: dog.breed,
-                          dogAge: dog.age,
-                          chipNumber: dog.chipNumber || ''
-                        });
-                      }
-                    } else {
-                      setSelectedDogForContract('');
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
-                >
-                  <option value="">-- Välj hund --</option>
-                  {dogs
-                    .filter(dog => {
-                      const matchesActive = dog.isActive !== false;
-                      const matchesSearch = !contractDogSearch.trim() || 
-                        dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
-                        dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
-                      return matchesActive && matchesSearch;
-                    })
-                    .map(dog => (
-                      <option key={dog.id} value={dog.id}>
-                        {dog.name} - {dog.owner}
-                      </option>
-                    ))}
-                </select>
-                {contractDogSearch.trim() && dogs.filter(dog => {
-                  const matchesActive = dog.isActive !== false;
-                  const matchesSearch = dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
-                    dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
-                  return matchesActive && matchesSearch;
-                }).length === 0 && (
-                  <p className="text-sm text-gray-500 mt-2">Inga hundar matchar sökningen</p>
-                )}
+                <div className="relative">
+                  <div
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary focus-within:border-primary cursor-pointer bg-white flex items-center justify-between"
+                    onClick={() => setIsContractDogDropdownOpen(!isContractDogDropdownOpen)}
+                  >
+                    <span className={selectedDogForContract ? "text-gray-900" : "text-gray-500"}>
+                      {selectedDogForContract ? (
+                        `${dogs.find(d => d.id === selectedDogForContract)?.name} - ${dogs.find(d => d.id === selectedDogForContract)?.owner}`
+                      ) : (
+                        '-- Välj hund --'
+                      )}
+                    </span>
+                    <svg 
+                      className={`w-5 h-5 text-gray-400 transition-transform ${isContractDogDropdownOpen ? 'transform rotate-180' : ''}`}
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {isContractDogDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-hidden">
+                      <div className="p-2 border-b border-gray-200">
+                        <input
+                          type="text"
+                          placeholder="Sök på hund eller ägare namn..."
+                          value={contractDogSearch}
+                          onChange={(e) => setContractDogSearch(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {dogs
+                          .filter(dog => {
+                            const matchesActive = dog.isActive !== false;
+                            const matchesSearch = !contractDogSearch.trim() || 
+                              dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
+                              dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
+                            return matchesActive && matchesSearch;
+                          })
+                          .map(dog => (
+                            <div
+                              key={dog.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDogForContract(dog.id);
+                                setContractData({
+                                  ...contractData,
+                                  customerName: dog.owner,
+                                  customerAddress: dog.ownerAddress || '',
+                                  customerCity: dog.ownerCity || '',
+                                  personalNumber: dog.ownerPersonalNumber || '',
+                                  dogName: dog.name,
+                                  dogBreed: dog.breed,
+                                  dogAge: dog.age,
+                                  chipNumber: dog.chipNumber || ''
+                                });
+                                setIsContractDogDropdownOpen(false);
+                                setContractDogSearch('');
+                              }}
+                              className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${
+                                selectedDogForContract === dog.id ? 'bg-blue-50' : ''
+                              }`}
+                            >
+                              {dog.name} - {dog.owner}
+                            </div>
+                          ))}
+                        {dogs.filter(dog => {
+                          const matchesActive = dog.isActive !== false;
+                          const matchesSearch = !contractDogSearch.trim() || 
+                            dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
+                            dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
+                          return matchesActive && matchesSearch;
+                        }).length === 0 && (
+                          <div className="px-3 py-2 text-sm text-gray-500">
+                            Inga hundar matchar sökningen
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
