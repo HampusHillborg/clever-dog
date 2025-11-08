@@ -1295,3 +1295,518 @@ export const deleteMeeting = async (id: string): Promise<void> => {
   }
 };
 
+// Employee types - matches actual database schema
+export type Employee = {
+  id: string;
+  name: string;
+  phone?: string;
+  location?: 'malmo' | 'staffanstorp' | 'both';
+  position?: string;
+  hire_date?: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  // These come from admin_users join
+  email?: string;
+  role?: 'admin' | 'employee' | 'platschef';
+};
+
+// Get all employees
+export const getEmployees = async (): Promise<Employee[]> => {
+  if (!isSupabaseAvailable()) {
+    const saved = localStorage.getItem('cleverEmployees');
+    return saved ? JSON.parse(saved) : [];
+  }
+
+  try {
+    // Join with admin_users to get email and role
+    // Since employees.id references admin_users.id, we can use a simple join
+    const { data, error } = await supabase!
+      .from('employees' as any)
+      .select(`
+        *,
+        admin_users!employees_id_fkey (
+          email,
+          role
+        )
+      `)
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+
+    if (data) {
+      // Map the data to include email and role from admin_users
+      const employees: Employee[] = data.map((emp: any) => ({
+        ...emp,
+        email: emp.admin_users?.email || emp.admin_users?.[0]?.email,
+        role: emp.admin_users?.role || emp.admin_users?.[0]?.role,
+      }));
+      
+      // Also save to localStorage as backup
+      localStorage.setItem('cleverEmployees', JSON.stringify(employees));
+      return employees;
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    const saved = localStorage.getItem('cleverEmployees');
+    return saved ? JSON.parse(saved) : [];
+  }
+};
+
+// Save or update employee (without creating auth account - that's done via Netlify function)
+// Note: email and role are stored in admin_users, not employees table
+export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'updated_at' | 'email' | 'role'> & { email?: string; role?: string }): Promise<Employee> => {
+  const now = new Date().toISOString();
+  
+  // Extract email and role (these go to admin_users, not employees)
+  const { email, role, ...employeeData } = employee;
+
+  const employeeRecord: Omit<Employee, 'email' | 'role' | 'created_at' | 'updated_at'> = {
+    id: employeeData.id,
+    name: employeeData.name,
+    phone: employeeData.phone || undefined,
+    location: employeeData.location || undefined,
+    position: employeeData.position || undefined,
+    hire_date: employeeData.hire_date || undefined,
+    notes: employeeData.notes || undefined,
+    is_active: employeeData.is_active,
+  };
+
+  // Always save to localStorage first as backup
+  const saved = localStorage.getItem('cleverEmployees');
+  const employees: Employee[] = saved ? JSON.parse(saved) : [];
+  
+  const existingIndex = employees.findIndex(e => e.id === employeeData.id);
+  const fullEmployee: Employee = {
+    ...employeeRecord,
+    email,
+    role: role as any,
+    created_at: employeeData.id ? (employee as any).created_at || now : now,
+    updated_at: now,
+  };
+  
+  if (existingIndex >= 0) {
+    employees[existingIndex] = fullEmployee;
+  } else {
+    employees.push(fullEmployee);
+  }
+  localStorage.setItem('cleverEmployees', JSON.stringify(employees));
+
+  // Try to save to Supabase if available
+  if (isSupabaseAvailable()) {
+    try {
+      const insertData: any = {
+        id: employeeRecord.id,
+        name: employeeRecord.name,
+        phone: employeeRecord.phone || null,
+        location: employeeRecord.location || null,
+        position: employeeRecord.position || null,
+        hire_date: employeeRecord.hire_date || null,
+        notes: employeeRecord.notes || null,
+        is_active: employeeRecord.is_active,
+      };
+
+      const { data, error } = existingIndex >= 0
+        ? await supabase!
+            .from('employees' as any)
+            .update(insertData)
+            .eq('id', employeeRecord.id)
+            .select()
+            .single()
+        : await supabase!
+            .from('employees' as any)
+            .insert(insertData)
+            .select()
+            .single();
+
+      if (!error && data) {
+        // Update localStorage with server response
+        const index = employees.findIndex(e => e.id === employeeRecord.id);
+        const updatedEmployee: Employee = {
+          ...(data as any),
+          email,
+          role: role as any,
+        };
+        if (index >= 0) {
+          employees[index] = updatedEmployee;
+        } else {
+          employees.push(updatedEmployee);
+        }
+        localStorage.setItem('cleverEmployees', JSON.stringify(employees));
+        return updatedEmployee;
+      }
+    } catch (error) {
+      console.error('Error saving employee to Supabase:', error);
+    }
+  }
+
+  return fullEmployee;
+};
+
+// Delete employee
+export const deleteEmployee = async (id: string): Promise<void> => {
+  // Remove from localStorage
+  const saved = localStorage.getItem('cleverEmployees');
+  if (saved) {
+    const employees: Employee[] = JSON.parse(saved);
+    const filtered = employees.filter(e => e.id !== id);
+    localStorage.setItem('cleverEmployees', JSON.stringify(filtered));
+  }
+
+  // Try to delete from Supabase if available
+  if (isSupabaseAvailable()) {
+    try {
+      const { error } = await supabase!
+        .from('employees' as any)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting employee from Supabase:', error);
+    }
+  }
+};
+
+// ============================================================================
+// STAFF SCHEDULING TYPES AND FUNCTIONS
+// ============================================================================
+
+export type StaffSchedule = {
+  id: string;
+  employee_id: string;
+  date: string;
+  start_time?: string;
+  end_time?: string;
+  location: 'malmo' | 'staffanstorp';
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StaffAbsence = {
+  id: string;
+  employee_id: string;
+  start_date: string;
+  end_date: string;
+  type: 'sick' | 'vacation' | 'personal' | 'other';
+  reason?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by?: string;
+  reviewed_at?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+// Get staff schedules for a specific employee or all employees (admin/platschef)
+export const getStaffSchedules = async (employeeId?: string, startDate?: string, endDate?: string): Promise<StaffSchedule[]> => {
+  if (!isSupabaseAvailable()) {
+    const saved = localStorage.getItem('cleverStaffSchedules');
+    const schedules: StaffSchedule[] = saved ? JSON.parse(saved) : [];
+    return employeeId 
+      ? schedules.filter(s => s.employee_id === employeeId)
+      : schedules;
+  }
+
+  try {
+    let query = supabase!
+      .from('staff_schedules' as any)
+      .select('*')
+      .order('date', { ascending: true });
+
+    if (employeeId) {
+      query = query.eq('employee_id', employeeId);
+    }
+
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
+
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data || []) as StaffSchedule[];
+  } catch (error) {
+    console.error('Error fetching staff schedules:', error);
+    const saved = localStorage.getItem('cleverStaffSchedules');
+    return saved ? JSON.parse(saved) : [];
+  }
+};
+
+// Save or update staff schedule
+export const saveStaffSchedule = async (schedule: Omit<StaffSchedule, 'created_at' | 'updated_at'>): Promise<StaffSchedule> => {
+  const now = new Date().toISOString();
+  
+  // Always save to localStorage first as backup
+  const saved = localStorage.getItem('cleverStaffSchedules');
+  const schedules: StaffSchedule[] = saved ? JSON.parse(saved) : [];
+  
+  const existingIndex = schedules.findIndex(s => s.id === schedule.id);
+  const scheduleData: StaffSchedule = {
+    ...schedule,
+    created_at: schedule.id ? (schedule as any).created_at || now : now,
+    updated_at: now,
+  };
+  
+  if (existingIndex >= 0) {
+    schedules[existingIndex] = scheduleData;
+  } else {
+    schedules.push(scheduleData);
+  }
+  localStorage.setItem('cleverStaffSchedules', JSON.stringify(schedules));
+
+  // Try to save to Supabase if available
+  if (isSupabaseAvailable()) {
+    try {
+      const insertData: any = {
+        employee_id: schedule.employee_id,
+        date: schedule.date,
+        start_time: schedule.start_time || null,
+        end_time: schedule.end_time || null,
+        location: schedule.location,
+        notes: schedule.notes || null,
+      };
+
+      const { data, error } = existingIndex >= 0
+        ? await supabase!
+            .from('staff_schedules' as any)
+            .update(insertData)
+            .eq('id', schedule.id)
+            .select()
+            .single()
+        : await supabase!
+            .from('staff_schedules' as any)
+            .insert(insertData)
+            .select()
+            .single();
+
+      if (!error && data) {
+        const index = schedules.findIndex(s => s.id === schedule.id);
+        if (index >= 0) {
+          schedules[index] = data as StaffSchedule;
+        } else {
+          schedules.push(data as StaffSchedule);
+        }
+        localStorage.setItem('cleverStaffSchedules', JSON.stringify(schedules));
+        return data as StaffSchedule;
+      }
+    } catch (error) {
+      console.error('Error saving staff schedule to Supabase:', error);
+    }
+  }
+
+  return scheduleData;
+};
+
+// Delete staff schedule
+export const deleteStaffSchedule = async (id: string): Promise<void> => {
+  const saved = localStorage.getItem('cleverStaffSchedules');
+  if (saved) {
+    const schedules: StaffSchedule[] = JSON.parse(saved);
+    const filtered = schedules.filter(s => s.id !== id);
+    localStorage.setItem('cleverStaffSchedules', JSON.stringify(filtered));
+  }
+
+  if (isSupabaseAvailable()) {
+    try {
+      const { error } = await supabase!
+        .from('staff_schedules' as any)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting staff schedule from Supabase:', error);
+    }
+  }
+};
+
+// Get staff absences for a specific employee or all employees (admin/platschef)
+export const getStaffAbsences = async (employeeId?: string, status?: 'pending' | 'approved' | 'rejected'): Promise<StaffAbsence[]> => {
+  if (!isSupabaseAvailable()) {
+    const saved = localStorage.getItem('cleverStaffAbsences');
+    const absences: StaffAbsence[] = saved ? JSON.parse(saved) : [];
+    let filtered = employeeId 
+      ? absences.filter(a => a.employee_id === employeeId)
+      : absences;
+    
+    if (status) {
+      filtered = filtered.filter(a => a.status === status);
+    }
+    
+    return filtered;
+  }
+
+  try {
+    let query = supabase!
+      .from('staff_absences' as any)
+      .select('*')
+      .order('start_date', { ascending: false });
+
+    if (employeeId) {
+      query = query.eq('employee_id', employeeId);
+    }
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return (data || []) as StaffAbsence[];
+  } catch (error) {
+    console.error('Error fetching staff absences:', error);
+    const saved = localStorage.getItem('cleverStaffAbsences');
+    return saved ? JSON.parse(saved) : [];
+  }
+};
+
+// Save or create staff absence
+export const saveStaffAbsence = async (absence: Omit<StaffAbsence, 'created_at' | 'updated_at' | 'reviewed_at' | 'reviewed_by'>): Promise<StaffAbsence> => {
+  const now = new Date().toISOString();
+  
+  // Always save to localStorage first as backup
+  const saved = localStorage.getItem('cleverStaffAbsences');
+  const absences: StaffAbsence[] = saved ? JSON.parse(saved) : [];
+  
+  const existingIndex = absences.findIndex(a => a.id === absence.id);
+  const absenceData: StaffAbsence = {
+    ...absence,
+    reviewed_by: absence.status !== 'pending' ? (absence as any).reviewed_by : undefined,
+    reviewed_at: absence.status !== 'pending' ? (absence as any).reviewed_at : undefined,
+    created_at: absence.id ? (absence as any).created_at || now : now,
+    updated_at: now,
+  };
+  
+  if (existingIndex >= 0) {
+    absences[existingIndex] = absenceData;
+  } else {
+    absences.push(absenceData);
+  }
+  localStorage.setItem('cleverStaffAbsences', JSON.stringify(absences));
+
+  // Try to save to Supabase if available
+  if (isSupabaseAvailable()) {
+    try {
+      const insertData: any = {
+        employee_id: absence.employee_id,
+        start_date: absence.start_date,
+        end_date: absence.end_date,
+        type: absence.type,
+        reason: absence.reason || null,
+        status: absence.status,
+      };
+
+      const { data, error } = existingIndex >= 0
+        ? await supabase!
+            .from('staff_absences' as any)
+            .update(insertData)
+            .eq('id', absence.id)
+            .select()
+            .single()
+        : await supabase!
+            .from('staff_absences' as any)
+            .insert(insertData)
+            .select()
+            .single();
+
+      if (!error && data) {
+        const index = absences.findIndex(a => a.id === absence.id);
+        if (index >= 0) {
+          absences[index] = data as StaffAbsence;
+        } else {
+          absences.push(data as StaffAbsence);
+        }
+        localStorage.setItem('cleverStaffAbsences', JSON.stringify(absences));
+        return data as StaffAbsence;
+      }
+    } catch (error) {
+      console.error('Error saving staff absence to Supabase:', error);
+    }
+  }
+
+  return absenceData;
+};
+
+// Update absence status (for admin/platschef to approve/reject)
+export const updateAbsenceStatus = async (id: string, status: 'approved' | 'rejected', reviewedBy: string): Promise<StaffAbsence> => {
+  const now = new Date().toISOString();
+  
+  // Update localStorage
+  const saved = localStorage.getItem('cleverStaffAbsences');
+  const absences: StaffAbsence[] = saved ? JSON.parse(saved) : [];
+  const index = absences.findIndex(a => a.id === id);
+  
+  if (index >= 0) {
+    absences[index] = {
+      ...absences[index],
+      status,
+      reviewed_by: reviewedBy,
+      reviewed_at: now,
+      updated_at: now,
+    };
+    localStorage.setItem('cleverStaffAbsences', JSON.stringify(absences));
+  }
+
+  // Update Supabase
+  if (isSupabaseAvailable()) {
+    try {
+      const { data, error } = await supabase!
+        .from('staff_absences' as any)
+        .update({
+          status,
+          reviewed_by: reviewedBy,
+          reviewed_at: now,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (!error && data) {
+        if (index >= 0) {
+          absences[index] = data as StaffAbsence;
+        }
+        localStorage.setItem('cleverStaffAbsences', JSON.stringify(absences));
+        return data as StaffAbsence;
+      }
+    } catch (error) {
+      console.error('Error updating absence status in Supabase:', error);
+    }
+  }
+
+  return absences[index] || {} as StaffAbsence;
+};
+
+// Delete staff absence
+export const deleteStaffAbsence = async (id: string): Promise<void> => {
+  const saved = localStorage.getItem('cleverStaffAbsences');
+  if (saved) {
+    const absences: StaffAbsence[] = JSON.parse(saved);
+    const filtered = absences.filter(a => a.id !== id);
+    localStorage.setItem('cleverStaffAbsences', JSON.stringify(filtered));
+  }
+
+  if (isSupabaseAvailable()) {
+    try {
+      const { error } = await supabase!
+        .from('staff_absences' as any)
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting staff absence from Supabase:', error);
+    }
+  }
+};
+

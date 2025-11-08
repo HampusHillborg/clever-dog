@@ -20,12 +20,26 @@ import {
   saveMeeting,
   updateMeeting,
   deleteMeeting,
+  getEmployees,
+  saveEmployee,
+  deleteEmployee,
+  getStaffSchedules,
+  saveStaffSchedule,
+  deleteStaffSchedule,
+  getStaffAbsences,
+  saveStaffAbsence,
+  updateAbsenceStatus,
+  deleteStaffAbsence,
   type BoxSettings,
   type Application,
-  type Meeting
+  type Meeting,
+  type Employee,
+  type StaffSchedule,
+  type StaffAbsence
 } from '../lib/database';
 import { PRICES, VAT_RATE } from '../lib/prices';
 import { signIn, signOut, getCurrentUser, onAuthStateChange, type AuthUser } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 
 interface ContractData {
   // Common fields
@@ -250,6 +264,19 @@ const AdminPage: React.FC = () => {
     loadBoxSettings();
   }, []);
 
+  // Load employees from database on mount
+  useEffect(() => {
+    const loadEmployees = async () => {
+      try {
+        const loadedEmployees = await getEmployees();
+        setEmployees(loadedEmployees);
+      } catch (error) {
+        console.error('Error loading employees:', error);
+      }
+    };
+    loadEmployees();
+  }, []);
+
   // Save box settings to database and state
   const saveBoxSettings = async (settings: BoxSettings) => {
     setBoxSettings(settings);
@@ -268,6 +295,24 @@ const AdminPage: React.FC = () => {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [copyIncludeBoarding, setCopyIncludeBoarding] = useState(true);
   const [customCopyDate, setCustomCopyDate] = useState('');
+
+  // Employee management state
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [employeeForm, setEmployeeForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    location: '' as '' | 'malmo' | 'staffanstorp' | 'both',
+    role: 'employee' as 'employee' | 'platschef',
+    position: '',
+    hire_date: '',
+    notes: '',
+    password: '', // Only used when creating new employee (admin only)
+  });
+  const [employeeError, setEmployeeError] = useState('');
+  const [isSavingEmployee, setIsSavingEmployee] = useState(false);
 
   // Initialize currentPlanningDate to today when entering planning view (but not if coming from calendar)
   useEffect(() => {
@@ -536,6 +581,291 @@ const AdminPage: React.FC = () => {
       setCurrentUser(null);
       setEmail('');
       setPassword('');
+    }
+  };
+
+  // Employee management functions
+  const openEmployeeModal = (employee?: Employee) => {
+    if (employee) {
+      setEditingEmployee(employee);
+      setEmployeeForm({
+        name: employee.name,
+        email: employee.email || '',
+        phone: employee.phone || '',
+        location: employee.location || '',
+        role: (employee.role || 'employee') as 'employee' | 'platschef',
+        position: employee.position || '',
+        hire_date: employee.hire_date || '',
+        notes: employee.notes || '',
+        password: '', // Never show password when editing
+      });
+    } else {
+      setEditingEmployee(null);
+      setEmployeeForm({
+        name: '',
+        email: '',
+        phone: '',
+        location: '',
+        role: 'employee',
+        position: '',
+        hire_date: '',
+        notes: '',
+        password: '',
+      });
+    }
+    setEmployeeError('');
+    setIsEmployeeModalOpen(true);
+  };
+
+  const handleSaveEmployee = async () => {
+    setEmployeeError('');
+    setIsSavingEmployee(true);
+
+    try {
+      // Validate required fields
+      if (!employeeForm.name.trim() || !employeeForm.email.trim()) {
+        setEmployeeError('Namn och e-postadress krävs');
+        setIsSavingEmployee(false);
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(employeeForm.email)) {
+        setEmployeeError('Ogiltig e-postadress');
+        setIsSavingEmployee(false);
+        return;
+      }
+
+      // If password is provided, create new account via Netlify Function (admin only)
+      if (employeeForm.password && userRole === 'admin' && !editingEmployee && supabase) {
+        // Get current session token
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setEmployeeError('Du måste vara inloggad för att skapa användare');
+          setIsSavingEmployee(false);
+          return;
+        }
+
+        // Call Netlify Function to create user
+        const response = await fetch('/.netlify/functions/create-staff-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            email: employeeForm.email,
+            password: employeeForm.password,
+            name: employeeForm.name,
+            phone: employeeForm.phone || null,
+            location: employeeForm.location || null,
+            role: employeeForm.role,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          setEmployeeError(result.error || 'Kunde inte skapa användare');
+          setIsSavingEmployee(false);
+          return;
+        }
+
+        // User created successfully, now save employee record
+        const savedEmployee = await saveEmployee({
+          id: result.user.id,
+          name: employeeForm.name,
+          email: employeeForm.email,
+          phone: employeeForm.phone || undefined,
+          location: employeeForm.location || undefined,
+          role: employeeForm.role,
+          position: employeeForm.position || undefined,
+          hire_date: employeeForm.hire_date || undefined,
+          notes: employeeForm.notes || undefined,
+          is_active: true,
+        });
+
+        setEmployees(prev => {
+          const existing = prev.find(e => e.id === savedEmployee.id);
+          if (existing) {
+            return prev.map(e => e.id === savedEmployee.id ? savedEmployee : e);
+          }
+          return [...prev, savedEmployee];
+        });
+
+        setIsEmployeeModalOpen(false);
+        setEmployeeForm({
+          name: '',
+          email: '',
+          phone: '',
+          location: '',
+          role: 'employee',
+          position: '',
+          hire_date: '',
+          notes: '',
+          password: '',
+        });
+        setIsSavingEmployee(false);
+        return;
+      }
+
+      // If editing existing employee or linking to existing account (no password)
+      if (editingEmployee) {
+        // Update existing employee
+        const updatedEmployee = await saveEmployee({
+          id: editingEmployee.id,
+          name: employeeForm.name,
+          email: employeeForm.email,
+          phone: employeeForm.phone || undefined,
+          location: employeeForm.location || undefined,
+          role: employeeForm.role,
+          position: employeeForm.position || undefined,
+          hire_date: employeeForm.hire_date || undefined,
+          notes: employeeForm.notes || undefined,
+          is_active: editingEmployee.is_active,
+        });
+
+        setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+        setIsEmployeeModalOpen(false);
+        setIsSavingEmployee(false);
+        return;
+      }
+
+      // If no password and no existing employee, check if user exists
+      // For platschef: try to find existing user and link
+      if (!employeeForm.password && userRole === 'platschef' && supabase) {
+        // Try to find user by email in admin_users
+        const { data: existingUser } = await supabase
+          .from('admin_users' as any)
+          .select('id')
+          .eq('email', employeeForm.email)
+          .single();
+
+        if (existingUser && (existingUser as any).id) {
+            // Link to existing user
+            const savedEmployee = await saveEmployee({
+              id: (existingUser as any).id,
+              name: employeeForm.name,
+              email: employeeForm.email,
+              phone: employeeForm.phone || undefined,
+              location: employeeForm.location || undefined,
+              role: employeeForm.role,
+              position: employeeForm.position || undefined,
+              hire_date: employeeForm.hire_date || undefined,
+              notes: employeeForm.notes || undefined,
+              is_active: true,
+            });
+
+          setEmployees(prev => {
+            const existing = prev.find(e => e.id === savedEmployee.id);
+            if (existing) {
+              return prev.map(e => e.id === savedEmployee.id ? savedEmployee : e);
+            }
+            return [...prev, savedEmployee];
+          });
+
+          setIsEmployeeModalOpen(false);
+          setEmployeeForm({
+            name: '',
+            email: '',
+            phone: '',
+            location: '',
+            role: 'employee',
+            position: '',
+            hire_date: '',
+            notes: '',
+            password: '',
+          });
+          setIsSavingEmployee(false);
+          return;
+        } else {
+          setEmployeeError('Användare med denna e-postadress finns inte. Endast admin kan skapa nya konton.');
+          setIsSavingEmployee(false);
+          return;
+        }
+      }
+
+      // If no password and admin, ask if they want to create account
+      if (!employeeForm.password && userRole === 'admin' && supabase) {
+        const shouldCreate = confirm(
+          'Inget lösenord angivet. Vill du skapa ett nytt konto för denna anställd? Klicka OK för att skapa konto eller Avbryt för att länka till befintligt konto.'
+        );
+        
+        if (shouldCreate) {
+          setEmployeeError('Ange ett lösenord för att skapa nytt konto');
+          setIsSavingEmployee(false);
+          return;
+        } else {
+          // Try to find existing user
+          const { data: existingUser } = await supabase
+            .from('admin_users' as any)
+            .select('id')
+            .eq('email', employeeForm.email)
+            .single();
+
+          if (existingUser && (existingUser as any).id) {
+            const savedEmployee = await saveEmployee({
+              id: (existingUser as any).id,
+              name: employeeForm.name,
+              email: employeeForm.email,
+              phone: employeeForm.phone || undefined,
+              location: employeeForm.location || undefined,
+              role: employeeForm.role,
+              position: employeeForm.position || undefined,
+              hire_date: employeeForm.hire_date || undefined,
+              notes: employeeForm.notes || undefined,
+              is_active: true,
+            });
+
+            setEmployees(prev => {
+              const existing = prev.find(e => e.id === savedEmployee.id);
+              if (existing) {
+                return prev.map(e => e.id === savedEmployee.id ? savedEmployee : e);
+              }
+              return [...prev, savedEmployee];
+            });
+
+            setIsEmployeeModalOpen(false);
+            setEmployeeForm({
+              name: '',
+              email: '',
+              phone: '',
+              location: '',
+              role: 'employee',
+              position: '',
+              hire_date: '',
+              notes: '',
+              password: '',
+            });
+            setIsSavingEmployee(false);
+            return;
+          } else {
+            setEmployeeError('Användare med denna e-postadress finns inte. Ange ett lösenord för att skapa nytt konto.');
+            setIsSavingEmployee(false);
+            return;
+          }
+        }
+      }
+
+    } catch (error: any) {
+      console.error('Error saving employee:', error);
+      setEmployeeError(error.message || 'Ett fel uppstod vid sparning');
+      setIsSavingEmployee(false);
+    }
+  };
+
+  const handleDeleteEmployee = async (id: string) => {
+    if (!confirm('Är du säker på att du vill ta bort denna anställd?')) {
+      return;
+    }
+
+    try {
+      await deleteEmployee(id);
+      setEmployees(prev => prev.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      alert('Kunde inte ta bort anställd');
     }
   };
 
@@ -3098,10 +3428,116 @@ const AdminPage: React.FC = () => {
                     )}
                   </div>
                 );
-              })}
+              }              )}
             </div>
           </div>
         </div>
+
+        {/* Employee Management Section - Only for admin and platschef */}
+        {(userRole === 'admin' || userRole === 'platschef') && (
+          <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Anställda</h2>
+              <button
+                onClick={() => openEmployeeModal()}
+                className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
+              >
+                <FaPlus className="mr-2" /> Lägg till anställd
+              </button>
+            </div>
+
+            {userRole === 'admin' && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <FaInfoCircle className="inline mr-2" />
+                  Som admin kan du skapa nya inloggningskonton för anställda genom att ange ett lösenord när du skapar en ny anställd.
+                </p>
+              </div>
+            )}
+
+            {userRole === 'platschef' && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">
+                  <FaInfoCircle className="inline mr-2" />
+                  Som platschef kan du länka till befintliga konton genom att ange e-postadressen. Endast admin kan skapa nya konton.
+                </p>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Namn</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">E-post</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Telefon</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Plats</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Roll</th>
+                    <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Status</th>
+                    <th className="text-right py-2 px-3 text-sm font-semibold text-gray-700">Åtgärder</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {employees.map((employee) => (
+                    <tr key={employee.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-2 px-3 text-sm">{employee.name}</td>
+                      <td className="py-2 px-3 text-sm">{employee.email}</td>
+                      <td className="py-2 px-3 text-sm">{employee.phone || '-'}</td>
+                      <td className="py-2 px-3 text-sm">
+                        {employee.location === 'malmo' ? 'Malmö' : 
+                         employee.location === 'staffanstorp' ? 'Staffanstorp' : 
+                         employee.location === 'both' ? 'Båda' : '-'}
+                      </td>
+                      <td className="py-2 px-3 text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          employee.role === 'platschef' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {employee.role === 'platschef' ? 'Platschef' : 'Anställd'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-sm">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          employee.is_active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {employee.is_active ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-sm text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => openEmployeeModal(employee)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Redigera"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEmployee(employee.id)}
+                            className="text-red-600 hover:text-red-800"
+                            title="Ta bort"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {employees.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-gray-400 text-sm">
+                        Inga anställda registrerade
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -6485,6 +6921,194 @@ const AdminPage: React.FC = () => {
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
                 Avbryt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Employee Modal - Global, should appear in all views */}
+      {isEmployeeModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+              <h3 className="text-lg sm:text-xl font-bold">
+                {editingEmployee ? 'Redigera anställd' : 'Lägg till anställd'}
+              </h3>
+              <button
+                onClick={() => {
+                  setIsEmployeeModalOpen(false);
+                  setEmployeeForm({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    location: '',
+                    role: 'employee',
+                    position: '',
+                    hire_date: '',
+                    notes: '',
+                    password: '',
+                  });
+                  setEmployeeError('');
+                }}
+                className="text-gray-500 hover:text-gray-900 text-lg sm:text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto flex-1 p-4 sm:p-6">
+              {employeeError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-800">{employeeError}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Namn *</label>
+                  <input
+                    type="text"
+                    value={employeeForm.name}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Anna Andersson"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">E-postadress *</label>
+                  <input
+                    type="email"
+                    value={employeeForm.email}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., anna@example.com"
+                    disabled={!!editingEmployee}
+                  />
+                  {editingEmployee && (
+                    <p className="text-xs text-gray-500 mt-1">E-postadress kan inte ändras</p>
+                  )}
+                </div>
+
+                {/* Password field - only for admin when creating new employee */}
+                {userRole === 'admin' && !editingEmployee && (
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lösenord {!editingEmployee && '(för att skapa nytt konto)'}
+                    </label>
+                    <input
+                      type="password"
+                      value={employeeForm.password}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, password: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="Lämna tomt för att länka till befintligt konto"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Ange ett lösenord för att skapa ett nytt inloggningskonto. Lämna tomt för att länka till ett befintligt konto.
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                  <input
+                    type="text"
+                    value={employeeForm.phone}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., 070-123 45 67"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Plats</label>
+                  <select
+                    value={employeeForm.location}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, location: e.target.value as 'malmo' | 'staffanstorp' | 'both' | '' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">Välj plats</option>
+                    <option value="malmo">Malmö</option>
+                    <option value="staffanstorp">Staffanstorp</option>
+                    <option value="both">Båda</option>
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Roll</label>
+                  <select
+                    value={employeeForm.role}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, role: e.target.value as 'employee' | 'platschef' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="employee">Anställd</option>
+                    <option value="platschef">Platschef</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                  <input
+                    type="text"
+                    value={employeeForm.position}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, position: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Hundvårdare"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Anställningsdatum</label>
+                  <input
+                    type="date"
+                    value={employeeForm.hire_date}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, hire_date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
+                  <textarea
+                    value={employeeForm.notes}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    rows={3}
+                    placeholder="Extra information om anställd..."
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2 p-6 border-t border-gray-200">
+              <button
+                onClick={() => {
+                  setIsEmployeeModalOpen(false);
+                  setEmployeeForm({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    location: '',
+                    role: 'employee',
+                    position: '',
+                    hire_date: '',
+                    notes: '',
+                    password: '',
+                  });
+                  setEmployeeError('');
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                disabled={isSavingEmployee}
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleSaveEmployee}
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                disabled={isSavingEmployee}
+              >
+                {isSavingEmployee ? 'Sparar...' : editingEmployee ? 'Uppdatera' : 'Spara'}
               </button>
             </div>
           </div>
