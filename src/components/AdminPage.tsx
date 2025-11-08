@@ -54,7 +54,6 @@ interface Dog {
   phone: string;
   email?: string; // Optional email field for matching
   notes?: string;
-  color: string; // For visual distinction
   locations: ('malmo' | 'staffanstorp')[]; // Which daycares the dog belongs to (can be both)
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean; // Whether the dog is active (default: true)
@@ -163,7 +162,6 @@ const AdminPage: React.FC = () => {
     phone: '',
     email: '',
     notes: '',
-    color: 'bg-gray-100 text-gray-800',
     locations: ['staffanstorp'] as ('malmo' | 'staffanstorp')[],
     type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '',
     isActive: true,
@@ -653,10 +651,6 @@ const AdminPage: React.FC = () => {
       return;
     }
 
-    const colors = ['bg-blue-100 text-blue-800', 'bg-green-100 text-green-800', 'bg-purple-100 text-purple-800', 
-                    'bg-pink-100 text-pink-800', 'bg-orange-100 text-orange-800', 'bg-yellow-100 text-yellow-800'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-
     const newDog: Dog = {
       id: editingDog?.id || `${Date.now()}`,
       name: dogForm.name,
@@ -666,7 +660,6 @@ const AdminPage: React.FC = () => {
       phone: dogForm.phone,
       email: dogForm.email || undefined,
       notes: dogForm.notes,
-      color: dogForm.color || 'bg-gray-100 text-gray-800',
       locations: dogForm.locations,
       // Only set type if it's not empty string
       type: (dogForm.type && dogForm.type.trim() !== '') 
@@ -705,7 +698,7 @@ const AdminPage: React.FC = () => {
     });
     setIsDogModalOpen(false);
     setEditingDog(null);
-    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', color: 'bg-gray-100 text-gray-800', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
+    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
   };
 
   const deleteDog = async (id: string) => {
@@ -736,7 +729,6 @@ const AdminPage: React.FC = () => {
         phone: dog.phone,
         email: dog.email || '',
         notes: dog.notes || '',
-        color: dog.color || 'bg-gray-100 text-gray-800',
         locations: dog.locations,
         type: dog.type || '',
         isActive: dog.isActive !== undefined ? dog.isActive : true,
@@ -747,7 +739,7 @@ const AdminPage: React.FC = () => {
       });
     } else {
       setEditingDog(null);
-      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', color: 'bg-gray-100 text-gray-800', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
+      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
     }
     setIsDogModalOpen(true);
   };
@@ -2451,7 +2443,7 @@ const AdminPage: React.FC = () => {
               draggable
               onDragStart={(e) => handleDragStart(e, dog)}
               onDragEnd={handleDragEnd}
-              className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 ${dog.color} relative group border-2 border-transparent hover:border-primary`}
+              className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 bg-gray-100 text-gray-800 relative group border-2 border-transparent hover:border-primary`}
               title="Dra för att flytta"
             >
               <button
@@ -2742,7 +2734,7 @@ const AdminPage: React.FC = () => {
                         draggable
                         onDragStart={(e) => handleDragStart(e, dog)}
                         onDragEnd={handleDragEnd}
-                        className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 ${dog.color} relative group border-2 border-orange-400 hover:border-orange-500`}
+                        className={`p-4 rounded-xl cursor-move hover:shadow-lg transition-all duration-200 bg-gray-100 text-gray-800 relative group border-2 border-orange-400 hover:border-orange-500`}
                         title="Dra för att flytta"
                       >
                         <button
@@ -2843,7 +2835,7 @@ const AdminPage: React.FC = () => {
                             draggable
                             onDragStart={(e) => handleDragStart(e, dog)}
                             onDragEnd={handleDragEnd}
-                            className={`p-2.5 rounded-lg ${dog.color} relative cursor-move hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-primary/30 group`}
+                            className={`p-2.5 rounded-lg bg-gray-100 text-gray-800 relative cursor-move hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-primary/30 group`}
                             title="Dra för att flytta"
                           >
                             <button
@@ -3110,7 +3102,7 @@ const AdminPage: React.FC = () => {
                           {record.dogName}
                         </div>
                         {dog && (
-                          <div className={`px-2 py-1 rounded text-xs font-semibold ${dog.color} inline-block mt-1`}>
+                          <div className={`px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800 inline-block mt-1`}>
                             {dog.type === 'fulltime' ? 'Heltid' :
                              dog.type === 'parttime-3' ? 'Deltid 3 dagar' :
                              dog.type === 'parttime-2' ? 'Deltid 2 dagar' :
@@ -3314,9 +3306,7 @@ const AdminPage: React.FC = () => {
                         return (
                           <div 
                             key={dogIndex}
-                            className={`text-xs p-1 rounded flex items-center gap-1 ${
-                              dog?.color || 'bg-gray-200'
-                            }`}
+                            className={`text-xs p-1 rounded flex items-center gap-1 bg-gray-100 text-gray-800`}
                             title={
                               isBoarding && !isPlanned 
                                 ? 'Hundpensionat' 
@@ -3970,7 +3960,7 @@ const AdminPage: React.FC = () => {
             <div key={dog.id} className="bg-white rounded-lg shadow-lg p-4 border-l-4 border-primary">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <div className={`px-3 py-1 rounded-full text-sm font-semibold ${dog.color} inline-block`}>
+                  <div className={`px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800 inline-block`}>
                     {dog.name}
                   </div>
                   <div className="flex gap-1 mt-1">
@@ -4358,9 +4348,6 @@ const AdminPage: React.FC = () => {
         });
       } else {
         // Create new dog from application
-        const colors = ['bg-blue-100 text-blue-800', 'bg-green-100 text-green-800', 'bg-purple-100 text-purple-800', 
-                        'bg-pink-100 text-pink-800', 'bg-orange-100 text-orange-800', 'bg-yellow-100 text-yellow-800'];
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
         
         // Determine dog type from service_type
         let dogType: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
@@ -4387,7 +4374,6 @@ const AdminPage: React.FC = () => {
           phone: application.owner_phone || '',
           email: application.owner_email || undefined,
           notes: `${application.dog_socialization ? `Socialisering: ${application.dog_socialization}\n` : ''}${application.problem_behaviors ? `Problembeteenden: ${application.problem_behaviors}\n` : ''}${application.allergies ? `Allergier: ${application.allergies}\n` : ''}${application.message ? `Meddelande: ${application.message}` : ''}`.trim() || undefined,
-          color: randomColor,
           locations: [application.location],
           type: dogType,
           isActive: true,
@@ -5690,8 +5676,8 @@ const AdminPage: React.FC = () => {
       {/* Dog Modal - Global, should appear in all views */}
       {isDogModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h3 className="text-xl font-bold">
                 {(userRole === 'employee') ? 'Visa hundinformation' : (editingDog ? 'Redigera hund' : 'Lägg till hund')}
               </h3>
@@ -5703,15 +5689,16 @@ const AdminPage: React.FC = () => {
               </button>
             </div>
             
-            {userRole === 'employee' && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-sm text-yellow-800">
-                  Du har endast läsbehörighet. Du kan inte redigera eller lägga till hundar.
-                </p>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="overflow-y-auto flex-1 p-6">
+              {userRole === 'employee' && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-sm text-yellow-800">
+                    Du har endast läsbehörighet. Du kan inte redigera eller lägga till hundar.
+                  </p>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hundens namn *</label>
                 <input
@@ -5788,25 +5775,6 @@ const AdminPage: React.FC = () => {
                   placeholder="e.g., 941000016851106"
                   disabled={userRole === 'employee'}
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Färg</label>
-                <select
-                  value={dogForm.color}
-                  onChange={(e) => setDogForm({ ...dogForm, color: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  disabled={userRole === 'employee'}
-                >
-                  <option value="bg-gray-100 text-gray-800">Grå</option>
-                  <option value="bg-blue-100 text-blue-800">Blå</option>
-                  <option value="bg-green-100 text-green-800">Grön</option>
-                  <option value="bg-purple-100 text-purple-800">Lila</option>
-                  <option value="bg-pink-100 text-pink-800">Rosa</option>
-                  <option value="bg-orange-100 text-orange-800">Orange</option>
-                  <option value="bg-yellow-100 text-yellow-800">Gul</option>
-                  <option value="bg-red-100 text-red-800">Röd</option>
-                  <option value="bg-indigo-100 text-indigo-800">Indigo</option>
-                </select>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Platser *</label>
@@ -5934,8 +5902,9 @@ const AdminPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            </div>
             
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="flex justify-end gap-2 p-6 border-t border-gray-200">
               <button
                 onClick={() => setIsDogModalOpen(false)}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"

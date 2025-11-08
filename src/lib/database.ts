@@ -10,7 +10,6 @@ export type Dog = {
   phone: string;
   email?: string; // Optional email field for matching
   notes?: string;
-  color: string;
   locations: ('malmo' | 'staffanstorp')[];
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean;
@@ -118,7 +117,6 @@ export const getDogs = async (): Promise<Dog[]> => {
       phone: dog.phone || '',
       email: dog.email || undefined,
       notes: dog.notes ? String(dog.notes) : undefined,
-      color: dog.color || 'bg-gray-100 text-gray-800',
       locations: locations,
       type: type,
       isActive: dog.is_active !== undefined ? dog.is_active : true,
@@ -173,7 +171,6 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
       phone: dog.phone,
       email: dog.email || null,
       notes: dog.notes || null,
-      color: dog.color,
       locations: dog.locations,
         type: dog.type || null,
         is_active: dog.isActive !== undefined ? dog.isActive : true,
@@ -225,7 +222,6 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     phone: dbDog.phone || '',
     email: dbDog.email || undefined,
     notes: dbDog.notes ? String(dbDog.notes) : undefined,
-    color: dbDog.color || 'bg-gray-100 text-gray-800',
     locations: locations,
     type: type,
     isActive: dbDog.is_active !== undefined ? dbDog.is_active : true,
@@ -233,6 +229,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     ownerAddress: dbDog.owner_address || undefined,
     ownerCity: dbDog.owner_city || undefined,
     ownerPersonalNumber: dbDog.owner_personal_number || undefined,
+    chipNumber: dbDog.chip_number || undefined,
   };
   
   // If the ID changed (old format to UUID), we need to update localStorage
