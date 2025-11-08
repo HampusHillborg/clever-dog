@@ -160,26 +160,32 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     }
   }
 
+  // Prepare data for database
+  const upsertData: any = {
+    id: dogId,
+    name: dog.name,
+    breed: dog.breed,
+    age: dog.age,
+    owner: dog.owner,
+    phone: dog.phone,
+    email: dog.email || null,
+    notes: dog.notes || null,
+    color: 'bg-gray-100 text-gray-800', // Default color - remove this when color column is removed from database
+    locations: dog.locations,
+    type: dog.type || null,
+    is_active: dog.isActive !== undefined ? dog.isActive : true,
+    // Contract fields
+    owner_address: dog.ownerAddress || null,
+    owner_city: dog.ownerCity || null,
+    owner_personal_number: dog.ownerPersonalNumber || null,
+    chip_number: dog.chipNumber || null,
+  };
+
+  console.log('Saving dog to database:', upsertData); // Debug log
+
   const { data, error } = await supabase!
     .from('dogs')
-    .upsert({
-      id: dogId,
-      name: dog.name,
-      breed: dog.breed,
-      age: dog.age,
-      owner: dog.owner,
-      phone: dog.phone,
-      email: dog.email || null,
-      notes: dog.notes || null,
-      locations: dog.locations,
-        type: dog.type || null,
-        is_active: dog.isActive !== undefined ? dog.isActive : true,
-        // Contract fields
-        owner_address: dog.ownerAddress || null,
-        owner_city: dog.ownerCity || null,
-        owner_personal_number: dog.ownerPersonalNumber || null,
-        chip_number: dog.chipNumber || null,
-      } as any, {
+    .upsert(upsertData as any, {
       onConflict: 'id'
     })
     .select()
