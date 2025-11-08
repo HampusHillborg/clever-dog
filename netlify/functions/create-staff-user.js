@@ -190,10 +190,10 @@ exports.handler = async function(event, context) {
 
     // Validate role if provided
     const employeeRole = role || 'employee';
-    if (!['employee', 'platschef'].includes(employeeRole)) {
+    if (!['admin', 'employee', 'platschef'].includes(employeeRole)) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Role must be either "employee" or "platschef"' }),
+        body: JSON.stringify({ error: 'Role must be either "admin", "employee", or "platschef"' }),
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Content-Type': 'application/json',
@@ -245,14 +245,12 @@ exports.handler = async function(event, context) {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Update admin_users role if needed (should be 'employee' by default from trigger)
-    // But we might want to set it to 'platschef' if that's what was requested
-    // Note: admin_users.role is separate from employees.role
-    // admin_users.role controls access (admin/employee/platschef)
+    // Note: admin_users.role controls access (admin/employee/platschef)
     // employees.role is just metadata (employee/platschef)
-    if (employeeRole === 'platschef') {
+    if (employeeRole === 'admin' || employeeRole === 'platschef') {
       const { error: updateRoleError } = await supabaseAdmin
         .from('admin_users')
-        .update({ role: 'platschef' })
+        .update({ role: employeeRole })
         .eq('id', userId);
 
       if (updateRoleError) {

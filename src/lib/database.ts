@@ -1415,6 +1415,27 @@ export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'upda
         : await query.insert(insertData).select().single();
 
       if (!error && data) {
+        // Update role in admin_users if role is provided and different
+        if (role && existingIndex >= 0) {
+          // Get current role from admin_users
+          const { data: currentAdminUser } = await supabase!
+            .from('admin_users' as any)
+            .select('role')
+            .eq('id', employeeRecord.id)
+            .maybeSingle();
+          
+          // Update role if it has changed
+          if (currentAdminUser && (currentAdminUser as any).role !== role) {
+            const { error: roleUpdateError } = await (supabase!.from('admin_users' as any) as any)
+              .update({ role: role })
+              .eq('id', employeeRecord.id);
+            
+            if (roleUpdateError) {
+              console.error('Error updating role in admin_users:', roleUpdateError);
+            }
+          }
+        }
+
         // Update localStorage with server response
         const index = employees.findIndex(e => e.id === employeeRecord.id);
         const updatedEmployee: Employee = {

@@ -331,7 +331,7 @@ const AdminPage: React.FC = () => {
     email: '',
     phone: '',
     location: '' as '' | 'malmo' | 'staffanstorp' | 'both',
-    role: 'employee' as 'employee' | 'platschef',
+    role: 'employee' as 'admin' | 'employee' | 'platschef',
     position: '',
     hire_date: '',
     notes: '',
@@ -812,7 +812,7 @@ const AdminPage: React.FC = () => {
         email: employee.email || '',
         phone: employee.phone || '',
         location: employee.location || '',
-        role: (employee.role || 'employee') as 'employee' | 'platschef',
+        role: (employee.role || 'employee') as 'admin' | 'employee' | 'platschef',
         position: employee.position || '',
         hire_date: employee.hire_date || '',
         notes: employee.notes || '',
@@ -8091,12 +8091,19 @@ const AdminPage: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Roll</label>
                   <select
                     value={employeeForm.role}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, role: e.target.value as 'employee' | 'platschef' })}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, role: e.target.value as 'admin' | 'employee' | 'platschef' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    disabled={!!editingEmployee && editingEmployee.role === 'admin' && userRole !== 'admin'}
                   >
+                    {userRole === 'admin' && (
+                      <option value="admin">Admin</option>
+                    )}
                     <option value="employee">Anställd</option>
                     <option value="platschef">Platschef</option>
                   </select>
+                  {editingEmployee && editingEmployee.role === 'admin' && userRole !== 'admin' && (
+                    <p className="text-xs text-gray-500 mt-1">Endast admin kan ändra admin-roller</p>
+                  )}
                 </div>
 
                 <div>
