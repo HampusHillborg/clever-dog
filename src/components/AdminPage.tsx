@@ -4380,7 +4380,8 @@ const AdminPage: React.FC = () => {
           // Contract fields from application
           ownerAddress: application.owner_address || undefined,
           ownerCity: application.owner_city || undefined,
-          ownerPersonalNumber: application.owner_personnummer || undefined
+          ownerPersonalNumber: application.owner_personnummer || undefined,
+          chipNumber: application.dog_chip_number || undefined
         };
         
         const savedDog = await saveDogToDb(newDog);
