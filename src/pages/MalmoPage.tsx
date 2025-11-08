@@ -64,6 +64,22 @@ const MalmoPage: React.FC = () => {
     updateOGTag('og:title', 'Clever Dog - Hunddagis Malmö Videdal | Professionell Hundomsorg');
     updateOGTag('og:description', 'Modernt hunddagis i Malmö Videdal. Godkänd av Länsstyrelsen. Hundpassning, hundpensionat, social walks.');
     updateOGTag('og:url', 'https://cleverdog.se/malmo');
+    
+    // Update Twitter tags
+    const updateTwitterTag = (name: string, content: string) => {
+      let twitterTag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
+      if (!twitterTag) {
+        twitterTag = document.createElement('meta');
+        twitterTag.name = name;
+        document.head.appendChild(twitterTag);
+      }
+      twitterTag.content = content;
+    };
+    
+    updateTwitterTag('twitter:card', 'summary_large_image');
+    updateTwitterTag('twitter:title', 'Clever Dog - Hunddagis Malmö Videdal | Professionell Hundomsorg');
+    updateTwitterTag('twitter:description', 'Modernt hunddagis i Malmö Videdal. Godkänd av Länsstyrelsen. Hundpassning, hundpensionat, social walks.');
+    updateTwitterTag('twitter:image', 'https://cleverdog.se/favicon.png');
   }, []);
 
   // Preload hero images immediately
