@@ -2745,92 +2745,96 @@ const AdminPage: React.FC = () => {
     return (
       <div className="space-y-3 sm:space-y-6">
         {/* Date Selector and Reset Button */}
-        <div className="bg-white rounded-xl shadow-md p-3 sm:p-4 border border-gray-200">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap">Datum:</label>
-                <input
-                  type="date"
-                  value={currentPlanningDate}
-                  onChange={(e) => setCurrentPlanningDate(e.target.value)}
-                  className="flex-1 sm:flex-none px-2 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg bg-white text-gray-800 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-              
-              {/* Date Navigation */}
-              <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => navigateWeek('prev')}
-                  className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg hover:bg-gray-300 transition-colors"
-                  title="Föregående vecka"
-                >
-                  <span className="hidden sm:inline">← Vecka</span>
-                  <span className="sm:hidden">← V</span>
-                </button>
-                <button
-                  onClick={() => navigateDate(-1)}
-                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg hover:bg-gray-300 transition-colors"
-                  title="Föregående dag"
-                >
-                  ←
-                </button>
-                <button
-                  onClick={() => setCurrentPlanningDate(new Date().toISOString().split('T')[0])}
-                  className={`flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${isToday ? 'bg-primary text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
-                  title="Gå till idag"
-                >
-                  Idag
-                </button>
-                <button
-                  onClick={() => navigateDate(1)}
-                  className="px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg hover:bg-gray-300 transition-colors"
-                  title="Nästa dag"
-                >
-                  →
-                </button>
-                <button
-                  onClick={() => navigateWeek('next')}
-                  className="flex-1 sm:flex-none px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-200 text-gray-700 text-xs sm:text-sm rounded-lg hover:bg-gray-300 transition-colors"
-                  title="Nästa vecka"
-                >
-                  <span className="hidden sm:inline">Vecka →</span>
-                  <span className="sm:hidden">V →</span>
-                </button>
-              </div>
-
-              {/* Date Display */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-base sm:text-lg font-bold text-primary">
-                  {formatDateDisplay(currentPlanningDate)}
-                </span>
-                {isToday && (
-                  <span className="px-2 py-1 bg-primary text-white text-xs font-semibold rounded-full">
-                    Idag
-                  </span>
-                )}
-              </div>
-
-              {/* Planned Dogs Counter */}
-              <div className="flex items-center gap-2 bg-blue-50 border-2 border-blue-300 rounded-lg px-3 sm:px-4 py-1.5 sm:py-2 w-full sm:w-auto">
-                <span className="text-xs sm:text-sm font-semibold text-gray-700">Inplanerade hundar:</span>
-                <span className="text-lg sm:text-xl font-bold text-blue-700">{plannedDogsCount}</span>
-              </div>
+        <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-200">
+          {/* Top Row: Date Input and Display */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <label className="text-sm sm:text-base font-semibold text-gray-700 whitespace-nowrap">Datum:</label>
+              <input
+                type="date"
+                value={currentPlanningDate}
+                onChange={(e) => setCurrentPlanningDate(e.target.value)}
+                className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            
+            {/* Date Display with Today Badge */}
+            <div className="flex items-center gap-2">
+              <span className="text-lg sm:text-xl font-bold text-primary">
+                {formatDateDisplay(currentPlanningDate)}
+              </span>
+              {isToday && (
+                <span className="px-3 py-1 bg-primary text-white text-xs sm:text-sm font-semibold rounded-full">
+                  Idag
+                </span>
+              )}
+            </div>
+
+            {/* Planned Dogs Counter */}
+            <div className="flex items-center gap-2 bg-blue-50 border-2 border-blue-300 rounded-lg px-4 py-2">
+              <span className="text-sm sm:text-base font-semibold text-gray-700">Inplanerade hundar:</span>
+              <span className="text-xl sm:text-2xl font-bold text-blue-700">{plannedDogsCount}</span>
+            </div>
+          </div>
+
+          {/* Bottom Row: Navigation and Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            {/* Date Navigation */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => navigateWeek('prev')}
+                className="px-3 sm:px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+                title="Föregående vecka"
+              >
+                <span className="hidden sm:inline">← Vecka</span>
+                <span className="sm:hidden">← V</span>
+              </button>
+              <button
+                onClick={() => navigateDate(-1)}
+                className="px-3 sm:px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+                title="Föregående dag"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => setCurrentPlanningDate(new Date().toISOString().split('T')[0])}
+                className={`px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${isToday ? 'bg-primary text-white' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
+                title="Gå till idag"
+              >
+                Idag
+              </button>
+              <button
+                onClick={() => navigateDate(1)}
+                className="px-3 sm:px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+                title="Nästa dag"
+              >
+                →
+              </button>
+              <button
+                onClick={() => navigateWeek('next')}
+                className="px-3 sm:px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 transition-colors"
+                title="Nästa vecka"
+              >
+                <span className="hidden sm:inline">Vecka →</span>
+                <span className="sm:hidden">V →</span>
+              </button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsCopyModalOpen(true)}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
               >
-                <FaCopy className="text-xs sm:text-sm" />
+                <FaCopy className="text-sm" />
                 <span className="hidden sm:inline">Kopiera planering</span>
                 <span className="sm:hidden">Kopiera</span>
               </button>
               <button
                 onClick={() => resetCages(location)}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-red-500 text-white text-xs sm:text-sm rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors shadow-sm"
               >
-                <FaTrash className="text-xs sm:text-sm" />
+                <FaTrash className="text-sm" />
                 <span className="hidden sm:inline">Återställ burar</span>
                 <span className="sm:hidden">Återställ</span>
               </button>
