@@ -182,6 +182,8 @@ const AdminPage: React.FC = () => {
   const [selectedDogForContract, setSelectedDogForContract] = useState<string>('');
   const [contractDogSearch, setContractDogSearch] = useState<string>('');
   const [isContractDogDropdownOpen, setIsContractDogDropdownOpen] = useState<boolean>(false);
+  // Boarding dog dropdown state
+  const [isBoardingDogDropdownOpen, setIsBoardingDogDropdownOpen] = useState<boolean>(false);
   // Search state for dogs tab
   const [dogsTabSearch, setDogsTabSearch] = useState<string>('');
   const [dogsLocationFilter, setDogsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp' | 'both'>('all');
@@ -820,6 +822,7 @@ const AdminPage: React.FC = () => {
     setBoardingForm({ startDate: '', endDate: '', notes: '' });
     setSelectedDogForBoarding('');
     setBoardingDogSearch(''); // Clear search when closing
+    setIsBoardingDogDropdownOpen(false); // Close dropdown when closing modal
     setEditingBoardingRecord(null);
   };
 
@@ -854,6 +857,7 @@ const AdminPage: React.FC = () => {
       setBoardingForm({ startDate: '', endDate: '', notes: '' });
       setSelectedDogForBoarding('');
       setBoardingDogSearch(''); // Clear search when opening new
+      setIsBoardingDogDropdownOpen(false); // Close dropdown when opening new
     }
     setIsBoardingModalOpen(true);
     // Store the location for use in saveBoardingRecord
@@ -964,6 +968,25 @@ const AdminPage: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isContractDogDropdownOpen]);
+
+  // Close boarding dog dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isBoardingDogDropdownOpen && !target.closest('.boarding-dog-dropdown')) {
+        setIsBoardingDogDropdownOpen(false);
+        setBoardingDogSearch('');
+      }
+    };
+
+    if (isBoardingDogDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isBoardingDogDropdownOpen]);
 
   const getBoardingRecordsByMonth = (records: BoardingRecord[], year: string) => {
     const recordsByMonth: { [key: string]: BoardingRecord[] } = {};
@@ -5602,6 +5625,7 @@ const AdminPage: React.FC = () => {
                 onClick={() => {
                   setIsBoardingModalOpen(false);
                   setBoardingDogSearch(''); // Clear search when closing
+                  setIsBoardingDogDropdownOpen(false); // Close dropdown when closing modal
                 }}
                 className="text-gray-500 hover:text-gray-900"
               >
@@ -5610,44 +5634,83 @@ const AdminPage: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 relative boarding-dog-dropdown">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Välj hund *</label>
-                {/* Search input */}
-                <input
-                  type="text"
-                  placeholder="Sök på namn eller ägare..."
-                  value={boardingDogSearch}
-                  onChange={(e) => setBoardingDogSearch(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                <select
-                  value={selectedDogForBoarding}
-                  onChange={(e) => setSelectedDogForBoarding(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Välj hund</option>
-                  {dogs
-                    .filter(dog => {
-                      const matchesLocation = dog.locations.includes((window as any).currentBoardingLocation);
-                      const matchesSearch = !boardingDogSearch.trim() || 
-                        dog.name.toLowerCase().includes(boardingDogSearch.toLowerCase()) ||
-                        dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
-                      return matchesLocation && matchesSearch;
-                    })
-                    .map(dog => (
-                      <option key={dog.id} value={dog.id}>
-                        {dog.name} - {dog.owner} ({dog.locations.map(l => l === 'malmo' ? 'Malmö' : 'Staffanstorp').join(', ')})
-                      </option>
-                    ))}
-                </select>
-                {boardingDogSearch.trim() && dogs.filter(dog => {
-                  const matchesLocation = dog.locations.includes((window as any).currentBoardingLocation);
-                  const matchesSearch = dog.name.toLowerCase().includes(boardingDogSearch.toLowerCase()) ||
-                    dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
-                  return matchesLocation && matchesSearch;
-                }).length === 0 && (
-                  <p className="text-sm text-gray-500 mt-2">Inga hundar matchar sökningen</p>
-                )}
+                <div className="relative">
+                  <div
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary focus-within:border-primary cursor-pointer bg-white flex items-center justify-between"
+                    onClick={() => setIsBoardingDogDropdownOpen(!isBoardingDogDropdownOpen)}
+                  >
+                    <span className={selectedDogForBoarding ? "text-gray-900" : "text-gray-500"}>
+                      {selectedDogForBoarding ? (
+                        `${dogs.find(d => d.id === selectedDogForBoarding)?.name} - ${dogs.find(d => d.id === selectedDogForBoarding)?.owner}`
+                      ) : (
+                        '-- Välj hund --'
+                      )}
+                    </span>
+                    <svg 
+                      className={`w-5 h-5 text-gray-400 transition-transform ${isBoardingDogDropdownOpen ? 'transform rotate-180' : ''}`}
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                  {isBoardingDogDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-hidden">
+                      <div className="p-2 border-b border-gray-200">
+                        <input
+                          type="text"
+                          placeholder="Sök på hund eller ägare namn..."
+                          value={boardingDogSearch}
+                          onChange={(e) => setBoardingDogSearch(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {dogs
+                          .filter(dog => {
+                            const matchesLocation = dog.locations.includes((window as any).currentBoardingLocation);
+                            const matchesActive = dog.isActive !== false;
+                            const matchesSearch = !boardingDogSearch.trim() || 
+                              dog.name.toLowerCase().includes(boardingDogSearch.toLowerCase()) ||
+                              dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
+                            return matchesLocation && matchesActive && matchesSearch;
+                          })
+                          .map(dog => (
+                            <div
+                              key={dog.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedDogForBoarding(dog.id);
+                                setIsBoardingDogDropdownOpen(false);
+                                setBoardingDogSearch('');
+                              }}
+                              className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${
+                                selectedDogForBoarding === dog.id ? 'bg-blue-50' : ''
+                              }`}
+                            >
+                              {dog.name} - {dog.owner}
+                            </div>
+                          ))}
+                        {boardingDogSearch.trim() && dogs.filter(dog => {
+                          const matchesLocation = dog.locations.includes((window as any).currentBoardingLocation);
+                          const matchesActive = dog.isActive !== false;
+                          const matchesSearch = dog.name.toLowerCase().includes(boardingDogSearch.toLowerCase()) ||
+                            dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
+                          return matchesLocation && matchesActive && matchesSearch;
+                        }).length === 0 && (
+                          <div className="px-3 py-2 text-sm text-gray-500">
+                            Inga hundar matchar sökningen
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Startdatum *</label>
@@ -5681,7 +5744,11 @@ const AdminPage: React.FC = () => {
             
             <div className="flex justify-end gap-2 mt-6">
               <button
-                onClick={() => setIsBoardingModalOpen(false)}
+                onClick={() => {
+                  setIsBoardingModalOpen(false);
+                  setBoardingDogSearch('');
+                  setIsBoardingDogDropdownOpen(false);
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
               >
                 Avbryt
