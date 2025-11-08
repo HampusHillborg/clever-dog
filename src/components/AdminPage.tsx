@@ -163,6 +163,7 @@ const AdminPage: React.FC = () => {
     phone: '',
     email: '',
     notes: '',
+    color: 'bg-gray-100 text-gray-800',
     locations: ['staffanstorp'] as ('malmo' | 'staffanstorp')[],
     type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '',
     isActive: true,
@@ -665,7 +666,7 @@ const AdminPage: React.FC = () => {
       phone: dogForm.phone,
       email: dogForm.email || undefined,
       notes: dogForm.notes,
-      color: editingDog?.color || randomColor,
+      color: dogForm.color || 'bg-gray-100 text-gray-800',
       locations: dogForm.locations,
       // Only set type if it's not empty string
       type: (dogForm.type && dogForm.type.trim() !== '') 
@@ -704,7 +705,7 @@ const AdminPage: React.FC = () => {
     });
     setIsDogModalOpen(false);
     setEditingDog(null);
-    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
+    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', color: 'bg-gray-100 text-gray-800', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
   };
 
   const deleteDog = async (id: string) => {
@@ -735,6 +736,7 @@ const AdminPage: React.FC = () => {
         phone: dog.phone,
         email: dog.email || '',
         notes: dog.notes || '',
+        color: dog.color || 'bg-gray-100 text-gray-800',
         locations: dog.locations,
         type: dog.type || '',
         isActive: dog.isActive !== undefined ? dog.isActive : true,
@@ -745,7 +747,7 @@ const AdminPage: React.FC = () => {
       });
     } else {
       setEditingDog(null);
-      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
+      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', color: 'bg-gray-100 text-gray-800', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
     }
     setIsDogModalOpen(true);
   };
@@ -5787,6 +5789,25 @@ const AdminPage: React.FC = () => {
                   disabled={userRole === 'employee'}
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Färg</label>
+                <select
+                  value={dogForm.color}
+                  onChange={(e) => setDogForm({ ...dogForm, color: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  disabled={userRole === 'employee'}
+                >
+                  <option value="bg-gray-100 text-gray-800">Grå</option>
+                  <option value="bg-blue-100 text-blue-800">Blå</option>
+                  <option value="bg-green-100 text-green-800">Grön</option>
+                  <option value="bg-purple-100 text-purple-800">Lila</option>
+                  <option value="bg-pink-100 text-pink-800">Rosa</option>
+                  <option value="bg-orange-100 text-orange-800">Orange</option>
+                  <option value="bg-yellow-100 text-yellow-800">Gul</option>
+                  <option value="bg-red-100 text-red-800">Röd</option>
+                  <option value="bg-indigo-100 text-indigo-800">Indigo</option>
+                </select>
+              </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Platser *</label>
                 <div className="flex gap-4">
@@ -5872,6 +5893,46 @@ const AdminPage: React.FC = () => {
                 placeholder="Extra information om hunden..."
                 disabled={userRole === 'employee'}
               />
+            </div>
+            
+            {/* Contract Information Section */}
+            <div className="mt-6 border-t pt-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Kontraktinformation</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ägares adress</label>
+                  <input
+                    type="text"
+                    value={dogForm.ownerAddress}
+                    onChange={(e) => setDogForm({ ...dogForm, ownerAddress: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Storgatan 123"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ägares stad</label>
+                  <input
+                    type="text"
+                    value={dogForm.ownerCity}
+                    onChange={(e) => setDogForm({ ...dogForm, ownerCity: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Malmö"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ägares personnummer</label>
+                  <input
+                    type="text"
+                    value={dogForm.ownerPersonalNumber}
+                    onChange={(e) => setDogForm({ ...dogForm, ownerPersonalNumber: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., 199001011234"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+              </div>
             </div>
             
             <div className="flex justify-end gap-2 mt-6">
