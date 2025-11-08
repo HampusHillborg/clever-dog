@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 // import { useTranslation } from 'react-i18next'; // Unused for now
 import { useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaArrowRight } from 'react-icons/fa';
@@ -9,6 +9,30 @@ import dogLogo from '../assets/images/logos/Logo.png';
 const LocationSelector: React.FC = () => {
   // const { t } = useTranslation(); // Unused for now
   const navigate = useNavigate();
+
+  // Set SEO meta tags for homepage
+  useEffect(() => {
+    // Ensure homepage meta tags are correct
+    document.title = 'Clever Dog - Hunddagis Staffanstorp & Malmö Videdal | Professionell Hundomsorg';
+    
+    // Update canonical URL to homepage
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = 'https://cleverdog.se';
+    
+    // Update Open Graph URL
+    let ogUrl = document.querySelector('meta[property="og:url"]') as HTMLMetaElement;
+    if (!ogUrl) {
+      ogUrl = document.createElement('meta');
+      ogUrl.setAttribute('property', 'og:url');
+      document.head.appendChild(ogUrl);
+    }
+    ogUrl.content = 'https://cleverdog.se';
+  }, []);
 
   const locations = [
     {
