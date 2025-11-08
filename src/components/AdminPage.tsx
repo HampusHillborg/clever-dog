@@ -426,6 +426,41 @@ const AdminPage: React.FC = () => {
     };
   }, []);
 
+  // Set meta robots tag to prevent indexing of admin pages
+  useEffect(() => {
+    // Find or create robots meta tag
+    let robotsMeta = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
+    
+    if (!robotsMeta) {
+      robotsMeta = document.createElement('meta');
+      robotsMeta.name = 'robots';
+      document.head.appendChild(robotsMeta);
+    }
+    
+    // Set to noindex, nofollow for admin pages
+    robotsMeta.content = 'noindex, nofollow, noarchive, nosnippet';
+    
+    // Also update googlebot and bingbot
+    let googlebotMeta = document.querySelector('meta[name="googlebot"]') as HTMLMetaElement;
+    if (!googlebotMeta) {
+      googlebotMeta = document.createElement('meta');
+      googlebotMeta.name = 'googlebot';
+      document.head.appendChild(googlebotMeta);
+    }
+    googlebotMeta.content = 'noindex, nofollow';
+    
+    let bingbotMeta = document.querySelector('meta[name="bingbot"]') as HTMLMetaElement;
+    if (!bingbotMeta) {
+      bingbotMeta = document.createElement('meta');
+      bingbotMeta.name = 'bingbot';
+      document.head.appendChild(bingbotMeta);
+    }
+    bingbotMeta.content = 'noindex, nofollow';
+    
+    // Update page title
+    document.title = 'Admin - Clever Dog';
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

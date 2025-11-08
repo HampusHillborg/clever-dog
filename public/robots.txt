@@ -1,24 +1,31 @@
 User-agent: *
 Allow: /
 
+# Block admin pages from being indexed
+Disallow: /admin
+Disallow: /admin/*
+
 # Sitemap
 Sitemap: https://cleverdog.se/sitemap.xml
 
 # Crawl-delay for respectful crawling
 Crawl-delay: 1
 
-# Allow all search engines to index all content
-Disallow:
-
 # Specific rules for different bots
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /admin/*
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /admin/*
 
 User-agent: Slurp
 Allow: /
+Disallow: /admin
+Disallow: /admin/*
 
 # Block bad bots (if any)
 User-agent: AhrefsBot
