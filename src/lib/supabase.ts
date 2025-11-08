@@ -6,14 +6,27 @@ import type { Database } from './database.types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+console.log('Supabase initialization:', {
+  hasUrl: !!SUPABASE_URL,
+  hasKey: !!SUPABASE_ANON_KEY,
+  urlLength: SUPABASE_URL.length,
+  keyLength: SUPABASE_ANON_KEY.length
+});
+
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.warn('Supabase URL or Anon Key is missing. Using localStorage fallback.');
+  console.warn('Missing:', {
+    url: !SUPABASE_URL,
+    key: !SUPABASE_ANON_KEY
+  });
 }
 
 // Create Supabase client
 export const supabase = SUPABASE_URL && SUPABASE_ANON_KEY 
   ? createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
+
+console.log('Supabase client created:', supabase !== null);
 
 // Type definitions matching our database schema
 export type Dog = {

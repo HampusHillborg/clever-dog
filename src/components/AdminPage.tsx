@@ -4316,7 +4316,13 @@ const AdminPage: React.FC = () => {
 
   // Add dog directly from application
   const handleAddDogFromApplication = async (application: Application, matchExistingDogId?: string) => {
+    console.log('handleAddDogFromApplication called', { application, matchExistingDogId });
     try {
+      if (!application) {
+        console.error('No application provided');
+        alert('Ingen ansökan vald');
+        return;
+      }
       let newDog: Dog;
       
       if (matchExistingDogId) {
@@ -4384,16 +4390,20 @@ const AdminPage: React.FC = () => {
           chipNumber: application.dog_chip_number || undefined
         };
         
+        console.log('Creating new dog from application:', newDog);
         const savedDog = await saveDogToDb(newDog);
+        console.log('Dog saved successfully:', savedDog);
         setDogs([...dogs, savedDog]);
         
         // Update application status to added
+        console.log('Updating application status');
         await updateApplication(application.id, {
           status: 'added',
           matched_dog_id: savedDog.id,
           matched_by: currentUser?.id,
           matched_at: new Date().toISOString(),
         });
+        console.log('Application updated successfully');
       }
       
       // Reload applications to reflect status change
@@ -4414,7 +4424,11 @@ const AdminPage: React.FC = () => {
       alert('Hund tillagd!');
     } catch (error) {
       console.error('Error adding dog from application:', error);
-      alert('Fel uppstod vid tillägg av hund');
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      alert(`Fel uppstod vid tillägg av hund: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
 
@@ -4760,8 +4774,16 @@ const AdminPage: React.FC = () => {
                 {/* Add New Dog Button */}
                 <div className="flex justify-end gap-2">
                   <button
-                    onClick={() => handleAddDogFromApplication(selectedApplication)}
-                    className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium"
+                    onClick={() => {
+                      console.log('Button clicked, selectedApplication:', selectedApplication);
+                      if (!selectedApplication) {
+                        alert('Ingen ansökan vald');
+                        return;
+                      }
+                      handleAddDogFromApplication(selectedApplication);
+                    }}
+                    disabled={!selectedApplication}
+                    className={`px-6 py-2 bg-primary text-white rounded-md hover:bg-primary-dark font-medium ${!selectedApplication ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     Lägg till som ny hund
                   </button>

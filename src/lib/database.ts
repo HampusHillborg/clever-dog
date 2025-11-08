@@ -130,7 +130,9 @@ export const getDogs = async (): Promise<Dog[]> => {
 };
 
 export const saveDog = async (dog: Dog): Promise<Dog> => {
+  console.log('saveDog called, isSupabaseAvailable:', isSupabaseAvailable(), 'supabase:', supabase);
   if (!isSupabaseAvailable()) {
+    console.warn('Supabase not available, saving to localStorage');
     // Fallback to localStorage
     const saved = localStorage.getItem('cleverDogs');
     const dogs: Dog[] = saved ? JSON.parse(saved) : [];
@@ -183,16 +185,31 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
 
   console.log('Saving dog to database:', upsertData); // Debug log
 
-  const { data, error } = await supabase!
-    .from('dogs')
-    .upsert(upsertData as any, {
-      onConflict: 'id'
-    })
-    .select()
-    .single();
+  let data: any;
+  try {
+    const result = await supabase!
+      .from('dogs')
+      .upsert(upsertData as any, {
+        onConflict: 'id'
+      })
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error saving dog:', error);
+    if (result.error) {
+      console.error('Error saving dog to Supabase:', result.error);
+      console.error('Error details:', {
+        message: result.error.message,
+        details: result.error.details,
+        hint: result.error.hint,
+        code: result.error.code
+      });
+      throw result.error;
+    }
+
+    data = result.data;
+    console.log('Dog saved successfully to Supabase:', data);
+  } catch (error) {
+    console.error('Exception while saving dog:', error);
     throw error;
   }
 
