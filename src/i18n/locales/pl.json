@@ -251,6 +251,7 @@
       "yes": "Tak",
       "no": "Nie",
       "startDate": "Pożądana data rozpoczęcia",
+      "endDate": "Data zakończenia",
       "dogSocialization": "Jak pies zachowuje się z innymi psami?",
       "socializationPlaceholder": "Opisz jak pies zachowuje się w towarzystwie innych psów",
       "problemBehaviors": "Czy są jakieś problematyczne zachowania, o których powinniśmy wiedzieć?",

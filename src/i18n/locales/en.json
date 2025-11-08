@@ -254,6 +254,7 @@
       "yes": "Yes",
       "no": "No",
       "startDate": "Start date",
+      "endDate": "End date",
       "dogSocialization": "How does your dog interact with other dogs?",
       "socializationPlaceholder": "Describe how your dog behaves around other dogs",
       "problemBehaviors": "Any problem behaviors we should know about?",

@@ -254,6 +254,7 @@
       "yes": "Ja",
       "no": "Nej",
       "startDate": "Önskat startdatum",
+      "endDate": "Slutdatum",
       "dogSocialization": "Hur fungerar hunden med andra hundar?",
       "socializationPlaceholder": "Beskriv hur hunden beter sig runt andra hundar",
       "problemBehaviors": "Finns det problembeteenden vi bör veta om?",
