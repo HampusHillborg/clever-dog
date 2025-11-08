@@ -33,14 +33,27 @@ exports.handler = async function(event, context) {
 
   try {
     // Get environment variables
-    const supabaseUrl = process.env.SUPABASE_URL;
+    // Try without VITE_ prefix first (for Netlify Functions), then with VITE_ prefix as fallback
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
+    // Log which variables are missing (for debugging)
+    const missingVars = [];
+    if (!supabaseUrl) missingVars.push('SUPABASE_URL (or VITE_SUPABASE_URL)');
+    if (!supabaseServiceRoleKey) missingVars.push('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseAnonKey) missingVars.push('SUPABASE_ANON_KEY (or VITE_SUPABASE_ANON_KEY)');
+
+    if (missingVars.length > 0) {
       console.error('Supabase environment variables not configured');
+      console.error('Missing variables:', missingVars.join(', '));
+      console.error('Available SUPABASE env vars:', Object.keys(process.env).filter(k => k.includes('SUPABASE')).join(', ') || 'NONE');
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Server configuration error' }),
+        body: JSON.stringify({ 
+          error: 'Server configuration error',
+          details: `Missing environment variables: ${missingVars.join(', ')}. Please configure these in Netlify Dashboard → Site settings → Environment variables.`
+        }),
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Content-Type': 'application/json',
@@ -49,7 +62,7 @@ exports.handler = async function(event, context) {
     }
 
     // Get Authorization header (Supabase session token)
-    const authHeader = event.headers.authorization;
+    const authHeader = event.headers.authorization || event.headers.Authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return {
         statusCode: 401,
@@ -62,19 +75,6 @@ exports.handler = async function(event, context) {
     }
 
     const sessionToken = authHeader.split(' ')[1];
-
-    // Create Supabase client for user verification (anon key)
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-    if (!supabaseAnonKey) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Server configuration error' }),
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json',
-        },
-      };
-    }
 
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
     
@@ -111,7 +111,32 @@ exports.handler = async function(event, context) {
     }
 
     // Parse request body
-    const body = JSON.parse(event.body);
+    let body;
+    try {
+      body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' }),
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+      };
+    }
+
+    if (!body) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Request body is required' }),
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+      };
+    }
+
     const { email, password, name, phone, location, role } = body;
 
     // Validate required fields
@@ -292,10 +317,16 @@ exports.handler = async function(event, context) {
 
   } catch (error) {
     console.error('Error in create-staff-user:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Event:', JSON.stringify(event, null, 2));
     
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error: ' + error.message }),
+      body: JSON.stringify({ 
+        error: 'Internal Server Error',
+        details: error.message || 'An unexpected error occurred',
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }),
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',

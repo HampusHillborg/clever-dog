@@ -900,7 +900,9 @@ const AdminPage: React.FC = () => {
 
           if (!response.ok) {
             console.error('Error response:', result);
-            setEmployeeError(result.error || `Kunde inte skapa användare (${response.status})`);
+            const errorMsg = result.error || `Kunde inte skapa användare (${response.status})`;
+            const detailsMsg = result.details ? `\n\n${result.details}` : '';
+            setEmployeeError(errorMsg + detailsMsg);
             setIsSavingEmployee(false);
             return;
           }
@@ -1032,27 +1034,30 @@ const AdminPage: React.FC = () => {
         }
       }
 
-      // If no password and admin, ask if they want to create account
+      // If no password and admin, try to find existing user first
       if (!employeeForm.password && userRole === 'admin' && supabase) {
-        const shouldCreate = confirm(
-          'Inget lösenord angivet. Vill du skapa ett nytt konto för denna anställd? Klicka OK för att skapa konto eller Avbryt för att länka till befintligt konto.'
-        );
-        
-        if (shouldCreate) {
-          setEmployeeError('Ange ett lösenord för att skapa nytt konto');
-          setIsSavingEmployee(false);
-          return;
-        } else {
-          // Try to find existing user
-          const { data: existingUser } = await supabase
-            .from('admin_users' as any)
-            .select('id')
-            .eq('email', employeeForm.email)
-            .single();
+        // First, try to find existing user in admin_users
+        // Use case-insensitive search and trim whitespace
+        const emailToSearch = employeeForm.email.trim().toLowerCase();
+        const { data: existingUser, error: searchError } = await supabase
+          .from('admin_users' as any)
+          .select('id, email')
+          .ilike('email', emailToSearch)
+          .maybeSingle();
 
-          if (existingUser && (existingUser as any).id) {
+        if (searchError) {
+          console.error('Error searching for user:', searchError);
+          // Try alternative search method
+          const { data: altUser } = await supabase
+            .from('admin_users' as any)
+            .select('id, email')
+            .eq('email', emailToSearch)
+            .maybeSingle();
+          
+          if (altUser && (altUser as any).id) {
+            // Found user with alternative search, continue
             const savedEmployee = await saveEmployee({
-              id: (existingUser as any).id,
+              id: (altUser as any).id,
               name: employeeForm.name,
               email: employeeForm.email,
               phone: employeeForm.phone || undefined,
@@ -1086,11 +1091,59 @@ const AdminPage: React.FC = () => {
             });
             setIsSavingEmployee(false);
             return;
-          } else {
-            setEmployeeError('Användare med denna e-postadress finns inte. Ange ett lösenord för att skapa nytt konto.');
-            setIsSavingEmployee(false);
-            return;
           }
+        }
+
+        if (existingUser && (existingUser as any).id) {
+          // User found, link to existing account
+          const savedEmployee = await saveEmployee({
+            id: (existingUser as any).id,
+            name: employeeForm.name,
+            email: employeeForm.email,
+            phone: employeeForm.phone || undefined,
+            location: employeeForm.location || undefined,
+            role: employeeForm.role,
+            position: employeeForm.position || undefined,
+            hire_date: employeeForm.hire_date || undefined,
+            notes: employeeForm.notes || undefined,
+            is_active: true,
+          });
+
+          setEmployees(prev => {
+            const existing = prev.find(e => e.id === savedEmployee.id);
+            if (existing) {
+              return prev.map(e => e.id === savedEmployee.id ? savedEmployee : e);
+            }
+            return [...prev, savedEmployee];
+          });
+
+          setIsEmployeeModalOpen(false);
+          setEmployeeForm({
+            name: '',
+            email: '',
+            phone: '',
+            location: '',
+            role: 'employee',
+            position: '',
+            hire_date: '',
+            notes: '',
+            password: '',
+          });
+          setIsSavingEmployee(false);
+          return;
+        } else {
+          // User not found in admin_users
+          // This could mean:
+          // 1. User doesn't exist at all
+          // 2. User exists in auth.users but not in admin_users (trigger didn't run)
+          setEmployeeError(
+            `Ingen användare hittades med e-postadressen "${employeeForm.email}" i systemet.\n\n` +
+            `Om användaren finns i Supabase Auth men inte i admin_users, kan du:\n` +
+            `1. Skapa ett nytt konto med ett lösenord (kommer automatiskt skapa både auth.users och admin_users)\n` +
+            `2. Eller manuellt skapa admin_users-posten i Supabase för denna användare`
+          );
+          setIsSavingEmployee(false);
+          return;
         }
       }
 
