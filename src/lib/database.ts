@@ -1409,18 +1409,10 @@ export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'upda
         is_active: employeeRecord.is_active,
       };
 
+      const query = supabase!.from('employees' as any) as any;
       const { data, error } = existingIndex >= 0
-        ? await supabase!
-            .from('employees' as any)
-            .update(insertData)
-            .eq('id', employeeRecord.id)
-            .select()
-            .single()
-        : await supabase!
-            .from('employees' as any)
-            .insert(insertData)
-            .select()
-            .single();
+        ? await query.update(insertData).eq('id', employeeRecord.id).select().single()
+        : await query.insert(insertData).select().single();
 
       if (!error && data) {
         // Update localStorage with server response
@@ -1575,18 +1567,10 @@ export const saveStaffSchedule = async (schedule: Omit<StaffSchedule, 'created_a
         notes: schedule.notes || null,
       };
 
+      const query = supabase!.from('staff_schedules' as any) as any;
       const { data, error } = existingIndex >= 0
-        ? await supabase!
-            .from('staff_schedules' as any)
-            .update(insertData)
-            .eq('id', schedule.id)
-            .select()
-            .single()
-        : await supabase!
-            .from('staff_schedules' as any)
-            .insert(insertData)
-            .select()
-            .single();
+        ? await query.update(insertData).eq('id', schedule.id).select().single()
+        : await query.insert(insertData).select().single();
 
       if (!error && data) {
         const index = schedules.findIndex(s => s.id === schedule.id);
@@ -1707,18 +1691,10 @@ export const saveStaffAbsence = async (absence: Omit<StaffAbsence, 'created_at' 
         status: absence.status,
       };
 
+      const query = supabase!.from('staff_absences' as any) as any;
       const { data, error } = existingIndex >= 0
-        ? await supabase!
-            .from('staff_absences' as any)
-            .update(insertData)
-            .eq('id', absence.id)
-            .select()
-            .single()
-        : await supabase!
-            .from('staff_absences' as any)
-            .insert(insertData)
-            .select()
-            .single();
+        ? await query.update(insertData).eq('id', absence.id).select().single()
+        : await query.insert(insertData).select().single();
 
       if (!error && data) {
         const index = absences.findIndex(a => a.id === absence.id);
@@ -1761,16 +1737,12 @@ export const updateAbsenceStatus = async (id: string, status: 'approved' | 'reje
   // Update Supabase
   if (isSupabaseAvailable()) {
     try {
-      const { data, error } = await supabase!
-        .from('staff_absences' as any)
-        .update({
-          status,
-          reviewed_by: reviewedBy,
-          reviewed_at: now,
-        })
-        .eq('id', id)
-        .select()
-        .single();
+      const query = supabase!.from('staff_absences' as any) as any;
+      const { data, error } = await query.update({
+        status,
+        reviewed_by: reviewedBy,
+        reviewed_at: now,
+      }).eq('id', id).select().single();
 
       if (!error && data) {
         if (index >= 0) {
