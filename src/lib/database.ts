@@ -18,6 +18,7 @@ export type Dog = {
   ownerAddress?: string;
   ownerCity?: string;
   ownerPersonalNumber?: string;
+  chipNumber?: string;
 };
 
 export type BoardingRecord = {
@@ -125,6 +126,7 @@ export const getDogs = async (): Promise<Dog[]> => {
       ownerAddress: dog.owner_address || undefined,
       ownerCity: dog.owner_city || undefined,
       ownerPersonalNumber: dog.owner_personal_number || undefined,
+      chipNumber: dog.chip_number || undefined,
     };
   });
 };
@@ -179,6 +181,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
         owner_address: dog.ownerAddress || null,
         owner_city: dog.ownerCity || null,
         owner_personal_number: dog.ownerPersonalNumber || null,
+        chip_number: dog.chipNumber || null,
       } as any, {
       onConflict: 'id'
     })

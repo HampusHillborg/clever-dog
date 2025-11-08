@@ -62,6 +62,7 @@ interface Dog {
   ownerAddress?: string;
   ownerCity?: string;
   ownerPersonalNumber?: string;
+  chipNumber?: string;
 }
 
 interface BoardingRecord {
@@ -168,7 +169,8 @@ const AdminPage: React.FC = () => {
     // Contract fields
     ownerAddress: '',
     ownerCity: '',
-    ownerPersonalNumber: ''
+    ownerPersonalNumber: '',
+    chipNumber: ''
   });
   const [planningStaffanstorp, setPlanningStaffanstorp] = useState<Cage[]>([]);
   const [planningMalmo, setPlanningMalmo] = useState<Cage[]>([]);
@@ -179,6 +181,7 @@ const AdminPage: React.FC = () => {
   // Search state for dog selection in boarding form
   const [boardingDogSearch, setBoardingDogSearch] = useState<string>('');
   const [selectedDogForContract, setSelectedDogForContract] = useState<string>('');
+  const [contractDogSearch, setContractDogSearch] = useState<string>('');
   // Search state for dogs tab
   const [dogsTabSearch, setDogsTabSearch] = useState<string>('');
   const [dogsLocationFilter, setDogsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp' | 'both'>('all');
@@ -671,7 +674,8 @@ const AdminPage: React.FC = () => {
       // Contract fields
       ownerAddress: dogForm.ownerAddress || undefined,
       ownerCity: dogForm.ownerCity || undefined,
-      ownerPersonalNumber: dogForm.ownerPersonalNumber || undefined
+      ownerPersonalNumber: dogForm.ownerPersonalNumber || undefined,
+      chipNumber: dogForm.chipNumber || undefined
     };
 
     // Save to database
@@ -699,7 +703,7 @@ const AdminPage: React.FC = () => {
     });
     setIsDogModalOpen(false);
     setEditingDog(null);
-    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '' });
+    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
   };
 
   const deleteDog = async (id: string) => {
@@ -735,11 +739,12 @@ const AdminPage: React.FC = () => {
         isActive: dog.isActive !== undefined ? dog.isActive : true,
         ownerAddress: dog.ownerAddress || '',
         ownerCity: dog.ownerCity || '',
-        ownerPersonalNumber: dog.ownerPersonalNumber || ''
+        ownerPersonalNumber: dog.ownerPersonalNumber || '',
+        chipNumber: dog.chipNumber || ''
       });
     } else {
       setEditingDog(null);
-      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '' });
+      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
     }
     setIsDogModalOpen(true);
   };
@@ -5302,6 +5307,14 @@ const AdminPage: React.FC = () => {
                 <label htmlFor="selectedDogForContract" className="block text-sm font-medium text-gray-700 mb-1">
                   Välj hund (för att autofylla fält)
                 </label>
+                {/* Search input */}
+                <input
+                  type="text"
+                  placeholder="Sök på hund eller ägare namn..."
+                  value={contractDogSearch}
+                  onChange={(e) => setContractDogSearch(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
                 <select
                   id="selectedDogForContract"
                   value={selectedDogForContract || ''}
@@ -5320,7 +5333,7 @@ const AdminPage: React.FC = () => {
                           dogName: dog.name,
                           dogBreed: dog.breed,
                           dogAge: dog.age,
-                          chipNumber: '' // Chip number not stored in dog object, keep existing or empty
+                          chipNumber: dog.chipNumber || ''
                         });
                       }
                     } else {
@@ -5330,12 +5343,28 @@ const AdminPage: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
                 >
                   <option value="">-- Välj hund --</option>
-                  {dogs.filter(dog => dog.isActive !== false).map(dog => (
-                    <option key={dog.id} value={dog.id}>
-                      {dog.name} - {dog.owner}
-                    </option>
-                  ))}
+                  {dogs
+                    .filter(dog => {
+                      const matchesActive = dog.isActive !== false;
+                      const matchesSearch = !contractDogSearch.trim() || 
+                        dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
+                        dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
+                      return matchesActive && matchesSearch;
+                    })
+                    .map(dog => (
+                      <option key={dog.id} value={dog.id}>
+                        {dog.name} - {dog.owner}
+                      </option>
+                    ))}
                 </select>
+                {contractDogSearch.trim() && dogs.filter(dog => {
+                  const matchesActive = dog.isActive !== false;
+                  const matchesSearch = dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
+                    dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
+                  return matchesActive && matchesSearch;
+                }).length === 0 && (
+                  <p className="text-sm text-gray-500 mt-2">Inga hundar matchar sökningen</p>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
