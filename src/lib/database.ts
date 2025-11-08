@@ -172,7 +172,6 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     phone: dog.phone,
     email: dog.email || null,
     notes: dog.notes || null,
-    color: 'bg-gray-100 text-gray-800', // Default color - remove this when color column is removed from database
     locations: dog.locations,
     type: dog.type || null,
     is_active: dog.isActive !== undefined ? dog.isActive : true,
