@@ -5776,6 +5776,17 @@ const AdminPage: React.FC = () => {
                   disabled={userRole === 'employee'}
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Chipnummer</label>
+                <input
+                  type="text"
+                  value={dogForm.chipNumber}
+                  onChange={(e) => setDogForm({ ...dogForm, chipNumber: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="e.g., 941000016851106"
+                  disabled={userRole === 'employee'}
+                />
+              </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Platser *</label>
                 <div className="flex gap-4">
