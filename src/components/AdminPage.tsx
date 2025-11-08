@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars } from 'react-icons/fa';
+import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars, FaUserClock, FaUserMd, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
 import { 
   getDogs as fetchDogs, 
@@ -20,9 +20,21 @@ import {
   saveMeeting,
   updateMeeting,
   deleteMeeting,
+  getEmployees,
+  saveEmployee,
+  deleteEmployee,
+  getStaffSchedules,
+  saveStaffSchedule,
+  deleteStaffSchedule,
+  getStaffAbsences,
+  saveStaffAbsence,
+  deleteStaffAbsence,
   type BoxSettings,
   type Application,
-  type Meeting
+  type Meeting,
+  type Employee,
+  type StaffSchedule,
+  type StaffAbsence
 } from '../lib/database';
 import { PRICES, VAT_RATE } from '../lib/prices';
 import { signIn, signOut, getCurrentUser, onAuthStateChange, type AuthUser } from '../lib/auth';
@@ -126,7 +138,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedule';
 
 type UserRole = 'admin' | 'employee' | 'platschef';
 
@@ -234,6 +246,46 @@ const AdminPage: React.FC = () => {
     date: '',
     time: '',
     location: 'malmo' as 'malmo' | 'staffanstorp'
+  });
+
+  // Staff scheduling state
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
+  const [staffAbsences, setStaffAbsences] = useState<StaffAbsence[]>([]);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<StaffSchedule | null>(null);
+  const [editingAbsence, setEditingAbsence] = useState<StaffAbsence | null>(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    employeeId: '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '08:00',
+    endTime: '17:00',
+    location: 'malmo' as 'malmo' | 'staffanstorp',
+    notes: ''
+  });
+  const [absenceForm, setAbsenceForm] = useState({
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    type: 'sick' as 'sick' | 'vacation' | 'personal' | 'other',
+    reason: ''
+  });
+  const [scheduleViewDate, setScheduleViewDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [scheduleViewLocation, setScheduleViewLocation] = useState<'malmo' | 'staffanstorp' | 'all'>('all');
+  const [scheduleViewEmployee, setScheduleViewEmployee] = useState<string>('all');
+  const [absenceFilter, setAbsenceFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [employeeForm, setEmployeeForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    location: 'both' as 'malmo' | 'staffanstorp' | 'both',
+    position: '',
+    hireDate: '',
+    notes: '',
+    isActive: true
   });
 
   // Load box settings from database on mount
@@ -1053,6 +1105,82 @@ const AdminPage: React.FC = () => {
     };
     loadMeetings();
   }, []);
+
+  // Load employees and schedules from database
+  useEffect(() => {
+    const loadStaffData = async () => {
+      try {
+        const loadedEmployees = await getEmployees();
+        setEmployees(loadedEmployees);
+        
+        // Load schedules for current week
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // Sunday
+        
+        const startDateStr = startOfWeek.toISOString().split('T')[0];
+        const endDateStr = endOfWeek.toISOString().split('T')[0];
+        
+        const loadedSchedules = await getStaffSchedules(startDateStr, endDateStr);
+        setStaffSchedules(loadedSchedules);
+        
+        // Load absences
+        const loadedAbsences = await getStaffAbsences();
+        setStaffAbsences(loadedAbsences);
+      } catch (error) {
+        console.error('Error loading staff data:', error);
+      }
+    };
+    
+    if (isLoggedIn) {
+      loadStaffData();
+    }
+  }, [isLoggedIn, currentView]);
+
+  // Reload schedules when view date or filters change
+  useEffect(() => {
+    if (currentView === 'staff-schedule') {
+      const loadSchedules = async () => {
+        try {
+          const startDate = new Date(scheduleViewDate);
+          startDate.setDate(startDate.getDate() - startDate.getDay() + 1); // Monday of that week
+          const endDate = new Date(startDate);
+          endDate.setDate(startDate.getDate() + 6); // Sunday
+          
+          const startDateStr = startDate.toISOString().split('T')[0];
+          const endDateStr = endDate.toISOString().split('T')[0];
+          
+          const location = scheduleViewLocation === 'all' ? undefined : scheduleViewLocation;
+          const employeeId = scheduleViewEmployee === 'all' ? undefined : scheduleViewEmployee;
+          
+          const loadedSchedules = await getStaffSchedules(startDateStr, endDateStr, employeeId, location);
+          setStaffSchedules(loadedSchedules);
+        } catch (error) {
+          console.error('Error loading schedules:', error);
+        }
+      };
+      loadSchedules();
+    }
+  }, [currentView, scheduleViewDate, scheduleViewLocation, scheduleViewEmployee]);
+
+  // Reload absences when filter changes
+  useEffect(() => {
+    if (currentView === 'staff-schedule') {
+      const loadAbsences = async () => {
+        try {
+          const employeeId = userRole === 'employee' && currentUser ? currentUser.id : undefined;
+          const status = absenceFilter === 'all' ? undefined : absenceFilter;
+          const loadedAbsences = await getStaffAbsences(employeeId, status);
+          setStaffAbsences(loadedAbsences);
+        } catch (error) {
+          console.error('Error loading absences:', error);
+        }
+      };
+      loadAbsences();
+    }
+  }, [currentView, absenceFilter, userRole, currentUser]);
 
   // Load applications from database
   useEffect(() => {
@@ -2318,7 +2446,7 @@ const AdminPage: React.FC = () => {
               <FaChartBar className="mr-2 text-emerald-600" />
               Statistik & Analys
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 px-2">
               <div 
                 onClick={() => setCurrentView('statistics')}
                 className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 active:scale-95 sm:hover:scale-105"
@@ -2365,10 +2493,23 @@ const AdminPage: React.FC = () => {
                     {meetings.length} möten
                   </span>
                 </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('settings')}
+              {(userRole === 'admin' || userRole === 'platschef') && (
+                <div 
+                  onClick={() => setCurrentView('staff-schedule')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaUserClock className="text-purple-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Personal & Schema</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Schemaläggning och frånvaro</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                      {employees.filter(e => e.isActive).length} anställda
+                    </span>
+                  </div>
+                </div>
+              )}
                 className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 active:scale-95 sm:hover:scale-105"
               >
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mb-3 sm:mb-4 mx-auto">
@@ -2424,10 +2565,23 @@ const AdminPage: React.FC = () => {
                     {meetings.length} möten
                   </span>
                 </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('settings')}
+              {(userRole === 'admin' || userRole === 'platschef') && (
+                <div 
+                  onClick={() => setCurrentView('staff-schedule')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaUserClock className="text-purple-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Personal & Schema</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Schemaläggning och frånvaro</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                      {employees.filter(e => e.isActive).length} anställda
+                    </span>
+                  </div>
+                </div>
+              )}
                 className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 active:scale-95 sm:hover:scale-105"
               >
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mb-3 sm:mb-4 mx-auto">
@@ -5370,10 +5524,1220 @@ const AdminPage: React.FC = () => {
     );
   };
 
+  const renderStaffSchedule = () => {
+    const handleOpenScheduleModal = (schedule?: StaffSchedule) => {
+      if (schedule) {
+        setEditingSchedule(schedule);
+        setScheduleForm({
+          employeeId: schedule.employeeId,
+          date: schedule.date,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          location: schedule.location,
+          notes: schedule.notes || ''
+        });
+      } else {
+        setEditingSchedule(null);
+        setScheduleForm({
+          employeeId: '',
+          date: new Date().toISOString().split('T')[0],
+          startTime: '08:00',
+          endTime: '17:00',
+          location: 'malmo',
+          notes: ''
+        });
+      }
+      setIsScheduleModalOpen(true);
+    };
+
+    const handleSaveSchedule = async () => {
+      if (!scheduleForm.employeeId || !scheduleForm.date || !scheduleForm.startTime || !scheduleForm.endTime) {
+        alert('Anställd, datum, starttid och sluttid är obligatoriska fält');
+        return;
+      }
+
+      if (userRole !== 'admin' && userRole !== 'platschef') {
+        alert('Endast admin och platschef kan ändra scheman');
+        return;
+      }
+
+      try {
+        if (editingSchedule) {
+          const updated = await saveStaffSchedule({
+            id: editingSchedule.id,
+            employeeId: scheduleForm.employeeId,
+            date: scheduleForm.date,
+            startTime: scheduleForm.startTime,
+            endTime: scheduleForm.endTime,
+            location: scheduleForm.location,
+            notes: scheduleForm.notes || undefined,
+            createdBy: currentUser?.id
+          });
+          setStaffSchedules(staffSchedules.map(s => s.id === updated.id ? updated : s));
+        } else {
+          const newSchedule = await saveStaffSchedule({
+            employeeId: scheduleForm.employeeId,
+            date: scheduleForm.date,
+            startTime: scheduleForm.startTime,
+            endTime: scheduleForm.endTime,
+            location: scheduleForm.location,
+            notes: scheduleForm.notes || undefined,
+            createdBy: currentUser?.id
+          });
+          setStaffSchedules([...staffSchedules, newSchedule]);
+        }
+        setIsScheduleModalOpen(false);
+        setEditingSchedule(null);
+      } catch (error) {
+        console.error('Error saving schedule:', error);
+        alert('Ett fel uppstod när schemat skulle sparas');
+      }
+    };
+
+    const handleDeleteSchedule = async (id: string) => {
+      if (!confirm('Är du säker på att du vill ta bort detta schema?')) return;
+      if (userRole !== 'admin' && userRole !== 'platschef') return;
+
+      try {
+        await deleteStaffSchedule(id);
+        setStaffSchedules(staffSchedules.filter(s => s.id !== id));
+      } catch (error) {
+        console.error('Error deleting schedule:', error);
+        alert('Ett fel uppstod när schemat skulle tas bort');
+      }
+    };
+
+    const handleOpenAbsenceModal = (absence?: StaffAbsence) => {
+      if (absence) {
+        setEditingAbsence(absence);
+        setAbsenceForm({
+          startDate: absence.startDate,
+          endDate: absence.endDate,
+          type: absence.type,
+          reason: absence.reason || ''
+        });
+      } else {
+        setEditingAbsence(null);
+        setAbsenceForm({
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: new Date().toISOString().split('T')[0],
+          type: 'sick',
+          reason: ''
+        });
+      }
+      setIsAbsenceModalOpen(true);
+    };
+
+    const handleSaveAbsence = async () => {
+      if (!absenceForm.startDate || !absenceForm.endDate) {
+        alert('Startdatum och slutdatum är obligatoriska fält');
+        return;
+      }
+
+      if (new Date(absenceForm.endDate) < new Date(absenceForm.startDate)) {
+        alert('Slutdatum kan inte vara tidigare än startdatum');
+        return;
+      }
+
+      try {
+        const employeeId = userRole === 'employee' && currentUser ? currentUser.id : editingAbsence?.employeeId;
+        if (!employeeId) {
+          alert('Kunde inte hitta anställd');
+          return;
+        }
+
+        if (editingAbsence) {
+          // Only employees can update their own pending absences
+          if (userRole === 'employee' && editingAbsence.status !== 'pending') {
+            alert('Du kan endast redigera väntande frånvaroanmälningar');
+            return;
+          }
+
+          const updated = await saveStaffAbsence({
+            id: editingAbsence.id,
+            employeeId: editingAbsence.employeeId,
+            startDate: absenceForm.startDate,
+            endDate: absenceForm.endDate,
+            type: absenceForm.type,
+            reason: absenceForm.reason || undefined,
+            status: editingAbsence.status,
+            reviewedBy: (userRole === 'admin' || userRole === 'platschef') && currentUser ? currentUser.id : editingAbsence.reviewedBy
+          });
+          setStaffAbsences(staffAbsences.map(a => a.id === updated.id ? updated : a));
+        } else {
+          const newAbsence = await saveStaffAbsence({
+            employeeId: employeeId,
+            startDate: absenceForm.startDate,
+            endDate: absenceForm.endDate,
+            type: absenceForm.type,
+            reason: absenceForm.reason || undefined,
+            status: 'pending'
+          });
+          setStaffAbsences([...staffAbsences, newAbsence]);
+        }
+        setIsAbsenceModalOpen(false);
+        setEditingAbsence(null);
+      } catch (error) {
+        console.error('Error saving absence:', error);
+        alert('Ett fel uppstod när frånvaroanmälan skulle sparas');
+      }
+    };
+
+    const handleApproveRejectAbsence = async (id: string, status: 'approved' | 'rejected') => {
+      if (userRole !== 'admin' && userRole !== 'platschef') return;
+
+      try {
+        const absence = staffAbsences.find(a => a.id === id);
+        if (!absence) return;
+
+        const updated = await saveStaffAbsence({
+          id: absence.id,
+          employeeId: absence.employeeId,
+          startDate: absence.startDate,
+          endDate: absence.endDate,
+          type: absence.type,
+          reason: absence.reason,
+          status: status,
+          reviewedBy: currentUser?.id
+        });
+        setStaffAbsences(staffAbsences.map(a => a.id === updated.id ? updated : a));
+      } catch (error) {
+        console.error('Error updating absence:', error);
+        alert('Ett fel uppstod när frånvaroanmälan skulle uppdateras');
+      }
+    };
+
+    // Get week dates
+    const getWeekDates = (date: string) => {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+      const monday = new Date(d.setDate(diff));
+      const week = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+        week.push(date.toISOString().split('T')[0]);
+      }
+      return week;
+    };
+
+    const weekDates = getWeekDates(scheduleViewDate);
+    const weekDays = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'];
+
+    // Filter schedules based on current filters
+    const filteredSchedules = staffSchedules.filter(s => {
+      if (scheduleViewLocation !== 'all' && s.location !== scheduleViewLocation) return false;
+      if (scheduleViewEmployee !== 'all' && s.employeeId !== scheduleViewEmployee) return false;
+      if (userRole === 'employee' && s.employeeId !== currentUser?.id) return false;
+      return weekDates.includes(s.date);
+    });
+
+    const filteredAbsences = staffAbsences.filter(a => {
+      if (absenceFilter !== 'all' && a.status !== absenceFilter) return false;
+      if (userRole === 'employee' && a.employeeId !== currentUser?.id) return false;
+      return true;
+    });
+
+    // Get employee name helper
+    const getEmployeeName = (employeeId: string) => {
+      return employees.find(e => e.id === employeeId)?.name || 'Okänd';
+    };
+
+    const handleOpenEmployeeModal = (employee?: Employee) => {
+      if (employee) {
+        setEditingEmployee(employee);
+        setEmployeeForm({
+          name: employee.name,
+          email: employee.email || '',
+          password: '', // Don't show password
+          phone: employee.phone || '',
+          location: employee.location,
+          position: employee.position || '',
+          hireDate: employee.hireDate || '',
+          notes: employee.notes || '',
+          isActive: employee.isActive
+        });
+      } else {
+        setEditingEmployee(null);
+        setEmployeeForm({
+          name: '',
+          email: '',
+          password: '',
+          phone: '',
+          location: 'both',
+          position: '',
+          hireDate: '',
+          notes: '',
+          isActive: true
+        });
+      }
+      setIsEmployeeModalOpen(true);
+    };
+
+    const handleSaveEmployee = async () => {
+      if (!employeeForm.name) {
+        alert('Namn är obligatoriskt');
+        return;
+      }
+
+      if (userRole !== 'admin' && userRole !== 'platschef') {
+        alert('Endast admin och platschef kan hantera anställda');
+        return;
+      }
+
+      try {
+        if (editingEmployee) {
+          // Update existing employee
+          const updated = await saveEmployee({
+            id: editingEmployee.id,
+            name: employeeForm.name,
+            phone: employeeForm.phone || undefined,
+            location: employeeForm.location,
+            position: employeeForm.position || undefined,
+            hireDate: employeeForm.hireDate || undefined,
+            notes: employeeForm.notes || undefined,
+            isActive: employeeForm.isActive,
+            email: employeeForm.email || undefined
+          });
+          setEmployees(employees.map(e => e.id === updated.id ? updated : e));
+        } else {
+          // Create new employee
+          // Check if user wants to create account or link existing
+          if (!employeeForm.email) {
+            alert('E-post krävs för att skapa ny anställd');
+            return;
+          }
+
+          if (!employeeForm.password && userRole === 'admin') {
+            // Try to find existing user first
+            const { supabase } = await import('../lib/supabase');
+            if (!supabase) {
+              alert('Supabase är inte konfigurerad. Kontakta administratören.');
+              return;
+            }
+
+            const { data: userData, error: userError } = await supabase
+              .from('admin_users' as any)
+              .select('id, email')
+              .eq('email', employeeForm.email)
+              .single();
+
+            if (userError || !userData) {
+              // User doesn't exist - ask if they want to create account
+              const createAccount = confirm(
+                `Användare med e-post ${employeeForm.email} hittades inte.\n\n` +
+                `Vill du skapa ett nytt inloggningskonto för denna anställd?\n\n` +
+                `Klicka OK för att skapa konto, eller Avbryt för att bara skapa anställd-posten (användaren måste skapas manuellt i Supabase Dashboard).`
+              );
+
+              if (!createAccount) {
+                alert('Skapa först användaren i Supabase Dashboard > Authentication > Users, sedan kan du skapa anställd-posten här.');
+                return;
+              }
+
+              // Create account via Netlify Function (only for admin)
+              if (userRole !== 'admin') {
+                alert('Endast admin kan skapa nya inloggningskonton. Kontakta admin för att skapa kontot.');
+                return;
+              }
+
+              // Get current user's session token
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) {
+                alert('Du måste vara inloggad för att skapa anställda');
+                return;
+              }
+
+              // Ask for password
+              const password = prompt('Ange ett temporärt lösenord för den nya användaren:');
+              if (!password) {
+                alert('Lösenord krävs för att skapa nytt konto');
+                return;
+              }
+
+              // Call Netlify Function to create user
+              const response = await fetch('/.netlify/functions/create-staff-user', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  email: employeeForm.email,
+                  password: password,
+                  name: employeeForm.name,
+                  phone: employeeForm.phone || undefined,
+                  location: employeeForm.location,
+                  position: employeeForm.position || undefined,
+                  hireDate: employeeForm.hireDate || undefined,
+                  notes: employeeForm.notes || undefined,
+                }),
+              });
+
+              const result = await response.json();
+
+              if (!response.ok) {
+                alert(`Fel vid skapande av användare: ${result.error || 'Okänt fel'}`);
+                return;
+              }
+
+              if (result.success) {
+                // Reload employees list
+                const loadedEmployees = await getEmployees();
+                setEmployees(loadedEmployees);
+                alert('Anställd och inloggningskonto skapades framgångsrikt!');
+                setIsEmployeeModalOpen(false);
+                setEditingEmployee(null);
+                return;
+              } else {
+                alert(`Varning: ${result.warning || 'Okänt fel'}`);
+                return;
+              }
+            } else {
+              // User exists, just create employee record
+              const newEmployee = await saveEmployee({
+                id: userData.id,
+                name: employeeForm.name,
+                phone: employeeForm.phone || undefined,
+                location: employeeForm.location,
+                position: employeeForm.position || undefined,
+                hireDate: employeeForm.hireDate || undefined,
+                notes: employeeForm.notes || undefined,
+                isActive: employeeForm.isActive,
+                email: employeeForm.email
+              });
+              setEmployees([...employees, newEmployee]);
+            }
+          } else {
+            // Password provided - create account via Netlify Function (only for admin)
+            if (userRole !== 'admin') {
+              alert('Endast admin kan skapa nya inloggningskonton');
+              return;
+            }
+
+            if (!employeeForm.password) {
+              alert('Lösenord krävs för att skapa nytt inloggningskonto');
+              return;
+            }
+
+            const { supabase } = await import('../lib/supabase');
+            if (!supabase) {
+              alert('Supabase är inte konfigurerad. Kontakta administratören.');
+              return;
+            }
+
+            // Get current user's session token
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+              alert('Du måste vara inloggad för att skapa anställda');
+              return;
+            }
+
+            // Call Netlify Function to create user
+            const response = await fetch('/.netlify/functions/create-staff-user', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                email: employeeForm.email,
+                password: employeeForm.password,
+                name: employeeForm.name,
+                phone: employeeForm.phone || undefined,
+                location: employeeForm.location,
+                position: employeeForm.position || undefined,
+                hireDate: employeeForm.hireDate || undefined,
+                notes: employeeForm.notes || undefined,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+              alert(`Fel vid skapande av användare: ${result.error || 'Okänt fel'}`);
+              return;
+            }
+
+            if (result.success) {
+              // Reload employees list
+              const loadedEmployees = await getEmployees();
+              setEmployees(loadedEmployees);
+              alert('Anställd och inloggningskonto skapades framgångsrikt!');
+              setIsEmployeeModalOpen(false);
+              setEditingEmployee(null);
+              return;
+            } else {
+              alert(`Varning: ${result.warning || 'Okänt fel'}`);
+              return;
+            }
+          }
+        }
+        setIsEmployeeModalOpen(false);
+        setEditingEmployee(null);
+      } catch (error) {
+        console.error('Error saving employee:', error);
+        alert('Ett fel uppstod när anställd skulle sparas');
+      }
+    };
+
+    const handleDeleteEmployee = async (id: string) => {
+      if (!confirm('Är du säker på att du vill ta bort denna anställd? Detta tar bort anställd-posten men behåller inloggningskontot.')) return;
+      if (userRole !== 'admin' && userRole !== 'platschef') return;
+
+      try {
+        await deleteEmployee(id);
+        setEmployees(employees.filter(e => e.id !== id));
+        // Note: The auth account remains, but employee record is deleted
+        // To fully delete the account, do it manually in Supabase Dashboard
+      } catch (error) {
+        console.error('Error deleting employee:', error);
+        alert('Ett fel uppstod när anställd skulle tas bort');
+      }
+    };
+
+    return (
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+            {userRole === 'employee' ? 'Mitt Schema' : 'Personal & Schemaläggning'}
+          </h2>
+          {userRole === 'employee' && (
+            <button
+              onClick={() => handleOpenAbsenceModal()}
+              className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark text-sm sm:text-base w-full sm:w-auto"
+            >
+              <FaPlus className="mr-2" /> Anmäl frånvaro
+            </button>
+          )}
+          {(userRole === 'admin' || userRole === 'platschef') && (
+            <button
+              onClick={() => handleOpenScheduleModal()}
+              className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark text-sm sm:text-base w-full sm:w-auto"
+            >
+              <FaPlus className="mr-2" /> Nytt schema
+            </button>
+          )}
+        </div>
+
+        {/* Schedule View */}
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Vecka</label>
+              <input
+                type="date"
+                value={scheduleViewDate}
+                onChange={(e) => setScheduleViewDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              />
+            </div>
+            {(userRole === 'admin' || userRole === 'platschef') && (
+              <>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Plats</label>
+                  <select
+                    value={scheduleViewLocation}
+                    onChange={(e) => setScheduleViewLocation(e.target.value as 'malmo' | 'staffanstorp' | 'all')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                  >
+                    <option value="all">Alla platser</option>
+                    <option value="malmo">Malmö</option>
+                    <option value="staffanstorp">Staffanstorp</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Anställd</label>
+                  <select
+                    value={scheduleViewEmployee}
+                    onChange={(e) => setScheduleViewEmployee(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                  >
+                    <option value="all">Alla anställda</option>
+                    {employees.filter(e => e.isActive).map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Week Schedule Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-2 py-2 text-left text-xs sm:text-sm font-semibold">Anställd</th>
+                  {weekDays.map((day, index) => (
+                    <th key={index} className="border border-gray-300 px-2 py-2 text-center text-xs sm:text-sm font-semibold">
+                      {day}<br />
+                      <span className="text-gray-500 text-xs">{new Date(weekDates[index]).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(userRole === 'admin' || userRole === 'platschef') ? (
+                  employees.filter(e => e.isActive && (scheduleViewEmployee === 'all' || e.id === scheduleViewEmployee)).map(emp => (
+                    <tr key={emp.id} className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-2 py-2 font-medium text-xs sm:text-sm">{emp.name}</td>
+                      {weekDates.map((date, dateIndex) => {
+                        const daySchedules = filteredSchedules.filter(s => s.employeeId === emp.id && s.date === date);
+                        return (
+                          <td key={dateIndex} className="border border-gray-300 px-1 py-1 text-xs">
+                            {daySchedules.map(schedule => (
+                              <div key={schedule.id} className="mb-1 p-1 bg-blue-100 rounded text-xs">
+                                <div className="font-medium">{schedule.startTime} - {schedule.endTime}</div>
+                                <div className="text-gray-600">{schedule.location === 'malmo' ? 'M' : 'S'}</div>
+                                {(userRole === 'admin' || userRole === 'platschef') && (
+                                  <div className="flex gap-1 mt-1">
+                                    <button
+                                      onClick={() => handleOpenScheduleModal(schedule)}
+                                      className="text-blue-600 hover:text-blue-800 text-xs"
+                                    >
+                                      <FaEdit />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteSchedule(schedule.id)}
+                                      className="text-red-600 hover:text-red-800 text-xs"
+                                    >
+                                      <FaTrash />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
+                ) : (
+                  // Employee view - only show their own schedule
+                  currentUser && (
+                    <tr className="hover:bg-gray-50">
+                      <td className="border border-gray-300 px-2 py-2 font-medium text-xs sm:text-sm">
+                        {getEmployeeName(currentUser.id)}
+                      </td>
+                      {weekDates.map((date, dateIndex) => {
+                        const daySchedules = filteredSchedules.filter(s => s.employeeId === currentUser.id && s.date === date);
+                        return (
+                          <td key={dateIndex} className="border border-gray-300 px-1 py-1 text-xs">
+                            {daySchedules.map(schedule => (
+                              <div key={schedule.id} className="mb-1 p-1 bg-blue-100 rounded text-xs">
+                                <div className="font-medium">{schedule.startTime} - {schedule.endTime}</div>
+                                <div className="text-gray-600">{schedule.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}</div>
+                                {schedule.notes && <div className="text-gray-500 italic">{schedule.notes}</div>}
+                              </div>
+                            ))}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Absences Section */}
+        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+              {userRole === 'employee' ? 'Mina frånvaroanmälningar' : 'Frånvaroanmälningar'}
+            </h3>
+            {(userRole === 'admin' || userRole === 'platschef') && (
+              <select
+                value={absenceFilter}
+                onChange={(e) => setAbsenceFilter(e.target.value as 'all' | 'pending' | 'approved' | 'rejected')}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              >
+                <option value="all">Alla</option>
+                <option value="pending">Väntande</option>
+                <option value="approved">Godkända</option>
+                <option value="rejected">Avvisade</option>
+              </select>
+            )}
+          </div>
+
+          {filteredAbsences.length === 0 ? (
+            <p className="text-gray-500 text-center py-6 sm:py-8 text-sm sm:text-base">Inga frånvaroanmälningar</p>
+          ) : (
+            <div className="space-y-2 sm:space-y-3">
+              {filteredAbsences.map((absence) => {
+                const typeLabels = {
+                  sick: 'Sjukdom',
+                  vacation: 'Semester',
+                  personal: 'Personligt',
+                  other: 'Övrigt'
+                };
+                const statusColors = {
+                  pending: 'bg-yellow-100 text-yellow-800',
+                  approved: 'bg-green-100 text-green-800',
+                  rejected: 'bg-red-100 text-red-800'
+                };
+                return (
+                  <div
+                    key={absence.id}
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex-1 min-w-0 w-full sm:w-auto">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                        <h4 className="font-semibold text-sm sm:text-base text-gray-900">
+                          {absence.employeeName || getEmployeeName(absence.employeeId)}
+                        </h4>
+                        <span className={`text-xs sm:text-sm px-2 py-1 rounded-full ${statusColors[absence.status]}`}>
+                          {absence.status === 'pending' ? 'Väntande' : absence.status === 'approved' ? 'Godkänd' : 'Avvisad'}
+                        </span>
+                        <span className="text-xs sm:text-sm text-gray-500">
+                          {typeLabels[absence.type]}
+                        </span>
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-600">
+                        <div>
+                          <span className="font-medium">Period:</span> {new Date(absence.startDate).toLocaleDateString('sv-SE')} - {new Date(absence.endDate).toLocaleDateString('sv-SE')}
+                        </div>
+                        {absence.reason && (
+                          <div className="mt-1">
+                            <span className="font-medium">Anledning:</span> {absence.reason}
+                          </div>
+                        )}
+                        {absence.reviewedAt && (
+                          <div className="mt-1 text-gray-500">
+                            Granskad: {new Date(absence.reviewedAt).toLocaleDateString('sv-SE')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      {userRole === 'employee' && absence.status === 'pending' && (
+                        <button
+                          onClick={() => handleOpenAbsenceModal(absence)}
+                          className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm"
+                        >
+                          <FaEdit /> Redigera
+                        </button>
+                      )}
+                      {(userRole === 'admin' || userRole === 'platschef') && absence.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApproveRejectAbsence(absence.id, 'approved')}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-xs sm:text-sm"
+                          >
+                            <FaCheckCircle /> Godkänn
+                          </button>
+                          <button
+                            onClick={() => handleApproveRejectAbsence(absence.id, 'rejected')}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm"
+                          >
+                            <FaTimesCircle /> Avvisa
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Employees Management Section - Only for admin and platschef */}
+        {(userRole === 'admin' || userRole === 'platschef') && (
+          <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">Anställda</h3>
+              <button
+                onClick={() => handleOpenEmployeeModal()}
+                className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark text-sm sm:text-base w-full sm:w-auto"
+              >
+                <FaPlus className="mr-2" /> Lägg till anställd
+              </button>
+            </div>
+
+            {employees.length === 0 ? (
+              <div className="text-center py-6 sm:py-8">
+                <p className="text-gray-500 text-sm sm:text-base mb-4">Inga anställda registrerade</p>
+                <p className="text-gray-400 text-xs sm:text-sm">
+                  För att lägga till en anställd med inloggningskonto, se GUIDE_STAFF_CREATION.md
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 sm:space-y-3">
+                {employees.map((employee) => (
+                  <div
+                    key={employee.id}
+                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex-1 min-w-0 w-full sm:w-auto">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                        <h4 className="font-semibold text-sm sm:text-base text-gray-900">{employee.name}</h4>
+                        {!employee.isActive && (
+                          <span className="text-xs sm:text-sm px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                            Inaktiv
+                          </span>
+                        )}
+                        <span className="text-xs sm:text-sm text-gray-500">
+                          {employee.location === 'both' ? 'Båda platser' : employee.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                        </span>
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-600 space-y-0.5">
+                        {employee.email && (
+                          <div><span className="font-medium">E-post:</span> {employee.email}</div>
+                        )}
+                        {employee.phone && (
+                          <div><span className="font-medium">Telefon:</span> {employee.phone}</div>
+                        )}
+                        {employee.position && (
+                          <div><span className="font-medium">Position:</span> {employee.position}</div>
+                        )}
+                        {employee.hireDate && (
+                          <div><span className="font-medium">Anställd:</span> {new Date(employee.hireDate).toLocaleDateString('sv-SE')}</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <button
+                        onClick={() => handleOpenEmployeeModal(employee)}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm"
+                      >
+                        <FaEdit /> Redigera
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEmployee(employee.id)}
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 sm:py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm"
+                      >
+                        <FaTrash /> Ta bort
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Schedule Modal */}
+        {isScheduleModalOpen && (userRole === 'admin' || userRole === 'platschef') && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {editingSchedule ? 'Redigera schema' : 'Nytt schema'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsScheduleModalOpen(false);
+                    setEditingSchedule(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes className="text-lg sm:text-xl" />
+                </button>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Anställd * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <select
+                    value={scheduleForm.employeeId}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, employeeId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    required
+                  >
+                    <option value="">Välj anställd</option>
+                    {employees.filter(e => e.isActive).map(emp => (
+                      <option key={emp.id} value={emp.id}>{emp.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Datum * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={scheduleForm.date}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, date: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Starttid * <span className="text-red-500">(obligatoriskt)</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={scheduleForm.startTime}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, startTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Sluttid * <span className="text-red-500">(obligatoriskt)</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={scheduleForm.endTime}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, endTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Plats * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <select
+                    value={scheduleForm.location}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value as 'malmo' | 'staffanstorp' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    required
+                  >
+                    <option value="malmo">Malmö</option>
+                    <option value="staffanstorp">Staffanstorp</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Anteckningar
+                  </label>
+                  <textarea
+                    value={scheduleForm.notes}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={handleSaveSchedule}
+                    className="flex-1 bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark text-sm sm:text-base"
+                  >
+                    Spara
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsScheduleModalOpen(false);
+                      setEditingSchedule(null);
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 text-sm sm:text-base"
+                  >
+                    Avbryt
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Absence Modal */}
+        {isAbsenceModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {editingAbsence ? 'Redigera frånvaroanmälan' : 'Ny frånvaroanmälan'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsAbsenceModalOpen(false);
+                    setEditingAbsence(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes className="text-lg sm:text-xl" />
+                </button>
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Startdatum * <span className="text-red-500">(obligatoriskt)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={absenceForm.startDate}
+                      onChange={(e) => setAbsenceForm({ ...absenceForm, startDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Slutdatum * <span className="text-red-500">(obligatoriskt)</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={absenceForm.endDate}
+                      onChange={(e) => setAbsenceForm({ ...absenceForm, endDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Typ * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <select
+                    value={absenceForm.type}
+                    onChange={(e) => setAbsenceForm({ ...absenceForm, type: e.target.value as 'sick' | 'vacation' | 'personal' | 'other' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    required
+                  >
+                    <option value="sick">Sjukdom</option>
+                    <option value="vacation">Semester</option>
+                    <option value="personal">Personligt</option>
+                    <option value="other">Övrigt</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Anledning
+                  </label>
+                  <textarea
+                    value={absenceForm.reason}
+                    onChange={(e) => setAbsenceForm({ ...absenceForm, reason: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    rows={3}
+                    placeholder="Beskriv anledningen till frånvaron..."
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={handleSaveAbsence}
+                    className="flex-1 bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark text-sm sm:text-base"
+                  >
+                    Spara
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAbsenceModalOpen(false);
+                      setEditingAbsence(null);
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 text-sm sm:text-base"
+                  >
+                    Avbryt
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Employee Modal - Only for admin and platschef */}
+        {isEmployeeModalOpen && (userRole === 'admin' || userRole === 'platschef') && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {editingEmployee ? 'Redigera anställd' : 'Ny anställd'}
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsEmployeeModalOpen(false);
+                    setEditingEmployee(null);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes className="text-lg sm:text-xl" />
+                </button>
+              </div>
+
+              {!editingEmployee && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    <strong>Viktigt:</strong> {userRole === 'admin' 
+                      ? 'Du kan skapa ett nytt inloggningskonto direkt här genom att ange lösenord. Om användaren redan finns i Supabase Auth kan du bara ange e-post utan lösenord.'
+                      : 'För att skapa en anställd med inloggningskonto måste du först skapa användaren i Supabase Dashboard > Authentication > Users. Se GUIDE_STAFF_CREATION.md för detaljerade instruktioner.'}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Namn * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={employeeForm.name}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    E-post * <span className="text-red-500">(obligatoriskt)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={employeeForm.email}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    disabled={!!editingEmployee}
+                    placeholder={editingEmployee ? 'E-post kan inte ändras' : 'Användarens e-post'}
+                    required
+                  />
+                  {!editingEmployee && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      {userRole === 'admin' 
+                        ? 'Ange lösenord nedan för att skapa nytt konto, eller lämna tomt för att länka till befintligt konto'
+                        : 'Användaren måste redan finnas i Supabase Auth med denna e-post'}
+                    </p>
+                  )}
+                </div>
+
+                {!editingEmployee && userRole === 'admin' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lösenord <span className="text-gray-500">(endast för nya konton)</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={employeeForm.password}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, password: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                      placeholder="Lämna tomt om användaren redan finns"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Om lösenord anges skapas ett nytt inloggningskonto. Om tomt försöker systemet hitta befintlig användare.
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={employeeForm.phone}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    placeholder="070-1234567"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Plats
+                  </label>
+                  <select
+                    value={employeeForm.location}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, location: e.target.value as 'malmo' | 'staffanstorp' | 'both' })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                  >
+                    <option value="both">Båda platser</option>
+                    <option value="malmo">Malmö</option>
+                    <option value="staffanstorp">Staffanstorp</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Position
+                  </label>
+                  <input
+                    type="text"
+                    value={employeeForm.position}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, position: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    placeholder="t.ex. Hundvårdare"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Anställningsdatum
+                  </label>
+                  <input
+                    type="date"
+                    value={employeeForm.hireDate}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, hireDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Anteckningar
+                  </label>
+                  <textarea
+                    value={employeeForm.notes}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                    rows={3}
+                    placeholder="Ytterligare information om anställden..."
+                  />
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={employeeForm.isActive}
+                    onChange={(e) => setEmployeeForm({ ...employeeForm, isActive: e.target.checked })}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+                    Aktiv anställd
+                  </label>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={handleSaveEmployee}
+                    className="flex-1 bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark text-sm sm:text-base"
+                  >
+                    {editingEmployee ? 'Spara ändringar' : 'Skapa anställd'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEmployeeModalOpen(false);
+                      setEditingEmployee(null);
+                    }}
+                    className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 text-sm sm:text-base"
+                  >
+                    Avbryt
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderContent = () => {
-    // Employees can ONLY see meetings - redirect everything else to meetings
-    if (userRole === 'employee') {
-      return renderMeetings();
+    // Employees can see meetings and their own schedule
+    if (userRole === 'employee' && currentView !== 'meetings' && currentView !== 'staff-schedule') {
+      return renderDashboard();
     }
     // Redirect platschef away from contracts and statistics
     if (userRole === 'platschef' && (currentView === 'contracts' || currentView === 'statistics')) {
@@ -5405,6 +6769,8 @@ const AdminPage: React.FC = () => {
         return (userRole === 'admin' || userRole === 'platschef') ? renderApplications() : renderDashboard();
       case 'meetings':
         return renderMeetings();
+      case 'staff-schedule':
+        return (userRole === 'admin' || userRole === 'platschef' || userRole === 'employee') ? renderStaffSchedule() : renderDashboard();
       default:
         return renderDashboard();
     }
