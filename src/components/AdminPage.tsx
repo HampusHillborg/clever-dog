@@ -154,7 +154,16 @@ const AdminPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Password setting state
-  const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [isSettingPassword, setIsSettingPassword] = useState(() => {
+    // Check for invite/recovery token immediately on mount to avoid race conditions with Supabase client
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get('type');
+      const accessToken = hashParams.get('access_token');
+      return (type === 'invite' || type === 'recovery') && !!accessToken;
+    }
+    return false;
+  });
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
