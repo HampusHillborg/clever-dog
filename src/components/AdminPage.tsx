@@ -2761,8 +2761,72 @@ const AdminPage: React.FC = () => {
     });
   };
 
+  if (isSettingPassword) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
+          <div className="flex justify-center mb-8">
+            <FaLock className="text-4xl text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+            Välkommen till CleverDog Admin
+          </h2>
+          <p className="text-center text-gray-600 mb-4 text-sm">
+            Ange ditt önskade lösenord för att aktivera ditt konto
+          </p>
+
+          {passwordError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+              <span className="block sm:inline">{passwordError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSetPassword}>
+            <div className="mb-4">
+              <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1">Nytt lösenord</label>
+              <input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                required
+                disabled={isSettingPasswordLoading}
+                placeholder="••••••••"
+                minLength={8}
+              />
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">Bekräfta lösenord</label>
+              <input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                required
+                disabled={isSettingPasswordLoading}
+                placeholder="••••••••"
+                minLength={8}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-colors"
+              disabled={isSettingPasswordLoading}
+            >
+              {isSettingPasswordLoading ? 'Sparar...' : 'Spara lösenord och logga in'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoggedIn) {
-    if (isSettingPassword) {
+    if (false && isSettingPassword) {
       return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
           <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
