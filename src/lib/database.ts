@@ -54,7 +54,7 @@ const generateUUID = (): string => {
     return crypto.randomUUID();
   }
   // Fallback for older browsers
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -98,7 +98,7 @@ export const getDogs = async (): Promise<Dog[]> => {
         locations = [dog.locations as 'malmo' | 'staffanstorp'];
       }
     }
-    
+
     // Ensure type is properly converted (null -> undefined, empty string -> undefined)
     let type: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
     if (dog.type && typeof dog.type === 'string' && dog.type.trim() !== '') {
@@ -107,7 +107,7 @@ export const getDogs = async (): Promise<Dog[]> => {
         type = typeValue as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
       }
     }
-    
+
     return {
       id: dog.id,
       name: dog.name || '',
@@ -137,7 +137,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     const saved = localStorage.getItem('cleverDogs');
     const dogs: Dog[] = saved ? JSON.parse(saved) : [];
     const existingIndex = dogs.findIndex(d => d.id === dog.id);
-    
+
     if (existingIndex >= 0) {
       dogs[existingIndex] = dog;
     } else {
@@ -213,7 +213,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
   }
 
   const dbDog = data as any;
-  
+
   // Ensure locations is always an array
   let locations: ('malmo' | 'staffanstorp')[] = [];
   if (Array.isArray(dbDog.locations)) {
@@ -225,7 +225,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
       locations = [];
     }
   }
-  
+
   // Ensure type is properly converted
   let type: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
   if (dbDog.type && typeof dbDog.type === 'string' && dbDog.type.trim() !== '') {
@@ -234,7 +234,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
       type = typeValue as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
     }
   }
-  
+
   const savedDog = {
     id: dbDog.id, // Use the UUID from database
     name: dbDog.name || '',
@@ -253,7 +253,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     ownerPersonalNumber: dbDog.owner_personal_number || undefined,
     chipNumber: dbDog.chip_number || undefined,
   };
-  
+
   // If the ID changed (old format to UUID), we need to update localStorage
   if (dog.id !== savedDog.id && isSupabaseAvailable()) {
     // Update any references in localStorage
@@ -264,7 +264,7 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
       localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
     }
   }
-  
+
   return savedDog;
 };
 
@@ -330,7 +330,7 @@ export const saveBoardingRecord = async (record: BoardingRecord): Promise<Boardi
     const saved = localStorage.getItem('cleverBoarding');
     const records: BoardingRecord[] = saved ? JSON.parse(saved) : [];
     const existingIndex = records.findIndex(r => r.id === record.id);
-    
+
     if (existingIndex >= 0) {
       records[existingIndex] = record;
     } else {
@@ -442,7 +442,7 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
     const existingIndex = history.findIndex(
       p => p.date === planning.date && p.location === planning.location
     );
-    
+
     if (existingIndex >= 0) {
       history[existingIndex] = planning;
     } else {
@@ -455,7 +455,7 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
   // First, check if a planning already exists for this date and location
   // to reuse the existing ID (important for upsert to work correctly)
   let planningId = planning.id;
-  
+
   // If ID is not a UUID, try to find existing planning to get its ID
   if (!planning.id || !planning.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
     try {
@@ -523,10 +523,10 @@ export const getPlanningForDate = async (
     // Handle 406 and PGRST116 as "not found" cases
     // PGRST116 = no rows returned
     // 406 errors can occur with .single() when no rows found
-    if (error.code === 'PGRST116' || 
-        (error.message && error.message.includes('406')) ||
-        (error.message && error.message.includes('multiple')) ||
-        error.message === 'JSON object requested, multiple (or no) rows returned') {
+    if (error.code === 'PGRST116' ||
+      (error.message && error.message.includes('406')) ||
+      (error.message && error.message.includes('multiple')) ||
+      error.message === 'JSON object requested, multiple (or no) rows returned') {
       return null;
     }
     console.error('Error fetching planning for date:', error);
@@ -604,7 +604,7 @@ export const getBoxSettings = async (): Promise<BoxSettings> => {
 
     // Transform database format to app format
     const settings: BoxSettings = { ...defaultSettings };
-    
+
     if (data && Array.isArray(data)) {
       data.forEach((row: any) => {
         const location = row.location as 'malmo' | 'staffanstorp';
@@ -647,10 +647,10 @@ export const saveBoxSettings = async (settings: BoxSettings): Promise<BoxSetting
   try {
     // Save settings for both locations
     const locations: Array<'malmo' | 'staffanstorp'> = ['malmo', 'staffanstorp'];
-    
+
     for (const location of locations) {
       const locationSettings = settings[location];
-      
+
       const { error } = await supabase!
         .from('box_settings')
         .upsert({
@@ -684,7 +684,7 @@ export const saveBoxSettings = async (settings: BoxSettings): Promise<BoxSetting
 export type Application = {
   id: string;
   location: 'malmo' | 'staffanstorp';
-  
+
   // Owner information
   owner_name: string;
   owner_email: string;
@@ -693,7 +693,7 @@ export type Application = {
   owner_city?: string;
   owner_postal_code?: string;
   owner_personnummer?: string;
-  
+
   // Dog information
   dog_name: string;
   dog_breed?: string;
@@ -702,30 +702,30 @@ export type Application = {
   dog_age?: string;
   dog_chip_number?: string;
   is_neutered?: string;
-  
+
   // Service information
   service_type: string;
   days_per_week?: string;
   start_date?: string;
   end_date?: string;
   part_time_days?: string;
-  
+
   // Additional information
   dog_socialization?: string;
   problem_behaviors?: string;
   allergies?: string;
   additional_info?: string;
   message?: string;
-  
+
   // Status and matching
   status: 'new' | 'reviewed' | 'approved' | 'rejected' | 'matched' | 'added';
   matched_dog_id?: string;
   matched_by?: string;
   matched_at?: string;
-  
+
   // Admin notes
   admin_notes?: string;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
@@ -908,37 +908,63 @@ export const updateApplication = async (id: string, updates: Partial<Application
   return updated;
 };
 
+// Delete an application
+export const deleteApplication = async (id: string): Promise<void> => {
+  const saved = localStorage.getItem('cleverApplications');
+  if (saved) {
+    const applications: Application[] = JSON.parse(saved);
+    const filtered = applications.filter(a => a.id !== id);
+    localStorage.setItem('cleverApplications', JSON.stringify(filtered));
+  }
+
+  // Try to delete from Supabase if available
+  if (isSupabaseAvailable()) {
+    try {
+      const { error } = await supabase!
+        .from('applications' as any)
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.warn('Failed to delete application from database:', error);
+      }
+    } catch (error) {
+      console.warn('Error deleting application from database:', error);
+    }
+  }
+};
+
 // Find potential matching dogs based on phone number, email, and dog name
 export const findMatchingDogs = async (phone: string, dogName: string, email?: string): Promise<Dog[]> => {
   const allDogs = await getDogs();
-  
+
   // Normalize phone numbers (remove spaces, dashes, etc.)
   const normalizePhone = (phoneNum: string): string => {
     return phoneNum.replace(/\s+/g, '').replace(/-/g, '').replace(/\(/g, '').replace(/\)/g, '');
   };
-  
+
   // Normalize email (lowercase and trim)
   const normalizeEmail = (emailAddr: string): string => {
     return emailAddr.toLowerCase().trim();
   };
-  
+
   const normalizedSearchPhone = normalizePhone(phone || '');
   const normalizedSearchName = dogName.toLowerCase().trim();
   const normalizedSearchEmail = email ? normalizeEmail(email) : '';
-  
+
   return allDogs.filter(dog => {
     const normalizedDogPhone = normalizePhone(dog.phone || '');
     const normalizedDogName = dog.name.toLowerCase().trim();
     const normalizedDogEmail = dog.email ? normalizeEmail(dog.email) : '';
-    
+
     // Match if phone + name match, OR email + name match
-    const phoneNameMatch = normalizedDogPhone === normalizedSearchPhone && 
-                          normalizedDogName === normalizedSearchName;
-    
-    const emailNameMatch = normalizedSearchEmail && 
-                          normalizedDogEmail === normalizedSearchEmail &&
-                          normalizedDogName === normalizedSearchName;
-    
+    const phoneNameMatch = normalizedDogPhone === normalizedSearchPhone &&
+      normalizedDogName === normalizedSearchName;
+
+    const emailNameMatch = normalizedSearchEmail &&
+      normalizedDogEmail === normalizedSearchEmail &&
+      normalizedDogName === normalizedSearchName;
+
     return phoneNameMatch || emailNameMatch;
   });
 };
@@ -969,12 +995,12 @@ export const saveMeeting = async (meeting: Omit<Meeting, 'id' | 'createdAt' | 'u
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     const saved = localStorage.getItem('cleverMeetings');
     const meetings = saved ? JSON.parse(saved) : [];
     meetings.push(newMeeting);
     localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
-    
+
     return newMeeting;
   }
 
@@ -1002,12 +1028,12 @@ export const saveMeeting = async (meeting: Omit<Meeting, 'id' | 'createdAt' | 'u
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      
+
       const saved = localStorage.getItem('cleverMeetings');
       const meetings = saved ? JSON.parse(saved) : [];
       meetings.push(newMeeting);
       localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
-      
+
       return newMeeting;
     }
 
@@ -1039,12 +1065,12 @@ export const saveMeeting = async (meeting: Omit<Meeting, 'id' | 'createdAt' | 'u
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     const saved = localStorage.getItem('cleverMeetings');
     const meetings = saved ? JSON.parse(saved) : [];
     meetings.push(newMeeting);
     localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
-    
+
     return newMeeting;
   }
 };
@@ -1054,14 +1080,14 @@ export const getMeetings = async (filters?: { location?: string; date?: string }
     // Fallback to localStorage
     const saved = localStorage.getItem('cleverMeetings');
     let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
-    
+
     if (filters?.location) {
       meetings = meetings.filter(m => m.location === filters.location);
     }
     if (filters?.date) {
       meetings = meetings.filter(m => m.date === filters.date);
     }
-    
+
     return meetings.sort((a, b) => {
       const dateCompare = a.date.localeCompare(b.date);
       if (dateCompare !== 0) return dateCompare;
@@ -1090,14 +1116,14 @@ export const getMeetings = async (filters?: { location?: string; date?: string }
       // Fallback to localStorage
       const saved = localStorage.getItem('cleverMeetings');
       let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
-      
+
       if (filters?.location) {
         meetings = meetings.filter(m => m.location === filters.location);
       }
       if (filters?.date) {
         meetings = meetings.filter(m => m.date === filters.date);
       }
-      
+
       return meetings.sort((a, b) => {
         const dateCompare = a.date.localeCompare(b.date);
         if (dateCompare !== 0) return dateCompare;
@@ -1123,14 +1149,14 @@ export const getMeetings = async (filters?: { location?: string; date?: string }
     // Fallback to localStorage
     const saved = localStorage.getItem('cleverMeetings');
     let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
-    
+
     if (filters?.location) {
       meetings = meetings.filter(m => m.location === filters.location);
     }
     if (filters?.date) {
       meetings = meetings.filter(m => m.date === filters.date);
     }
-    
+
     return meetings.sort((a, b) => {
       const dateCompare = a.date.localeCompare(b.date);
       if (dateCompare !== 0) return dateCompare;
@@ -1145,7 +1171,7 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
     const saved = localStorage.getItem('cleverMeetings');
     const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
     const index = meetings.findIndex(m => m.id === id);
-    
+
     if (index >= 0) {
       meetings[index] = {
         ...meetings[index],
@@ -1155,7 +1181,7 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
       localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
       return meetings[index];
     }
-    
+
     throw new Error('Meeting not found');
   }
 
@@ -1182,7 +1208,7 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
       const saved = localStorage.getItem('cleverMeetings');
       const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
       const index = meetings.findIndex(m => m.id === id);
-      
+
       if (index >= 0) {
         meetings[index] = {
           ...meetings[index],
@@ -1192,7 +1218,7 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
         localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
         return meetings[index];
       }
-      
+
       throw new Error('Meeting not found');
     }
 
@@ -1237,7 +1263,7 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
     const saved = localStorage.getItem('cleverMeetings');
     const meetings: Meeting[] = saved ? JSON.parse(saved) : [];
     const index = meetings.findIndex(m => m.id === id);
-    
+
     if (index >= 0) {
       meetings[index] = {
         ...meetings[index],
@@ -1247,7 +1273,7 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
       localStorage.setItem('cleverMeetings', JSON.stringify(meetings));
       return meetings[index];
     }
-    
+
     throw error;
   }
 };
@@ -1342,7 +1368,7 @@ export const getEmployees = async (): Promise<Employee[]> => {
         email: emp.admin_users?.email || emp.admin_users?.[0]?.email,
         role: emp.admin_users?.role || emp.admin_users?.[0]?.role,
       }));
-      
+
       // Also save to localStorage as backup
       localStorage.setItem('cleverEmployees', JSON.stringify(employees));
       return employees;
@@ -1360,7 +1386,7 @@ export const getEmployees = async (): Promise<Employee[]> => {
 // Note: email and role are stored in admin_users, not employees table
 export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'updated_at' | 'email' | 'role'> & { email?: string; role?: string }): Promise<Employee> => {
   const now = new Date().toISOString();
-  
+
   // Extract email and role (these go to admin_users, not employees)
   const { email, role, ...employeeData } = employee;
 
@@ -1378,7 +1404,7 @@ export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'upda
   // Always save to localStorage first as backup
   const saved = localStorage.getItem('cleverEmployees');
   const employees: Employee[] = saved ? JSON.parse(saved) : [];
-  
+
   const existingIndex = employees.findIndex(e => e.id === employeeData.id);
   const fullEmployee: Employee = {
     ...employeeRecord,
@@ -1387,7 +1413,7 @@ export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'upda
     created_at: employeeData.id ? (employee as any).created_at || now : now,
     updated_at: now,
   };
-  
+
   if (existingIndex >= 0) {
     employees[existingIndex] = fullEmployee;
   } else {
@@ -1423,13 +1449,13 @@ export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'upda
             .select('role')
             .eq('id', employeeRecord.id)
             .maybeSingle();
-          
+
           // Update role if it has changed
           if (currentAdminUser && (currentAdminUser as any).role !== role) {
             const { error: roleUpdateError } = await (supabase!.from('admin_users' as any) as any)
               .update({ role: role })
               .eq('id', employeeRecord.id);
-            
+
             if (roleUpdateError) {
               console.error('Error updating role in admin_users:', roleUpdateError);
             }
@@ -1519,7 +1545,7 @@ export const getStaffSchedules = async (employeeId?: string, startDate?: string,
   if (!isSupabaseAvailable()) {
     const saved = localStorage.getItem('cleverStaffSchedules');
     const schedules: StaffSchedule[] = saved ? JSON.parse(saved) : [];
-    return employeeId 
+    return employeeId
       ? schedules.filter(s => s.employee_id === employeeId)
       : schedules;
   }
@@ -1557,18 +1583,18 @@ export const getStaffSchedules = async (employeeId?: string, startDate?: string,
 // Save or update staff schedule
 export const saveStaffSchedule = async (schedule: Omit<StaffSchedule, 'created_at' | 'updated_at'>): Promise<StaffSchedule> => {
   const now = new Date().toISOString();
-  
+
   // Always save to localStorage first as backup
   const saved = localStorage.getItem('cleverStaffSchedules');
   const schedules: StaffSchedule[] = saved ? JSON.parse(saved) : [];
-  
+
   const existingIndex = schedules.findIndex(s => s.id === schedule.id);
   const scheduleData: StaffSchedule = {
     ...schedule,
     created_at: schedule.id ? (schedule as any).created_at || now : now,
     updated_at: now,
   };
-  
+
   if (existingIndex >= 0) {
     schedules[existingIndex] = scheduleData;
   } else {
@@ -1639,14 +1665,14 @@ export const getStaffAbsences = async (employeeId?: string, status?: 'pending' |
   if (!isSupabaseAvailable()) {
     const saved = localStorage.getItem('cleverStaffAbsences');
     const absences: StaffAbsence[] = saved ? JSON.parse(saved) : [];
-    let filtered = employeeId 
+    let filtered = employeeId
       ? absences.filter(a => a.employee_id === employeeId)
       : absences;
-    
+
     if (status) {
       filtered = filtered.filter(a => a.status === status);
     }
-    
+
     return filtered;
   }
 
@@ -1679,11 +1705,11 @@ export const getStaffAbsences = async (employeeId?: string, status?: 'pending' |
 // Save or create staff absence
 export const saveStaffAbsence = async (absence: Omit<StaffAbsence, 'created_at' | 'updated_at' | 'reviewed_at' | 'reviewed_by'>): Promise<StaffAbsence> => {
   const now = new Date().toISOString();
-  
+
   // Always save to localStorage first as backup
   const saved = localStorage.getItem('cleverStaffAbsences');
   const absences: StaffAbsence[] = saved ? JSON.parse(saved) : [];
-  
+
   const existingIndex = absences.findIndex(a => a.id === absence.id);
   const absenceData: StaffAbsence = {
     ...absence,
@@ -1692,7 +1718,7 @@ export const saveStaffAbsence = async (absence: Omit<StaffAbsence, 'created_at' 
     created_at: absence.id ? (absence as any).created_at || now : now,
     updated_at: now,
   };
-  
+
   if (existingIndex >= 0) {
     absences[existingIndex] = absenceData;
   } else {
@@ -1738,12 +1764,12 @@ export const saveStaffAbsence = async (absence: Omit<StaffAbsence, 'created_at' 
 // Update absence status (for admin/platschef to approve/reject)
 export const updateAbsenceStatus = async (id: string, status: 'approved' | 'rejected', reviewedBy: string): Promise<StaffAbsence> => {
   const now = new Date().toISOString();
-  
+
   // Update localStorage
   const saved = localStorage.getItem('cleverStaffAbsences');
   const absences: StaffAbsence[] = saved ? JSON.parse(saved) : [];
   const index = absences.findIndex(a => a.id === id);
-  
+
   if (index >= 0) {
     absences[index] = {
       ...absences[index],

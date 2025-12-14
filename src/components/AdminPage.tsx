@@ -30,6 +30,7 @@ import {
   saveStaffAbsence,
   updateAbsenceStatus,
   deleteStaffAbsence,
+  deleteApplication,
   type BoxSettings,
   type Application,
   type Meeting,
@@ -5715,6 +5716,29 @@ const AdminPage: React.FC = () => {
     } catch (error) {
       console.error('Error updating application status:', error);
       alert('Fel uppstod vid uppdatering av ansökan');
+    }
+  };
+
+  const handleDeleteApplication = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (confirm('Är du säker på att du vill ta bort denna ansökan? Detta går inte att ångra.')) {
+      try {
+        await deleteApplication(id);
+
+        // Refresh list
+        const filters: { status?: string; location?: string } = {};
+        if (applicationsFilter !== 'all') {
+          filters.status = applicationsFilter;
+        }
+        if (applicationsLocationFilter !== 'all') {
+          filters.location = applicationsLocationFilter;
+        }
+        const updatedApplications = await getApplications(filters);
+        setApplications(updatedApplications);
+      } catch (error) {
+        console.error('Error deleting application:', error);
+        alert('Ett fel uppstod när ansökan skulle tas bort.');
+      }
     }
   };
 
