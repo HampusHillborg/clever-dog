@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars, FaClock } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
-import { 
-  getDogs as fetchDogs, 
-  saveDog as saveDogToDb, 
+import {
+  getDogs as fetchDogs,
+  saveDog as saveDogToDb,
   deleteDog as deleteDogFromDb,
   getBoardingRecords as fetchBoardingRecords,
   saveBoardingRecord as saveBoardingRecordToDb,
@@ -38,7 +38,7 @@ import {
   type StaffAbsence
 } from '../lib/database';
 import { PRICES, VAT_RATE } from '../lib/prices';
-import { signIn, signOut, getCurrentUser, onAuthStateChange, type AuthUser } from '../lib/auth';
+import { signIn, signOut, getCurrentUser, onAuthStateChange, setPassword as setUserPassword, type AuthUser } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 
 interface ContractData {
@@ -152,6 +152,14 @@ const AdminPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Password setting state
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [isSettingPasswordLoading, setIsSettingPasswordLoading] = useState(false);
+
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [contracts] = useState<ContractData[]>([]);
@@ -380,7 +388,7 @@ const AdminPage: React.FC = () => {
   const createInitialCages = (location: 'staffanstorp' | 'malmo') => {
     const prefix = location === 'staffanstorp' ? 'staffanstorp' : 'malmo';
     const settings = boxSettings[location];
-    
+
     return [
       ...settings.cages.map((cage, i) => ({
         id: `${prefix}-cage-${i + 1}`,
@@ -409,7 +417,7 @@ const AdminPage: React.FC = () => {
       // while loading new data for the new date
       setPlanningStaffanstorp([]);
       setPlanningMalmo([]);
-      
+
       // Try to load from database first
       try {
         // Load Staffanstorp
@@ -459,13 +467,13 @@ const AdminPage: React.FC = () => {
   // Check if user is already logged in from Supabase session
   useEffect(() => {
     // Temporary: Auto-login for local development (only if Supabase is not configured)
-    const isDevelopment = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1' ||
-                         window.location.hostname.includes('localhost');
-    
+    const isDevelopment = window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.includes('localhost');
+
     // Check if Supabase is configured
     const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
-    
+
     let authSubscription: { unsubscribe: () => void } | null = null;
 
     if (isDevelopment && !isSupabaseConfigured) {
@@ -516,6 +524,7 @@ const AdminPage: React.FC = () => {
       authSubscription = authStateResult.data.subscription;
     }
 
+
     // Cleanup function
     return () => {
       if (authSubscription) {
@@ -524,20 +533,37 @@ const AdminPage: React.FC = () => {
     };
   }, []);
 
+  // Check for invite token in URL
+  useEffect(() => {
+    // Check if there is a hash in the URL
+    if (window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get('type');
+      const accessToken = hashParams.get('access_token');
+
+      // If it's an invite or recovery flow and we have an access token
+      if ((type === 'invite' || type === 'recovery') && accessToken) {
+        setIsSettingPassword(true);
+        // Clear any previous errors
+        setError('');
+      }
+    }
+  }, []);
+
   // Set meta robots tag to prevent indexing of admin pages
   useEffect(() => {
     // Find or create robots meta tag
     let robotsMeta = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
-    
+
     if (!robotsMeta) {
       robotsMeta = document.createElement('meta');
       robotsMeta.name = 'robots';
       document.head.appendChild(robotsMeta);
     }
-    
+
     // Set to noindex, nofollow for admin pages
     robotsMeta.content = 'noindex, nofollow, noarchive, nosnippet';
-    
+
     // Also update googlebot and bingbot
     let googlebotMeta = document.querySelector('meta[name="googlebot"]') as HTMLMetaElement;
     if (!googlebotMeta) {
@@ -546,7 +572,7 @@ const AdminPage: React.FC = () => {
       document.head.appendChild(googlebotMeta);
     }
     googlebotMeta.content = 'noindex, nofollow';
-    
+
     let bingbotMeta = document.querySelector('meta[name="bingbot"]') as HTMLMetaElement;
     if (!bingbotMeta) {
       bingbotMeta = document.createElement('meta');
@@ -554,7 +580,7 @@ const AdminPage: React.FC = () => {
       document.head.appendChild(bingbotMeta);
     }
     bingbotMeta.content = 'noindex, nofollow';
-    
+
     // Update page title
     document.title = 'Admin - Clever Dog';
   }, []);
@@ -563,15 +589,15 @@ const AdminPage: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    
+
     // Check if Supabase is configured
     const isSupabaseConfigured = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
-    
+
     // Temporary: Auto-login for local development (only if Supabase is not configured)
-    const isDevelopment = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1' ||
-                         window.location.hostname.includes('localhost');
-    
+    const isDevelopment = window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.includes('localhost');
+
     if (isDevelopment && !isSupabaseConfigured) {
       // Fallback for local development without Supabase
       let devRole: UserRole = 'admin';
@@ -588,17 +614,17 @@ const AdminPage: React.FC = () => {
       setIsLoggedIn(true);
       return;
     }
-    
+
     if (!isSupabaseConfigured) {
       setError('Autentisering är inte konfigurerad. Kontakta administratören.');
       setIsLoading(false);
       return;
     }
-    
+
     // Use Supabase Auth
     try {
       const result = await signIn(email, password);
-      
+
       if (result.success && result.user) {
         // Update all state in sequence to ensure proper re-render
         setCurrentUser(result.user);
@@ -634,6 +660,45 @@ const AdminPage: React.FC = () => {
       setCurrentUser(null);
       setEmail('');
       setPassword('');
+    }
+  };
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    setIsSettingPasswordLoading(true);
+
+    if (newPassword.length < 8) {
+      setPasswordError('Lösenordet måste vara minst 8 tecken långt');
+      setIsSettingPasswordLoading(false);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Lösenorden matchar inte');
+      setIsSettingPasswordLoading(false);
+      return;
+    }
+
+    try {
+      const result = await setUserPassword(newPassword);
+
+      if (result.success && result.user) {
+        // Password set successfully, log the user in
+        setCurrentUser(result.user);
+        setUserRole(result.user.role);
+        setIsLoggedIn(true);
+        setIsSettingPassword(false);
+        // Clear cleanup
+        window.location.hash = '';
+      } else {
+        setPasswordError(result.error || 'Kunde inte sätta lösenord');
+      }
+    } catch (err) {
+      console.error('Set password error:', err);
+      setPasswordError('Ett fel uppstod. Försök igen.');
+    } finally {
+      setIsSettingPasswordLoading(false);
     }
   };
 
@@ -686,7 +751,7 @@ const AdminPage: React.FC = () => {
       };
 
       const savedSchedule = await saveStaffSchedule(scheduleData);
-      
+
       setStaffSchedules(prev => {
         const existing = prev.find(s => s.id === savedSchedule.id);
         if (existing) {
@@ -713,7 +778,7 @@ const AdminPage: React.FC = () => {
 
   const handleDeleteSchedule = async (id: string) => {
     if (!confirm('Är du säker på att du vill ta bort detta schema?')) return;
-    
+
     try {
       await deleteStaffSchedule(id);
       setStaffSchedules(prev => prev.filter(s => s.id !== id));
@@ -762,7 +827,7 @@ const AdminPage: React.FC = () => {
       };
 
       const savedAbsence = await saveStaffAbsence(absenceData);
-      
+
       setStaffAbsences(prev => [...prev, savedAbsence]);
 
       setIsAbsenceModalOpen(false);
@@ -781,7 +846,7 @@ const AdminPage: React.FC = () => {
 
   const handleApproveAbsence = async (id: string) => {
     if (!currentUser?.id) return;
-    
+
     try {
       const updated = await updateAbsenceStatus(id, 'approved', currentUser.id);
       setStaffAbsences(prev => prev.map(a => a.id === id ? updated : a));
@@ -793,7 +858,7 @@ const AdminPage: React.FC = () => {
 
   const handleRejectAbsence = async (id: string) => {
     if (!currentUser?.id) return;
-    
+
     try {
       const updated = await updateAbsenceStatus(id, 'rejected', currentUser.id);
       setStaffAbsences(prev => prev.map(a => a.id === id ? updated : a));
@@ -869,7 +934,7 @@ const AdminPage: React.FC = () => {
         // Call Netlify Function to create user
         // Convert empty string to null for location
         const locationValue = employeeForm.location && employeeForm.location.trim() ? employeeForm.location : null;
-        
+
         try {
           const response = await fetch('/.netlify/functions/create-staff-user', {
             method: 'POST',
@@ -991,19 +1056,19 @@ const AdminPage: React.FC = () => {
           .single();
 
         if (existingUser && (existingUser as any).id) {
-            // Link to existing user
-            const savedEmployee = await saveEmployee({
-              id: (existingUser as any).id,
-              name: employeeForm.name,
-              email: employeeForm.email,
-              phone: employeeForm.phone || undefined,
-              location: employeeForm.location || undefined,
-              role: employeeForm.role,
-              position: employeeForm.position || undefined,
-              hire_date: employeeForm.hire_date || undefined,
-              notes: employeeForm.notes || undefined,
-              is_active: true,
-            });
+          // Link to existing user
+          const savedEmployee = await saveEmployee({
+            id: (existingUser as any).id,
+            name: employeeForm.name,
+            email: employeeForm.email,
+            phone: employeeForm.phone || undefined,
+            location: employeeForm.location || undefined,
+            role: employeeForm.role,
+            position: employeeForm.position || undefined,
+            hire_date: employeeForm.hire_date || undefined,
+            notes: employeeForm.notes || undefined,
+            is_active: true,
+          });
 
           setEmployees(prev => {
             const existing = prev.find(e => e.id === savedEmployee.id);
@@ -1053,7 +1118,7 @@ const AdminPage: React.FC = () => {
             .select('id, email')
             .eq('email', emailToSearch)
             .maybeSingle();
-          
+
           if (altUser && (altUser as any).id) {
             // Found user with alternative search, continue
             const savedEmployee = await saveEmployee({
@@ -1251,9 +1316,9 @@ const AdminPage: React.FC = () => {
     savePlanningDataToDb(planningData).then((savedPlanning) => {
       const existingIndex = planningHistory.findIndex(p => p.id === savedPlanning.id);
       let updatedHistory;
-      
+
       if (existingIndex >= 0) {
-        updatedHistory = planningHistory.map((p, index) => 
+        updatedHistory = planningHistory.map((p, index) =>
           index === existingIndex ? savedPlanning : p
         );
       } else {
@@ -1267,9 +1332,9 @@ const AdminPage: React.FC = () => {
       // Fallback to localStorage
       const existingIndex = planningHistory.findIndex(p => p.id === planningData.id);
       let updatedHistory;
-      
+
       if (existingIndex >= 0) {
-        updatedHistory = planningHistory.map((p, index) => 
+        updatedHistory = planningHistory.map((p, index) =>
           index === existingIndex ? planningData : p
         );
       } else {
@@ -1285,7 +1350,7 @@ const AdminPage: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getInitialCages = (_location: 'malmo' | 'staffanstorp'): Cage[] => {
     const cages: Cage[] = [];
-    
+
     // Add 8 cages
     for (let i = 1; i <= 8; i++) {
       cages.push({
@@ -1295,7 +1360,7 @@ const AdminPage: React.FC = () => {
         dogs: []
       });
     }
-    
+
     // Add 2 free areas
     for (let i = 1; i <= 2; i++) {
       cages.push({
@@ -1305,7 +1370,7 @@ const AdminPage: React.FC = () => {
         dogs: []
       });
     }
-    
+
     return cages;
   };
 
@@ -1331,7 +1396,7 @@ const AdminPage: React.FC = () => {
       notes: dogForm.notes,
       locations: dogForm.locations,
       // Only set type if it's not empty string
-      type: (dogForm.type && dogForm.type.trim() !== '') 
+      type: (dogForm.type && dogForm.type.trim() !== '')
         ? (dogForm.type as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding')
         : undefined,
       isActive: dogForm.isActive,
@@ -1448,25 +1513,25 @@ const AdminPage: React.FC = () => {
 
     const recordToSave: BoardingRecord = editingBoardingRecord
       ? {
-          ...editingBoardingRecord,
-          dogId: selectedDogForBoarding,
-          dogName: selectedDog.name,
-          location: location,
-          startDate: boardingForm.startDate,
-          endDate: boardingForm.endDate,
-          notes: boardingForm.notes || undefined
-        }
+        ...editingBoardingRecord,
+        dogId: selectedDogForBoarding,
+        dogName: selectedDog.name,
+        location: location,
+        startDate: boardingForm.startDate,
+        endDate: boardingForm.endDate,
+        notes: boardingForm.notes || undefined
+      }
       : {
-          id: `${Date.now()}`,
-          dogId: selectedDogForBoarding,
-          dogName: selectedDog.name,
-          location: location,
-          startDate: boardingForm.startDate,
-          endDate: boardingForm.endDate,
-          notes: boardingForm.notes || undefined,
-          createdAt: new Date().toISOString(),
-          isArchived: false
-        };
+        id: `${Date.now()}`,
+        dogId: selectedDogForBoarding,
+        dogName: selectedDog.name,
+        location: location,
+        startDate: boardingForm.startDate,
+        endDate: boardingForm.endDate,
+        notes: boardingForm.notes || undefined,
+        createdAt: new Date().toISOString(),
+        isArchived: false
+      };
 
     // Save to database
     saveBoardingRecordToDb(recordToSave).then((savedRecord) => {
@@ -1484,7 +1549,7 @@ const AdminPage: React.FC = () => {
       setBoardingRecords(updatedRecords);
       localStorage.setItem('cleverBoarding', JSON.stringify(updatedRecords));
     });
-    
+
     setIsBoardingModalOpen(false);
     setBoardingForm({ startDate: '', endDate: '', notes: '' });
     setSelectedDogForBoarding('');
@@ -1645,10 +1710,10 @@ const AdminPage: React.FC = () => {
   // Auto-archive records whenever boardingRecords changes
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
-    const recordsToArchive = boardingRecords.filter(record => 
+    const recordsToArchive = boardingRecords.filter(record =>
       record.endDate < today && !record.isArchived
     );
-    
+
     if (recordsToArchive.length > 0) {
       // Archive all records that need archiving
       Promise.all(
@@ -1686,7 +1751,7 @@ const AdminPage: React.FC = () => {
   // Load applications from database
   useEffect(() => {
     if (userRole !== 'admin' && userRole !== 'platschef') return; // Only load for admins and platschef
-    
+
     const loadApplications = async () => {
       try {
         const filters: { status?: string; location?: string } = {};
@@ -1702,7 +1767,7 @@ const AdminPage: React.FC = () => {
         console.error('Error loading applications:', error);
       }
     };
-    
+
     loadApplications();
   }, [userRole, applicationsFilter, applicationsLocationFilter]);
 
@@ -1757,13 +1822,13 @@ const AdminPage: React.FC = () => {
 
   const getBoardingRecordsByMonth = (records: BoardingRecord[], year: string) => {
     const recordsByMonth: { [key: string]: BoardingRecord[] } = {};
-    
+
     records.forEach(record => {
       const recordYear = new Date(record.startDate).getFullYear().toString();
       if (recordYear === year) {
         const month = new Date(record.startDate).getMonth();
         const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-        
+
         if (!recordsByMonth[monthKey]) {
           recordsByMonth[monthKey] = [];
         }
@@ -1781,7 +1846,7 @@ const AdminPage: React.FC = () => {
 
   const categorizeBoardingRecords = (records: BoardingRecord[]) => {
     const today = new Date().toISOString().split('T')[0];
-    
+
     return {
       future: records.filter(record => record.startDate > today),
       ongoing: records.filter(record => record.startDate <= today && record.endDate >= today),
@@ -1801,21 +1866,21 @@ const AdminPage: React.FC = () => {
   // Helper function to find the last location a dog was planned at
   const getLastPlannedLocation = (dogId: string): 'malmo' | 'staffanstorp' | null => {
     // Find all planning entries where this dog appears
-    const dogPlanningEntries = planningHistory.filter(plan => 
-      plan.cages && plan.cages.some(cage => 
+    const dogPlanningEntries = planningHistory.filter(plan =>
+      plan.cages && plan.cages.some(cage =>
         cage.dogs && Array.isArray(cage.dogs) && cage.dogs.includes(dogId)
       )
     );
-    
+
     if (dogPlanningEntries.length === 0) return null;
-    
+
     // Sort by date descending (most recent first)
     dogPlanningEntries.sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       return dateB - dateA;
     });
-    
+
     // Return the location of the most recent planning
     return dogPlanningEntries[0].location;
   };
@@ -1824,11 +1889,11 @@ const AdminPage: React.FC = () => {
   const calculateDogIncome = (dog: Dog, location: 'malmo' | 'staffanstorp', assignLocationForBoth: boolean = false): number => {
     // Safety checks
     if (!dog || !dog.locations) return 0;
-    
+
     // Ensure locations is an array
     const locations = Array.isArray(dog.locations) ? dog.locations : [];
     if (!locations.includes(location)) return 0;
-    
+
     // Handle dogs with both locations - only count to the last planned location
     if (assignLocationForBoth && locations.includes('malmo') && locations.includes('staffanstorp')) {
       const lastLocation = getLastPlannedLocation(dog.id);
@@ -1839,10 +1904,10 @@ const AdminPage: React.FC = () => {
       // Only count if this is the last planned location
       if (lastLocation !== location) return 0;
     }
-    
+
     // Only calculate income if dog has a type (excluding singleDay and boarding)
     if (!dog.type || dog.type === 'singleDay' || dog.type === 'boarding') return 0;
-    
+
     return calculateDogIncomeForType(dog.type, location);
   };
 
@@ -1865,7 +1930,7 @@ const AdminPage: React.FC = () => {
   const calculateBoardingIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
     const prices = PRICES[location];
     let filteredRecords = boardingRecords.filter(record => record.location === location);
-    
+
     if (filter.period === 'year' && filter.year) {
       filteredRecords = filteredRecords.filter(record => {
         const recordYear = new Date(record.startDate).getFullYear();
@@ -1874,11 +1939,11 @@ const AdminPage: React.FC = () => {
     } else if (filter.period === 'month' && filter.year && filter.month) {
       filteredRecords = filteredRecords.filter(record => {
         const recordDate = new Date(record.startDate);
-        return recordDate.getFullYear() === filter.year && 
-               recordDate.getMonth() + 1 === filter.month;
+        return recordDate.getFullYear() === filter.year &&
+          recordDate.getMonth() + 1 === filter.month;
       });
     }
-    
+
     return filteredRecords.length * prices.boarding;
   };
 
@@ -1887,14 +1952,14 @@ const AdminPage: React.FC = () => {
   // IMPORTANT: Only counts dogs that were planned at the SPECIFIC location, not at other locations
   const calculateSingleDayIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter, validDogsList: Dog[]): number => {
     if (!statisticsFilter.includeSingleDays) return 0;
-    
+
     // CRITICAL: Filter planning history to ONLY include plans for this specific location
     // A dog planned at Staffanstorp should NOT count for Malmö income, even if registered at both locations
     let filteredPlanning = planningHistory.filter(p => {
       // Double-check that the location matches exactly
       return p.location === location && p.cages && Array.isArray(p.cages);
     });
-    
+
     // Filter by period
     if (filter.period === 'year' && filter.year) {
       filteredPlanning = filteredPlanning.filter(p => {
@@ -1904,28 +1969,28 @@ const AdminPage: React.FC = () => {
     } else if (filter.period === 'month' && filter.year && filter.month) {
       filteredPlanning = filteredPlanning.filter(p => {
         const planDate = new Date(p.date);
-        return planDate.getFullYear() === filter.year && 
-               planDate.getMonth() + 1 === filter.month;
+        return planDate.getFullYear() === filter.year &&
+          planDate.getMonth() + 1 === filter.month;
       });
     } else if (filter.period === 'all') {
       // For 'all' period, count all planning history for this location
       // No additional filtering needed
     }
-    
+
     // Count how many times each singleDay dog was actually planned (in cages) at THIS location during the period
     // IMPORTANT: We ONLY count dogs that appear in planning history for THIS location (were actually planned here)
     // A singleDay dog that exists but was never planned at this location will NOT be counted
     // A dog planned at Staffanstorp will NOT count for Malmö, even if registered at both locations
     let totalSingleDayDays = 0;
     const processedDogs = new Set<string>(); // Track which dogs we've counted per date to avoid duplicates
-    
+
     filteredPlanning.forEach(plan => {
       // Extra safety check: ensure plan location matches
       if (!plan.cages || !plan.date || plan.location !== location) return;
-      
+
       plan.cages.forEach(cage => {
         if (!cage.dogs || !Array.isArray(cage.dogs)) return;
-        
+
         cage.dogs.forEach(dogId => {
           // Find the dog to check if it's a singleDay dog
           const dog = validDogsList.find((d: Dog) => d.id === dogId);
@@ -1941,7 +2006,7 @@ const AdminPage: React.FC = () => {
         });
       });
     });
-    
+
     // Multiply by price - each planned day counts as one singleDay service
     return totalSingleDayDays * PRICES[location].singleDay;
   };
@@ -1950,16 +2015,16 @@ const AdminPage: React.FC = () => {
   // IMPORTANT: Only counts boarding records for the specified location that overlap with the filter period
   const calculateBoardingIncomeDetailed = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
     if (!statisticsFilter.includeBoarding) return 0;
-    
+
     const prices = PRICES[location];
-    
+
     // CRITICAL: First filter by location only (don't exclude archived records for statistics)
     // Archived records should still be counted in statistics for past periods
     let filteredRecords = boardingRecords.filter(record => {
       // Ensure location matches exactly - a boarding at Staffanstorp should NOT count for Malmö
       return record.location === location;
     });
-    
+
     // Filter by period
     if (filter.period === 'year' && filter.year) {
       filteredRecords = filteredRecords.filter(record => {
@@ -1967,7 +2032,7 @@ const AdminPage: React.FC = () => {
         const endDate = new Date(record.endDate);
         const filterStart = new Date(filter.year!, 0, 1);
         const filterEnd = new Date(filter.year!, 11, 31);
-        
+
         // Check if boarding period overlaps with filter year
         return startDate <= filterEnd && endDate >= filterStart;
       });
@@ -1977,27 +2042,27 @@ const AdminPage: React.FC = () => {
         const endDate = new Date(record.endDate);
         const filterStart = new Date(filter.year!, filter.month! - 1, 1);
         const filterEnd = new Date(filter.year!, filter.month!, 0); // Last day of month
-        
+
         // Check if boarding period overlaps with filter month
         return startDate <= filterEnd && endDate >= filterStart;
       });
     }
     // For 'all' period, we count all records (already filtered by location)
-    
+
     // Calculate total days and income - only for records that actually overlap with the period
     let totalDays = 0;
     filteredRecords.forEach(record => {
       const startDate = new Date(record.startDate);
       const endDate = new Date(record.endDate);
-      
+
       if (filter.period === 'month' && filter.year && filter.month) {
         // Calculate only days within the filtered month
         const filterStart = new Date(filter.year, filter.month - 1, 1);
         const filterEnd = new Date(filter.year, filter.month, 0); // Last day of month
-        
+
         const actualStart = startDate > filterStart ? startDate : filterStart;
         const actualEnd = endDate < filterEnd ? endDate : filterEnd;
-        
+
         // Only count if there's an overlap
         if (actualStart <= actualEnd) {
           const daysDiff = Math.ceil((actualEnd.getTime() - actualStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -2007,10 +2072,10 @@ const AdminPage: React.FC = () => {
         // Calculate only days within the filtered year
         const filterStart = new Date(filter.year, 0, 1);
         const filterEnd = new Date(filter.year, 11, 31);
-        
+
         const actualStart = startDate > filterStart ? startDate : filterStart;
         const actualEnd = endDate < filterEnd ? endDate : filterEnd;
-        
+
         // Only count if there's an overlap
         if (actualStart <= actualEnd) {
           const daysDiff = Math.ceil((actualEnd.getTime() - actualStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -2022,14 +2087,14 @@ const AdminPage: React.FC = () => {
         totalDays += daysDiff;
       }
     });
-    
+
     return totalDays * prices.boarding;
   };
 
   const getStatistics = (): DogStatistics => {
     // Ensure we have valid dogs data
     let validDogs = dogs.filter(dog => dog && dog.id);
-    
+
     // Filter by active/inactive status
     if (statisticsFilter.includeActive && !statisticsFilter.includeInactive) {
       validDogs = validDogs.filter(dog => dog.isActive !== false); // Default true if undefined
@@ -2038,28 +2103,28 @@ const AdminPage: React.FC = () => {
     } else if (!statisticsFilter.includeActive && !statisticsFilter.includeInactive) {
       validDogs = []; // No dogs if both are excluded
     }
-    
+
     let filteredDogs = validDogs;
-    
+
     // Filter dogs by location
     if (statisticsFilter.location === 'malmo') {
       filteredDogs = validDogs.filter(dog => dog.locations && Array.isArray(dog.locations) && dog.locations.includes('malmo'));
     } else if (statisticsFilter.location === 'staffanstorp') {
       filteredDogs = validDogs.filter(dog => dog.locations && Array.isArray(dog.locations) && dog.locations.includes('staffanstorp'));
     }
-    
+
     const malmoDogs = validDogs.filter(dog => dog && dog.locations && Array.isArray(dog.locations) && dog.locations.includes('malmo'));
     const staffanstorpDogs = validDogs.filter(dog => dog && dog.locations && Array.isArray(dog.locations) && dog.locations.includes('staffanstorp'));
     const bothLocationDogs = validDogs.filter(dog => {
       if (!dog || !dog.locations || !Array.isArray(dog.locations)) return false;
       return dog.locations.includes('malmo') && dog.locations.includes('staffanstorp');
     });
-    
+
     // Calculate daycare income (monthly subscriptions) - ONLY for selected location if filter is set
     // For dogs with both locations, only count to the last planned location
     let malmoDaycareIncome = 0;
     let staffanstorpDaycareIncome = 0;
-    
+
     if (statisticsFilter.location === 'all') {
       // Count both locations
       malmoDaycareIncome = malmoDogs.reduce((sum, dog) => {
@@ -2085,7 +2150,7 @@ const AdminPage: React.FC = () => {
         return sum + income;
       }, 0);
     }
-    
+
     // Calculate boarding income - ONLY for selected location if filter is set
     let boardingMalmoIncome = 0;
     let boardingStaffanstorpIncome = 0;
@@ -2102,7 +2167,7 @@ const AdminPage: React.FC = () => {
       boardingMalmoIncome = 0;
       boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
     }
-    
+
     // Calculate single day income from planning history - ONLY for selected location if filter is set
     let singleDayMalmoIncome = 0;
     let singleDayStaffanstorpIncome = 0;
@@ -2119,19 +2184,19 @@ const AdminPage: React.FC = () => {
       singleDayMalmoIncome = 0;
       singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter, validDogs);
     }
-    
+
     // Total income calculations
     // IMPORTANT: PRICES are INCLUSIVE of VAT (as shown on the website)
     // So we need to calculate backwards: prices are with VAT, we need to extract VAT
     const totalDaycareIncome = malmoDaycareIncome + staffanstorpDaycareIncome;
     const totalBoardingIncome = boardingMalmoIncome + boardingStaffanstorpIncome;
     const totalSingleDayIncome = singleDayMalmoIncome + singleDayStaffanstorpIncome;
-    
+
     // Prices from PRICES are inclusive of VAT, so this is the total with VAT
     const totalIncomeWithVAT = totalDaycareIncome + totalBoardingIncome + totalSingleDayIncome;
     // Calculate income without VAT by dividing by (1 + VAT_RATE)
     const totalIncomeWithoutVAT = totalIncomeWithVAT / (1 + VAT_RATE);
-    
+
     // Income by type (monthly subscriptions) - respect location filter
     const incomeByType = {
       fulltime: filteredDogs
@@ -2182,14 +2247,14 @@ const AdminPage: React.FC = () => {
       singleDay: totalSingleDayIncome,
       boarding: totalBoardingIncome
     };
-    
+
     // Income by category
     const incomeByCategory = {
       daycare: totalDaycareIncome,
       boarding: totalBoardingIncome,
       singleDays: totalSingleDayIncome
     };
-    
+
     return {
       totalDogs: filteredDogs.length,
       malmoDogs: malmoDogs.length,
@@ -2224,12 +2289,12 @@ const AdminPage: React.FC = () => {
     });
 
     updatePlanning(updatedCages);
-    
+
     // Auto-save planning data with current date
     setTimeout(() => {
       savePlanningData(location, updatedCages);
     }, 100);
-    
+
     setDraggedDog(null);
   };
 
@@ -2245,7 +2310,7 @@ const AdminPage: React.FC = () => {
     });
 
     updatePlanning(updatedCages);
-    
+
     // Auto-save planning data
     setTimeout(() => {
       savePlanningData(location, updatedCages);
@@ -2255,7 +2320,7 @@ const AdminPage: React.FC = () => {
   const resetCages = (location: 'staffanstorp' | 'malmo') => {
     if (confirm('Är du säker på att du vill återställa alla burar för denna dag?')) {
       const newCages = createInitialCages(location);
-      
+
       if (location === 'staffanstorp') {
         setPlanningStaffanstorp(newCages);
       } else {
@@ -2271,21 +2336,21 @@ const AdminPage: React.FC = () => {
 
   // Copy planning from another date
   const copyPlanningFromDate = async (
-    sourceDate: string, 
+    sourceDate: string,
     location: 'staffanstorp' | 'malmo',
     includeBoarding: boolean
   ) => {
     try {
       // Get planning from source date
       const sourcePlanning = await getPlanningForDate(sourceDate, location);
-      
+
       if (!sourcePlanning || !sourcePlanning.cages) {
         alert(`Ingen planering hittades för ${new Date(sourceDate).toLocaleDateString('sv-SE')}`);
         return;
       }
 
       // Get boarding dogs for current date to filter them out if needed
-      const currentDateBoardingRecords = boardingRecords.filter(record => 
+      const currentDateBoardingRecords = boardingRecords.filter(record =>
         record.location === location &&
         !record.isArchived &&
         record.startDate <= currentPlanningDate &&
@@ -2335,7 +2400,7 @@ const AdminPage: React.FC = () => {
     };
 
     const today = formatDate(new Date().toISOString());
-    
+
     // Create a simple contract with proper page break controls
     let contractHTML = `
       <!DOCTYPE html>
@@ -2473,10 +2538,10 @@ const AdminPage: React.FC = () => {
           <div class="contract-subtitle">För hundens bästa</div>
         </div>
       
-        <h1>AVTAL ${contractData.contractType === 'daycare' ? 'HUNDDAGIS' : 
-                      contractData.contractType === 'boarding' ? 'HUNDPENSIONAT' : 
-                      contractData.contractType === 'socialWalk' ? 'SOCIAL PROMENAD' : 
-                      contractData.contractType === 'partTime' ? 'DELTID HUNDDAGIS' : 'ENKELDAGIS'}</h1>
+        <h1>AVTAL ${contractData.contractType === 'daycare' ? 'HUNDDAGIS' :
+        contractData.contractType === 'boarding' ? 'HUNDPENSIONAT' :
+          contractData.contractType === 'socialWalk' ? 'SOCIAL PROMENAD' :
+            contractData.contractType === 'partTime' ? 'DELTID HUNDDAGIS' : 'ENKELDAGIS'}</h1>
         
         <p>Ingånget den ${today} mellan:</p>
         <ol>
@@ -2663,24 +2728,24 @@ const AdminPage: React.FC = () => {
 
   const generatePDF = () => {
     const contractHTML = generateContractHTML();
-    
+
     // Create a temporary div to render the HTML content
     const element = document.createElement('div');
     element.innerHTML = contractHTML;
     document.body.appendChild(element);
-    
+
     // PDF options with proper page break handling
     const options = {
       margin: [8, 8, 8, 8],
       filename: `contract-${contractData.contractType}-${contractData.dogName}.pdf`,
       image: { type: 'jpeg', quality: 0.95 },
-      html2canvas: { 
+      html2canvas: {
         scale: 2,
         useCORS: true
       },
-      jsPDF: { 
-        unit: 'mm', 
-        format: 'a4', 
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
         orientation: 'portrait',
         compress: true
       },
@@ -2697,6 +2762,69 @@ const AdminPage: React.FC = () => {
   };
 
   if (!isLoggedIn) {
+    if (isSettingPassword) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+          <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
+            <div className="flex justify-center mb-8">
+              <FaLock className="text-4xl text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+              Välkommen till CleverDog Admin
+            </h2>
+            <p className="text-center text-gray-600 mb-4 text-sm">
+              Ange ditt önskade lösenord för att aktivera ditt konto
+            </p>
+
+            {passwordError && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+                <span className="block sm:inline">{passwordError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSetPassword}>
+              <div className="mb-4">
+                <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1">Nytt lösenord</label>
+                <input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                  required
+                  disabled={isSettingPasswordLoading}
+                  placeholder="••••••••"
+                  minLength={8}
+                />
+              </div>
+
+              <div className="mb-6">
+                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">Bekräfta lösenord</label>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary"
+                  required
+                  disabled={isSettingPasswordLoading}
+                  placeholder="••••••••"
+                  minLength={8}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-colors"
+                disabled={isSettingPasswordLoading}
+              >
+                {isSettingPasswordLoading ? 'Sparar...' : 'Spara lösenord och logga in'}
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-lg">
@@ -2709,13 +2837,13 @@ const AdminPage: React.FC = () => {
           <p className="text-center text-gray-600 mb-4 text-sm">
             Logga in med din e-postadress och lösenord
           </p>
-          
+
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
               <span className="block sm:inline">{error}</span>
             </div>
           )}
-          
+
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">E-postadress</label>
@@ -2730,7 +2858,7 @@ const AdminPage: React.FC = () => {
                 placeholder="din@epost.se"
               />
             </div>
-            
+
             <div className="mb-6">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Lösenord</label>
               <input
@@ -2744,7 +2872,7 @@ const AdminPage: React.FC = () => {
                 placeholder="••••••••"
               />
             </div>
-            
+
             <button
               type="submit"
               className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-colors"
@@ -2765,447 +2893,447 @@ const AdminPage: React.FC = () => {
     }
 
     return (
-    <div className="space-y-4 sm:space-y-8">
-      {/* Header */}
-      <div className="text-center px-2">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Välkommen till CleverDog Admin</h2>
-        <p className="text-sm sm:text-base text-gray-600">Hantera hundar, planering och pensionat</p>
-      </div>
-
-      {/* Main Categories */}
       <div className="space-y-4 sm:space-y-8">
-        {/* Hundar & Kontrakt */}
-        <div>
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
-            <FaDog className="mr-2 text-blue-600" />
-            Hundar & Kontrakt
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
-            <div 
-              onClick={() => setCurrentView('dogs')}
-              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                <FaDog className="text-blue-600 text-xl sm:text-2xl" />
-              </div>
-              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Hundar</h4>
-              <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera hundregister och information</p>
-              <div className="mt-2 sm:mt-3 text-center">
-                <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                  {dogs.length} hundar registrerade
-                </span>
-              </div>
-            </div>
-
-            {userRole === 'admin' && (
-              <div 
-                onClick={() => setCurrentView('contracts')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-green-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaFilePdf className="text-green-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kontrakt</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Skapa och hantera dagiskontrakt</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                    PDF-generator
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
+        {/* Header */}
+        <div className="text-center px-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Välkommen till CleverDog Admin</h2>
+          <p className="text-sm sm:text-base text-gray-600">Hantera hundar, planering och pensionat</p>
         </div>
 
-        {/* Dagisplanering */}
-        <div>
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
-            <FaCalendarAlt className="mr-2 text-purple-600" />
-            Dagisplanering
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
-            <div 
-              onClick={() => setCurrentView('planning-malmo')}
-              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                <FaCalendarAlt className="text-purple-600 text-xl sm:text-2xl" />
-              </div>
-              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Planering Malmö</h4>
-              <p className="text-center text-gray-600 text-xs sm:text-sm">Drag & drop planering för Malmö</p>
-              <div className="mt-2 sm:mt-3 text-center">
-                <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
-                  Live planering
-                </span>
-              </div>
-            </div>
-
-            <div 
-              onClick={() => setCurrentView('planning-staffanstorp')}
-              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                <FaCalendarAlt className="text-purple-600 text-xl sm:text-2xl" />
-              </div>
-              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Planering Staffanstorp</h4>
-              <p className="text-center text-gray-600 text-xs sm:text-sm">Drag & drop planering för Staffanstorp</p>
-              <div className="mt-2 sm:mt-3 text-center">
-                <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
-                  Live planering
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Kalender & Historik */}
-        <div>
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
-            <FaCalendarAlt className="mr-2 text-indigo-600" />
-            Kalender & Historik
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
-            <div 
-              onClick={() => setCurrentView('calendar-malmo')}
-              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 active:scale-95 sm:hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                <FaCalendarAlt className="text-indigo-600 text-xl sm:text-2xl" />
-              </div>
-              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kalender Malmö</h4>
-              <p className="text-center text-gray-600 text-xs sm:text-sm">Planeringshistorik och kalendervy</p>
-              <div className="mt-2 sm:mt-3 text-center">
-                <span className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
-                  Veckovy
-                </span>
-              </div>
-            </div>
-
-            <div 
-              onClick={() => setCurrentView('calendar-staffanstorp')}
-              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 active:scale-95 sm:hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                <FaCalendarAlt className="text-indigo-600 text-xl sm:text-2xl" />
-              </div>
-              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kalender Staffanstorp</h4>
-              <p className="text-center text-gray-600 text-xs sm:text-sm">Planeringshistorik och kalendervy</p>
-              <div className="mt-2 sm:mt-3 text-center">
-                <span className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
-                  Veckovy
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Hundpensionat */}
-        <div>
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
-            <FaDog className="mr-2 text-red-600" />
-            Hundpensionat
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
-            <div 
-              onClick={() => setCurrentView('boarding-malmo')}
-              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 active:scale-95 sm:hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                <FaDog className="text-red-600 text-xl sm:text-2xl" />
-              </div>
-              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Pensionat Malmö</h4>
-              <p className="text-center text-gray-600 text-xs sm:text-sm">Hundpensionat registreringar</p>
-              <div className="mt-2 sm:mt-3 text-center">
-                <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                  {boardingRecords.filter(r => r.location === 'malmo').length} registreringar
-                </span>
-              </div>
-            </div>
-
-            <div 
-              onClick={() => setCurrentView('boarding-staffanstorp')}
-              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 active:scale-95 sm:hover:scale-105"
-            >
-              <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                <FaDog className="text-red-600 text-xl sm:text-2xl" />
-              </div>
-              <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Pensionat Staffanstorp</h4>
-              <p className="text-center text-gray-600 text-xs sm:text-sm">Hundpensionat registreringar</p>
-              <div className="mt-2 sm:mt-3 text-center">
-                <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                  {boardingRecords.filter(r => r.location === 'staffanstorp').length} registreringar
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Statistik & Analys - Only for admin */}
-        {userRole === 'admin' && (
-          <div>
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
-              <FaChartBar className="mr-2 text-emerald-600" />
-              Statistik & Analys
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-2">
-              <div 
-                onClick={() => setCurrentView('statistics')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaChartBar className="text-emerald-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Statistik & Inkomst</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Detaljerad statistik och inkomstanalys</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
-                    Filtrerbar statistik
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('applications')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaDog className="text-blue-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Granska och hantera nya ansökningar</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                    {applications.filter(a => a.status === 'new').length} nya
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('meetings')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaCalendarAlt className="text-orange-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Boka och hantera kundmöten</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
-                    {meetings.length} möten
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('settings')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaEdit className="text-gray-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera boxar och burar</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-                    Box-konfiguration
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('staff-schedules')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-teal-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaCalendarAlt className="text-teal-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Personal Scheman</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Schemalägg anställda</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
-                    Schemaläggning
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('staff-absences')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaInfoCircle className="text-yellow-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Frånvaro</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Godkänn frånvaroanmälningar</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                    {staffAbsences.filter(a => a.status === 'pending').length} väntande
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('staff-hours')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaClock className="text-purple-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Arbetade Timmar</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Se arbetade timmar per månad</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
-                    Timmar
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Ansökningar & Inställningar - For platschef */}
-        {userRole === 'platschef' && (
+        {/* Main Categories */}
+        <div className="space-y-4 sm:space-y-8">
+          {/* Hundar & Kontrakt */}
           <div>
             <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
               <FaDog className="mr-2 text-blue-600" />
-              Administration
+              Hundar & Kontrakt
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-2">
-              <div 
-                onClick={() => setCurrentView('applications')}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
+              <div
+                onClick={() => setCurrentView('dogs')}
                 className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
               >
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
                   <FaDog className="text-blue-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Granska och hantera nya ansökningar</p>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Hundar</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera hundregister och information</p>
                 <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                    {applications.filter(a => a.status === 'new').length} nya
+                    {dogs.length} hundar registrerade
                   </span>
                 </div>
               </div>
 
-              <div 
-                onClick={() => setCurrentView('meetings')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaCalendarAlt className="text-orange-600 text-xl sm:text-2xl" />
+              {userRole === 'admin' && (
+                <div
+                  onClick={() => setCurrentView('contracts')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-green-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaFilePdf className="text-green-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kontrakt</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Skapa och hantera dagiskontrakt</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                      PDF-generator
+                    </span>
+                  </div>
                 </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Boka och hantera kundmöten</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
-                    {meetings.length} möten
-                  </span>
-                </div>
-              </div>
+              )}
+            </div>
+          </div>
 
-              <div 
-                onClick={() => setCurrentView('settings')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaEdit className="text-gray-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera boxar och burar</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-                    Box-konfiguration
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('staff-schedules')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-teal-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaCalendarAlt className="text-teal-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Personal Scheman</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Schemalägg anställda</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
-                    Schemaläggning
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('staff-absences')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaInfoCircle className="text-yellow-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Frånvaro</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Godkänn frånvaroanmälningar</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                    {staffAbsences.filter(a => a.status === 'pending').length} väntande
-                  </span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => setCurrentView('staff-hours')}
+          {/* Dagisplanering */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
+              <FaCalendarAlt className="mr-2 text-purple-600" />
+              Dagisplanering
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
+              <div
+                onClick={() => setCurrentView('planning-malmo')}
                 className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
               >
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaClock className="text-purple-600 text-xl sm:text-2xl" />
+                  <FaCalendarAlt className="text-purple-600 text-xl sm:text-2xl" />
                 </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Arbetade Timmar</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Se arbetade timmar per månad</p>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Planering Malmö</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Drag & drop planering för Malmö</p>
                 <div className="mt-2 sm:mt-3 text-center">
                   <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
-                    Timmar
+                    Live planering
+                  </span>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setCurrentView('planning-staffanstorp')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaCalendarAlt className="text-purple-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Planering Staffanstorp</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Drag & drop planering för Staffanstorp</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                    Live planering
                   </span>
                 </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Quick Stats */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 sm:p-6 border border-blue-200 mx-2 sm:mx-0">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Snabbstatistik</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="text-center">
-            <div className="text-xl sm:text-2xl font-bold text-blue-600">{dogs.length}</div>
-            <div className="text-xs sm:text-sm text-gray-600">Registrerade hundar</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xl sm:text-2xl font-bold text-purple-600">
-              {planningHistory.filter(p => p.location === 'malmo').length + planningHistory.filter(p => p.location === 'staffanstorp').length}
+          {/* Kalender & Historik */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
+              <FaCalendarAlt className="mr-2 text-indigo-600" />
+              Kalender & Historik
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
+              <div
+                onClick={() => setCurrentView('calendar-malmo')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaCalendarAlt className="text-indigo-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kalender Malmö</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Planeringshistorik och kalendervy</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
+                    Veckovy
+                  </span>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setCurrentView('calendar-staffanstorp')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaCalendarAlt className="text-indigo-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kalender Staffanstorp</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Planeringshistorik och kalendervy</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
+                    Veckovy
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="text-xs sm:text-sm text-gray-600">Planerade dagar</div>
           </div>
-          <div className="text-center">
-            <div className="text-xl sm:text-2xl font-bold text-red-600">{boardingRecords.length}</div>
-            <div className="text-xs sm:text-sm text-gray-600">Pensionatsregistreringar</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xl sm:text-2xl font-bold text-green-600">
-              {dogs.filter(d => d.locations.includes('malmo') && d.locations.includes('staffanstorp')).length}
+
+          {/* Hundpensionat */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
+              <FaDog className="mr-2 text-red-600" />
+              Hundpensionat
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
+              <div
+                onClick={() => setCurrentView('boarding-malmo')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaDog className="text-red-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Pensionat Malmö</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Hundpensionat registreringar</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                    {boardingRecords.filter(r => r.location === 'malmo').length} registreringar
+                  </span>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setCurrentView('boarding-staffanstorp')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaDog className="text-red-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Pensionat Staffanstorp</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Hundpensionat registreringar</p>
+                <div className="mt-2 sm:mt-3 text-center">
+                  <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                    {boardingRecords.filter(r => r.location === 'staffanstorp').length} registreringar
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="text-xs sm:text-sm text-gray-600">Hundar på båda dagisen</div>
+          </div>
+
+          {/* Statistik & Analys - Only for admin */}
+          {userRole === 'admin' && (
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
+                <FaChartBar className="mr-2 text-emerald-600" />
+                Statistik & Analys
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-2">
+                <div
+                  onClick={() => setCurrentView('statistics')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaChartBar className="text-emerald-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Statistik & Inkomst</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Detaljerad statistik och inkomstanalys</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full">
+                      Filtrerbar statistik
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('applications')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaDog className="text-blue-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Granska och hantera nya ansökningar</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      {applications.filter(a => a.status === 'new').length} nya
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('meetings')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaCalendarAlt className="text-orange-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Boka och hantera kundmöten</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                      {meetings.length} möten
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('settings')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaEdit className="text-gray-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera boxar och burar</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                      Box-konfiguration
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('staff-schedules')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-teal-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaCalendarAlt className="text-teal-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Personal Scheman</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Schemalägg anställda</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
+                      Schemaläggning
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('staff-absences')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaInfoCircle className="text-yellow-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Frånvaro</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Godkänn frånvaroanmälningar</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                      {staffAbsences.filter(a => a.status === 'pending').length} väntande
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('staff-hours')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaClock className="text-purple-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Arbetade Timmar</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Se arbetade timmar per månad</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                      Timmar
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Ansökningar & Inställningar - For platschef */}
+          {userRole === 'platschef' && (
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
+                <FaDog className="mr-2 text-blue-600" />
+                Administration
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-2">
+                <div
+                  onClick={() => setCurrentView('applications')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaDog className="text-blue-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Ansökningar</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Granska och hantera nya ansökningar</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      {applications.filter(a => a.status === 'new').length} nya
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('meetings')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaCalendarAlt className="text-orange-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Möten</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Boka och hantera kundmöten</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                      {meetings.length} möten
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('settings')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-gray-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaEdit className="text-gray-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Inställningar</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Hantera boxar och burar</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                      Box-konfiguration
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('staff-schedules')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-teal-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaCalendarAlt className="text-teal-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Personal Scheman</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Schemalägg anställda</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">
+                      Schemaläggning
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('staff-absences')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaInfoCircle className="text-yellow-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Frånvaro</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Godkänn frånvaroanmälningar</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                      {staffAbsences.filter(a => a.status === 'pending').length} väntande
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setCurrentView('staff-hours')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaClock className="text-purple-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Arbetade Timmar</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Se arbetade timmar per månad</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                      Timmar
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Stats */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 sm:p-6 border border-blue-200 mx-2 sm:mx-0">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">Snabbstatistik</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="text-center">
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">{dogs.length}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Registrerade hundar</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl sm:text-2xl font-bold text-purple-600">
+                {planningHistory.filter(p => p.location === 'malmo').length + planningHistory.filter(p => p.location === 'staffanstorp').length}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-600">Planerade dagar</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl sm:text-2xl font-bold text-red-600">{boardingRecords.length}</div>
+              <div className="text-xs sm:text-sm text-gray-600">Pensionatsregistreringar</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xl sm:text-2xl font-bold text-green-600">
+                {dogs.filter(d => d.locations.includes('malmo') && d.locations.includes('staffanstorp')).length}
+              </div>
+              <div className="text-xs sm:text-sm text-gray-600">Hundar på båda dagisen</div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     );
   };
 
   const renderContracts = () => (
     <div className="space-y-3 sm:space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <h2 className="text-lg sm:text-xl font-bold text-gray-900">Kontrakt</h2>
-            <button
+        <button
           onClick={() => setContractData({
             customerName: '',
             customerAddress: '',
@@ -3224,9 +3352,9 @@ const AdminPage: React.FC = () => {
           className="bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
         >
           Nytt kontrakt
-            </button>
-          </div>
-          
+        </button>
+      </div>
+
       {contracts.length > 0 && (
         <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6 mb-4 sm:mb-6">
           <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Befintliga kontrakt</h3>
@@ -3261,7 +3389,7 @@ const AdminPage: React.FC = () => {
   const filterBySearch = (dogsList: Dog[], searchQuery: string) => {
     if (!searchQuery.trim()) return dogsList;
     const query = searchQuery.toLowerCase();
-    return dogsList.filter(dog => 
+    return dogsList.filter(dog =>
       dog.name.toLowerCase().includes(query) ||
       dog.owner.toLowerCase().includes(query)
     );
@@ -3296,7 +3424,7 @@ const AdminPage: React.FC = () => {
     const searchQuery = getSearchValue(searchKey.split('_')[0], searchKey.split('_')[1]);
     const filteredDogs = filterBySearch(dogs, searchQuery);
     const isCollapsed = collapsedCategories[searchKey] ?? false;
-    
+
     // Hide category if no dogs and no active search
     if (dogs.length === 0 && !searchQuery.trim()) return null;
 
@@ -3309,7 +3437,7 @@ const AdminPage: React.FC = () => {
 
     return (
       <div className={`bg-gradient-to-br ${bgColor} rounded-xl shadow-lg border-2 ${borderColor}`}>
-        <div 
+        <div
           className="flex items-center justify-between p-4 cursor-pointer hover:bg-opacity-80 transition-colors"
           onClick={toggleCollapse}
         >
@@ -3321,17 +3449,17 @@ const AdminPage: React.FC = () => {
             <span className={`${badgeColor} text-sm font-semibold px-3 py-1 rounded-full`}>
               {filteredDogs.length}
             </span>
-            <svg 
+            <svg
               className={`w-5 h-5 text-gray-600 transition-transform ${isCollapsed ? '' : 'transform rotate-180'}`}
-              fill="none" 
-              stroke="currentColor" 
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
-        
+
         {!isCollapsed && (
           <div className="px-4 pb-4">
             {/* Search input */}
@@ -3376,16 +3504,16 @@ const AdminPage: React.FC = () => {
                   <div className="text-xs text-gray-600 truncate">👤 {dog.owner}</div>
                 </div>
               ))}
-          {filteredDogs.length === 0 && dogs.length > 0 && (
-            <div className="text-center py-4 text-gray-400 text-sm">
-              <p>Inga hundar matchar sökningen</p>
-            </div>
-          )}
-          {dogs.length === 0 && (
-            <div className="text-center py-4 text-gray-400 text-sm">
-              <p>Inga hundar i denna kategori</p>
-            </div>
-          )}
+              {filteredDogs.length === 0 && dogs.length > 0 && (
+                <div className="text-center py-4 text-gray-400 text-sm">
+                  <p>Inga hundar matchar sökningen</p>
+                </div>
+              )}
+              {dogs.length === 0 && (
+                <div className="text-center py-4 text-gray-400 text-sm">
+                  <p>Inga hundar i denna kategori</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -3398,14 +3526,14 @@ const AdminPage: React.FC = () => {
     const getBoardingDogs = () => {
       const activeBoardingRecords = boardingRecords.filter(record => {
         return record.location === location &&
-               !record.isArchived &&
-               record.startDate <= currentPlanningDate &&
-               record.endDate >= currentPlanningDate;
+          !record.isArchived &&
+          record.startDate <= currentPlanningDate &&
+          record.endDate >= currentPlanningDate;
       });
 
       const boardingDogIds = activeBoardingRecords.map(record => record.dogId);
       const boardingDogs = dogs.filter(dog => boardingDogIds.includes(dog.id));
-      
+
       // Exclude dogs already assigned to cages
       const assignedDogIds = planning.flatMap(cage => cage.dogs || []);
       return boardingDogs.filter(dog => !assignedDogIds.includes(dog.id));
@@ -3415,10 +3543,10 @@ const AdminPage: React.FC = () => {
       // Get all dog IDs that are already in cages or in boarding
       const assignedDogIds = planning.flatMap(cage => cage.dogs || []);
       const boardingDogIds = getBoardingDogs().map(dog => dog.id);
-      
+
       // Filter dogs by location, exclude assigned and boarding dogs
-      return dogs.filter(dog => 
-        dog.locations.includes(location) && 
+      return dogs.filter(dog =>
+        dog.locations.includes(location) &&
         !assignedDogIds.includes(dog.id) &&
         !boardingDogIds.includes(dog.id)
       );
@@ -3482,7 +3610,7 @@ const AdminPage: React.FC = () => {
                 className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-800 text-sm sm:text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
-            
+
             {/* Date Display with Today Badge */}
             <div className="flex items-center gap-2">
               <span className="text-lg sm:text-xl font-bold text-primary">
@@ -3624,10 +3752,10 @@ const AdminPage: React.FC = () => {
                   [boardingSearchKey]: !prev[boardingSearchKey]
                 }));
               };
-              
+
               return (
                 <div className={`bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-lg border-2 border-orange-300`}>
-                  <div 
+                  <div
                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-opacity-80 transition-colors"
                     onClick={toggleCollapse}
                   >
@@ -3639,17 +3767,17 @@ const AdminPage: React.FC = () => {
                       <span className="bg-orange-500 text-white text-sm font-semibold px-3 py-1 rounded-full">
                         {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).length}
                       </span>
-                      <svg 
+                      <svg
                         className={`w-5 h-5 text-gray-600 transition-transform ${isCollapsed ? '' : 'transform rotate-180'}`}
-                        fill="none" 
-                        stroke="currentColor" 
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
-                  
+
                   {!isCollapsed && (
                     <div className="px-4 pb-4">
                       {/* Search input */}
@@ -3666,42 +3794,42 @@ const AdminPage: React.FC = () => {
 
                       {/* Dogs list */}
                       <div className="space-y-2">
-                  {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).map(dog => {
-                    const boardingRecord = boardingRecords.find(r => r.dogId === dog.id && r.location === location);
-                    return (
-                        <div
-                          key={dog.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, dog)}
-                          onDragEnd={handleDragEnd}
-                          className="p-3 rounded-lg cursor-move hover:shadow-md transition-all duration-200 bg-white text-gray-800 relative group border border-orange-300 hover:border-orange-500 hover:bg-orange-50"
-                          title="Dra för att flytta"
-                        >
-                          <button
-                            onClick={(e) => handleInfoClick(e, dog)}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onDragStart={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                            }}
-                            className="absolute top-2 right-2 text-gray-400 hover:text-primary z-30 transition-colors"
-                            title="Visa info"
-                          >
-                            <FaInfoCircle className="text-sm" />
-                          </button>
-                          <div className="flex items-center gap-2 mb-1 pr-6">
-                            <span className="text-lg">🏨</span>
-                            <div className="font-semibold text-sm truncate">{dog.name}</div>
-                          </div>
-                          <div className="text-xs text-gray-600 truncate mb-1">👤 {dog.owner}</div>
-                          {boardingRecord && (
-                            <div className="text-xs text-orange-700 font-semibold truncate">
-                              {new Date(boardingRecord.startDate).toLocaleDateString('sv-SE')} - {new Date(boardingRecord.endDate).toLocaleDateString('sv-SE')}
+                        {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).map(dog => {
+                          const boardingRecord = boardingRecords.find(r => r.dogId === dog.id && r.location === location);
+                          return (
+                            <div
+                              key={dog.id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, dog)}
+                              onDragEnd={handleDragEnd}
+                              className="p-3 rounded-lg cursor-move hover:shadow-md transition-all duration-200 bg-white text-gray-800 relative group border border-orange-300 hover:border-orange-500 hover:bg-orange-50"
+                              title="Dra för att flytta"
+                            >
+                              <button
+                                onClick={(e) => handleInfoClick(e, dog)}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onDragStart={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                                className="absolute top-2 right-2 text-gray-400 hover:text-primary z-30 transition-colors"
+                                title="Visa info"
+                              >
+                                <FaInfoCircle className="text-sm" />
+                              </button>
+                              <div className="flex items-center gap-2 mb-1 pr-6">
+                                <span className="text-lg">🏨</span>
+                                <div className="font-semibold text-sm truncate">{dog.name}</div>
+                              </div>
+                              <div className="text-xs text-gray-600 truncate mb-1">👤 {dog.owner}</div>
+                              {boardingRecord && (
+                                <div className="text-xs text-orange-700 font-semibold truncate">
+                                  {new Date(boardingRecord.startDate).toLocaleDateString('sv-SE')} - {new Date(boardingRecord.endDate).toLocaleDateString('sv-SE')}
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                    );
-                  })}
+                          );
+                        })}
                         {filterBySearch(boardingDogs, getSearchValue(location, 'boarding')).length === 0 && boardingDogs.length > 0 && (
                           <div className="text-center py-4 text-gray-400 text-sm">
                             <p>Inga hundar matchar sökningen</p>
@@ -3726,29 +3854,26 @@ const AdminPage: React.FC = () => {
                     key={cage.id}
                     onDragOver={handleDragOver}
                     onDrop={() => handleDrop(cage.id, location)}
-                    className={`min-h-36 p-4 rounded-xl border-2 transition-all duration-200 ${
-                      cage.type === 'cage' 
-                        ? cageDogs.length > 0 
-                          ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-md' 
-                          : 'border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-400'
-                        : cageDogs.length > 0
-                          ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100 shadow-md'
-                          : 'border-dashed border-green-300 bg-green-50/50 hover:bg-green-50 hover:border-green-400'
-                    }`}
+                    className={`min-h-36 p-4 rounded-xl border-2 transition-all duration-200 ${cage.type === 'cage'
+                      ? cageDogs.length > 0
+                        ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 shadow-md'
+                        : 'border-dashed border-blue-300 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-400'
+                      : cageDogs.length > 0
+                        ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100 shadow-md'
+                        : 'border-dashed border-green-300 bg-green-50/50 hover:bg-green-50 hover:border-green-400'
+                      }`}
                   >
-                    <div className={`flex items-center justify-between mb-3 ${
-                      cage.type === 'cage' ? 'text-blue-700' : 'text-green-700'
-                    }`}>
+                    <div className={`flex items-center justify-between mb-3 ${cage.type === 'cage' ? 'text-blue-700' : 'text-green-700'
+                      }`}>
                       <div className="flex items-center gap-1.5">
                         <span className="text-lg">{cage.type === 'cage' ? '🏠' : '🏞️'}</span>
                         <span className="text-sm font-bold">{cage.name}</span>
                       </div>
                       {cageDogs.length > 0 && (
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          cage.type === 'cage' 
-                            ? 'bg-blue-500 text-white' 
-                            : 'bg-green-500 text-white'
-                        }`}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${cage.type === 'cage'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-green-500 text-white'
+                          }`}>
                           {cageDogs.length}
                         </span>
                       )}
@@ -3757,59 +3882,59 @@ const AdminPage: React.FC = () => {
                       <div className="space-y-2">
                         {cageDogs.map(dog => {
                           // Check if dog is on active boarding for this date and location
-                          const isOnBoarding = boardingRecords.some(record => 
+                          const isOnBoarding = boardingRecords.some(record =>
                             record.dogId === dog.id &&
                             record.location === location &&
                             !record.isArchived &&
                             record.startDate <= currentPlanningDate &&
                             record.endDate >= currentPlanningDate
                           );
-                          
+
                           return (
-                          <div
-                            key={dog.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, dog)}
-                            onDragEnd={handleDragEnd}
-                            className={`p-2.5 rounded-lg bg-gray-100 text-gray-800 relative cursor-move hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-primary/30 group`}
-                            title="Dra för att flytta"
-                          >
-                            <button
-                              onClick={(e) => handleInfoClick(e, dog)}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onDragStart={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                              }}
-                              className="absolute top-1.5 left-1.5 text-xs bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity z-30 shadow-sm"
-                              title="Visa info"
+                            <div
+                              key={dog.id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, dog)}
+                              onDragEnd={handleDragEnd}
+                              className={`p-2.5 rounded-lg bg-gray-100 text-gray-800 relative cursor-move hover:shadow-lg transition-all duration-200 border-2 border-transparent hover:border-primary/30 group`}
+                              title="Dra för att flytta"
                             >
-                              <FaInfoCircle className="text-xs" />
-                            </button>
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <span className="text-base">🐕</span>
-                              <div className="font-bold text-sm">{dog.name}</div>
-                              {isOnBoarding && (
-                                <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                                  <span>🏨</span>
-                                  <span>Pensionat</span>
-                                </span>
-                              )}
+                              <button
+                                onClick={(e) => handleInfoClick(e, dog)}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onDragStart={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                }}
+                                className="absolute top-1.5 left-1.5 text-xs bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-blue-700 opacity-0 group-hover:opacity-100 transition-opacity z-30 shadow-sm"
+                                title="Visa info"
+                              >
+                                <FaInfoCircle className="text-xs" />
+                              </button>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-base">🐕</span>
+                                <div className="font-bold text-sm">{dog.name}</div>
+                                {isOnBoarding && (
+                                  <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                                    <span>🏨</span>
+                                    <span>Pensionat</span>
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-gray-600 ml-5">{dog.owner}</div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  removeDogFromCage(cage.id, dog.id, location);
+                                }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                className="absolute top-1.5 right-1.5 text-xs bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-sm"
+                                title="Ta bort"
+                              >
+                                ✕
+                              </button>
                             </div>
-                            <div className="text-xs text-gray-600 ml-5">{dog.owner}</div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                removeDogFromCage(cage.id, dog.id, location);
-                              }}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className="absolute top-1.5 right-1.5 text-xs bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-sm"
-                              title="Ta bort"
-                            >
-                              ✕
-                            </button>
-                          </div>
                           );
                         })}
                       </div>
@@ -3823,7 +3948,7 @@ const AdminPage: React.FC = () => {
                     )}
                   </div>
                 );
-              }              )}
+              })}
             </div>
           </div>
         </div>
@@ -3851,7 +3976,7 @@ const AdminPage: React.FC = () => {
 
   const renderBoarding = (location: 'malmo' | 'staffanstorp') => {
     const locationRecords = boardingRecords.filter(record => record.location === location);
-    
+
     // Filter records based on current filter
     const filteredRecords = locationRecords.filter(record => {
       if (boardingFilter === 'current') return !record.isArchived;
@@ -3866,7 +3991,7 @@ const AdminPage: React.FC = () => {
 
     // For 'all' view, categorize records
     const categorizedRecords = categorizeBoardingRecords(locationRecords);
-    
+
     return (
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
@@ -3897,7 +4022,7 @@ const AdminPage: React.FC = () => {
                 <option value="archived">Arkiverade</option>
               </select>
             </div>
-            
+
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <label className="text-xs sm:text-sm font-medium text-gray-700 whitespace-nowrap">År:</label>
               <select
@@ -3970,10 +4095,10 @@ const AdminPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-lg p-6 sm:p-12 text-center">
               <FaDog className="text-4xl sm:text-6xl mx-auto mb-4 text-gray-300" />
               <p className="text-sm sm:text-base text-gray-500 mb-4">
-                {boardingFilter === 'archived' ? 'Inga arkiverade registreringar' : 
-                 boardingFilter === 'future' ? 'Inga framtida registreringar' :
-                 boardingFilter === 'ongoing' ? 'Inga pågående registreringar' : 
-                 'Inga pensionatsregistreringar än'}
+                {boardingFilter === 'archived' ? 'Inga arkiverade registreringar' :
+                  boardingFilter === 'future' ? 'Inga framtida registreringar' :
+                    boardingFilter === 'ongoing' ? 'Inga pågående registreringar' :
+                      'Inga pensionatsregistreringar än'}
               </p>
               {boardingFilter !== 'archived' && (
                 <button
@@ -3995,7 +4120,7 @@ const AdminPage: React.FC = () => {
   const renderRecordsByMonth = (records: BoardingRecord[], location: 'malmo' | 'staffanstorp') => {
     const recordsByMonth = getBoardingRecordsByMonth(records, boardingYearFilter);
     const sortedMonths = Object.keys(recordsByMonth).sort((a, b) => b.localeCompare(a));
-    
+
     return (
       <div className="space-y-4 sm:space-y-6">
         {sortedMonths.map(monthKey => (
@@ -4006,44 +4131,42 @@ const AdminPage: React.FC = () => {
                 ({recordsByMonth[monthKey].length} registreringar)
               </span>
             </h4>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {recordsByMonth[monthKey].map((record) => {
                 const dog = dogs.find(d => d.id === record.dogId);
                 const isPast = new Date(record.endDate) < new Date();
                 const isFuture = new Date(record.startDate) > new Date();
                 const isOngoing = new Date(record.startDate) <= new Date() && new Date(record.endDate) >= new Date();
-                
+
                 return (
-                  <div 
-                    key={record.id} 
-                    className={`p-3 sm:p-4 rounded-lg border-l-4 ${
-                      isPast 
-                        ? 'border-gray-400 bg-gray-50' 
-                        : isFuture
+                  <div
+                    key={record.id}
+                    className={`p-3 sm:p-4 rounded-lg border-l-4 ${isPast
+                      ? 'border-gray-400 bg-gray-50'
+                      : isFuture
                         ? 'border-green-400 bg-green-50'
                         : isOngoing
-                        ? 'border-blue-400 bg-blue-50'
-                        : 'border-primary bg-white'
-                    }`}
+                          ? 'border-blue-400 bg-blue-50'
+                          : 'border-primary bg-white'
+                      }`}
                   >
                     <div className="flex justify-between items-start mb-2 sm:mb-3">
                       <div className="flex-1 min-w-0">
-                        <div className={`font-bold text-base sm:text-lg ${
-                          isPast ? 'text-gray-600' : 
+                        <div className={`font-bold text-base sm:text-lg ${isPast ? 'text-gray-600' :
                           isFuture ? 'text-green-800' :
-                          isOngoing ? 'text-blue-800' :
-                          'text-gray-900'
-                        }`}>
+                            isOngoing ? 'text-blue-800' :
+                              'text-gray-900'
+                          }`}>
                           {record.dogName}
                         </div>
                         {dog && (
                           <div className={`px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800 inline-block mt-1`}>
                             {dog.type === 'fulltime' ? 'Heltid' :
-                             dog.type === 'parttime-3' ? 'Deltid 3 dagar' :
-                             dog.type === 'parttime-2' ? 'Deltid 2 dagar' :
-                             dog.type === 'singleDay' ? 'Enstaka dag' :
-                             dog.type === 'boarding' ? 'Hundpensionat' : 'Dagis'}
+                              dog.type === 'parttime-3' ? 'Deltid 3 dagar' :
+                                dog.type === 'parttime-2' ? 'Deltid 2 dagar' :
+                                  dog.type === 'singleDay' ? 'Enstaka dag' :
+                                    dog.type === 'boarding' ? 'Hundpensionat' : 'Dagis'}
                           </div>
                         )}
                         <div className="text-xs text-gray-500 mt-1">
@@ -4095,14 +4218,14 @@ const AdminPage: React.FC = () => {
 
   const renderCalendar = (location: 'malmo' | 'staffanstorp') => {
     const locationHistory = planningHistory.filter(p => p.location === location);
-    
+
     // Get current week dates
     const getWeekDates = (date: string) => {
       const d = new Date(date);
       const day = d.getDay();
       const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
       const monday = new Date(d.setDate(diff));
-      
+
       const week = [];
       for (let i = 0; i < 7; i++) {
         const date = new Date(monday);
@@ -4124,7 +4247,7 @@ const AdminPage: React.FC = () => {
 
     const getDogsForDate = (date: string) => {
       const dogsForDate: Dog[] = [];
-      
+
       // Get dogs from planning (cages) - includes all dogs that are planned for this date
       const dayData = locationHistory.find(p => p.date === date);
       if (dayData) {
@@ -4132,14 +4255,14 @@ const AdminPage: React.FC = () => {
         const plannedDogs = allDogs.map(dogId => dogs.find(d => d.id === dogId)).filter(Boolean) as Dog[];
         dogsForDate.push(...plannedDogs);
       }
-      
+
       // Get boarding dogs for this date and location
       const boardingDogsForDate = boardingRecords
         .filter(record => {
           return record.location === location &&
-                 !record.isArchived &&
-                 record.startDate <= date &&
-                 record.endDate >= date;
+            !record.isArchived &&
+            record.startDate <= date &&
+            record.endDate >= date;
         })
         .map(record => {
           // Find the dog by dogId or dogName
@@ -4147,14 +4270,14 @@ const AdminPage: React.FC = () => {
           return dog;
         })
         .filter((dog): dog is Dog => dog !== undefined);
-      
+
       // Add boarding dogs that aren't already in the list
       boardingDogsForDate.forEach(boardingDog => {
         if (!dogsForDate.find(d => d.id === boardingDog.id)) {
           dogsForDate.push(boardingDog);
         }
       });
-      
+
       return dogsForDate;
     };
 
@@ -4197,60 +4320,58 @@ const AdminPage: React.FC = () => {
               const dayData = locationHistory.find(p => p.date === date);
               const isToday = date === new Date().toISOString().split('T')[0];
               const isPast = new Date(date) < new Date();
-              
+
               return (
-                <div 
+                <div
                   key={date}
-                  className={`border rounded-lg p-2 sm:p-3 ${
-                    isToday ? 'border-blue-500 bg-blue-50' : 
-                    isPast ? 'border-gray-300 bg-gray-50' : 
-                    'border-gray-200 bg-white'
-                  }`}
+                  className={`border rounded-lg p-2 sm:p-3 ${isToday ? 'border-blue-500 bg-blue-50' :
+                    isPast ? 'border-gray-300 bg-gray-50' :
+                      'border-gray-200 bg-white'
+                    }`}
                 >
                   <div className="text-center mb-1 sm:mb-2">
                     <div className="text-xs sm:text-sm font-medium text-gray-600">
                       {dayNames[index]}
                     </div>
-                    <div className={`text-base sm:text-lg font-bold ${
-                      isToday ? 'text-blue-700' : 
-                      isPast ? 'text-gray-500' : 
-                      'text-gray-900'
-                    }`}>
+                    <div className={`text-base sm:text-lg font-bold ${isToday ? 'text-blue-700' :
+                      isPast ? 'text-gray-500' :
+                        'text-gray-900'
+                      }`}>
                       {new Date(date).getDate()}
                     </div>
                   </div>
-                  
+
                   <div className="space-y-0.5 sm:space-y-1">
                     {dayDogs.length > 0 ? (
                       dayDogs.map((dog, dogIndex) => {
                         if (!dog) return null;
-                        
+
                         // Check if dog is in boarding for this date
-                        const isBoarding = boardingRecords.some(record => 
+                        const isBoarding = boardingRecords.some(record =>
                           record.location === location &&
                           !record.isArchived &&
                           record.startDate <= date &&
                           record.endDate >= date &&
                           (record.dogId === dog.id || record.dogName === dog.name)
                         );
-                        
+
                         // Check if dog is planned (in cages)
-                        const isPlanned = dayData?.cages.some((cage: Cage) => 
+                        const isPlanned = dayData?.cages.some((cage: Cage) =>
                           cage.dogs?.includes(dog.id)
                         );
-                        
+
                         const badge = isBoarding && !isPlanned ? '🏨' : '';
-                        
+
                         return (
-                          <div 
+                          <div
                             key={dogIndex}
                             className={`text-xs p-0.5 sm:p-1 rounded flex items-center gap-1 bg-gray-100 text-gray-800 truncate`}
                             title={
-                              isBoarding && !isPlanned 
-                                ? 'Hundpensionat' 
-                                : dog.type === 'singleDay' 
-                                ? 'Enstaka dag' 
-                                : ''
+                              isBoarding && !isPlanned
+                                ? 'Hundpensionat'
+                                : dog.type === 'singleDay'
+                                  ? 'Enstaka dag'
+                                  : ''
                             }
                           >
                             {badge && <span>{badge}</span>}
@@ -4263,7 +4384,7 @@ const AdminPage: React.FC = () => {
                         Inga hundar
                       </div>
                     )}
-                    
+
                     {/* Meetings */}
                     {dayMeetings.length > 0 && (
                       <div className="mt-1 sm:mt-2 pt-1 sm:pt-2 border-t border-gray-300">
@@ -4281,7 +4402,7 @@ const AdminPage: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="mt-1 sm:mt-2 text-center">
                     <button
                       onClick={() => {
@@ -4526,7 +4647,7 @@ const AdminPage: React.FC = () => {
             <FaChartBar className="mr-2 text-green-600" />
             Förväntad inkomst
           </h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
             {/* Without VAT */}
             <div className="bg-white rounded-lg p-4 sm:p-5 border-2 border-gray-200">
@@ -4588,7 +4709,7 @@ const AdminPage: React.FC = () => {
           {dogs.some(dog => !dog.type && dog.isActive !== false) && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-sm text-yellow-800">
-                <strong>OBS:</strong> Vissa aktiva hundar saknar typ (heltid/deltid). 
+                <strong>OBS:</strong> Vissa aktiva hundar saknar typ (heltid/deltid).
                 Dessa räknas inte med i inkomsten. Redigera hundarna och lägg till typ för korrekt beräkning.
               </p>
             </div>
@@ -4730,9 +4851,9 @@ const AdminPage: React.FC = () => {
       if (dogsTabSearch.trim()) {
         const searchLower = dogsTabSearch.toLowerCase();
         const matchesSearch = dog.name.toLowerCase().includes(searchLower) ||
-                             dog.owner.toLowerCase().includes(searchLower) ||
-                             (dog.breed && dog.breed.toLowerCase().includes(searchLower)) ||
-                             (dog.phone && dog.phone.toLowerCase().includes(searchLower));
+          dog.owner.toLowerCase().includes(searchLower) ||
+          (dog.breed && dog.breed.toLowerCase().includes(searchLower)) ||
+          (dog.phone && dog.phone.toLowerCase().includes(searchLower));
         if (!matchesSearch) return false;
       }
 
@@ -4770,187 +4891,187 @@ const AdminPage: React.FC = () => {
     });
 
     return (
-    <div className="space-y-3 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-          Hundar ({dogs.length}{filteredDogs.length !== dogs.length ? `, visar ${filteredDogs.length}` : ''})
-        </h2>
-        {(userRole === 'admin' || userRole === 'platschef') && (
-          <button
-            onClick={() => openDogModal()}
-            className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
-          >
-            <FaPlus className="mr-2" /> Lägg till hund
-          </button>
-        )}
-      </div>
-
-      {/* Search and Filters */}
-      {dogs.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 space-y-3 sm:space-y-4">
-          {/* Search input */}
-          <div>
-            <input
-              type="text"
-              placeholder="Sök på namn, ägare, ras eller telefon..."
-              value={dogsTabSearch}
-              onChange={(e) => setDogsTabSearch(e.target.value)}
-              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
-            />
-          </div>
-
-          {/* Filter controls */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-gray-200">
-            {/* Location Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <FaFilter className="inline mr-1" /> Plats
-              </label>
-              <select
-                value={dogsLocationFilter}
-                onChange={(e) => setDogsLocationFilter(e.target.value as 'all' | 'malmo' | 'staffanstorp' | 'both')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="all">Alla platser</option>
-                <option value="malmo">Malmö</option>
-                <option value="staffanstorp">Staffanstorp</option>
-                <option value="both">Båda platserna</option>
-              </select>
-            </div>
-
-            {/* Type Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Typ
-              </label>
-              <select
-                value={dogsTypeFilter}
-                onChange={(e) => setDogsTypeFilter(e.target.value as 'all' | 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="all">Alla typer</option>
-                <option value="fulltime">Heltid</option>
-                <option value="parttime-3">Deltid 3 dagar</option>
-                <option value="parttime-2">Deltid 2 dagar</option>
-                <option value="singleDay">Enstaka dag</option>
-                <option value="boarding">Hundpensionat</option>
-              </select>
-            </div>
-
-            {/* Active/Inactive Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <select
-                value={dogsActiveFilter}
-                onChange={(e) => setDogsActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value="all">Alla</option>
-                <option value="active">Aktiva</option>
-                <option value="inactive">Inaktiva</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Clear filters button */}
-          {(dogsTabSearch.trim() || dogsLocationFilter !== 'all' || dogsTypeFilter !== 'all' || dogsActiveFilter !== 'all') && (
-            <div className="pt-2">
-              <button
-                onClick={() => {
-                  setDogsTabSearch('');
-                  setDogsLocationFilter('all');
-                  setDogsTypeFilter('all');
-                  setDogsActiveFilter('all');
-                }}
-                className="text-sm text-gray-600 hover:text-primary flex items-center gap-1"
-              >
-                <FaTimes className="text-xs" /> Rensa alla filter
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {dogs.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-          <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 mb-4">Inga hundar tillagda än</p>
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">
+            Hundar ({dogs.length}{filteredDogs.length !== dogs.length ? `, visar ${filteredDogs.length}` : ''})
+          </h2>
           {(userRole === 'admin' || userRole === 'platschef') && (
             <button
               onClick={() => openDogModal()}
-              className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto"
+              className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
             >
-              <FaPlus className="mr-2" /> Lägg till första hunden
+              <FaPlus className="mr-2" /> Lägg till hund
             </button>
           )}
         </div>
-      ) : filteredDogs.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-          <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500 mb-2">Inga hundar matchar sökningen</p>
-          <p className="text-sm text-gray-400">Försök med en annan sökterm</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {filteredDogs.map((dog) => (
-            <div key={dog.id} className="bg-white rounded-lg shadow-lg p-3 sm:p-4 border-l-4 border-primary">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <div className={`px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800 inline-block`}>
-                    {dog.name}
-                  </div>
-                  <div className="flex gap-1 mt-1">
-                    {dog.locations.map(location => (
-                      <span key={location} className={`text-xs px-2 py-1 rounded ${location === 'malmo' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                        {location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                {(userRole === 'admin' || userRole === 'platschef') && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => openDogModal(dog)}
-                      className="text-gray-600 hover:text-primary"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => deleteDog(dog.id)}
-                      className="text-gray-600 hover:text-red-600"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                )}
+
+        {/* Search and Filters */}
+        {dogs.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 space-y-3 sm:space-y-4">
+            {/* Search input */}
+            <div>
+              <input
+                type="text"
+                placeholder="Sök på namn, ägare, ras eller telefon..."
+                value={dogsTabSearch}
+                onChange={(e) => setDogsTabSearch(e.target.value)}
+                className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
+              />
+            </div>
+
+            {/* Filter controls */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-gray-200">
+              {/* Location Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <FaFilter className="inline mr-1" /> Plats
+                </label>
+                <select
+                  value={dogsLocationFilter}
+                  onChange={(e) => setDogsLocationFilter(e.target.value as 'all' | 'malmo' | 'staffanstorp' | 'both')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="all">Alla platser</option>
+                  <option value="malmo">Malmö</option>
+                  <option value="staffanstorp">Staffanstorp</option>
+                  <option value="both">Båda platserna</option>
+                </select>
               </div>
-              <div className="space-y-1 text-sm">
-                <p><strong>Ras:</strong> {dog.breed || '-'}</p>
-                <p><strong>Ålder:</strong> {dog.age || '-'}</p>
-                <p><strong>Ägare:</strong> {dog.owner}</p>
-                <p><strong>Telefon:</strong> {dog.phone || '-'}</p>
-                {dog.type && (
-                  <p><strong>Typ:</strong> {
-                    dog.type === 'fulltime' ? 'Heltid' :
-                    dog.type === 'parttime-3' ? 'Deltid 3 dagar' :
-                    dog.type === 'parttime-2' ? 'Deltid 2 dagar' :
-                    dog.type === 'singleDay' ? 'Enstaka dag' :
-                    dog.type === 'boarding' ? 'Hundpensionat' :
-                    '-'
-                  }</p>
-                )}
-                {dog.notes && (
-                  <p className="text-gray-600 italic">{dog.notes}</p>
-                )}
+
+              {/* Type Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Typ
+                </label>
+                <select
+                  value={dogsTypeFilter}
+                  onChange={(e) => setDogsTypeFilter(e.target.value as 'all' | 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="all">Alla typer</option>
+                  <option value="fulltime">Heltid</option>
+                  <option value="parttime-3">Deltid 3 dagar</option>
+                  <option value="parttime-2">Deltid 2 dagar</option>
+                  <option value="singleDay">Enstaka dag</option>
+                  <option value="boarding">Hundpensionat</option>
+                </select>
+              </div>
+
+              {/* Active/Inactive Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  value={dogsActiveFilter}
+                  onChange={(e) => setDogsActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="all">Alla</option>
+                  <option value="active">Aktiva</option>
+                  <option value="inactive">Inaktiva</option>
+                </select>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+
+            {/* Clear filters button */}
+            {(dogsTabSearch.trim() || dogsLocationFilter !== 'all' || dogsTypeFilter !== 'all' || dogsActiveFilter !== 'all') && (
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    setDogsTabSearch('');
+                    setDogsLocationFilter('all');
+                    setDogsTypeFilter('all');
+                    setDogsActiveFilter('all');
+                  }}
+                  className="text-sm text-gray-600 hover:text-primary flex items-center gap-1"
+                >
+                  <FaTimes className="text-xs" /> Rensa alla filter
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {dogs.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+            <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500 mb-4">Inga hundar tillagda än</p>
+            {(userRole === 'admin' || userRole === 'platschef') && (
+              <button
+                onClick={() => openDogModal()}
+                className="flex items-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors mx-auto"
+              >
+                <FaPlus className="mr-2" /> Lägg till första hunden
+              </button>
+            )}
+          </div>
+        ) : filteredDogs.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
+            <FaDog className="text-6xl mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500 mb-2">Inga hundar matchar sökningen</p>
+            <p className="text-sm text-gray-400">Försök med en annan sökterm</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {filteredDogs.map((dog) => (
+              <div key={dog.id} className="bg-white rounded-lg shadow-lg p-3 sm:p-4 border-l-4 border-primary">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800 inline-block`}>
+                      {dog.name}
+                    </div>
+                    <div className="flex gap-1 mt-1">
+                      {dog.locations.map(location => (
+                        <span key={location} className={`text-xs px-2 py-1 rounded ${location === 'malmo' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                          {location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {(userRole === 'admin' || userRole === 'platschef') && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openDogModal(dog)}
+                        className="text-gray-600 hover:text-primary"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => deleteDog(dog.id)}
+                        className="text-gray-600 hover:text-red-600"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1 text-sm">
+                  <p><strong>Ras:</strong> {dog.breed || '-'}</p>
+                  <p><strong>Ålder:</strong> {dog.age || '-'}</p>
+                  <p><strong>Ägare:</strong> {dog.owner}</p>
+                  <p><strong>Telefon:</strong> {dog.phone || '-'}</p>
+                  {dog.type && (
+                    <p><strong>Typ:</strong> {
+                      dog.type === 'fulltime' ? 'Heltid' :
+                        dog.type === 'parttime-3' ? 'Deltid 3 dagar' :
+                          dog.type === 'parttime-2' ? 'Deltid 2 dagar' :
+                            dog.type === 'singleDay' ? 'Enstaka dag' :
+                              dog.type === 'boarding' ? 'Hundpensionat' :
+                                '-'
+                    }</p>
+                  )}
+                  {dog.notes && (
+                    <p className="text-gray-600 italic">{dog.notes}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderSettings = () => {
@@ -5085,25 +5206,23 @@ const AdminPage: React.FC = () => {
                       <td className="py-2 px-3 text-sm">{employee.email}</td>
                       <td className="py-2 px-3 text-sm">{employee.phone || '-'}</td>
                       <td className="py-2 px-3 text-sm">
-                        {employee.location === 'malmo' ? 'Malmö' : 
-                         employee.location === 'staffanstorp' ? 'Staffanstorp' : 
-                         employee.location === 'both' ? 'Båda' : '-'}
+                        {employee.location === 'malmo' ? 'Malmö' :
+                          employee.location === 'staffanstorp' ? 'Staffanstorp' :
+                            employee.location === 'both' ? 'Båda' : '-'}
                       </td>
                       <td className="py-2 px-3 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          employee.role === 'platschef' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${employee.role === 'platschef'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-green-100 text-green-800'
+                          }`}>
                           {employee.role === 'platschef' ? 'Platschef' : 'Anställd'}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          employee.is_active 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${employee.is_active
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                          }`}>
                           {employee.is_active ? 'Aktiv' : 'Inaktiv'}
                         </span>
                       </td>
@@ -5142,28 +5261,26 @@ const AdminPage: React.FC = () => {
 
         <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Box-inställningar</h2>
-          
+
           {/* Location Selector */}
           <div className="mb-4 sm:mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Välj plats</label>
             <div className="flex gap-2 sm:gap-4">
               <button
                 onClick={() => setSettingsLocation('staffanstorp')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${
-                  settingsLocation === 'staffanstorp'
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${settingsLocation === 'staffanstorp'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
               >
                 Staffanstorp
               </button>
               <button
                 onClick={() => setSettingsLocation('malmo')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${
-                  settingsLocation === 'malmo'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${settingsLocation === 'malmo'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
               >
                 Malmö
               </button>
@@ -5368,7 +5485,7 @@ const AdminPage: React.FC = () => {
         return;
       }
       let newDog: Dog;
-      
+
       if (matchExistingDogId) {
         // Update existing dog with application data
         const existingDog = dogs.find(d => d.id === matchExistingDogId);
@@ -5376,7 +5493,7 @@ const AdminPage: React.FC = () => {
           alert('Hund hittades inte');
           return;
         }
-        
+
         // Update dog with application info (but keep existing data as priority)
         newDog = {
           ...existingDog,
@@ -5384,11 +5501,11 @@ const AdminPage: React.FC = () => {
           email: existingDog.email || application.owner_email || undefined,
           notes: existingDog.notes || `${existingDog.notes ? existingDog.notes + '\n\n' : ''}Från ansökan: ${application.dog_socialization || ''}`.trim() || undefined,
         };
-        
+
         await saveDogToDb(newDog);
         const updatedDogs = dogs.map(d => d.id === matchExistingDogId ? newDog : d);
         setDogs(updatedDogs);
-        
+
         // Update application status to matched
         await updateApplication(application.id, {
           status: 'matched',
@@ -5398,7 +5515,7 @@ const AdminPage: React.FC = () => {
         });
       } else {
         // Create new dog from application
-        
+
         // Determine dog type from service_type
         let dogType: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
         if (application.service_type === 'daycare') {
@@ -5414,7 +5531,7 @@ const AdminPage: React.FC = () => {
         } else if (application.service_type === 'boarding') {
           dogType = 'boarding';
         }
-        
+
         newDog = {
           id: '',
           name: application.dog_name,
@@ -5433,12 +5550,12 @@ const AdminPage: React.FC = () => {
           ownerPersonalNumber: application.owner_personnummer || undefined,
           chipNumber: application.dog_chip_number || undefined
         };
-        
+
         console.log('Creating new dog from application:', newDog);
         const savedDog = await saveDogToDb(newDog);
         console.log('Dog saved successfully:', savedDog);
         setDogs([...dogs, savedDog]);
-        
+
         // Update application status to added
         console.log('Updating application status');
         await updateApplication(application.id, {
@@ -5449,7 +5566,7 @@ const AdminPage: React.FC = () => {
         });
         console.log('Application updated successfully');
       }
-      
+
       // Reload applications to reflect status change
       const filters: { status?: string; location?: string } = {};
       if (applicationsFilter !== 'all') {
@@ -5460,11 +5577,11 @@ const AdminPage: React.FC = () => {
       }
       const updatedApplications = await getApplications(filters);
       setApplications(updatedApplications);
-      
+
       // Close selected application
       setSelectedApplication(null);
       setApplicationMatchingDogs([]);
-      
+
       alert('Hund tillagd!');
     } catch (error) {
       console.error('Error adding dog from application:', error);
@@ -5523,7 +5640,7 @@ const AdminPage: React.FC = () => {
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900">Ansökningar ({filteredApplications.length})</h2>
-          
+
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
             <select
@@ -5539,7 +5656,7 @@ const AdminPage: React.FC = () => {
               <option value="matched">Matchade</option>
               <option value="added">Tillagda</option>
             </select>
-            
+
             <select
               value={applicationsLocationFilter}
               onChange={(e) => setApplicationsLocationFilter(e.target.value as any)}
@@ -5563,9 +5680,8 @@ const AdminPage: React.FC = () => {
               {filteredApplications.map((application) => (
                 <div
                   key={application.id}
-                  className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                    selectedApplication?.id === application.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                  }`}
+                  className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${selectedApplication?.id === application.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                    }`}
                   onClick={() => handleSelectApplication(application)}
                 >
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-2 sm:gap-0">
@@ -5848,12 +5964,12 @@ const AdminPage: React.FC = () => {
     startOfWeek.setDate(today.getDate() - today.getDay());
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
-    
+
     const startDateStr = startOfWeek.toISOString().split('T')[0];
     const endDateStr = endOfWeek.toISOString().split('T')[0];
-    
+
     const weekSchedules = staffSchedules.filter(s => s.date >= startDateStr && s.date <= endDateStr);
-    
+
     // Group by date
     const schedulesByDate: { [date: string]: StaffSchedule[] } = {};
     weekSchedules.forEach(schedule => {
@@ -5890,7 +6006,7 @@ const AdminPage: React.FC = () => {
               const daySchedules = schedulesByDate[date];
               const dateObj = new Date(date);
               const dayName = dateObj.toLocaleDateString('sv-SE', { weekday: 'long' });
-              
+
               return (
                 <div key={date} className="border border-gray-200 rounded-lg p-4">
                   <h3 className="font-semibold text-gray-800 mb-3">
@@ -6059,15 +6175,15 @@ const AdminPage: React.FC = () => {
     const startDate = `${yearMonth}-01`;
     const lastDay = new Date(year, month, 0).getDate();
     const endDate = `${yearMonth}-${lastDay.toString().padStart(2, '0')}`;
-    
-    const monthSchedules = staffSchedules.filter(s => 
-      s.employee_id === employeeId && 
-      s.date >= startDate && 
+
+    const monthSchedules = staffSchedules.filter(s =>
+      s.employee_id === employeeId &&
+      s.date >= startDate &&
       s.date <= endDate &&
       s.start_time &&
       s.end_time
     );
-    
+
     let totalHours = 0;
     monthSchedules.forEach(schedule => {
       const start = new Date(`2000-01-01T${schedule.start_time}`);
@@ -6079,7 +6195,7 @@ const AdminPage: React.FC = () => {
       const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
       totalHours += hours;
     });
-    
+
     return Math.round(totalHours * 100) / 100; // Round to 2 decimals
   };
 
@@ -6087,7 +6203,7 @@ const AdminPage: React.FC = () => {
   const renderStaffHours = () => {
     const [year, month] = hoursViewMonth.split('-').map(Number);
     const monthName = new Date(year, month - 1, 1).toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
-    
+
     // Calculate hours for each employee
     const employeeHours = employees
       .filter(e => e.is_active)
@@ -6096,7 +6212,7 @@ const AdminPage: React.FC = () => {
         hours: calculateHoursForMonth(employee.id, hoursViewMonth),
       }))
       .sort((a, b) => b.hours - a.hours); // Sort by hours descending
-    
+
     const totalHours = employeeHours.reduce((sum, eh) => sum + eh.hours, 0);
 
     return (
@@ -6147,9 +6263,9 @@ const AdminPage: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {employee.location === 'malmo' ? 'Malmö' : 
-                         employee.location === 'staffanstorp' ? 'Staffanstorp' : 
-                         employee.location === 'both' ? 'Båda' : '-'}
+                        {employee.location === 'malmo' ? 'Malmö' :
+                          employee.location === 'staffanstorp' ? 'Staffanstorp' :
+                            employee.location === 'both' ? 'Båda' : '-'}
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right">
@@ -6310,7 +6426,7 @@ const AdminPage: React.FC = () => {
               const daySchedules = schedulesByDate[date];
               const dateObj = new Date(date);
               const dayName = dateObj.toLocaleDateString('sv-SE', { weekday: 'long' });
-              
+
               return (
                 <div key={date} className="border border-gray-200 rounded-lg p-4">
                   <h3 className="font-semibold text-gray-800 mb-3">
@@ -6354,11 +6470,10 @@ const AdminPage: React.FC = () => {
             {staffAbsences.map(absence => (
               <div
                 key={absence.id}
-                className={`border rounded-lg p-4 ${
-                  absence.status === 'pending' ? 'border-yellow-200 bg-yellow-50' :
+                className={`border rounded-lg p-4 ${absence.status === 'pending' ? 'border-yellow-200 bg-yellow-50' :
                   absence.status === 'approved' ? 'border-green-200 bg-green-50' :
-                  'border-red-200 bg-red-50'
-                }`}
+                    'border-red-200 bg-red-50'
+                  }`}
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -6370,13 +6485,12 @@ const AdminPage: React.FC = () => {
                       {absence.reason && ` | ${absence.reason}`}
                     </div>
                     <div className="text-sm mt-1">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        absence.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${absence.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                         absence.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
+                          'bg-red-100 text-red-800'
+                        }`}>
                         {absence.status === 'pending' ? 'Väntar på godkännande' :
-                         absence.status === 'approved' ? 'Godkänd' : 'Avvisad'}
+                          absence.status === 'approved' ? 'Godkänd' : 'Avvisad'}
                       </span>
                     </div>
                   </div>
@@ -6862,7 +6976,7 @@ const AdminPage: React.FC = () => {
       return renderDashboard();
     }
 
-    switch(currentView) {
+    switch (currentView) {
       case 'dogs':
         return renderDogs();
       case 'contracts':
@@ -6900,297 +7014,296 @@ const AdminPage: React.FC = () => {
 
   const renderContractForm = () => (
     <form className="space-y-4 sm:space-y-6" onSubmit={(e) => e.preventDefault()}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div>
-                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Contract Type</h2>
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="contractType" className="block text-sm font-medium text-gray-700 mb-1">Contract Type</label>
-                  <select
-                    id="contractType"
-                    name="contractType"
-                    value={contractData.contractType}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                  >
-                    <option value="daycare">Hunddagis (Full-time)</option>
-                    <option value="partTime">Hunddagis (Part-time)</option>
-                    <option value="boarding">Hundpensionat</option>
-                    <option value="socialWalk">Social Promenad</option>
-                    <option value="singleDay">Enstaka Dag</option>
-                  </select>
-                </div>
-                
-                {contractData.contractType === 'partTime' && (
-                  <div className="mb-3 sm:mb-4">
-                    <label htmlFor="daysPerWeek" className="block text-sm font-medium text-gray-700 mb-1">Days Per Week</label>
-                    <input
-                      type="text"
-                      id="daysPerWeek"
-                      name="daysPerWeek"
-                      value={contractData.daysPerWeek}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                      placeholder="e.g., 2-3"
-                    />
-                  </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        <div>
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Contract Type</h2>
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="contractType" className="block text-sm font-medium text-gray-700 mb-1">Contract Type</label>
+            <select
+              id="contractType"
+              name="contractType"
+              value={contractData.contractType}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+            >
+              <option value="daycare">Hunddagis (Full-time)</option>
+              <option value="partTime">Hunddagis (Part-time)</option>
+              <option value="boarding">Hundpensionat</option>
+              <option value="socialWalk">Social Promenad</option>
+              <option value="singleDay">Enstaka Dag</option>
+            </select>
+          </div>
+
+          {contractData.contractType === 'partTime' && (
+            <div className="mb-3 sm:mb-4">
+              <label htmlFor="daysPerWeek" className="block text-sm font-medium text-gray-700 mb-1">Days Per Week</label>
+              <input
+                type="text"
+                id="daysPerWeek"
+                name="daysPerWeek"
+                value={contractData.daysPerWeek}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+                placeholder="e.g., 2-3"
+              />
+            </div>
+          )}
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Price (SEK)</label>
+            <input
+              type="text"
+              id="price"
+              name="price"
+              value={contractData.price}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., 2500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="mb-3 sm:mb-4">
+              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <input
+                type="date"
+                id="startDate"
+                name="startDate"
+                value={contractData.startDate}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              />
+            </div>
+
+            <div className="mb-3 sm:mb-4">
+              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <input
+                type="date"
+                id="endDate"
+                name="endDate"
+                value={contractData.endDate}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Owner Information</h2>
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+            <input
+              type="text"
+              id="customerName"
+              name="customerName"
+              value={contractData.customerName}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., Tina Eriksson"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <input
+              type="text"
+              id="customerAddress"
+              name="customerAddress"
+              value={contractData.customerAddress}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., Storabackegatan 15d"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="customerCity" className="block text-sm font-medium text-gray-700 mb-1">City</label>
+            <input
+              type="text"
+              id="customerCity"
+              name="customerCity"
+              value={contractData.customerCity}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., Malmö"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="personalNumber" className="block text-sm font-medium text-gray-700 mb-1">Personal Number</label>
+            <input
+              type="text"
+              id="personalNumber"
+              name="personalNumber"
+              value={contractData.personalNumber}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., 19711216-3907"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Hundinformation</h2>
+
+        {/* Dog Selection - Searchable Dropdown */}
+        <div className="mb-4 relative contract-dog-dropdown">
+          <label htmlFor="selectedDogForContract" className="block text-sm font-medium text-gray-700 mb-1">
+            Välj hund (för att autofylla fält)
+          </label>
+          <div className="relative">
+            <div
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary focus-within:border-primary cursor-pointer bg-white flex items-center justify-between"
+              onClick={() => setIsContractDogDropdownOpen(!isContractDogDropdownOpen)}
+            >
+              <span className={selectedDogForContract ? "text-gray-900" : "text-gray-500"}>
+                {selectedDogForContract ? (
+                  `${dogs.find(d => d.id === selectedDogForContract)?.name} - ${dogs.find(d => d.id === selectedDogForContract)?.owner}`
+                ) : (
+                  '-- Välj hund --'
                 )}
-                
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Price (SEK)</label>
-                  <input
-                    type="text"
-                    id="price"
-                    name="price"
-                    value={contractData.price}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., 2500"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="mb-3 sm:mb-4">
-                    <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                    <input
-                      type="date"
-                      id="startDate"
-                      name="startDate"
-                      value={contractData.startDate}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    />
-                  </div>
-                  
-                  <div className="mb-3 sm:mb-4">
-                    <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                    <input
-                      type="date"
-                      id="endDate"
-                      name="endDate"
-                      value={contractData.endDate}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Owner Information</h2>
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
-                  <input
-                    type="text"
-                    id="customerName"
-                    name="customerName"
-                    value={contractData.customerName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., Tina Eriksson"
-                  />
-                </div>
-                
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="customerAddress" className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                  <input
-                    type="text"
-                    id="customerAddress"
-                    name="customerAddress"
-                    value={contractData.customerAddress}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., Storabackegatan 15d"
-                  />
-                </div>
-                
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="customerCity" className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                  <input
-                    type="text"
-                    id="customerCity"
-                    name="customerCity"
-                    value={contractData.customerCity}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., Malmö"
-                  />
-                </div>
-                
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="personalNumber" className="block text-sm font-medium text-gray-700 mb-1">Personal Number</label>
-                  <input
-                    type="text"
-                    id="personalNumber"
-                    name="personalNumber"
-                    value={contractData.personalNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., 19711216-3907"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 border-b pb-2">Hundinformation</h2>
-              
-              {/* Dog Selection - Searchable Dropdown */}
-              <div className="mb-4 relative contract-dog-dropdown">
-                <label htmlFor="selectedDogForContract" className="block text-sm font-medium text-gray-700 mb-1">
-                  Välj hund (för att autofylla fält)
-                </label>
-                <div className="relative">
-                  <div
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-primary focus-within:border-primary cursor-pointer bg-white flex items-center justify-between"
-                    onClick={() => setIsContractDogDropdownOpen(!isContractDogDropdownOpen)}
-                  >
-                    <span className={selectedDogForContract ? "text-gray-900" : "text-gray-500"}>
-                      {selectedDogForContract ? (
-                        `${dogs.find(d => d.id === selectedDogForContract)?.name} - ${dogs.find(d => d.id === selectedDogForContract)?.owner}`
-                      ) : (
-                        '-- Välj hund --'
-                      )}
-                    </span>
-                    <svg 
-                      className={`w-5 h-5 text-gray-400 transition-transform ${isContractDogDropdownOpen ? 'transform rotate-180' : ''}`}
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                  {isContractDogDropdownOpen && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-hidden">
-                      <div className="p-2 border-b border-gray-200">
-                        <input
-                          type="text"
-                          placeholder="Sök på hund eller ägare namn..."
-                          value={contractDogSearch}
-                          onChange={(e) => setContractDogSearch(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          autoFocus
-                        />
-                      </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {dogs
-                          .filter(dog => {
-                            const matchesActive = dog.isActive !== false;
-                            const matchesSearch = !contractDogSearch.trim() || 
-                              dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
-                              dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
-                            return matchesActive && matchesSearch;
-                          })
-                          .map(dog => (
-                            <div
-                              key={dog.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedDogForContract(dog.id);
-                                setContractData({
-                                  ...contractData,
-                                  customerName: dog.owner,
-                                  customerAddress: dog.ownerAddress || '',
-                                  customerCity: dog.ownerCity || '',
-                                  personalNumber: dog.ownerPersonalNumber || '',
-                                  dogName: dog.name,
-                                  dogBreed: dog.breed,
-                                  dogAge: dog.age,
-                                  chipNumber: dog.chipNumber || ''
-                                });
-                                setIsContractDogDropdownOpen(false);
-                                setContractDogSearch('');
-                              }}
-                              className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                                selectedDogForContract === dog.id ? 'bg-blue-50' : ''
-                              }`}
-                            >
-                              {dog.name} - {dog.owner}
-                            </div>
-                          ))}
-                        {dogs.filter(dog => {
-                          const matchesActive = dog.isActive !== false;
-                          const matchesSearch = !contractDogSearch.trim() || 
-                            dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
-                            dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
-                          return matchesActive && matchesSearch;
-                        }).length === 0 && (
-                          <div className="px-3 py-2 text-sm text-gray-500">
-                            Inga hundar matchar sökningen
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="dogName" className="block text-sm font-medium text-gray-700 mb-1">Hundens namn</label>
-                  <input
-                    type="text"
-                    id="dogName"
-                    name="dogName"
-                    value={contractData.dogName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., Morris"
-                  />
-                </div>
-                
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="dogBreed" className="block text-sm font-medium text-gray-700 mb-1">Dog Breed</label>
-                  <input
-                    type="text"
-                    id="dogBreed"
-                    name="dogBreed"
-                    value={contractData.dogBreed}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., Labradoodle"
-                  />
-                </div>
-                
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="dogAge" className="block text-sm font-medium text-gray-700 mb-1">Dog Age (years)</label>
-                  <input
-                    type="text"
-                    id="dogAge"
-                    name="dogAge"
-                    value={contractData.dogAge}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., 10"
-                  />
-                </div>
-                
-                <div className="mb-3 sm:mb-4">
-                  <label htmlFor="chipNumber" className="block text-sm font-medium text-gray-700 mb-1">Microchip/Tattoo Number</label>
-                  <input
-                    type="text"
-                    id="chipNumber"
-                    name="chipNumber"
-                    value={contractData.chipNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                    placeholder="e.g., 941000016851106"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-center mt-6 sm:mt-8">
-              <button
-                type="button"
-                onClick={generatePDF}
-                className="flex items-center justify-center bg-primary text-white py-2 sm:py-3 px-4 sm:px-6 rounded-md hover:bg-primary-dark transition-colors text-base sm:text-lg w-full sm:w-auto"
+              </span>
+              <svg
+                className={`w-5 h-5 text-gray-400 transition-transform ${isContractDogDropdownOpen ? 'transform rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <FaFilePdf className="mr-2" /> Generera kontrakt PDF
-              </button>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
-          </form>
+            {isContractDogDropdownOpen && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-80 overflow-hidden">
+                <div className="p-2 border-b border-gray-200">
+                  <input
+                    type="text"
+                    placeholder="Sök på hund eller ägare namn..."
+                    value={contractDogSearch}
+                    onChange={(e) => setContractDogSearch(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    autoFocus
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {dogs
+                    .filter(dog => {
+                      const matchesActive = dog.isActive !== false;
+                      const matchesSearch = !contractDogSearch.trim() ||
+                        dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
+                        dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
+                      return matchesActive && matchesSearch;
+                    })
+                    .map(dog => (
+                      <div
+                        key={dog.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDogForContract(dog.id);
+                          setContractData({
+                            ...contractData,
+                            customerName: dog.owner,
+                            customerAddress: dog.ownerAddress || '',
+                            customerCity: dog.ownerCity || '',
+                            personalNumber: dog.ownerPersonalNumber || '',
+                            dogName: dog.name,
+                            dogBreed: dog.breed,
+                            dogAge: dog.age,
+                            chipNumber: dog.chipNumber || ''
+                          });
+                          setIsContractDogDropdownOpen(false);
+                          setContractDogSearch('');
+                        }}
+                        className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${selectedDogForContract === dog.id ? 'bg-blue-50' : ''
+                          }`}
+                      >
+                        {dog.name} - {dog.owner}
+                      </div>
+                    ))}
+                  {dogs.filter(dog => {
+                    const matchesActive = dog.isActive !== false;
+                    const matchesSearch = !contractDogSearch.trim() ||
+                      dog.name.toLowerCase().includes(contractDogSearch.toLowerCase()) ||
+                      dog.owner.toLowerCase().includes(contractDogSearch.toLowerCase());
+                    return matchesActive && matchesSearch;
+                  }).length === 0 && (
+                      <div className="px-3 py-2 text-sm text-gray-500">
+                        Inga hundar matchar sökningen
+                      </div>
+                    )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="dogName" className="block text-sm font-medium text-gray-700 mb-1">Hundens namn</label>
+            <input
+              type="text"
+              id="dogName"
+              name="dogName"
+              value={contractData.dogName}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., Morris"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="dogBreed" className="block text-sm font-medium text-gray-700 mb-1">Dog Breed</label>
+            <input
+              type="text"
+              id="dogBreed"
+              name="dogBreed"
+              value={contractData.dogBreed}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., Labradoodle"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="dogAge" className="block text-sm font-medium text-gray-700 mb-1">Dog Age (years)</label>
+            <input
+              type="text"
+              id="dogAge"
+              name="dogAge"
+              value={contractData.dogAge}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., 10"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="chipNumber" className="block text-sm font-medium text-gray-700 mb-1">Microchip/Tattoo Number</label>
+            <input
+              type="text"
+              id="chipNumber"
+              name="chipNumber"
+              value={contractData.chipNumber}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., 941000016851106"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-center mt-6 sm:mt-8">
+        <button
+          type="button"
+          onClick={generatePDF}
+          className="flex items-center justify-center bg-primary text-white py-2 sm:py-3 px-4 sm:px-6 rounded-md hover:bg-primary-dark transition-colors text-base sm:text-lg w-full sm:w-auto"
+        >
+          <FaFilePdf className="mr-2" /> Generera kontrakt PDF
+        </button>
+      </div>
+    </form>
   );
 
   // Get today's meetings for admin and platschef
@@ -7252,7 +7365,7 @@ const AdminPage: React.FC = () => {
               >
                 <FaBars className="text-xl" />
               </button>
-              
+
               {currentView !== 'dashboard' && (
                 <button
                   onClick={() => setCurrentView('dashboard')}
@@ -7262,29 +7375,28 @@ const AdminPage: React.FC = () => {
                 </button>
               )}
               <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate flex-1 sm:flex-none">
-                {currentView === 'dashboard' ? 'CleverDog Admin' : 
-                 currentView === 'dogs' ? 'Hundar' :
-                 currentView === 'contracts' ? 'Kontrakt' :
-                 currentView === 'planning-malmo' ? 'Planering Malmö' :
-                 currentView === 'planning-staffanstorp' ? 'Planering Staffanstorp' :
-                 currentView === 'boarding-malmo' ? 'Hundpensionat Malmö' :
-                 currentView === 'boarding-staffanstorp' ? 'Hundpensionat Staffanstorp' :
-                 currentView === 'calendar-malmo' ? 'Kalender Malmö' :
-                 currentView === 'calendar-staffanstorp' ? 'Kalender Staffanstorp' :
-                 currentView === 'statistics' ? 'Statistik & Inkomst' :
-                 currentView === 'settings' ? 'Inställningar' :
-                 currentView === 'applications' ? 'Ansökningar' :
-                 currentView === 'meetings' ? 'Möten' :
-                 'Dashboard'}
+                {currentView === 'dashboard' ? 'CleverDog Admin' :
+                  currentView === 'dogs' ? 'Hundar' :
+                    currentView === 'contracts' ? 'Kontrakt' :
+                      currentView === 'planning-malmo' ? 'Planering Malmö' :
+                        currentView === 'planning-staffanstorp' ? 'Planering Staffanstorp' :
+                          currentView === 'boarding-malmo' ? 'Hundpensionat Malmö' :
+                            currentView === 'boarding-staffanstorp' ? 'Hundpensionat Staffanstorp' :
+                              currentView === 'calendar-malmo' ? 'Kalender Malmö' :
+                                currentView === 'calendar-staffanstorp' ? 'Kalender Staffanstorp' :
+                                  currentView === 'statistics' ? 'Statistik & Inkomst' :
+                                    currentView === 'settings' ? 'Inställningar' :
+                                      currentView === 'applications' ? 'Ansökningar' :
+                                        currentView === 'meetings' ? 'Möten' :
+                                          'Dashboard'}
               </h1>
               <div className="ml-auto sm:ml-4">
-                <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${
-                  userRole === 'admin' 
-                    ? 'bg-blue-100 text-blue-800' 
-                    : userRole === 'platschef'
+                <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${userRole === 'admin'
+                  ? 'bg-blue-100 text-blue-800'
+                  : userRole === 'platschef'
                     ? 'bg-purple-100 text-purple-800'
                     : 'bg-green-100 text-green-800'
-                }`}>
+                  }`}>
                   {userRole === 'admin' ? 'Admin' : userRole === 'platschef' ? 'Platschef' : 'Anställd'}
                 </span>
               </div>
@@ -7296,7 +7408,7 @@ const AdminPage: React.FC = () => {
               <FaSignOutAlt className="mr-2" /> <span className="hidden sm:inline">Logout</span><span className="sm:hidden">Logga ut</span>
             </button>
           </div>
-          
+
           {/* Mobile Navigation Menu */}
           {isMobileMenuOpen && (
             <div className="lg:hidden border-t border-gray-200 pt-4 mt-4">
@@ -7306,9 +7418,8 @@ const AdminPage: React.FC = () => {
                     setCurrentView('dogs');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`p-3 text-left rounded-lg transition-colors ${
-                    currentView === 'dogs' ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'dogs' ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="font-semibold">Hundar</div>
                   <div className="text-xs text-gray-600">{dogs.length} registrerade</div>
@@ -7319,9 +7430,8 @@ const AdminPage: React.FC = () => {
                       setCurrentView('contracts');
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`p-3 text-left rounded-lg transition-colors ${
-                      currentView === 'contracts' ? 'bg-green-100 text-green-800' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
+                    className={`p-3 text-left rounded-lg transition-colors ${currentView === 'contracts' ? 'bg-green-100 text-green-800' : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
                   >
                     <div className="font-semibold">Kontrakt</div>
                     <div className="text-xs text-gray-600">PDF-generator</div>
@@ -7332,9 +7442,8 @@ const AdminPage: React.FC = () => {
                     setCurrentView('planning-malmo');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`p-3 text-left rounded-lg transition-colors ${
-                    currentView === 'planning-malmo' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'planning-malmo' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="font-semibold">Planering Malmö</div>
                   <div className="text-xs text-gray-600">Drag & drop</div>
@@ -7344,9 +7453,8 @@ const AdminPage: React.FC = () => {
                     setCurrentView('planning-staffanstorp');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`p-3 text-left rounded-lg transition-colors ${
-                    currentView === 'planning-staffanstorp' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'planning-staffanstorp' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="font-semibold">Planering Staffanstorp</div>
                   <div className="text-xs text-gray-600">Drag & drop</div>
@@ -7356,9 +7464,8 @@ const AdminPage: React.FC = () => {
                     setCurrentView('boarding-malmo');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`p-3 text-left rounded-lg transition-colors ${
-                    currentView === 'boarding-malmo' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'boarding-malmo' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="font-semibold">Pensionat Malmö</div>
                 </button>
@@ -7367,9 +7474,8 @@ const AdminPage: React.FC = () => {
                     setCurrentView('boarding-staffanstorp');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`p-3 text-left rounded-lg transition-colors ${
-                    currentView === 'boarding-staffanstorp' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'boarding-staffanstorp' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="font-semibold">Pensionat Staffanstorp</div>
                 </button>
@@ -7379,9 +7485,8 @@ const AdminPage: React.FC = () => {
                       setCurrentView('statistics');
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`p-3 text-left rounded-lg transition-colors ${
-                      currentView === 'statistics' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
+                    className={`p-3 text-left rounded-lg transition-colors ${currentView === 'statistics' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
                   >
                     <div className="font-semibold">Statistik</div>
                   </button>
@@ -7391,9 +7496,8 @@ const AdminPage: React.FC = () => {
                     setCurrentView('applications');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`p-3 text-left rounded-lg transition-colors ${
-                    currentView === 'applications' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'applications' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="font-semibold">Ansökningar</div>
                 </button>
@@ -7402,9 +7506,8 @@ const AdminPage: React.FC = () => {
                     setCurrentView('meetings');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`p-3 text-left rounded-lg transition-colors ${
-                    currentView === 'meetings' ? 'bg-pink-100 text-pink-800' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'meetings' ? 'bg-pink-100 text-pink-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="font-semibold">Möten</div>
                 </button>
@@ -7413,9 +7516,8 @@ const AdminPage: React.FC = () => {
                     setCurrentView('settings');
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`p-3 text-left rounded-lg transition-colors ${
-                    currentView === 'settings' ? 'bg-gray-100 text-gray-800' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'settings' ? 'bg-gray-100 text-gray-800' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
                 >
                   <div className="font-semibold">Inställningar</div>
                 </button>
@@ -7423,7 +7525,7 @@ const AdminPage: React.FC = () => {
             </div>
           )}
         </div>
-          
+
         {renderContent()}
       </div>
 
@@ -7444,7 +7546,7 @@ const AdminPage: React.FC = () => {
                 ✕
               </button>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
               <div className="md:col-span-2 relative boarding-dog-dropdown">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Välj hund *</label>
@@ -7460,10 +7562,10 @@ const AdminPage: React.FC = () => {
                         '-- Välj hund --'
                       )}
                     </span>
-                    <svg 
+                    <svg
                       className={`w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ml-2 ${isBoardingDogDropdownOpen ? 'transform rotate-180' : ''}`}
-                      fill="none" 
-                      stroke="currentColor" 
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -7487,7 +7589,7 @@ const AdminPage: React.FC = () => {
                           .filter(dog => {
                             const matchesLocation = dog.locations.includes((window as any).currentBoardingLocation);
                             const matchesActive = dog.isActive !== false;
-                            const matchesSearch = !boardingDogSearch.trim() || 
+                            const matchesSearch = !boardingDogSearch.trim() ||
                               dog.name.toLowerCase().includes(boardingDogSearch.toLowerCase()) ||
                               dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
                             return matchesLocation && matchesActive && matchesSearch;
@@ -7513,10 +7615,10 @@ const AdminPage: React.FC = () => {
                             dog.owner.toLowerCase().includes(boardingDogSearch.toLowerCase());
                           return matchesLocation && matchesActive && matchesSearch;
                         }).length === 0 && (
-                          <div className="px-3 py-2 text-xs sm:text-sm text-gray-500">
-                            Inga hundar matchar sökningen
-                          </div>
-                        )}
+                            <div className="px-3 py-2 text-xs sm:text-sm text-gray-500">
+                              Inga hundar matchar sökningen
+                            </div>
+                          )}
                       </div>
                     </div>
                   )}
@@ -7541,7 +7643,7 @@ const AdminPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             {/* Expected Cost Calculation */}
             {boardingForm.startDate && boardingForm.endDate && (window as any).currentBoardingLocation && (
               <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-md">
@@ -7554,7 +7656,7 @@ const AdminPage: React.FC = () => {
                     location
                   );
                   const prices = PRICES[location];
-                  
+
                   return (
                     <div className="space-y-1 text-xs sm:text-sm">
                       <div className="flex justify-between">
@@ -7576,7 +7678,7 @@ const AdminPage: React.FC = () => {
                 })()}
               </div>
             )}
-            
+
             <div className="mt-3 sm:mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
               <textarea
@@ -7587,7 +7689,7 @@ const AdminPage: React.FC = () => {
                 placeholder="Extra information om pensionatet..."
               />
             </div>
-            
+
             <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-2 mt-4 sm:mt-6">
               <button
                 onClick={() => {
@@ -7625,7 +7727,7 @@ const AdminPage: React.FC = () => {
                 ✕
               </button>
             </div>
-            
+
             <div className="overflow-y-auto flex-1 p-4 sm:p-6">
               {userRole === 'employee' && (
                 <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -7634,213 +7736,213 @@ const AdminPage: React.FC = () => {
                   </p>
                 </div>
               )}
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hundens namn *</label>
-                <input
-                  type="text"
-                  value={dogForm.name}
-                  onChange={(e) => setDogForm({ ...dogForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Morris"
-                  disabled={userRole === 'employee'}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ras</label>
-                <input
-                  type="text"
-                  value={dogForm.breed}
-                  onChange={(e) => setDogForm({ ...dogForm, breed: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Labradoodle"
-                  disabled={userRole === 'employee'}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ålder</label>
-                <input
-                  type="text"
-                  value={dogForm.age}
-                  onChange={(e) => setDogForm({ ...dogForm, age: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., 3"
-                  disabled={userRole === 'employee'}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ägare *</label>
-                <input
-                  type="text"
-                  value={dogForm.owner}
-                  onChange={(e) => setDogForm({ ...dogForm, owner: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., Tina Eriksson"
-                  disabled={userRole === 'employee'}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
-                <input
-                  type="text"
-                  value={dogForm.phone}
-                  onChange={(e) => setDogForm({ ...dogForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., 070-123 45 67"
-                  disabled={userRole === 'employee'}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">E-post</label>
-                <input
-                  type="email"
-                  value={dogForm.email}
-                  onChange={(e) => setDogForm({ ...dogForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., agare@example.com"
-                  disabled={userRole === 'employee'}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Chipnummer</label>
-                <input
-                  type="text"
-                  value={dogForm.chipNumber}
-                  onChange={(e) => setDogForm({ ...dogForm, chipNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., 941000016851106"
-                  disabled={userRole === 'employee'}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Platser *</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={dogForm.locations.includes('staffanstorp')}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          if (!dogForm.locations.includes('staffanstorp')) {
-                            setDogForm({ ...dogForm, locations: [...dogForm.locations, 'staffanstorp'] });
-                          }
-                        } else {
-                          setDogForm({ ...dogForm, locations: dogForm.locations.filter(l => l !== 'staffanstorp') });
-                        }
-                      }}
-                      className="mr-2"
-                      disabled={userRole === 'employee'}
-                    />
-                    Staffanstorp
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={dogForm.locations.includes('malmo')}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          if (!dogForm.locations.includes('malmo')) {
-                            setDogForm({ ...dogForm, locations: [...dogForm.locations, 'malmo'] });
-                          }
-                        } else {
-                          setDogForm({ ...dogForm, locations: dogForm.locations.filter(l => l !== 'malmo') });
-                        }
-                      }}
-                      className="mr-2"
-                      disabled={userRole === 'employee'}
-                    />
-                    Malmö
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Typ</label>
-                <select
-                  value={dogForm.type}
-                  onChange={(e) => setDogForm({ ...dogForm, type: e.target.value as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  disabled={userRole === 'employee'}
-                >
-                  <option value="">Välj typ</option>
-                  <option value="fulltime">Heltid</option>
-                  <option value="parttime-3">Deltid 3 dagar</option>
-                  <option value="parttime-2">Deltid 2 dagar</option>
-                  <option value="singleDay">Enstaka dag</option>
-                  <option value="boarding">Hundpensionat</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Hundens namn *</label>
                   <input
-                    type="checkbox"
-                    checked={dogForm.isActive}
-                    onChange={(e) => setDogForm({ ...dogForm, isActive: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded"
+                    type="text"
+                    value={dogForm.name}
+                    onChange={(e) => setDogForm({ ...dogForm, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Morris"
                     disabled={userRole === 'employee'}
                   />
-                  <span className="text-sm text-gray-700">
-                    Aktiv hund
-                  </span>
-                </label>
-                <p className="text-xs text-gray-500 mt-1 ml-6">
-                  Inaktiva hundar visas inte i planering och listor, men kan användas i statistik.
-                </p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
-              <textarea
-                value={dogForm.notes}
-                onChange={(e) => setDogForm({ ...dogForm, notes: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                rows={3}
-                placeholder="Extra information om hunden..."
-                disabled={userRole === 'employee'}
-              />
-            </div>
-            
-            {/* Contract Information Section */}
-            <div className="mt-6 border-t pt-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Kontraktinformation</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ras</label>
+                  <input
+                    type="text"
+                    value={dogForm.breed}
+                    onChange={(e) => setDogForm({ ...dogForm, breed: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Labradoodle"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ålder</label>
+                  <input
+                    type="text"
+                    value={dogForm.age}
+                    onChange={(e) => setDogForm({ ...dogForm, age: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., 3"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ägare *</label>
+                  <input
+                    type="text"
+                    value={dogForm.owner}
+                    onChange={(e) => setDogForm({ ...dogForm, owner: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Tina Eriksson"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
+                  <input
+                    type="text"
+                    value={dogForm.phone}
+                    onChange={(e) => setDogForm({ ...dogForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., 070-123 45 67"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">E-post</label>
+                  <input
+                    type="email"
+                    value={dogForm.email}
+                    onChange={(e) => setDogForm({ ...dogForm, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., agare@example.com"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Chipnummer</label>
+                  <input
+                    type="text"
+                    value={dogForm.chipNumber}
+                    onChange={(e) => setDogForm({ ...dogForm, chipNumber: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., 941000016851106"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ägares adress</label>
-                  <input
-                    type="text"
-                    value={dogForm.ownerAddress}
-                    onChange={(e) => setDogForm({ ...dogForm, ownerAddress: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="e.g., Storgatan 123"
-                    disabled={userRole === 'employee'}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Platser *</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={dogForm.locations.includes('staffanstorp')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (!dogForm.locations.includes('staffanstorp')) {
+                              setDogForm({ ...dogForm, locations: [...dogForm.locations, 'staffanstorp'] });
+                            }
+                          } else {
+                            setDogForm({ ...dogForm, locations: dogForm.locations.filter(l => l !== 'staffanstorp') });
+                          }
+                        }}
+                        className="mr-2"
+                        disabled={userRole === 'employee'}
+                      />
+                      Staffanstorp
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={dogForm.locations.includes('malmo')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (!dogForm.locations.includes('malmo')) {
+                              setDogForm({ ...dogForm, locations: [...dogForm.locations, 'malmo'] });
+                            }
+                          } else {
+                            setDogForm({ ...dogForm, locations: dogForm.locations.filter(l => l !== 'malmo') });
+                          }
+                        }}
+                        className="mr-2"
+                        disabled={userRole === 'employee'}
+                      />
+                      Malmö
+                    </label>
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ägares stad</label>
-                  <input
-                    type="text"
-                    value={dogForm.ownerCity}
-                    onChange={(e) => setDogForm({ ...dogForm, ownerCity: e.target.value })}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Typ</label>
+                  <select
+                    value={dogForm.type}
+                    onChange={(e) => setDogForm({ ...dogForm, type: e.target.value as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="e.g., Malmö"
                     disabled={userRole === 'employee'}
-                  />
+                  >
+                    <option value="">Välj typ</option>
+                    <option value="fulltime">Heltid</option>
+                    <option value="parttime-3">Deltid 3 dagar</option>
+                    <option value="parttime-2">Deltid 2 dagar</option>
+                    <option value="singleDay">Enstaka dag</option>
+                    <option value="boarding">Hundpensionat</option>
+                  </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ägares personnummer</label>
-                  <input
-                    type="text"
-                    value={dogForm.ownerPersonalNumber}
-                    onChange={(e) => setDogForm({ ...dogForm, ownerPersonalNumber: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="e.g., 199001011234"
-                    disabled={userRole === 'employee'}
-                  />
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={dogForm.isActive}
+                      onChange={(e) => setDogForm({ ...dogForm, isActive: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 rounded"
+                      disabled={userRole === 'employee'}
+                    />
+                    <span className="text-sm text-gray-700">
+                      Aktiv hund
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    Inaktiva hundar visas inte i planering och listor, men kan användas i statistik.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
+                <textarea
+                  value={dogForm.notes}
+                  onChange={(e) => setDogForm({ ...dogForm, notes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  rows={3}
+                  placeholder="Extra information om hunden..."
+                  disabled={userRole === 'employee'}
+                />
+              </div>
+
+              {/* Contract Information Section */}
+              <div className="mt-6 border-t pt-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Kontraktinformation</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Ägares adress</label>
+                    <input
+                      type="text"
+                      value={dogForm.ownerAddress}
+                      onChange={(e) => setDogForm({ ...dogForm, ownerAddress: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="e.g., Storgatan 123"
+                      disabled={userRole === 'employee'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Ägares stad</label>
+                    <input
+                      type="text"
+                      value={dogForm.ownerCity}
+                      onChange={(e) => setDogForm({ ...dogForm, ownerCity: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="e.g., Malmö"
+                      disabled={userRole === 'employee'}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Ägares personnummer</label>
+                    <input
+                      type="text"
+                      value={dogForm.ownerPersonalNumber}
+                      onChange={(e) => setDogForm({ ...dogForm, ownerPersonalNumber: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="e.g., 199001011234"
+                      disabled={userRole === 'employee'}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-            </div>
-            
+
             <div className="flex justify-end gap-2 p-6 border-t border-gray-200">
               <button
                 onClick={() => setIsDogModalOpen(false)}
@@ -7874,13 +7976,13 @@ const AdminPage: React.FC = () => {
                 ×
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-gray-600 mb-4">
                   Välj vilken planering du vill kopiera från:
                 </p>
-                
+
                 <div className="space-y-2">
                   <button
                     onClick={() => {
@@ -7901,7 +8003,7 @@ const AdminPage: React.FC = () => {
                       })()}
                     </div>
                   </button>
-                  
+
                   <button
                     onClick={() => {
                       const prevWeekDate = new Date(currentPlanningDate);
@@ -7921,7 +8023,7 @@ const AdminPage: React.FC = () => {
                       })()}
                     </div>
                   </button>
-                  
+
                   <div className="px-4 py-3 bg-purple-50 border-2 border-purple-200 rounded-lg">
                     <div className="font-semibold text-purple-800 mb-2">Från valt datum</div>
                     <input
@@ -8008,7 +8110,7 @@ const AdminPage: React.FC = () => {
                 ✕
               </button>
             </div>
-            
+
             <div className="overflow-y-auto flex-1 p-4 sm:p-6">
               {employeeError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
@@ -8139,7 +8241,7 @@ const AdminPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-2 p-6 border-t border-gray-200">
               <button
                 onClick={() => {

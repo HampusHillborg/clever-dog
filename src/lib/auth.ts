@@ -202,11 +202,73 @@ export const updateUserRole = async (userId: string, newRole: UserRole): Promise
 };
 
 /**
+ * Set password for a new user (used after accepting invite)
+ * This function is called when a user clicks the invite link and needs to set their password
+ */
+export const setPassword = async (newPassword: string): Promise<{ success: boolean; error?: string; user?: AuthUser }> => {
+  if (!supabase) {
+    return { success: false, error: 'Supabase is not configured' };
+  }
+
+  try {
+    // Update the user's password
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    if (!data.user) {
+      return { success: false, error: 'Failed to set password' };
+    }
+
+    // Wait a bit for any triggers to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Get the user role from admin_users table
+    const { data: userData, error: userError } = await supabase
+      .from('admin_users')
+      .select('role, email')
+      .eq('id', data.user.id)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user role:', userError);
+      // If user doesn't exist in admin_users, create it with default role
+      const { error: insertError } = await supabase
+        .from('admin_users')
+        .insert({
+          id: data.user.id,
+          email: data.user.email || '',
+          role: 'employee',
+        } as any);
+
+      if (insertError) {
+        console.error('Error creating admin_users entry:', insertError);
+      }
+    }
+
+    return {
+      success: true,
+      user: {
+        id: data.user.id,
+        email: data.user.email || '',
+        role: ((userData as any)?.role as UserRole) || 'employee',
+      },
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to set password' };
+  }
+};
+
+/**
  * Listen to auth state changes
  */
 export const onAuthStateChange = (callback: (user: AuthUser | null) => void): { data: { subscription: { unsubscribe: () => void } } } => {
   if (!supabase) {
-    return { data: { subscription: { unsubscribe: () => {} } } };
+    return { data: { subscription: { unsubscribe: () => { } } } };
   }
 
   const subscriptionResult = supabase.auth.onAuthStateChange(async (event, session) => {
