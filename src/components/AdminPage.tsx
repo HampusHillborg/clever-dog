@@ -3070,6 +3070,25 @@ const AdminPage: React.FC = () => {
                   </span>
                 </div>
               </div>
+
+              {/* Employee specific tile */}
+              {userRole === 'employee' && (
+                <div
+                  onClick={() => setCurrentView('my-schedule')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-blue-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaClock className="text-blue-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Mitt Schema</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Se ditt arbetsschema och rapportera frånvaro</p>
+                  <div className="mt-2 sm:mt-3 text-center">
+                    <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      Personligt
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
