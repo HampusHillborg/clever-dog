@@ -5843,6 +5843,14 @@ const AdminPage: React.FC = () => {
                         {new Date(application.created_at).toLocaleDateString('sv-SE')} {new Date(application.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
+
+                    <button
+                      onClick={(e) => handleDeleteApplication(e, application.id)}
+                      className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors ml-2"
+                      title="Ta bort ansökan"
+                    >
+                      <FaTrash />
+                    </button>
                   </div>
                 </div>
               ))}
