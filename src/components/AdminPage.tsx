@@ -708,6 +708,9 @@ const AdminPage: React.FC = () => {
         setIsSettingPassword(false);
         // Clear cleanup
         window.location.hash = '';
+        if (typeof window !== 'undefined') {
+          window.__initialHash = '';
+        }
       } else {
         setPasswordError(result.error || 'Kunde inte sätta lösenord');
       }
