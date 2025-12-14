@@ -701,19 +701,16 @@ const AdminPage: React.FC = () => {
       const result = await setUserPassword(newPassword);
 
       if (result.success && result.user) {
-        // Password set successfully, log the user in
-        setCurrentUser(result.user);
-        setUserRole(result.user.role);
-        setIsLoggedIn(true);
-        setIsSettingPassword(false);
         // Clear cleanup
         window.location.hash = '';
         if (typeof window !== 'undefined') {
           window.__initialHash = '';
         }
 
-        // Force reload to ensure clean state and remove any lingering hash/invite state
-        window.location.reload();
+        // Force a hard navigation to the clean URL to ensure all Supabase/Auth state is reset
+        // and we start fresh with the new session
+        window.location.href = window.location.origin + window.location.pathname;
+        return;
       } else {
         setPasswordError(result.error || 'Kunde inte sätta lösenord');
       }
