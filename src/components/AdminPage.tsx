@@ -156,10 +156,18 @@ const AdminPage: React.FC = () => {
   // Password setting state
   const [isSettingPassword, setIsSettingPassword] = useState(() => {
     // Check for invite/recovery token immediately on mount to avoid race conditions with Supabase client
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    // We check both current location.hash AND the captured __initialHash (from main.tsx) 
+    // because Supabase client often strips the hash before this component mounts
+    let hash = '';
+    if (typeof window !== 'undefined') {
+      hash = window.location.hash || window.__initialHash || '';
+    }
+
+    if (hash) {
+      const hashParams = new URLSearchParams(hash.substring(1));
       const type = hashParams.get('type');
       const accessToken = hashParams.get('access_token');
+      // Verify it is an invite/recovery flow
       return (type === 'invite' || type === 'recovery') && !!accessToken;
     }
     return false;
