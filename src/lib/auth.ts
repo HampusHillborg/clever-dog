@@ -247,6 +247,25 @@ export const setPassword = async (newPassword: string): Promise<{ success: boole
 
       if (insertError) {
         console.error('Error creating admin_users entry:', insertError);
+      } else {
+        // Also create an entry in the employees table so they appear in scheduling
+        // We use the email prefix as the initial name
+        const nameFromEmail = (data.user.email || '').split('@')[0];
+        const initialName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+
+        const { error: employeeError } = await supabase
+          .from('employees')
+          .insert({
+            id: data.user.id,
+            name: initialName,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          } as any);
+
+        if (employeeError) {
+          console.error('Error creating linked employee entry:', employeeError);
+        }
       }
     }
 

@@ -2971,10 +2971,13 @@ const AdminPage: React.FC = () => {
   }
 
   const renderDashboard = () => {
-    // Employees should only see meetings, not dashboard
+    // Dashboard access control
+    // Employees can now see the dashboard but individual tiles might be filtered below
+    /*
     if (userRole === 'employee') {
       return renderMeetings();
     }
+    */
 
     return (
       <div className="space-y-4 sm:space-y-8">
