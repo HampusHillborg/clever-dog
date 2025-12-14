@@ -7048,16 +7048,6 @@ const AdminPage: React.FC = () => {
   };
 
   const renderContent = () => {
-    // Employees can see their schedule and report absences
-    if (userRole === 'employee') {
-      if (currentView === 'my-schedule') {
-        return renderMySchedule();
-      } else if (currentView === 'my-absences') {
-        return renderMyAbsences();
-      }
-      // Default for employees: show schedule
-      return renderMySchedule();
-    }
     // Redirect platschef away from contracts and statistics
     if (userRole === 'platschef' && (currentView === 'contracts' || currentView === 'statistics')) {
       return renderDashboard();
@@ -7094,6 +7084,10 @@ const AdminPage: React.FC = () => {
         return (userRole === 'admin' || userRole === 'platschef') ? renderStaffAbsences() : renderDashboard();
       case 'staff-hours':
         return (userRole === 'admin' || userRole === 'platschef') ? renderStaffHours() : renderDashboard();
+      case 'my-schedule':
+        return renderMySchedule();
+      case 'my-absences':
+        return renderMyAbsences();
       default:
         return renderDashboard();
     }
