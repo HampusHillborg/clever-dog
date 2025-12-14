@@ -711,6 +711,9 @@ const AdminPage: React.FC = () => {
         if (typeof window !== 'undefined') {
           window.__initialHash = '';
         }
+
+        // Force reload to ensure clean state and remove any lingering hash/invite state
+        window.location.reload();
       } else {
         setPasswordError(result.error || 'Kunde inte sätta lösenord');
       }
