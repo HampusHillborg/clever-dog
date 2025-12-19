@@ -1,7 +1,7 @@
 {
   "translation": {
     "welcome": "Välkommen till Clever Dog",
-    "heroDescription": "Hunddagis i Staffanstorp med fokus på trygghet, glädje och utveckling",
+    "heroDescription": "Hunddagis och hundpensionat i Malmö och Staffanstorp - Professionell hundpassning med fokus på trygghet, glädje och utveckling",
     "cta": "Läs mer",
     "bookCta": "Boka plats",
     "malmoCta": "Nytt hunddagis i Malmö Videdal - Anmäl intresse",
@@ -400,8 +400,8 @@
         "locations": "Två platser att välja mellan"
       },
       "staffanstorp": {
-        "subtitle": "Etablerat hunddagis & pensionat",
-        "description": "Vårt huvudkontor i Staffanstorp erbjuder fullservice hundomsorg inklusive dagis, pensionat och social promenader. Med vår strategiska plats bara 10 minuter från Lund och 15 minuter från Malmö.",
+        "subtitle": "Etablerat hunddagis & hundpensionat",
+        "description": "Hunddagis Staffanstorp - Vårt etablerade hunddagis och hundpensionat erbjuder professionell hundpassning, dagis, pensionat och social promenader. Perfekt beläget 10 minuter från Lund och 15 minuter från Malmö.",
         "services": {
           "daycare": "Hunddagis",
           "boarding": "Hundpensionat", 
@@ -410,8 +410,8 @@
         "status": "Öppet nu"
       },
       "malmo": {
-        "subtitle": "Modernt hunddagis i Malmö",
-        "description": "Vårt nya hunddagis i Malmö erbjuder modern hundomsorg med fokus på dagisverksamhet och social träning. Perfekt beläget i Videdal för hundägare i Malmöområdet.",
+        "subtitle": "Modernt hunddagis & hundpensionat i Malmö",
+        "description": "Hunddagis Malmö Videdal - Vårt moderna hunddagis och hundpensionat i Malmö erbjuder professionell hundpassning, dagisverksamhet och social träning. Perfekt beläget i Videdal för hundägare i hela Malmöområdet.",
         "services": {
           "daycare": "Hunddagis",
           "grooming": "Kloklippning & Bad",

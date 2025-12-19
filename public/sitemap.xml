@@ -1,31 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   
-  <!-- Homepage -->
+  <!-- Homepage - Hunddagis och Hundpensionat -->
   <url>
     <loc>https://cleverdog.se/</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://cleverdog.se/favicon.png</image:loc>
+      <image:title>Clever Dog - Hunddagis och Hundpensionat</image:title>
+      <image:caption>Hunddagis i Malmö och Staffanstorp</image:caption>
+    </image:image>
   </url>
   
-  <!-- Staffanstorp Page -->
+  <!-- Staffanstorp Page - Hunddagis Staffanstorp -->
   <url>
     <loc>https://cleverdog.se/staffanstorp</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://cleverdog.se/favicon.png</image:loc>
+      <image:title>Hunddagis Staffanstorp - Clever Dog</image:title>
+      <image:caption>Professionellt hunddagis och hundpensionat i Staffanstorp</image:caption>
+    </image:image>
   </url>
   
-  <!-- Malmö Page -->
+  <!-- Malmö Page - Hunddagis Malmö -->
   <url>
     <loc>https://cleverdog.se/malmo</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://cleverdog.se/favicon.png</image:loc>
+      <image:title>Hunddagis Malmö Videdal - Clever Dog</image:title>
+      <image:caption>Nyöppnat hunddagis och hundpensionat i Malmö Videdal</image:caption>
+    </image:image>
   </url>
   
 </urlset>
