@@ -5,13 +5,10 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/*
 
-# Sitemap
+# Sitemap - Important for SEO!
 Sitemap: https://cleverdog.se/sitemap.xml
 
-# Crawl-delay for respectful crawling
-Crawl-delay: 1
-
-# Specific rules for different bots
+# Specific rules for search engines (NO crawl-delay for faster indexing)
 User-agent: Googlebot
 Allow: /
 Disallow: /admin
@@ -27,8 +24,11 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/*
 
-# Block bad bots (if any)
+# Block bad bots and scrapers
 User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
 Disallow: /
 
 User-agent: MJ12bot
@@ -36,3 +36,10 @@ Disallow: /
 
 User-agent: DotBot
 Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# Allow all images for Google Image Search (SEO boost for "hunddagis malmö" searches)
+User-agent: Googlebot-Image
+Allow: /
