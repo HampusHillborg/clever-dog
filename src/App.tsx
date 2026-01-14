@@ -25,11 +25,12 @@ function App() {
                 <StaffanstorpPage />
               </Suspense>
             } />
-            <Route path="/malmo" element={
+            {/* Malmö route removed - page is hidden due to municipality rejection */}
+            {/* <Route path="/malmo" element={
               <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
                 <MalmoPage />
               </Suspense>
-            } />
+            } /> */}
             <Route path="/admin" element={
               <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
                 <AdminPage />
