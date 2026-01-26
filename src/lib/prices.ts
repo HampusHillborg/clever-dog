@@ -3,20 +3,26 @@
 
 export const PRICES = {
   malmo: {
-    fulltime: 3500,    // Heltid per månad
-    parttime3: 3000,   // Deltid 3 dagar per månad
-    parttime2: 2750,   // Deltid 2 dagar per månad
+    fulltime: 3700,    // Heltid per månad
+    fulltimeWithFood: 3850, // Heltid med mat per månad
+    parttime3: 3100,   // Deltid 3 dagar per månad
+    parttime3WithFood: 3250, // Deltid 3 dagar med mat per månad
+    parttime2: 2800,   // Deltid 2 dagar per månad
     singleDay: 350,    // Enstaka dag
     boarding: 400,     // Hundpensionat per dygn
-    boardingHoliday: 800 // Hundpensionat under helgdagar
+    boardingHoliday: 800, // Hundpensionat under helgdagar
+    nailClipping: 160  // Kloklipp
   },
   staffanstorp: {
-    fulltime: 3500,    // Heltid per månad
-    parttime3: 3000,   // Deltid 3 dagar per månad
-    parttime2: 2750,   // Deltid 2 dagar per månad
+    fulltime: 3700,    // Heltid per månad
+    fulltimeWithFood: 3850, // Heltid med mat per månad
+    parttime3: 3100,   // Deltid 3 dagar per månad
+    parttime3WithFood: 3250, // Deltid 3 dagar med mat per månad
+    parttime2: 2800,   // Deltid 2 dagar per månad
     singleDay: 350,    // Enstaka dag
     boarding: 400,     // Hundpensionat per dygn
-    boardingHoliday: 800 // Hundpensionat under helgdagar
+    boardingHoliday: 800, // Hundpensionat under helgdagar
+    nailClipping: 160  // Kloklipp
   }
 } as const;
 

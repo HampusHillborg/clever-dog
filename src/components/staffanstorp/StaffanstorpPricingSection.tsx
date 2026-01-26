@@ -13,6 +13,7 @@ interface ServiceItem {
   holidayRate?: string;
   holidayPrice?: string;
   holidayDetails?: string;
+  withFoodPrice?: string;
 }
 
 const StaffanstorpPricingSection: React.FC = () => {
@@ -26,9 +27,10 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.fiveDaysWeek'),
         t('pricing.openingHours')
       ],
-      price: '3500',
+      price: '3700',
       period: t('pricing.perMonth'),
-      note: t('pricing.closedOnHolidays')
+      note: t('pricing.closedOnHolidays'),
+      withFoodPrice: '3850'
     },
     {
       icon: FaCalendarAlt,
@@ -37,9 +39,10 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.threeDaysWeek'),
         t('pricing.openingHours')
       ],
-      price: '3000',
+      price: '3100',
       period: t('pricing.perMonth'),
-      note: t('pricing.closedOnHolidays')
+      note: t('pricing.closedOnHolidays'),
+      withFoodPrice: '3250'
     },
     {
       icon: FaCalendarAlt,
@@ -48,7 +51,7 @@ const StaffanstorpPricingSection: React.FC = () => {
         t('pricing.twoDaysWeek'),
         t('pricing.openingHours')
       ],
-      price: '2750',
+      price: '2800',
       period: t('pricing.perMonth'),
       note: t('pricing.closedOnHolidays')
     }
@@ -71,7 +74,7 @@ const StaffanstorpPricingSection: React.FC = () => {
       details: [
         t('pricing.nailClippingDesc')
       ],
-      price: '150',
+      price: '160',
       period: t('pricing.perOccasion')
     },
     {
@@ -129,6 +132,9 @@ const StaffanstorpPricingSection: React.FC = () => {
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-orange-500 mb-1">{pass.price} SEK</div>
+                {pass.withFoodPrice && (
+                  <div className="text-lg font-semibold text-gray-700 mb-1">{pass.withFoodPrice} SEK {t('pricing.withFood', 'med mat')}</div>
+                )}
                 <div className="text-sm text-gray-500 mb-4">{pass.period}</div>
                 <p className="text-xs text-red-500">{pass.note}</p>
               </div>
