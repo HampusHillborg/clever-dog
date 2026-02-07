@@ -48,6 +48,8 @@ interface ContractData {
   customerAddress: string;
   customerCity: string;
   personalNumber: string;
+  customerPhone: string;
+  customerEmail: string;
   dogName: string;
   dogBreed: string;
   dogAge: string;
@@ -471,6 +473,8 @@ const AdminPage: React.FC = () => {
     customerAddress: '',
     customerCity: '',
     personalNumber: '',
+    customerPhone: '',
+    customerEmail: '',
     dogName: '',
     dogBreed: '',
     dogAge: '',
@@ -2519,7 +2523,7 @@ const AdminPage: React.FC = () => {
           <span class="field-line">Företagsnamn: CleverDog</span>
           <span class="field-line">Organisationsnummer: 20020922-5325</span>
           <span class="field-line">Adress: Malmövägen 7, Staffanstorp</span>
-          <span class="field-line">Telefon/E-post: ______________________________</span>
+          <span class="field-line">Telefon/E-post: info@cleverdog.se</span>
         </div>
 
         <p>och</p>
@@ -2529,7 +2533,8 @@ const AdminPage: React.FC = () => {
           <span class="field-line">Namn: ${contractData.customerName || '______________________________'}</span>
           <span class="field-line">Personnummer: ${contractData.personalNumber || '______________________________'}</span>
           <span class="field-line">Adress: ${contractData.customerAddress ? contractData.customerAddress + (contractData.customerCity ? ', ' + contractData.customerCity : '') : '______________________________'}</span>
-          <span class="field-line">Telefon/E-post: ______________________________</span>
+          <span class="field-line">Telefon: ${contractData.customerPhone || '______________________________'}</span>
+          <span class="field-line">E-post: ${contractData.customerEmail || '______________________________'}</span>
         </div>
 
         <p>gällande nedanstående hund.</p>
@@ -7510,6 +7515,32 @@ const AdminPage: React.FC = () => {
               placeholder="e.g., 19711216-3907"
             />
           </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+            <input
+              type="tel"
+              id="customerPhone"
+              name="customerPhone"
+              value={contractData.customerPhone}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., 070-123 45 67"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="customerEmail" className="block text-sm font-medium text-gray-700 mb-1">E-post</label>
+            <input
+              type="email"
+              id="customerEmail"
+              name="customerEmail"
+              value={contractData.customerEmail}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., namn@example.com"
+            />
+          </div>
         </div>
       </div>
 
@@ -7576,6 +7607,8 @@ const AdminPage: React.FC = () => {
                             customerAddress: dog.ownerAddress || '',
                             customerCity: dog.ownerCity || '',
                             personalNumber: dog.ownerPersonalNumber || '',
+                            customerPhone: contractData.customerPhone,
+                            customerEmail: contractData.customerEmail,
                             dogName: dog.name,
                             dogBreed: dog.breed,
                             dogAge: dog.age,
