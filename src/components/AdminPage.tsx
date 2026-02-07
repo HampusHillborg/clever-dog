@@ -3687,6 +3687,8 @@ const AdminPage: React.FC = () => {
             customerAddress: '',
             customerCity: '',
             personalNumber: '',
+            customerPhone: '',
+            customerEmail: '',
             dogName: '',
             dogBreed: '',
             dogAge: '',
