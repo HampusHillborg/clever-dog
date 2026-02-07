@@ -2422,7 +2422,260 @@ const AdminPage: React.FC = () => {
 
     const today = formatDate(new Date().toISOString());
 
-    // Create a simple contract with proper page break controls
+    // Daycare contract uses a completely different template
+    if (contractData.contractType === 'daycare') {
+      return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Avtal om hunddagis</title>
+        <style>
+          @media print {
+            body { margin: 0; padding: 0; }
+            h2, h3 { page-break-after: avoid !important; }
+            p, li { page-break-inside: avoid !important; }
+            .section { page-break-inside: avoid !important; }
+            .avoid-break { page-break-inside: avoid !important; }
+          }
+          body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            margin: 15mm 12mm;
+            color: #000;
+          }
+          h1 {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #000;
+          }
+          h2 {
+            font-size: 11pt;
+            font-weight: bold;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            color: #000;
+          }
+          p {
+            margin: 4px 0;
+          }
+          ul {
+            margin: 4px 0;
+            padding-left: 20px;
+            list-style-type: disc;
+          }
+          li {
+            margin-bottom: 2px;
+          }
+          .section {
+            margin-bottom: 10px;
+          }
+          .party-block {
+            margin-bottom: 12px;
+          }
+          .field-line {
+            display: block;
+            margin: 3px 0;
+          }
+          .signatures {
+            margin-top: 30px;
+          }
+          .signature-line {
+            border-top: 1px solid black;
+            width: 250px;
+            display: inline-block;
+            margin-bottom: 2px;
+          }
+          .date-line {
+            border-bottom: 1px solid black;
+            width: 250px;
+            display: inline-block;
+            margin: 0 5px;
+          }
+          table {
+            width: 100%;
+            margin-top: 10px;
+          }
+          td {
+            width: 50%;
+            padding-top: 5px;
+            vertical-align: top;
+          }
+          * {
+            box-sizing: border-box;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Avtal om hunddagis</h1>
+
+        <p>Detta avtal ingås mellan:</p>
+
+        <div class="party-block">
+          <p><strong>Hunddagis:</strong></p>
+          <span class="field-line">Företagsnamn: CleverDog</span>
+          <span class="field-line">Organisationsnummer: 20020922-5325</span>
+          <span class="field-line">Adress: Malmövägen 7, Staffanstorp</span>
+          <span class="field-line">Telefon/E-post: ______________________________</span>
+        </div>
+
+        <p>och</p>
+
+        <div class="party-block">
+          <p><strong>Hundägare:</strong></p>
+          <span class="field-line">Namn: ${contractData.customerName || '______________________________'}</span>
+          <span class="field-line">Personnummer: ${contractData.personalNumber || '______________________________'}</span>
+          <span class="field-line">Adress: ${contractData.customerAddress ? contractData.customerAddress + (contractData.customerCity ? ', ' + contractData.customerCity : '') : '______________________________'}</span>
+          <span class="field-line">Telefon/E-post: ______________________________</span>
+        </div>
+
+        <p>gällande nedanstående hund.</p>
+
+        <div class="section">
+          <h2>1. Uppgifter om hunden</h2>
+          <span class="field-line">Hundens namn: ${contractData.dogName || '______________________________'}</span>
+          <span class="field-line">Ras: ${contractData.dogBreed || '______________________________'}</span>
+          <span class="field-line">Kön: ☐ Hane ☐ Tik</span>
+          <span class="field-line">Födelsedatum: ______________________________</span>
+          <span class="field-line">Chipnummer: ${contractData.chipNumber || '______________________________'}</span>
+          <span class="field-line">Försäkringsbolag: ______________________________</span>
+          <span class="field-line">Försäkringsnummer: ______________________________</span>
+        </div>
+
+        <div class="section">
+          <h2>2. Avtalets omfattning</h2>
+          <p>Hunddagiset åtar sig att tillhandahålla daglig tillsyn, omsorg, rastning och aktivering av hunden i en trygg och säker miljö, i enlighet med gällande lagstiftning samt Jordbruksverkets föreskrifter.</p>
+          <p>Hunden vistas i box tillsammans med andra hundar eller enskilt beroende på behov, temperament och hälsotillstånd.</p>
+        </div>
+
+        <div class="section">
+          <h2>3. Hundägarens ansvar</h2>
+          <p>Hundägaren ansvarar för att:</p>
+          <ul>
+            <li>Lämna korrekta och fullständiga uppgifter om hundens hälsa och beteende</li>
+            <li>Informera om sjukdom, medicinering, löp eller andra förändringar</li>
+            <li>Säkerställa att hunden är försäkrad under hela avtalstiden</li>
+          </ul>
+          <p>Hundar med aggressivt eller olämpligt beteende kan nekas plats.</p>
+        </div>
+
+        <div class="section">
+          <h2>4. Vaccinationer</h2>
+          <p>För att hunden ska kunna vistas på hunddagiset krävs att den är fullt vaccinerad enligt gällande rekommendationer.</p>
+          <p>Obligatoriska vaccinationer är:</p>
+          <ul>
+            <li>Valpsjuka (CDV)</li>
+            <li>Hepatit (HCC)</li>
+            <li>Parvovirus (CPV)</li>
+            <li>Kennelhosta</li>
+            <li>Leptospiros</li>
+            <li>Rabies</li>
+          </ul>
+          <p>Hundägaren ansvarar för att samtliga vaccinationer är giltiga och uppdaterade under hela avtalstiden. Hunddagiset har rätt att begära giltigt vaccinationsintyg.</p>
+          <p>Hund som inte uppfyller vaccinationskraven kan nekas plats utan rätt till reducering eller återbetalning av avgift.</p>
+        </div>
+
+        <div class="section">
+          <h2>5. Hunddagisets ansvar</h2>
+          <p>Hunddagiset ansvarar för:</p>
+          <ul>
+            <li>Daglig tillsyn och omsorg</li>
+            <li>Professionell och trygg hantering av hundarna</li>
+            <li>Rutiner för hygien, säkerhet och djurvälfärd</li>
+          </ul>
+          <p>Vid sjukdom eller olycka har hunddagiset rätt att kontakta veterinär. Samtliga kostnader belastar hundägaren.</p>
+        </div>
+
+        <div class="section">
+          <h2>6. Öppettider, hämtning och förseningsavgift</h2>
+          <p>Hunddagisets ordinarie öppettider är:</p>
+          <ul>
+            <li>Måndag–torsdag: till kl. 18.00</li>
+            <li>Fredag: till kl. 17.00</li>
+          </ul>
+          <p>Hunden ska hämtas senast vid angiven stängningstid.</p>
+          <p>Vid försenad hämtning debiteras 200 SEK per påbörjad timme.</p>
+          <p>Hämtning kan ske upp till en timme efter stängning, dock senast kl. 19.00.</p>
+          <p>Om hunden inte hämtas senast kl. 19.00 övergår vistelsen automatiskt till hundpensionat, och hundägaren debiteras extra enligt gällande prislista för hundpensionat.</p>
+        </div>
+
+        <div class="section">
+          <h2>7. Röda dagar och helgdagar</h2>
+          <p>Hunddagiset är stängt på samtliga röda dagar och helgdagar enligt svensk kalender.</p>
+          <p>Dagen före röd dag är hunddagiset öppet till kl. 14.00.</p>
+          <p>Hämtning ska ske senast vid denna tid. Försenad hämtning debiteras enligt gällande villkor.</p>
+        </div>
+
+        <div class="section">
+          <h2>8. Semester</h2>
+          <p>Hunddagiset har 28 dagars semester per år.</p>
+          <p>Under semestertiden sker ingen reducering eller återbetalning av månadsavgiften.</p>
+          <p>Avgiften avser en reserverad plats på hunddagiset och gäller oavsett faktisk närvaro.</p>
+        </div>
+
+        <div class="section">
+          <h2>9. Löp</h2>
+          <p>Om en tik börjar löpa och samtliga boxar avsedda för löptikar redan är upptagna, kan hunden inte tas emot på hunddagiset under löpperioden. Hunden ska då stanna hemma tills löpet är avslutat.</p>
+          <p>Ingen reducering eller återbetalning av avgiften sker under denna period.</p>
+        </div>
+
+        <div class="section">
+          <h2>10. Betalning</h2>
+          <p>Avgift enligt överenskommet abonnemang: ${contractData.price ? contractData.price + ' SEK/månad' : '__________ SEK/månad'}.</p>
+          <p>Betalning sker månadsvis enligt faktura.</p>
+          <p>Vid utebliven betalning kan platsen sägas upp med omedelbar verkan.</p>
+        </div>
+
+        <div class="section">
+          <h2>11. Uppsägning</h2>
+          <p>Uppsägningstiden är en (1) kalendermånad och räknas från nästkommande månadsskifte, oavsett vilket datum uppsägningen lämnas in.</p>
+          <p>Exempel:</p>
+          <ul>
+            <li>Om uppsägning sker 15 januari 2026, gäller platsen och avgiften till och med 1 mars 2026.</li>
+            <li>Om uppsägning sker 1 januari 2026, gäller platsen och avgiften till och med 1 mars 2026.</li>
+          </ul>
+          <p>Under uppsägningstiden debiteras full avgift oavsett faktisk närvaro.</p>
+        </div>
+
+        <div class="section">
+          <h2>12. Ansvarsbegränsning</h2>
+          <p>Hunddagiset ansvarar inte för skador, sjukdom eller olyckor som uppstår till följd av hundens eget beteende, ålder eller hälsotillstånd, såvida inte grov vårdslöshet föreligger.</p>
+        </div>
+
+        <div class="section">
+          <h2>13. Godkännande</h2>
+          <p>Genom underskrift bekräftar båda parter att de har tagit del av och godkänner avtalets villkor.</p>
+        </div>
+
+        <div class="signatures avoid-break">
+          <p>Ort och datum: <span class="date-line"></span></p>
+
+          <table style="margin-top: 40px;">
+            <tr>
+              <td>
+                <div class="signature-line"></div>
+                <p>Hundägarens underskrift</p>
+                <br/>
+                <p>Namnförtydligande: ${contractData.customerName || '_________________________'}</p>
+              </td>
+              <td>
+                <div class="signature-line"></div>
+                <p>Hunddagisets underskrift</p>
+                <br/>
+                <p>Namnförtydligande: _________________________</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </body>
+      </html>
+      `;
+    }
+
+    // Create a simple contract with proper page break controls for other contract types
     let contractHTML = `
       <!DOCTYPE html>
       <html>
@@ -2431,11 +2684,11 @@ const AdminPage: React.FC = () => {
         <title>Contract</title>
         <style>
           @media print {
-            body { 
+            body {
               margin: 0;
               padding: 0;
             }
-            h2 { 
+            h2 {
               page-break-after: avoid !important;
             }
             p, li {
@@ -2448,7 +2701,7 @@ const AdminPage: React.FC = () => {
               page-break-inside: avoid !important;
             }
           }
-          
+
           body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 10pt;
@@ -2558,17 +2811,16 @@ const AdminPage: React.FC = () => {
           <div class="company-name">CleverDog</div>
           <div class="contract-subtitle">För hundens bästa</div>
         </div>
-      
-        <h1>AVTAL ${contractData.contractType === 'daycare' ? 'HUNDDAGIS' :
-        contractData.contractType === 'boarding' ? 'HUNDPENSIONAT' :
+
+        <h1>AVTAL ${contractData.contractType === 'boarding' ? 'HUNDPENSIONAT' :
           contractData.contractType === 'socialWalk' ? 'SOCIAL PROMENAD' :
             contractData.contractType === 'partTime' ? 'DELTID HUNDDAGIS' : 'ENKELDAGIS'}</h1>
-        
+
         <p>Ingånget den ${today} mellan:</p>
         <ol>
-          <li>CleverDog, beläget på Malmövägen 7 Staffanstorp, organisationsnummer 20020922-5325, 
+          <li>CleverDog, beläget på Malmövägen 7 Staffanstorp, organisationsnummer 20020922-5325,
             företrätt av Alicja Wekwert, hädanefter kallad "Hunddagiset", och</li>
-          <li>${contractData.customerName} bosatt i ${contractData.customerCity} på ${contractData.customerAddress}, personnummer ${contractData.personalNumber}, 
+          <li>${contractData.customerName} bosatt i ${contractData.customerCity} på ${contractData.customerAddress}, personnummer ${contractData.personalNumber},
             hädanefter kallad "Ägaren", avseende omsorg om hunden:</li>
         </ol>
 
@@ -2582,19 +2834,7 @@ const AdminPage: React.FC = () => {
         <div class="section avoid-break">
           <h2>§1 Avtalets föremål</h2>
           <ol>
-            ${contractData.contractType === 'daycare' ? `
-            <li>Hunddagiset åtar sig att ta hand om Ägarens hund och tillhandahålla:
-              <ul>
-                <li>socialisering med andra hundar,</li>
-                <li>grundläggande lydnadsträning,</li>
-                <li>lek och fysisk aktivitet,</li>
-                <li>utfodring (enligt överenskommelse med Ägaren),</li>
-                <li>säkerhet och tillsyn.</li>
-              </ul>
-            </li>
-            <li>Omsorgen erbjuds på vardagar mellan kl. 7:00 och 18:00 (17* Fredag).</li>
-            <li>Ägaren åtar sig att lämna och hämta hunden i tid.</li>
-            ` : contractData.contractType === 'partTime' ? `
+            ${contractData.contractType === 'partTime' ? `
             <li>Hunddagiset åtar sig att ta hand om Ägarens hund ${contractData.daysPerWeek} dagar i veckan och tillhandahålla:
               <ul>
                 <li>socialisering med andra hundar,</li>
@@ -2642,7 +2882,7 @@ const AdminPage: React.FC = () => {
             `}
           </ol>
         </div>
-        
+
         <div class="section avoid-break">
           <h2>§2 Ägarens ansvar</h2>
           <ol>
@@ -2667,15 +2907,11 @@ const AdminPage: React.FC = () => {
             <li>Ägaren är fullt ansvarig för eventuella skador orsakade av hunden.</li>
           </ol>
         </div>
-        
+
         <div class="section avoid-break">
           <h2>§3 Avgifter</h2>
           <ol>
-            ${contractData.contractType === 'daycare' ? `
-            <li>Kostnaden för hunddagis är ${contractData.price}kr per månad och ska betalas senast den 27 varje månad.</li>
-            <li>Vid frånvaro återbetalas inte avgiften.</li>
-            <li>Dagiset har rätt till 25 semesterdagar per år. Dessa dagar är inkluderade i det månatliga abonnemanget och ersätts inte ekonomiskt.</li>
-            ` : contractData.contractType === 'partTime' ? `
+            ${contractData.contractType === 'partTime' ? `
             <li>Kostnaden för deltid hunddagis är ${contractData.price}kr per månad och ska betalas senast den 27 varje månad.</li>
             <li>Vid frånvaro återbetalas inte avgiften.</li>
             <li>Dagiset har rätt till 25 semesterdagar per år. Dessa dagar är inkluderade i det månatliga abonnemanget och ersätts inte ekonomiskt.</li>
@@ -2691,7 +2927,7 @@ const AdminPage: React.FC = () => {
             `}
           </ol>
         </div>
-      
+
         <div class="section avoid-break">
           <h2>§4 Ansvar</h2>
           <ol>
@@ -2699,7 +2935,7 @@ const AdminPage: React.FC = () => {
             <li>Vid akut sjukdom hos hunden försöker Hunddagiset kontakta Ägaren. Om kontakt inte är möjlig har Hunddagiset rätt att anlita en veterinär på Ägarens bekostnad.</li>
           </ol>
         </div>
-        
+
         <div class="section avoid-break">
           <h2>§5 Avtalstid och uppsägning</h2>
           <ol>
@@ -2713,7 +2949,7 @@ const AdminPage: React.FC = () => {
             <li>Hunddagiset har rätt att omedelbart säga upp avtalet vid aggressivt beteende hos hunden eller om Ägaren bryter mot reglerna.</li>
           </ol>
         </div>
-        
+
         <div class="section avoid-break">
           <h2>§6 Slutbestämmelser</h2>
           <ol>
@@ -2721,10 +2957,10 @@ const AdminPage: React.FC = () => {
             <li>Avtalet upprättas i två likalydande exemplar, ett för vardera part.</li>
           </ol>
         </div>
-      
+
         <div class="signatures avoid-break">
           <p>Ort och datum: <span class="date-line"></span></p>
-          
+
           <table style="margin-top: 50px;">
             <tr>
               <td>
