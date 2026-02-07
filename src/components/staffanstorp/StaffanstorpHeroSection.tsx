@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useBooking } from '../BookingContext';
 import TrustBanner from '../TrustBanner';
+import FloatingPaws from '../shared/FloatingPaws';
 
 // Import the hero images in different sizes
 import heroBackgroundLarge from '../../assets/images/hero/heroweb-large.webp';
@@ -11,12 +12,14 @@ import heroBackgroundSmall from '../../assets/images/hero/heroweb-small.webp';
 
 // Memoize the button to prevent unnecessary re-renders
 const BookingButton = memo(({ onClick, text }: { onClick: () => void, text: string }) => (
-  <button 
+  <motion.button
     onClick={onClick}
-    className="btn bg-white text-orange-600 hover:bg-gray-100 text-sm md:text-base py-2 px-4 md:py-3 md:px-6"
+    className="btn bg-white text-orange-600 hover:bg-orange-50 text-sm md:text-base py-2 px-4 md:py-3 md:px-6 rounded-full font-semibold"
+    whileHover={{ scale: 1.05 }}
+    transition={{ type: 'spring', stiffness: 400, damping: 17 }}
   >
     {text}
-  </button>
+  </motion.button>
 ));
 
 BookingButton.displayName = 'BookingButton';
@@ -31,9 +34,14 @@ const ContentSection = memo(({ t, openBookingForm }: { t: any, openBookingForm: 
       {t('locationSelector.staffanstorp.description')}
     </p>
     <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
-      <a href="#about" className="btn btn-primary text-sm md:text-base py-2 px-4 md:py-3 md:px-6">
+      <motion.a
+        href="#about"
+        className="btn btn-primary text-sm md:text-base py-2 px-4 md:py-3 md:px-6 rounded-full"
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+      >
         {t('cta')}
-      </a>
+      </motion.a>
       <BookingButton onClick={openBookingForm} text={t('bookCta')} />
     </div>
   </>
@@ -48,7 +56,7 @@ const HeroImage = memo(({ alt }: { alt: string }) => (
     <source media="(max-width: 1024px)" srcSet={heroBackgroundMedium} />
     <source media="(min-width: 1025px)" srcSet={heroBackgroundLarge} />
     <img
-      src={heroBackgroundSmall} 
+      src={heroBackgroundSmall}
       alt={alt}
       width="1920"
       height="1080"
@@ -72,10 +80,10 @@ const StaffanstorpHeroSection: React.FC = () => {
     const checkIfMobile = () => {
       setIsMobile(window.matchMedia('(max-width: 768px)').matches);
     };
-    
+
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
-    
+
     return () => {
       window.removeEventListener('resize', checkIfMobile);
     };
@@ -88,7 +96,12 @@ const StaffanstorpHeroSection: React.FC = () => {
     <div className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay - Responsive Image */}
       <HeroImage alt="Staffanstorp hunddagis - Etablerat hunddagis & pensionat" />
-      <div className="absolute inset-0 z-0 bg-black bg-opacity-50" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/40 to-orange-900/50" />
+
+      {/* Floating Paws */}
+      {shouldUseAnimations && (
+        <FloatingPaws count={15} color="#ffffff" opacity={0.2} />
+      )}
 
       {/* Content */}
       <div className="container relative z-10 text-center px-4">
@@ -99,7 +112,7 @@ const StaffanstorpHeroSection: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             <ContentSection t={t} openBookingForm={openBookingForm} />
-            
+
             {/* Trust Banner - Add with animation */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -107,9 +120,9 @@ const StaffanstorpHeroSection: React.FC = () => {
               transition={{ delay: 1, duration: 0.8 }}
               className="mt-8 flex justify-center"
             >
-              <TrustBanner 
-                variant="dark" 
-                displayReview={!isMobile} 
+              <TrustBanner
+                variant="dark"
+                displayReview={!isMobile}
                 className="max-w-md"
               />
             </motion.div>
@@ -117,12 +130,12 @@ const StaffanstorpHeroSection: React.FC = () => {
         ) : (
           <div>
             <ContentSection t={t} openBookingForm={openBookingForm} />
-            
+
             {/* Trust Banner - No animation for mobile */}
             <div className="mt-6 flex justify-center">
-              <TrustBanner 
-                variant="dark" 
-                compact={isMobile} 
+              <TrustBanner
+                variant="dark"
+                compact={isMobile}
                 className="max-w-md"
               />
             </div>
@@ -132,7 +145,7 @@ const StaffanstorpHeroSection: React.FC = () => {
 
       {/* Scroll down indicator - only show on desktop */}
       {shouldUseAnimations && (
-        <motion.div 
+        <motion.div
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
           animate={{ y: [0, 10, 0] }}
           transition={{ repeat: Infinity, duration: 1.5 }}

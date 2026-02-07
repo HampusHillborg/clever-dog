@@ -31,15 +31,15 @@ const SocialMediaSection: React.FC = () => {
   useEffect(() => {
     // Only load Instagram embed script when section becomes visible
     if (!isVisible) return;
-    
+
     if (document.getElementById('instagram-embed-script')) return;
-    
+
     const script = document.createElement('script');
     script.id = 'instagram-embed-script';
     script.src = 'https://www.instagram.com/embed.js';
     script.async = true;
     script.defer = true;
-    
+
     script.onload = () => {
       // @ts-ignore
       if (window.instgrm) {
@@ -47,9 +47,9 @@ const SocialMediaSection: React.FC = () => {
         window.instgrm.Embeds.process();
       }
     };
-    
+
     document.body.appendChild(script);
-    
+
     return () => {
       const scriptElem = document.getElementById('instagram-embed-script');
       if (scriptElem) document.body.removeChild(scriptElem);
@@ -59,14 +59,14 @@ const SocialMediaSection: React.FC = () => {
   return (
     <section id="social-media" className="section bg-white">
       <div className="container">
-        <motion.h2 
+        <motion.h2
           className="section-title"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          {t('social.title')}
+          <span className="gradient-text-coral">{t('social.title')}</span>
         </motion.h2>
 
         <div className="mb-12">
@@ -81,9 +81,9 @@ const SocialMediaSection: React.FC = () => {
               <FaInstagram className="text-primary" /> {t('social.followUs')}
             </h3>
             <p className="text-gray-600 mb-4">
-              <a 
-                href="https://www.instagram.com/cleverdog_hunddagis/" 
-                target="_blank" 
+              <a
+                href="https://www.instagram.com/cleverdog_hunddagis/"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:underline"
               >
@@ -121,7 +121,7 @@ const SocialMediaSection: React.FC = () => {
               ></iframe>
             )}
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -129,15 +129,17 @@ const SocialMediaSection: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex justify-center mt-8"
           >
-            <a 
-              href="https://www.instagram.com/cleverdog_hunddagis/" 
-              target="_blank" 
+            <motion.a
+              href="https://www.instagram.com/cleverdog_hunddagis/"
+              target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full hover:from-orange-600 hover:to-pink-600 transition-all duration-300 shadow-md hover:shadow-lg"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             >
               <span>{t('social.visitInstagram')}</span>
               <FaInstagram />
-            </a>
+            </motion.a>
           </motion.div>
         </div>
       </div>
@@ -145,4 +147,4 @@ const SocialMediaSection: React.FC = () => {
   );
 };
 
-export default SocialMediaSection; 
+export default SocialMediaSection;

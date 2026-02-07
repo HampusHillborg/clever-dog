@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git stash:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

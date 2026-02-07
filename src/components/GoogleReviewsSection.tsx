@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
+import FloatingPaws from './shared/FloatingPaws';
 
 interface Review {
   author_name: string;
@@ -23,11 +24,13 @@ interface PlaceDetails {
   error_message?: string;
 }
 
+const cardHoverSpring = { type: 'spring' as const, stiffness: 300, damping: 20 };
+
 const GoogleReviewsSection = () => {
   const { t } = useTranslation();
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [placeData, setPlaceData] = useState<{ 
-    name?: string; 
+  const [placeData, setPlaceData] = useState<{
+    name?: string;
     rating?: number;
     total?: number;
   }>({});
@@ -40,26 +43,26 @@ const GoogleReviewsSection = () => {
         setLoading(true);
         // Use Netlify function to fetch reviews
         const response = await fetch('/.netlify/functions/get-google-reviews');
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch reviews');
         }
 
         const data: PlaceDetails = await response.json();
-        
+
         if (data.status === 'OK' && data.result) {
           setPlaceData({
             name: data.result.name,
             rating: data.result.rating,
             total: data.result.user_ratings_total
           });
-          
+
           if (data.result.reviews) {
             // Sort reviews by time (newest first) and take only the latest 3
             const latestReviews = [...data.result.reviews]
               .sort((a, b) => b.time - a.time)
               .slice(0, 3);
-              
+
             setReviews(latestReviews);
           } else {
             setReviews([]);
@@ -98,8 +101,9 @@ const GoogleReviewsSection = () => {
   };
 
   return (
-    <section id="reviews" className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
+    <section id="reviews" className="py-16 bg-gray-50 section-with-paws">
+      <FloatingPaws count={15} color="#F97316" opacity={0.18} />
+      <div className="container mx-auto px-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -111,7 +115,7 @@ const GoogleReviewsSection = () => {
           <p className="text-gray-600 max-w-2xl mx-auto">
             {t('reviews.subtitle')}
           </p>
-          
+
           {placeData.name && placeData.rating && (
             <div className="mt-4 flex justify-center items-center gap-2">
               <span className="font-semibold">{placeData.name}</span>
@@ -155,7 +159,8 @@ const GoogleReviewsSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white p-6 rounded-lg shadow-md"
+                className="fun-card-hover p-6"
+                whileHover={{ scale: 1.03, y: -4 }}
               >
                 <div className="flex items-center mb-4">
                   {review.profile_photo_url && (
@@ -182,18 +187,20 @@ const GoogleReviewsSection = () => {
         )}
 
         <div className="text-center mt-8">
-          <a
+          <motion.a
             href="https://www.google.com/search?sca_esv=e76af58c9f706ded&hl=sv-SE&gl=se&sxsrf=AHTn8zou7xUyty4iwk2JXbtKGaKNO1XkRQ:1744636529311&q=Clever+Dog,+Malm%C3%B6v%C3%A4gen+7,+245+31+Staffanstorp&si=APYL9bs7Hg2KMLB-4tSoTdxuOx8BdRvHbByC_AuVpNyh0x2KzV7hbGHW4-upnq2sbYXW3bHgrlF10a8zswwG1420CTv9ZdPLm7RB2EjcG5Kpc5mDqob_qzw%3D&uds=ABqPDvy2qu3hKEYvihjSSfbXNyIHobLp5gZWYJ0xH9Zd2fWkh0Ls9M-mw1HuW3hTbQ8LOk6Z8lH0VvaZHHTkjXsjAWJeJFEt4hGR-61NT36vgiF1Wyq7J0qsvG8y8uXOSArp9t51Z330_2Qnxe3VIkHI7EC9r7qiQA&sa=X&ved=2ahUKEwiO3d3EzdeMAxXkQVUIHckVNHcQ3PALegQIHBAE&biw=1494&bih=765&dpr=1.5"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark transition duration-300"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium rounded-full hover:from-orange-600 hover:to-amber-600 transition-all duration-300 shadow-md hover:shadow-lg"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
             {t('reviews.viewAllReviews')}
-          </a>
+          </motion.a>
         </div>
       </div>
     </section>
   );
 };
 
-export default GoogleReviewsSection; 
+export default GoogleReviewsSection;

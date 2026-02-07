@@ -1,6 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaClock, FaUtensils, FaBed, FaPlay, FaUsers, FaHome } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+
+const cardHoverSpring = { type: 'spring' as const, stiffness: 300, damping: 20 };
 
 const DaycareScheduleSection: React.FC = () => {
   const { t } = useTranslation();
@@ -11,14 +14,14 @@ const DaycareScheduleSection: React.FC = () => {
       icon: FaClock,
       title: t('schedule.dropOff.title'),
       description: t('schedule.dropOff.description'),
-      color: 'bg-blue-500'
+      color: 'bg-amber-400'
     },
     {
       time: '09:00 - 11:45',
       icon: FaPlay,
       title: t('schedule.morningActivities.title'),
       description: t('schedule.morningActivities.description'),
-      color: 'bg-green-500'
+      color: 'bg-orange-400'
     },
     {
       time: '11:45 - 13:00',
@@ -32,21 +35,21 @@ const DaycareScheduleSection: React.FC = () => {
       icon: FaUsers,
       title: t('schedule.afternoonActivities.title'),
       description: t('schedule.afternoonActivities.description'),
-      color: 'bg-purple-500'
+      color: 'bg-rose-400'
     },
     {
       time: '15:00 - 17:00',
       icon: FaBed,
       title: t('schedule.quietTime.title'),
       description: t('schedule.quietTime.description'),
-      color: 'bg-indigo-500'
+      color: 'bg-pink-400'
     },
     {
       time: '15:00 - 18:00',
       icon: FaHome,
       title: t('schedule.pickup.title'),
       description: t('schedule.pickup.description'),
-      color: 'bg-red-500'
+      color: 'bg-amber-500'
     }
   ];
 
@@ -64,17 +67,27 @@ const DaycareScheduleSection: React.FC = () => {
           </div>
 
           <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-8 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-green-500 via-orange-500 via-purple-500 via-indigo-500 to-red-500 rounded-full"></div>
-            
+            {/* Timeline line - warm gradient */}
+            <div className="absolute left-8 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 via-orange-500 via-rose-400 to-amber-500 rounded-full"></div>
+
             <div className="space-y-8">
               {scheduleItems.map((item, index) => (
                 <div key={index} className="relative flex items-start">
-                  {/* Timeline dot */}
-                  <div className={`absolute left-6 w-4 h-4 ${item.color} rounded-full border-4 border-white shadow-lg z-10`}></div>
-                  
+                  {/* Timeline dot - larger with glow */}
+                  <div
+                    className={`absolute left-[22px] w-5 h-5 ${item.color} rounded-full border-4 border-white z-10`}
+                    style={{ boxShadow: '0 0 12px rgba(249, 115, 22, 0.4)' }}
+                  ></div>
+
                   {/* Content card */}
-                  <div className="ml-16 bg-white rounded-2xl shadow-lg p-6 flex-1 hover:shadow-xl transition-shadow duration-300">
+                  <motion.div
+                    className="ml-16 fun-card-hover p-6 flex-1"
+                    whileHover={{ x: 4 }}
+                    transition={cardHoverSpring}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                  >
                     <div className="flex items-start space-x-4">
                       <div className={`w-12 h-12 ${item.color} rounded-full flex items-center justify-center flex-shrink-0`}>
                         <item.icon className="text-white text-xl" />
@@ -93,7 +106,7 @@ const DaycareScheduleSection: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               ))}
             </div>

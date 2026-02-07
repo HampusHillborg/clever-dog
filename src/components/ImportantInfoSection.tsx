@@ -1,6 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaShieldAlt, FaHome, FaHeart, FaCertificate } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import FloatingPaws from './shared/FloatingPaws';
+
+const cardHoverSpring = { type: 'spring' as const, stiffness: 300, damping: 20 };
 
 const ImportantInfoSection: React.FC = () => {
   const { t } = useTranslation();
@@ -29,8 +33,9 @@ const ImportantInfoSection: React.FC = () => {
   ];
 
   return (
-    <section id="important-info" className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4">
+    <section id="important-info" className="py-16 bg-gray-50 section-with-paws">
+      <FloatingPaws count={15} color="#F97316" opacity={0.18} />
+      <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -43,9 +48,17 @@ const ImportantInfoSection: React.FC = () => {
 
           <div className="space-y-8">
             {infoSections.map((section, index) => (
-              <div key={index} className="bg-white rounded-2xl p-8 shadow-lg">
+              <motion.div
+                key={index}
+                className="fun-card-hover p-8"
+                whileHover={{ scale: 1.02, y: -4 }}
+                transition={cardHoverSpring}
+                initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+              >
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="icon-circle">
                     <section.icon className="text-white text-xl" />
                   </div>
                   <div className="flex-1">
@@ -57,7 +70,7 @@ const ImportantInfoSection: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

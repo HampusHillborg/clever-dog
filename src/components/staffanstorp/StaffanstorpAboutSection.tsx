@@ -1,13 +1,18 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebook } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebook, FaDog, FaHome, FaCut } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import FloatingPaws from '../shared/FloatingPaws';
+
+const cardHoverSpring = { type: 'spring' as const, stiffness: 300, damping: 20 };
 
 const StaffanstorpAboutSection: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <section id="about" className="py-16 bg-white">
-      <div className="container mx-auto px-4">
+    <section id="about" className="py-16 bg-white section-with-paws">
+      <FloatingPaws count={15} color="#F97316" opacity={0.18} />
+      <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -41,9 +46,13 @@ const StaffanstorpAboutSection: React.FC = () => {
                 {t('pricing.ourServices')}
               </h3>
               <div className="space-y-4">
-                <div className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">🐕</span>
+                <motion.div
+                  className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4"
+                  whileHover={{ scale: 1.02, y: -4 }}
+                  transition={cardHoverSpring}
+                >
+                  <div className="icon-circle">
+                    <FaDog className="text-white text-lg" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-orange-900 mb-1">{t('pricing.daycare')}</h4>
@@ -51,10 +60,14 @@ const StaffanstorpAboutSection: React.FC = () => {
                       {t('locationSelector.staffanstorp.services.daycare')}
                     </p>
                   </div>
-                </div>
-                <div className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">🏠</span>
+                </motion.div>
+                <motion.div
+                  className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4"
+                  whileHover={{ scale: 1.02, y: -4 }}
+                  transition={cardHoverSpring}
+                >
+                  <div className="icon-circle">
+                    <FaHome className="text-white text-lg" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-orange-900 mb-1">{t('pricing.boarding')}</h4>
@@ -62,10 +75,14 @@ const StaffanstorpAboutSection: React.FC = () => {
                       {t('locationSelector.staffanstorp.services.boarding')}
                     </p>
                   </div>
-                </div>
-                <div className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-bold text-lg">✂️</span>
+                </motion.div>
+                <motion.div
+                  className="bg-orange-50 rounded-xl p-6 flex items-center space-x-4"
+                  whileHover={{ scale: 1.02, y: -4 }}
+                  transition={cardHoverSpring}
+                >
+                  <div className="icon-circle">
+                    <FaCut className="text-white text-lg" />
                   </div>
                   <div>
                     <h4 className="font-semibold text-orange-900 mb-1">{t('locationSelector.staffanstorp.services.grooming')}</h4>
@@ -73,19 +90,19 @@ const StaffanstorpAboutSection: React.FC = () => {
                       {t('locationSelector.staffanstorp.services.grooming')}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </div>
 
             {/* Contact Info */}
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8 border border-orange-200 shadow-lg">
               <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
                 {t('contact.title')}
               </h3>
-              
+
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="icon-circle">
                     <FaMapMarkerAlt className="text-white text-lg" />
                   </div>
                   <div>
@@ -96,7 +113,7 @@ const StaffanstorpAboutSection: React.FC = () => {
                 </div>
 
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="icon-circle">
                     <FaEnvelope className="text-white text-lg" />
                   </div>
                   <div>
@@ -105,13 +122,13 @@ const StaffanstorpAboutSection: React.FC = () => {
                   </div>
                 </div>
 
-                <a 
-                  href="https://www.instagram.com/cleverdog_hunddagis" 
-                  target="_blank" 
+                <a
+                  href="https://www.instagram.com/cleverdog_hunddagis"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-4 hover:bg-orange-100 rounded-lg p-2 -m-2 transition-colors"
                 >
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="icon-circle">
                     <FaInstagram className="text-white text-lg" />
                   </div>
                   <div>
@@ -120,13 +137,13 @@ const StaffanstorpAboutSection: React.FC = () => {
                   </div>
                 </a>
 
-                <a 
-                  href="https://www.facebook.com/people/CleverDog/61555454325558/" 
-                  target="_blank" 
+                <a
+                  href="https://www.facebook.com/people/CleverDog/61555454325558/"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center space-x-4 hover:bg-orange-100 rounded-lg p-2 -m-2 transition-colors"
                 >
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="icon-circle">
                     <FaFacebook className="text-white text-lg" />
                   </div>
                   <div>

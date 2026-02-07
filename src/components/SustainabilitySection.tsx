@@ -10,14 +10,14 @@ const SustainabilitySection: React.FC = () => {
   return (
     <section id="sustainability" className="section bg-white">
       <div className="container">
-        <motion.h2 
+        <motion.h2
           className="section-title"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          {t('sustainability.title')}
+          <span className="gradient-text-sunset">{t('sustainability.title')}</span>
         </motion.h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -29,15 +29,15 @@ const SustainabilitySection: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="flex justify-center"
           >
-            <img 
-              src={goalImage} 
-              alt="UN Global Goal #8: Decent Work and Economic Growth" 
+            <img
+              src={goalImage}
+              alt="UN Global Goal #8: Decent Work and Economic Growth"
               className="max-w-full h-auto max-h-80"
             />
           </motion.div>
 
           {/* Text Content */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
@@ -57,4 +57,4 @@ const SustainabilitySection: React.FC = () => {
   );
 };
 
-export default SustainabilitySection; 
+export default SustainabilitySection;

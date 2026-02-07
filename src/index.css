@@ -7,7 +7,7 @@
     scroll-behavior: smooth;
     overflow-x: hidden; /* Prevent horizontal scroll */
   }
-  
+
   body {
     @apply font-sans text-dark bg-light;
     overflow-x: hidden; /* Prevent horizontal scroll */
@@ -18,7 +18,7 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold;
   }
-  
+
   /* Enhanced focus styles for accessibility - excluding logo */
   a:focus, button:focus, input:focus, select:focus, textarea:focus {
     @apply outline-none ring-2 ring-primary ring-offset-2;
@@ -46,22 +46,74 @@
   .btn-secondary {
     @apply text-white bg-secondary hover:bg-secondary/90 font-semibold;
   }
-  
+
   /* Book button with higher contrast */
   .btn-book {
-    @apply bg-primary text-white font-bold hover:bg-primary/90; 
+    @apply bg-primary text-white font-bold hover:bg-primary/90;
   }
-  
+
   /* Higher contrast for text links */
   .nav-link {
     @apply text-gray-800 hover:text-primary hover:underline font-medium;
   }
-  
+
   .section {
     @apply py-16;
   }
 
   .section-title {
     @apply mb-12 text-3xl font-bold text-center md:text-4xl;
+  }
+
+  /* Fun card hover effect */
+  .fun-card-hover {
+    @apply bg-white rounded-2xl shadow-lg border border-gray-100 transition-all duration-300;
+  }
+  .fun-card-hover:hover {
+    @apply shadow-xl border-orange-200;
+    transform: translateY(-4px);
+  }
+
+  /* Bouncy primary button */
+  .btn-bouncy-primary {
+    @apply text-white font-semibold rounded-xl px-6 py-3 transition-all duration-200;
+    background: linear-gradient(135deg, #F97316, #EA580C);
+  }
+  .btn-bouncy-primary:hover {
+    background: linear-gradient(135deg, #EA580C, #C2410C);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+  }
+  .btn-bouncy-primary:active {
+    transform: scale(0.95);
+  }
+
+  /* Gradient text utilities */
+  .gradient-text-sunset {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, #F97316, #F59E0B);
+  }
+
+  .gradient-text-coral {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, #F97316, #EC4899);
+  }
+
+  /* Section with paws container */
+  .section-with-paws {
+    @apply relative overflow-hidden;
+  }
+
+  /* Icon circle gradient */
+  .icon-circle {
+    @apply w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0;
+    background: linear-gradient(135deg, #FB923C, #EA580C);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+  }
+
+  .icon-circle-lg {
+    @apply w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0;
+    background: linear-gradient(135deg, #FB923C, #EA580C);
+    box-shadow: 0 6px 16px rgba(249, 115, 22, 0.3);
   }
 }

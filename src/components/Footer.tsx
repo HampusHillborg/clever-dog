@@ -1,12 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaInstagram, FaFacebookF, FaMapMarkerAlt } from 'react-icons/fa';
+import { motion } from 'framer-motion';
 import LanguageSwitcher from './LanguageSwitcher';
 import dogLogo from '../assets/images/logos/Logo.png';
 
 interface FooterProps {
   location?: string;
 }
+
+const iconHoverSpring = { type: 'spring' as const, stiffness: 400, damping: 17 };
 
 const Footer: React.FC<FooterProps> = ({ location }) => {
   const { t, i18n } = useTranslation();
@@ -15,56 +18,63 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
 
   return (
     <footer className="bg-gray-900 text-white py-8 md:py-12">
+      {/* Gradient strip at top */}
+      <div className="h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 -mt-8 md:-mt-12 mb-8 md:mb-12" />
+
       <div className="container px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           {/* Logo and Info */}
           <div>
             <div className="flex flex-col items-center md:items-start">
               <div className="flex items-center space-x-2 mb-4">
-                <img 
-                  src={dogLogo} 
-                  alt="Clever Dog Logo" 
+                <img
+                  src={dogLogo}
+                  alt="Clever Dog Logo"
                   className="h-10 md:h-12 w-auto"
                 />
                 <span className="text-lg md:text-xl font-bold text-orange-500">Clever Dog</span>
               </div>
               <p className="text-gray-400 text-center md:text-left mb-2 text-sm md:text-base">
-                {location === 'malmo' 
+                {location === 'malmo'
                   ? (isSwedish ? 'Hunddagis i Malmö med fokus på trygghet, glädje och utveckling' : 'Dog daycare in Malmö focusing on safety, joy and development')
                   : (isSwedish ? 'Hunddagis i Staffanstorp med fokus på trygghet, glädje och utveckling' : t('heroDescription'))
                 }
               </p>
               <div className="text-gray-400 text-center md:text-left mb-4 text-sm">
                 <p className="mb-2">
-                  <FaMapMarkerAlt className="inline mr-1" /> 
+                  <FaMapMarkerAlt className="inline mr-1" />
                   {location === 'malmo' ? 'Bellisgatan 13, Malmö 21232' : 'Malmövägen 7, Staffanstorp'}
                 </p>
                 <p className="text-xs">
-                  {location === 'malmo' 
-                    ? 'Perfekt för Malmöområdet' 
+                  {location === 'malmo'
+                    ? 'Perfekt för Malmöområdet'
                     : '10 min från Lund | 15 min från Malmö'
                   }
                 </p>
               </div>
               <div className="flex space-x-4">
-                <a 
-                  href="https://www.instagram.com/CleverDog_" 
-                  target="_blank" 
+                <motion.a
+                  href="https://www.instagram.com/CleverDog_"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                   aria-label="Instagram"
+                  whileHover={{ scale: 1.2, rotate: 5 }}
+                  transition={iconHoverSpring}
                 >
                   <FaInstagram className="text-lg md:text-xl" />
-                </a>
-                <a 
-                  href="https://www.facebook.com/profile.php?id=61555454325558" 
-                  target="_blank" 
+                </motion.a>
+                <motion.a
+                  href="https://www.facebook.com/profile.php?id=61555454325558"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
                   aria-label="Facebook"
+                  whileHover={{ scale: 1.2, rotate: 5 }}
+                  transition={iconHoverSpring}
                 >
                   <FaFacebookF className="text-lg md:text-xl" />
-                </a>
+                </motion.a>
               </div>
             </div>
           </div>
@@ -168,13 +178,13 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
               <div className="text-xs text-gray-400">
                 {location === 'malmo' ? (
                   <p>
-                    Malmöområdet inklusive Limhamn, Hyllie, Oxie, Husie, 
+                    Malmöområdet inklusive Limhamn, Hyllie, Oxie, Husie,
                     Vellinge, Trelleborg, Svedala och närliggande områden.
                   </p>
                 ) : (
                   <p>
-                    Lund, Dalby, Södra Sandby, Veberöd, Genarp, Hjärup, 
-                    Lomma, Bjärred, Åkarp, Arlöv, Burlöv samt hela Malmö 
+                    Lund, Dalby, Södra Sandby, Veberöd, Genarp, Hjärup,
+                    Lomma, Bjärred, Åkarp, Arlöv, Burlöv samt hela Malmö
                     med områden som Limhamn, Hyllie, Oxie och Husie.
                   </p>
                 )}
@@ -191,4 +201,4 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
   );
 };
 
-export default Footer; 
+export default Footer;

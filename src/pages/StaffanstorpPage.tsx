@@ -1,6 +1,7 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import '../i18n';  // Import i18n configuration
 import StaffanstorpNavbar from '../components/staffanstorp/StaffanstorpNavbar';
+import WaveDivider from '../components/shared/WaveDivider';
 // Staffanstorp-specific components
 import StaffanstorpHeroSection from '../components/staffanstorp/StaffanstorpHeroSection';
 import StaffanstorpPricingSection from '../components/staffanstorp/StaffanstorpPricingSection';
@@ -29,7 +30,7 @@ const StaffanstorpPage: React.FC = () => {
   useEffect(() => {
     // Update page title
     document.title = 'Clever Dog - Hunddagis Staffanstorp | Professionell Hundomsorg';
-    
+
     // Update or create meta description
     let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
     if (!metaDescription) {
@@ -38,7 +39,7 @@ const StaffanstorpPage: React.FC = () => {
       document.head.appendChild(metaDescription);
     }
     metaDescription.content = 'Clever Dog - Professionellt hunddagis i Staffanstorp. Godkänd av Länsstyrelsen. Hundpassning, hundpensionat, social walks. Nära Lund och Malmö. Boka nu!';
-    
+
     // Update canonical URL
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
     if (!canonical) {
@@ -47,7 +48,7 @@ const StaffanstorpPage: React.FC = () => {
       document.head.appendChild(canonical);
     }
     canonical.href = 'https://cleverdog.se/staffanstorp';
-    
+
     // Update Open Graph tags
     const updateOGTag = (property: string, content: string) => {
       let ogTag = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
@@ -58,11 +59,11 @@ const StaffanstorpPage: React.FC = () => {
       }
       ogTag.content = content;
     };
-    
+
     updateOGTag('og:title', 'Clever Dog - Hunddagis Staffanstorp | Professionell Hundomsorg');
     updateOGTag('og:description', 'Professionellt hunddagis i Staffanstorp. Godkänd av Länsstyrelsen. Hundpassning, hundpensionat, social walks.');
     updateOGTag('og:url', 'https://cleverdog.se/staffanstorp');
-    
+
     // Update Twitter tags
     const updateTwitterTag = (name: string, content: string) => {
       let twitterTag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
@@ -73,7 +74,7 @@ const StaffanstorpPage: React.FC = () => {
       }
       twitterTag.content = content;
     };
-    
+
     updateTwitterTag('twitter:card', 'summary_large_image');
     updateTwitterTag('twitter:title', 'Clever Dog - Hunddagis Staffanstorp | Professionell Hundomsorg');
     updateTwitterTag('twitter:description', 'Professionellt hunddagis i Staffanstorp. Godkänd av Länsstyrelsen. Hundpassning, hundpensionat, social walks.');
@@ -114,24 +115,32 @@ const StaffanstorpPage: React.FC = () => {
       <main>
         <StaffanstorpHeroSection />
         <StaffanstorpAboutSection />
+        <WaveDivider topColor="#ffffff" bottomColor="#FFF7ED" variant="wave2" />
         <StaffanstorpPricingSection />
-        
+
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+          <WaveDivider topColor="#FFF7ED" bottomColor="#F9FAFB" variant="wave3" />
           <ImportantInfoSection />
+          <WaveDivider topColor="#F9FAFB" bottomColor="#ffffff" variant="wave1" />
           <DaycareScheduleSection />
         </Suspense>
-        
-        
+
+
         <Suspense fallback={<div className="h-screen flex items-center justify-center">Loading...</div>}>
+          <WaveDivider topColor="#ffffff" bottomColor="#ffffff" variant="wave2" />
           <SocialMediaSection />
+          <WaveDivider topColor="#ffffff" bottomColor="#F9FAFB" variant="wave3" />
           <GoogleReviewsSection />
+          <WaveDivider topColor="#F9FAFB" bottomColor="#ffffff" variant="wave1" />
           <SustainabilitySection />
+          <WaveDivider topColor="#ffffff" bottomColor="#F9FAFB" variant="wave2" />
           <ContactSection location="staffanstorp" />
         </Suspense>
       </main>
-          <Suspense fallback={<div className="h-16">Loading...</div>}>
-            <Footer location="staffanstorp" />
-          </Suspense>
+      <Suspense fallback={<div className="h-16">Loading...</div>}>
+        <WaveDivider topColor="#F9FAFB" bottomColor="#111827" variant="wave3" />
+        <Footer location="staffanstorp" />
+      </Suspense>
     </>
   );
 };

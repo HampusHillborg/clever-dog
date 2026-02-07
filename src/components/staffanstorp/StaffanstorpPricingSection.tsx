@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaCalendarAlt, FaDog, FaCut, FaBed } from 'react-icons/fa';
 import { IconType } from 'react-icons';
+import { motion } from 'framer-motion';
 
 interface ServiceItem {
   icon: IconType;
@@ -15,6 +16,8 @@ interface ServiceItem {
   holidayDetails?: string;
   withFoodPrice?: string;
 }
+
+const cardHoverSpring = { type: 'spring' as const, stiffness: 300, damping: 20 };
 
 const StaffanstorpPricingSection: React.FC = () => {
   const { t } = useTranslation();
@@ -107,8 +110,8 @@ const StaffanstorpPricingSection: React.FC = () => {
     <section id="pricing" className="py-16 bg-gradient-to-br from-orange-50 to-white">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            {t('pricing.title')} - Staffanstorp
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <span className="gradient-text-sunset">{t('pricing.title')}</span> - Staffanstorp
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             {t('pricing.notes')}
@@ -118,9 +121,17 @@ const StaffanstorpPricingSection: React.FC = () => {
         {/* Passes Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
           {passes.map((pass, index) => (
-            <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+            <motion.div
+              key={index}
+              className="fun-card-hover p-8"
+              whileHover={{ scale: 1.02, y: -4 }}
+              transition={cardHoverSpring}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="icon-circle-lg mx-auto mb-4">
                   <pass.icon className="text-white text-2xl" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-4">{pass.title}</h3>
@@ -138,7 +149,7 @@ const StaffanstorpPricingSection: React.FC = () => {
                 <div className="text-sm text-gray-500 mb-4">{pass.period}</div>
                 <p className="text-xs text-red-500">{pass.note}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -147,9 +158,17 @@ const StaffanstorpPricingSection: React.FC = () => {
           <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">{t('pricing.individualServices')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {individualServices.map((service, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+              <motion.div
+                key={index}
+                className="fun-card-hover p-6"
+                whileHover={{ scale: 1.02, y: -4 }}
+                transition={cardHoverSpring}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
                 <div className="text-center mb-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="icon-circle mx-auto mb-3">
                     <service.icon className="text-white text-lg" />
                   </div>
                   <h4 className="text-lg font-bold text-gray-900 mb-3">{service.title}</h4>
@@ -173,7 +192,7 @@ const StaffanstorpPricingSection: React.FC = () => {
                     <p className="text-xs text-gray-500 mt-2">{service.note}</p>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -183,9 +202,14 @@ const StaffanstorpPricingSection: React.FC = () => {
           <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">{t('pricing.groomingServices')}</h3>
           <div className="grid grid-cols-1 gap-6">
             {groomingServices.map((service, index) => (
-              <div key={index} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+              <motion.div
+                key={index}
+                className="fun-card-hover p-6"
+                whileHover={{ scale: 1.02, y: -4 }}
+                transition={cardHoverSpring}
+              >
                 <div className="text-center mb-4">
-                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="icon-circle mx-auto mb-3">
                     <service.icon className="text-white text-lg" />
                   </div>
                   <h4 className="text-lg font-bold text-gray-900 mb-3">{service.title}</h4>
@@ -208,7 +232,7 @@ const StaffanstorpPricingSection: React.FC = () => {
                     <p className="text-xs text-gray-500 mt-2">{service.note}</p>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -249,12 +273,14 @@ const StaffanstorpPricingSection: React.FC = () => {
           <p className="text-gray-600 mb-4">
             {t('pricing.contactNote')}
           </p>
-          <a 
-            href="#contact" 
-            className="inline-flex items-center bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-full font-medium hover:from-orange-600 hover:to-orange-700 transition-all duration-300"
+          <motion.a
+            href="#contact"
+            className="inline-flex items-center bg-gradient-to-r from-orange-500 to-amber-500 text-white px-8 py-3 rounded-full font-medium hover:from-orange-600 hover:to-amber-600 transition-all duration-300 shadow-md hover:shadow-lg"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           >
             {t('pricing.contactForInfo')}
-          </a>
+          </motion.a>
         </div>
       </div>
     </section>
