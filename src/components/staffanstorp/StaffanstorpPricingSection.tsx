@@ -141,7 +141,7 @@ const StaffanstorpPricingSection: React.FC = () => {
               <div className="text-center">
                 <div className="text-3xl font-bold text-orange-500 mb-1">{pass.price} SEK</div>
                 {pass.withFoodPrice && (
-                  <div className="text-lg font-semibold text-gray-700 mb-1">{pass.withFoodPrice} SEK {t('pricing.withFood', 'med mat')}</div>
+                  <div className="text-lg font-semibold text-gray-700 mb-1">{pass.withFoodPrice} SEK {t('pricing.withFood')}</div>
                 )}
                 <div className="text-sm text-gray-500 mb-4">{pass.period}</div>
                 <p className="text-xs text-red-500">{pass.note}</p>
@@ -176,7 +176,7 @@ const StaffanstorpPricingSection: React.FC = () => {
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-500 mb-1">{service.price} SEK</div>
                   {service.withFoodPrice && (
-                    <div className="text-lg font-semibold text-gray-700 mb-1">{service.withFoodPrice} SEK {t('pricing.withFood', 'med mat')}</div>
+                    <div className="text-lg font-semibold text-gray-700 mb-1">+ {Number(service.withFoodPrice) - Number(service.price)}kr {t('pricing.withFood')}</div>
                   )}
                   <div className="text-sm text-gray-500 mb-3">{service.period}</div>
                   {service.holidayRate && (

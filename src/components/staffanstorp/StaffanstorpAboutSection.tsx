@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebook, FaDog, FaHome, FaCut } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebook, FaDog, FaHome, FaCut, FaCar, FaGlobeEurope } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import FloatingPaws from '../shared/FloatingPaws';
 
@@ -157,6 +157,68 @@ const StaffanstorpAboutSection: React.FC = () => {
           </div>
 
         </div>
+
+        {/* Service Area Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">
+            {t('serviceArea.title')}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div
+              className="card p-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="icon-circle">
+                  <FaCar className="text-white text-lg" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">{t('serviceArea.malmo.title')}</h3>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {t('serviceArea.malmo.description')}
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="card p-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="icon-circle">
+                  <FaCar className="text-white text-lg" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">{t('serviceArea.lund.title')}</h3>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {t('serviceArea.lund.description')}
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="card p-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="icon-circle">
+                  <FaGlobeEurope className="text-white text-lg" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">{t('serviceArea.other.title')}</h3>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {t('serviceArea.other.description')}
+              </p>
+            </motion.div>
+          </div>
+        </div>
+
       </div>
     </section>
   );
