@@ -17,8 +17,6 @@ interface ServiceItem {
   withFoodPrice?: string;
 }
 
-const cardHoverSpring = { type: 'spring' as const, stiffness: 300, damping: 20 };
-
 const StaffanstorpPricingSection: React.FC = () => {
   const { t } = useTranslation();
 
@@ -90,7 +88,8 @@ const StaffanstorpPricingSection: React.FC = () => {
       period: t('pricing.per24h'),
       holidayRate: t('pricing.holidayRate'),
       holidayPrice: '800',
-      holidayDetails: t('pricing.holidayDescription')
+      holidayDetails: t('pricing.holidayDescription'),
+      withFoodPrice: '450'
     }
   ];
 
@@ -124,8 +123,6 @@ const StaffanstorpPricingSection: React.FC = () => {
             <motion.div
               key={index}
               className="fun-card-hover p-8"
-              whileHover={{ scale: 1.02, y: -4 }}
-              transition={cardHoverSpring}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -161,8 +158,6 @@ const StaffanstorpPricingSection: React.FC = () => {
               <motion.div
                 key={index}
                 className="fun-card-hover p-6"
-                whileHover={{ scale: 1.02, y: -4 }}
-                transition={cardHoverSpring}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -180,6 +175,9 @@ const StaffanstorpPricingSection: React.FC = () => {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-500 mb-1">{service.price} SEK</div>
+                  {service.withFoodPrice && (
+                    <div className="text-lg font-semibold text-gray-700 mb-1">{service.withFoodPrice} SEK {t('pricing.withFood', 'med mat')}</div>
+                  )}
                   <div className="text-sm text-gray-500 mb-3">{service.period}</div>
                   {service.holidayRate && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
@@ -205,8 +203,6 @@ const StaffanstorpPricingSection: React.FC = () => {
               <motion.div
                 key={index}
                 className="fun-card-hover p-6"
-                whileHover={{ scale: 1.02, y: -4 }}
-                transition={cardHoverSpring}
               >
                 <div className="text-center mb-4">
                   <div className="icon-circle mx-auto mb-3">

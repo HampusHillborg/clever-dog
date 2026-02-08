@@ -10,6 +10,7 @@ export const PRICES = {
     parttime2: 2800,   // Deltid 2 dagar per månad
     singleDay: 350,    // Enstaka dag
     boarding: 400,     // Hundpensionat per dygn
+    boardingWithFood: 450, // Hundpensionat med mat per dygn
     boardingHoliday: 800, // Hundpensionat under helgdagar
     nailClipping: 160  // Kloklipp
   },
@@ -21,6 +22,7 @@ export const PRICES = {
     parttime2: 2800,   // Deltid 2 dagar per månad
     singleDay: 350,    // Enstaka dag
     boarding: 400,     // Hundpensionat per dygn
+    boardingWithFood: 450, // Hundpensionat med mat per dygn
     boardingHoliday: 800, // Hundpensionat under helgdagar
     nailClipping: 160  // Kloklipp
   }
