@@ -18,6 +18,10 @@ export type Dog = {
   ownerCity?: string;
   ownerPersonalNumber?: string;
   chipNumber?: string;
+  gender?: string;
+  birthDate?: string;
+  insuranceCompany?: string;
+  insuranceNumber?: string;
 };
 
 export type BoardingRecord = {
@@ -125,6 +129,10 @@ export const getDogs = async (): Promise<Dog[]> => {
       ownerCity: dog.owner_city || undefined,
       ownerPersonalNumber: dog.owner_personal_number || undefined,
       chipNumber: dog.chip_number || undefined,
+      gender: dog.gender || undefined,
+      birthDate: dog.birth_date || undefined,
+      insuranceCompany: dog.insurance_company || undefined,
+      insuranceNumber: dog.insurance_number || undefined,
     };
   });
 };
@@ -180,6 +188,10 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     owner_city: dog.ownerCity || null,
     owner_personal_number: dog.ownerPersonalNumber || null,
     chip_number: dog.chipNumber || null,
+    gender: dog.gender || null,
+    birth_date: dog.birthDate || null,
+    insurance_company: dog.insuranceCompany || null,
+    insurance_number: dog.insuranceNumber || null,
   };
 
   console.log('Saving dog to database:', upsertData); // Debug log
@@ -252,6 +264,10 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     ownerCity: dbDog.owner_city || undefined,
     ownerPersonalNumber: dbDog.owner_personal_number || undefined,
     chipNumber: dbDog.chip_number || undefined,
+    gender: dbDog.gender || undefined,
+    birthDate: dbDog.birth_date || undefined,
+    insuranceCompany: dbDog.insurance_company || undefined,
+    insuranceNumber: dbDog.insurance_number || undefined,
   };
 
   // If the ID changed (old format to UUID), we need to update localStorage

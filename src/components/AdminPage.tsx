@@ -54,6 +54,10 @@ interface ContractData {
   dogBreed: string;
   dogAge: string;
   chipNumber: string;
+  dogGender: string;
+  dogBirthDate: string;
+  dogInsuranceCompany: string;
+  dogInsuranceNumber: string;
   startDate: string;
   endDate: string;
   price: string;
@@ -79,6 +83,10 @@ interface Dog {
   ownerCity?: string;
   ownerPersonalNumber?: string;
   chipNumber?: string;
+  gender?: string;
+  birthDate?: string;
+  insuranceCompany?: string;
+  insuranceNumber?: string;
 }
 
 interface BoardingRecord {
@@ -212,7 +220,11 @@ const AdminPage: React.FC = () => {
     ownerAddress: '',
     ownerCity: '',
     ownerPersonalNumber: '',
-    chipNumber: ''
+    chipNumber: '',
+    gender: '',
+    birthDate: '',
+    insuranceCompany: '',
+    insuranceNumber: ''
   });
   const [planningStaffanstorp, setPlanningStaffanstorp] = useState<Cage[]>([]);
   const [planningMalmo, setPlanningMalmo] = useState<Cage[]>([]);
@@ -479,6 +491,10 @@ const AdminPage: React.FC = () => {
     dogBreed: '',
     dogAge: '',
     chipNumber: '',
+    dogGender: '',
+    dogBirthDate: '',
+    dogInsuranceCompany: '',
+    dogInsuranceNumber: '',
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 6 months from now
     price: '',
@@ -1429,7 +1445,11 @@ const AdminPage: React.FC = () => {
       ownerAddress: dogForm.ownerAddress || undefined,
       ownerCity: dogForm.ownerCity || undefined,
       ownerPersonalNumber: dogForm.ownerPersonalNumber || undefined,
-      chipNumber: dogForm.chipNumber || undefined
+      chipNumber: dogForm.chipNumber || undefined,
+      gender: dogForm.gender || undefined,
+      birthDate: dogForm.birthDate || undefined,
+      insuranceCompany: dogForm.insuranceCompany || undefined,
+      insuranceNumber: dogForm.insuranceNumber || undefined
     };
 
     // Save to database
@@ -1457,7 +1477,7 @@ const AdminPage: React.FC = () => {
     });
     setIsDogModalOpen(false);
     setEditingDog(null);
-    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
+    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '', gender: '', birthDate: '', insuranceCompany: '', insuranceNumber: '' });
   };
 
   const deleteDog = async (id: string) => {
@@ -1494,11 +1514,15 @@ const AdminPage: React.FC = () => {
         ownerAddress: dog.ownerAddress || '',
         ownerCity: dog.ownerCity || '',
         ownerPersonalNumber: dog.ownerPersonalNumber || '',
-        chipNumber: dog.chipNumber || ''
+        chipNumber: dog.chipNumber || '',
+        gender: dog.gender || '',
+        birthDate: dog.birthDate || '',
+        insuranceCompany: dog.insuranceCompany || '',
+        insuranceNumber: dog.insuranceNumber || ''
       });
     } else {
       setEditingDog(null);
-      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '' });
+      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '', gender: '', birthDate: '', insuranceCompany: '', insuranceNumber: '' });
     }
     setIsDogModalOpen(true);
   };
@@ -2522,8 +2546,8 @@ const AdminPage: React.FC = () => {
           <p><strong>Hunddagis:</strong></p>
           <span class="field-line">Företagsnamn: CleverDog</span>
           <span class="field-line">Organisationsnummer: 20020922-5325</span>
-          <span class="field-line">Adress: Malmövägen 7, Staffanstorp</span>
-          <span class="field-line">Telefon/E-post: info@cleverdog.se</span>
+          <span class="field-line">Adress: Malmövägen 7, Staffanstorp / Johan Anders väg 61, Staffanstorp</span>
+          <span class="field-line">E-post: cleverdog.aw@gmail.com</span>
         </div>
 
         <p>och</p>
@@ -2541,13 +2565,13 @@ const AdminPage: React.FC = () => {
 
         <div class="section">
           <h2>1. Uppgifter om hunden</h2>
-          <span class="field-line">Hundens namn: ${contractData.dogName || '______________________________'}</span>
-          <span class="field-line">Ras: ${contractData.dogBreed || '______________________________'}</span>
-          <span class="field-line">Kön: ☐ Hane ☐ Tik</span>
-          <span class="field-line">Födelsedatum: ______________________________</span>
-          <span class="field-line">Chipnummer: ${contractData.chipNumber || '______________________________'}</span>
-          <span class="field-line">Försäkringsbolag: ______________________________</span>
-          <span class="field-line">Försäkringsnummer: ______________________________</span>
+          <span class="field-line">Hundens namn: ${contractData.dogName || ''}</span>
+          <span class="field-line">Ras: ${contractData.dogBreed || ''}</span>
+          <span class="field-line">Kön: ${contractData.dogGender || ''}</span>
+          <span class="field-line">Födelsedatum: ${contractData.dogBirthDate || ''}</span>
+          <span class="field-line">Chipnummer: ${contractData.chipNumber || ''}</span>
+          <span class="field-line">Försäkringsbolag: ${contractData.dogInsuranceCompany || ''}</span>
+          <span class="field-line">Försäkringsnummer: ${contractData.dogInsuranceNumber || ''}</span>
         </div>
 
         <div class="section">
@@ -2823,7 +2847,7 @@ const AdminPage: React.FC = () => {
 
         <p>Ingånget den ${today} mellan:</p>
         <ol>
-          <li>CleverDog, beläget på Malmövägen 7 Staffanstorp, organisationsnummer 20020922-5325,
+          <li>CleverDog, beläget på Malmövägen 7, Staffanstorp / Johan Anders väg 61, Staffanstorp, e-post cleverdog.aw@gmail.com, organisationsnummer 20020922-5325,
             företrätt av Alicja Wekwert, hädanefter kallad "Hunddagiset", och</li>
           <li>${contractData.customerName} bosatt i ${contractData.customerCity} på ${contractData.customerAddress}, personnummer ${contractData.personalNumber},
             hädanefter kallad "Ägaren", avseende omsorg om hunden:</li>
@@ -2833,7 +2857,11 @@ const AdminPage: React.FC = () => {
           <li>Hundens namn: ${contractData.dogName}</li>
           <li>Ras: ${contractData.dogBreed}</li>
           <li>Ålder: ${contractData.dogAge} år</li>
+          <li>Kön: ${contractData.dogGender || ''}</li>
+          <li>Födelsedatum: ${contractData.dogBirthDate || ''}</li>
           <li>Mikrochip-/ tatueringnummer: ${contractData.chipNumber}</li>
+          <li>Försäkringsbolag: ${contractData.dogInsuranceCompany || ''}</li>
+          <li>Försäkringsnummer: ${contractData.dogInsuranceNumber || ''}</li>
         </ul>
 
         <div class="section avoid-break">
@@ -3693,6 +3721,10 @@ const AdminPage: React.FC = () => {
             dogBreed: '',
             dogAge: '',
             chipNumber: '',
+            dogGender: '',
+            dogBirthDate: '',
+            dogInsuranceCompany: '',
+            dogInsuranceNumber: '',
             startDate: new Date().toISOString().split('T')[0],
             endDate: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             price: '',
@@ -7609,12 +7641,16 @@ const AdminPage: React.FC = () => {
                             customerAddress: dog.ownerAddress || '',
                             customerCity: dog.ownerCity || '',
                             personalNumber: dog.ownerPersonalNumber || '',
-                            customerPhone: contractData.customerPhone,
-                            customerEmail: contractData.customerEmail,
+                            customerPhone: contractData.customerPhone || dog.phone || '',
+                            customerEmail: contractData.customerEmail || dog.email || '',
                             dogName: dog.name,
                             dogBreed: dog.breed,
                             dogAge: dog.age,
-                            chipNumber: dog.chipNumber || ''
+                            chipNumber: dog.chipNumber || '',
+                            dogGender: dog.gender || '',
+                            dogBirthDate: dog.birthDate || '',
+                            dogInsuranceCompany: dog.insuranceCompany || '',
+                            dogInsuranceNumber: dog.insuranceNumber || ''
                           });
                           setIsContractDogDropdownOpen(false);
                           setContractDogSearch('');
@@ -7692,6 +7728,57 @@ const AdminPage: React.FC = () => {
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
               placeholder="e.g., 941000016851106"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="dogGender" className="block text-sm font-medium text-gray-700 mb-1">Kön</label>
+            <input
+              type="text"
+              id="dogGender"
+              name="dogGender"
+              value={contractData.dogGender}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., Hane / Tik"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="dogBirthDate" className="block text-sm font-medium text-gray-700 mb-1">Födelsedatum</label>
+            <input
+              type="date"
+              id="dogBirthDate"
+              name="dogBirthDate"
+              value={contractData.dogBirthDate}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="dogInsuranceCompany" className="block text-sm font-medium text-gray-700 mb-1">Försäkringsbolag</label>
+            <input
+              type="text"
+              id="dogInsuranceCompany"
+              name="dogInsuranceCompany"
+              value={contractData.dogInsuranceCompany}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., Agria"
+            />
+          </div>
+
+          <div className="mb-3 sm:mb-4">
+            <label htmlFor="dogInsuranceNumber" className="block text-sm font-medium text-gray-700 mb-1">Försäkringsnummer</label>
+            <input
+              type="text"
+              id="dogInsuranceNumber"
+              name="dogInsuranceNumber"
+              value={contractData.dogInsuranceNumber}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
+              placeholder="e.g., 12345678"
             />
           </div>
         </div>
@@ -8215,6 +8302,49 @@ const AdminPage: React.FC = () => {
                     onChange={(e) => setDogForm({ ...dogForm, chipNumber: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     placeholder="e.g., 941000016851106"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Kön</label>
+                  <input
+                    type="text"
+                    value={dogForm.gender}
+                    onChange={(e) => setDogForm({ ...dogForm, gender: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Hane / Tik"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Födelsedatum</label>
+                  <input
+                    type="date"
+                    value={dogForm.birthDate}
+                    onChange={(e) => setDogForm({ ...dogForm, birthDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Försäkringsbolag</label>
+                  <input
+                    type="text"
+                    value={dogForm.insuranceCompany}
+                    onChange={(e) => setDogForm({ ...dogForm, insuranceCompany: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., Agria"
+                    disabled={userRole === 'employee'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Försäkringsnummer</label>
+                  <input
+                    type="text"
+                    value={dogForm.insuranceNumber}
+                    onChange={(e) => setDogForm({ ...dogForm, insuranceNumber: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g., 12345678"
                     disabled={userRole === 'employee'}
                   />
                 </div>
