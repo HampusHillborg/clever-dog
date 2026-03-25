@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars, FaClock } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
+import dogLogo from '../assets/images/logos/Logo.png';
 import {
   getDogs as fetchDogs,
   saveDog as saveDogToDb,
@@ -2453,134 +2454,75 @@ const AdminPage: React.FC = () => {
     // Daycare contract uses a completely different template
     if (contractData.contractType === 'daycare') {
       return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Avtal om hunddagis</title>
-        <style>
-          @media print {
-            body { margin: 0; padding: 0; }
-            h2, h3 { page-break-after: avoid !important; }
-            p, li { page-break-inside: avoid !important; }
-            .section { page-break-inside: avoid !important; }
-            .avoid-break { page-break-inside: avoid !important; }
-          }
-          body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
-            line-height: 1.4;
-            margin: 15mm 12mm;
-            color: #000;
-          }
-          h1 {
-            text-align: center;
-            font-size: 14pt;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #000;
-          }
-          h2 {
-            font-size: 11pt;
-            font-weight: bold;
-            margin-top: 14px;
-            margin-bottom: 6px;
-            color: #000;
-          }
-          p {
-            margin: 4px 0;
-          }
-          ul {
-            margin: 4px 0;
-            padding-left: 20px;
-            list-style-type: disc;
-          }
-          li {
-            margin-bottom: 2px;
-          }
-          .section {
-            margin-bottom: 10px;
-          }
-          .party-block {
-            margin-bottom: 12px;
-          }
-          .field-line {
-            display: block;
-            margin: 3px 0;
-          }
-          .signatures {
-            margin-top: 30px;
-          }
-          .signature-line {
-            border-top: 1px solid black;
-            width: 250px;
-            display: inline-block;
-            margin-bottom: 2px;
-          }
-          .date-line {
-            border-bottom: 1px solid black;
-            width: 250px;
-            display: inline-block;
-            margin: 0 5px;
-          }
-          table {
-            width: 100%;
-            margin-top: 10px;
-          }
-          td {
-            width: 50%;
-            padding-top: 5px;
-            vertical-align: top;
-          }
-          * {
-            box-sizing: border-box;
-          }
-        </style>
-      </head>
-      <body>
+      <style>
+        .c * { box-sizing: border-box; }
+        .c {
+          font-family: 'Segoe UI', Arial, sans-serif;
+          font-size: 9pt;
+          line-height: 1.6;
+          color: #222;
+        }
+        .c h1 { text-align: center; font-size: 14pt; font-weight: 600; color: #2a3f5f; margin: 0 0 8px 0; }
+        .c h2 { font-size: 9.5pt; font-weight: 600; color: #2a3f5f; margin: 12px 0 4px 0; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
+        .c p { margin: 3px 0; }
+        .c ul { margin: 4px 0; padding-left: 22px; list-style-type: disc; }
+        .c li { margin-bottom: 2px; }
+        .c .pb { background: #f8f9fb; padding: 6px 10px; border-left: 3px solid #f97316; margin: 6px 0; }
+        .c .fl { display: block; margin: 2px 0; }
+        .c .sig { margin-top: 18px; border-top: 1.5px solid #2a3f5f; padding-top: 12px; }
+        .c .sig-line { border-top: 1px solid #333; width: 200px; display: inline-block; margin-bottom: 2px; }
+        .c .dt-line { border-bottom: 1px solid #333; width: 200px; display: inline-block; margin: 0 5px; }
+        .c table { width: 100%; margin-top: 8px; }
+        .c td { width: 50%; vertical-align: top; padding-top: 3px; }
+        .c .sig-lbl { font-size: 7.5pt; color: #666; }
+      </style>
+      <div class="c">
+        <div style="margin-bottom: 6px; padding-bottom: 4px; border-bottom: 2px solid #f97316;">
+          <img src="${dogLogo}" alt="CleverDog" style="height: 40px; width: auto;" />
+        </div>
         <h1>Avtal om hunddagis</h1>
 
         <p>Detta avtal ingås mellan:</p>
 
-        <div class="party-block">
+        <div class="pb">
           <p><strong>Hunddagis:</strong></p>
-          <span class="field-line">Företagsnamn: CleverDog</span>
-          <span class="field-line">Organisationsnummer: 20020922-5325</span>
-          <span class="field-line">Adress: Malmövägen 7, Staffanstorp / Johan Anders väg 61, Staffanstorp</span>
-          <span class="field-line">E-post: cleverdog.aw@gmail.com</span>
+          <span class="fl">Företagsnamn: CleverDog</span>
+          <span class="fl">Organisationsnummer: 20020922-5325</span>
+          <span class="fl">Adress: Malmövägen 7, Staffanstorp / Johan Anders väg 61, Staffanstorp</span>
+          <span class="fl">E-post: cleverdog.aw@gmail.com</span>
         </div>
 
         <p>och</p>
 
-        <div class="party-block">
+        <div class="pb">
           <p><strong>Hundägare:</strong></p>
-          <span class="field-line">Namn: ${contractData.customerName || '______________________________'}</span>
-          <span class="field-line">Personnummer: ${contractData.personalNumber || '______________________________'}</span>
-          <span class="field-line">Adress: ${contractData.customerAddress ? contractData.customerAddress + (contractData.customerCity ? ', ' + contractData.customerCity : '') : '______________________________'}</span>
-          <span class="field-line">Telefon: ${contractData.customerPhone || '______________________________'}</span>
-          <span class="field-line">E-post: ${contractData.customerEmail || '______________________________'}</span>
+          <span class="fl">Namn: ${contractData.customerName || '______________________________'}</span>
+          <span class="fl">Personnummer: ${contractData.personalNumber || '______________________________'}</span>
+          <span class="fl">Adress: ${contractData.customerAddress ? contractData.customerAddress + (contractData.customerCity ? ', ' + contractData.customerCity : '') : '______________________________'}</span>
+          <span class="fl">Telefon: ${contractData.customerPhone || '______________________________'}</span>
+          <span class="fl">E-post: ${contractData.customerEmail || '______________________________'}</span>
         </div>
 
         <p>gällande nedanstående hund.</p>
 
-        <div class="section">
+        <div class="s">
           <h2>1. Uppgifter om hunden</h2>
-          <span class="field-line">Hundens namn: ${contractData.dogName || ''}</span>
-          <span class="field-line">Ras: ${contractData.dogBreed || ''}</span>
-          <span class="field-line">Kön: ${contractData.dogGender || ''}</span>
-          <span class="field-line">Födelsedatum: ${contractData.dogBirthDate || ''}</span>
-          <span class="field-line">Chipnummer: ${contractData.chipNumber || ''}</span>
-          <span class="field-line">Försäkringsbolag: ${contractData.dogInsuranceCompany || ''}</span>
-          <span class="field-line">Försäkringsnummer: ${contractData.dogInsuranceNumber || ''}</span>
+          <span class="fl">Hundens namn: ${contractData.dogName || ''}</span>
+          <span class="fl">Ras: ${contractData.dogBreed || ''}</span>
+          <span class="fl">Kön: ${contractData.dogGender || ''}</span>
+          <span class="fl">Födelsedatum: ${contractData.dogBirthDate || ''}</span>
+          <span class="fl">Chipnummer: ${contractData.chipNumber || ''}</span>
+          <span class="fl">Försäkringsbolag: ${contractData.dogInsuranceCompany || ''}</span>
+          <span class="fl">Försäkringsnummer: ${contractData.dogInsuranceNumber || ''}</span>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>2. Avtalets omfattning</h2>
           <p>Hunddagiset åtar sig att tillhandahålla daglig tillsyn, omsorg, rastning och aktivering av hunden i en trygg och säker miljö, i enlighet med gällande lagstiftning samt Jordbruksverkets föreskrifter.</p>
           <p>Hunden vistas i box tillsammans med andra hundar eller enskilt beroende på behov, temperament och hälsotillstånd.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>3. Hundägarens ansvar</h2>
           <p>Hundägaren ansvarar för att:</p>
           <ul>
@@ -2591,7 +2533,7 @@ const AdminPage: React.FC = () => {
           <p>Hundar med aggressivt eller olämpligt beteende kan nekas plats.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>4. Vaccinationer</h2>
           <p>För att hunden ska kunna vistas på hunddagiset krävs att den är fullt vaccinerad enligt gällande rekommendationer.</p>
           <p>Obligatoriska vaccinationer är:</p>
@@ -2607,7 +2549,7 @@ const AdminPage: React.FC = () => {
           <p>Hund som inte uppfyller vaccinationskraven kan nekas plats utan rätt till reducering eller återbetalning av avgift.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>5. Hunddagisets ansvar</h2>
           <p>Hunddagiset ansvarar för:</p>
           <ul>
@@ -2618,7 +2560,7 @@ const AdminPage: React.FC = () => {
           <p>Vid sjukdom eller olycka har hunddagiset rätt att kontakta veterinär. Samtliga kostnader belastar hundägaren.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>6. Öppettider, hämtning och förseningsavgift</h2>
           <p>Hunddagisets ordinarie öppettider är:</p>
           <ul>
@@ -2631,34 +2573,34 @@ const AdminPage: React.FC = () => {
           <p>Om hunden inte hämtas senast kl. 19.00 övergår vistelsen automatiskt till hundpensionat, och hundägaren debiteras extra enligt gällande prislista för hundpensionat.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>7. Röda dagar och helgdagar</h2>
           <p>Hunddagiset är stängt på samtliga röda dagar och helgdagar enligt svensk kalender.</p>
           <p>Dagen före röd dag är hunddagiset öppet till kl. 14.00.</p>
           <p>Hämtning ska ske senast vid denna tid. Försenad hämtning debiteras enligt gällande villkor.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>8. Semester</h2>
           <p>Hunddagiset har 28 dagars semester per år.</p>
           <p>Under semestertiden sker ingen reducering eller återbetalning av månadsavgiften.</p>
           <p>Avgiften avser en reserverad plats på hunddagiset och gäller oavsett faktisk närvaro.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>9. Löp</h2>
           <p>Om en tik börjar löpa och samtliga boxar avsedda för löptikar redan är upptagna, kan hunden inte tas emot på hunddagiset under löpperioden. Hunden ska då stanna hemma tills löpet är avslutat.</p>
           <p>Ingen reducering eller återbetalning av avgiften sker under denna period.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>10. Betalning</h2>
           <p>Avgift enligt överenskommet abonnemang: ${contractData.price ? contractData.price + ' SEK/månad' : '__________ SEK/månad'}.</p>
           <p>Betalning sker månadsvis enligt faktura.</p>
           <p>Vid utebliven betalning kan platsen sägas upp med omedelbar verkan.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>11. Uppsägning</h2>
           <p>Uppsägningstiden är en (1) kalendermånad och räknas från nästkommande månadsskifte, oavsett vilket datum uppsägningen lämnas in.</p>
           <p>Exempel:</p>
@@ -2669,38 +2611,34 @@ const AdminPage: React.FC = () => {
           <p>Under uppsägningstiden debiteras full avgift oavsett faktisk närvaro.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>12. Ansvarsbegränsning</h2>
           <p>Hunddagiset ansvarar inte för skador, sjukdom eller olyckor som uppstår till följd av hundens eget beteende, ålder eller hälsotillstånd, såvida inte grov vårdslöshet föreligger.</p>
         </div>
 
-        <div class="section">
+        <div class="s">
           <h2>13. Godkännande</h2>
           <p>Genom underskrift bekräftar båda parter att de har tagit del av och godkänner avtalets villkor.</p>
         </div>
 
-        <div class="signatures avoid-break">
-          <p>Ort och datum: <span class="date-line"></span></p>
-
-          <table style="margin-top: 40px;">
+        <div class="sig">
+          <p>Ort och datum: <span class="dt-line"></span></p>
+          <table style="margin-top: 20px;">
             <tr>
               <td>
-                <div class="signature-line"></div>
-                <p>Hundägarens underskrift</p>
-                <br/>
-                <p>Namnförtydligande: ${contractData.customerName || '_________________________'}</p>
+                <div class="sig-line"></div>
+                <p class="sig-lbl">Hundägarens underskrift</p>
+                <p style="margin-top: 4px;">Namnförtydligande: ${contractData.customerName || '_________________________'}</p>
               </td>
               <td>
-                <div class="signature-line"></div>
-                <p>Hunddagisets underskrift</p>
-                <br/>
-                <p>Namnförtydligande: _________________________</p>
+                <div class="sig-line"></div>
+                <p class="sig-lbl">Hunddagisets underskrift</p>
+                <p style="margin-top: 4px;">Namnförtydligande: _________________________</p>
               </td>
             </tr>
           </table>
         </div>
-      </body>
-      </html>
+      </div>
       `;
     }
 
@@ -2713,66 +2651,56 @@ const AdminPage: React.FC = () => {
         <title>Contract</title>
         <style>
           @media print {
-            body {
-              margin: 0;
-              padding: 0;
-            }
-            h2 {
-              page-break-after: avoid !important;
-            }
-            p, li {
-              page-break-inside: avoid !important;
-            }
-            .section {
-              page-break-inside: avoid !important;
-            }
-            .avoid-break {
-              page-break-inside: avoid !important;
-            }
+            body { margin: 0; padding: 0; }
+            h2 { page-break-after: avoid !important; }
+            .signatures { page-break-inside: avoid !important; }
           }
 
           body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
-            line-height: 1.2;
-            margin: 15mm 12mm;
+            font-size: 9pt;
+            line-height: 1.15;
+            margin: 2mm 3mm;
             color: #000;
           }
           h1 {
             text-align: center;
-            font-size: 12pt;
+            font-size: 11pt;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 3px;
+            margin-top: 0;
             border-bottom: 1px solid #000;
-            padding-bottom: 3px;
+            padding-bottom: 2px;
             color: #2a3f5f;
           }
           h2 {
-            font-size: 10pt;
+            font-size: 9.5pt;
             font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 4px;
+            margin-top: 3px;
+            margin-bottom: 1px;
             color: #2a3f5f;
             border-bottom: 0.5px solid #ddd;
-            padding-bottom: 2px;
+            padding-bottom: 1px;
           }
           p {
-            margin: 4px 0;
+            margin: 0;
           }
           ol, ul {
-            margin: 4px 0;
-            padding-left: 20px;
+            margin: 0;
+            padding-left: 18px;
           }
           li {
-            margin-bottom: 2px;
+            margin-bottom: 0;
           }
           .section {
-            margin-bottom: 8px;
-            border-left: 2px solid #f5f5f5;
-            padding-left: 6px;
+            margin-bottom: 2px;
+            border-left: 2px solid #e0e4e8;
+            padding-left: 5px;
           }
           .signatures {
-            margin-top: 20px;
+            margin-top: 8px;
+            border-top: 1px solid #ddd;
+            padding-top: 4px;
           }
           .signature-line {
             border-top: 1px solid black;
@@ -2782,60 +2710,52 @@ const AdminPage: React.FC = () => {
           }
           .date-line {
             border-bottom: 1px solid black;
-            width: 250px;
+            width: 220px;
             display: inline-block;
             margin: 0 5px;
           }
           table {
             width: 100%;
-            margin-top: 10px;
+            margin-top: 8px;
           }
           td {
             width: 50%;
-            padding-top: 5px;
+            padding-top: 3px;
             vertical-align: top;
           }
-          /* Compact lists */
-          ul li, ol li {
-            padding-top: 0;
-            padding-bottom: 0;
-          }
-          /* Inner lists more compact */
-          li ul, li ol {
-            margin-top: 1px;
-            margin-bottom: 1px;
-          }
-          /* More compact layout overall */
-          * {
-            box-sizing: border-box;
-          }
+          ul li, ol li { padding: 0; }
+          li ul, li ol { margin: 0; }
+          * { box-sizing: border-box; }
           .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 3px;
           }
           .company-name {
             font-weight: bold;
-            font-size: 11pt;
+            font-size: 10pt;
             color: #2a3f5f;
           }
           .contract-subtitle {
             font-style: italic;
-            font-size: 9pt;
+            font-size: 8pt;
             color: #555;
-            margin-top: 2px;
+            margin-top: 1px;
           }
           .signature-name {
-            font-size: 9pt;
+            font-size: 8.5pt;
             font-weight: bold;
           }
           .signature-title {
-            font-size: 8pt;
+            font-size: 7.5pt;
             color: #555;
             margin-top: 1px;
           }
         </style>
       </head>
       <body>
+        <div style="margin-bottom: 4px; padding-bottom: 3px; border-bottom: 2px solid #f97316;">
+          <img src="${dogLogo}" alt="CleverDog" style="height: 40px; width: auto;" />
+        </div>
         <div class="header">
           <div class="company-name">CleverDog</div>
           <div class="contract-subtitle">För hundens bästa</div>
@@ -2994,7 +2914,7 @@ const AdminPage: React.FC = () => {
         <div class="signatures avoid-break">
           <p>Ort och datum: <span class="date-line"></span></p>
 
-          <table style="margin-top: 50px;">
+          <table style="margin-top: 25px;">
             <tr>
               <td>
                 <div class="signature-line"></div>
@@ -3019,16 +2939,15 @@ const AdminPage: React.FC = () => {
   const generatePDF = () => {
     const contractHTML = generateContractHTML();
 
-    // Create a temporary div to render the HTML content
     const element = document.createElement('div');
     element.innerHTML = contractHTML;
+    element.style.width = '180mm';
     document.body.appendChild(element);
 
-    // PDF options with proper page break handling
     const options = {
-      margin: [8, 8, 8, 8],
+      margin: [10, 15, 10, 15],
       filename: `contract-${contractData.contractType}-${contractData.dogName}.pdf`,
-      image: { type: 'jpeg', quality: 0.95 },
+      image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         scale: 2,
         useCORS: true
@@ -3040,13 +2959,11 @@ const AdminPage: React.FC = () => {
         compress: true
       },
       pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy']
+        avoid: ['.s', '.pb', '.sig']
       }
     };
 
-    // Generate PDF
     html2pdf().from(element).set(options).save().then(() => {
-      // Remove the temporary element after PDF generation
       document.body.removeChild(element);
     });
   };
