@@ -2457,63 +2457,116 @@ const AdminPage: React.FC = () => {
       <style>
         .c * { box-sizing: border-box; }
         .c {
-          font-family: 'Segoe UI', Arial, sans-serif;
-          font-size: 9pt;
+          font-family: Georgia, 'Times New Roman', serif;
+          font-size: 9.5pt;
           line-height: 1.6;
-          color: #222;
+          color: #1a1a1a;
         }
-        .c h1 { text-align: center; font-size: 14pt; font-weight: 600; color: #2a3f5f; margin: 0 0 8px 0; }
-        .c h2 { font-size: 9.5pt; font-weight: 600; color: #2a3f5f; margin: 12px 0 4px 0; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
-        .c p { margin: 3px 0; }
+        .c .header {
+          border-bottom: 3px solid #1e3a5f;
+          padding-bottom: 10px;
+          margin-bottom: 14px;
+          display: table;
+          width: 100%;
+        }
+        .c .header-left { display: table-cell; vertical-align: middle; width: 60px; }
+        .c .header-right { display: table-cell; vertical-align: middle; text-align: right; }
+        .c .header-right .company { font-size: 16pt; font-weight: 700; color: #1e3a5f; letter-spacing: 1px; }
+        .c .header-right .tagline { font-size: 7.5pt; color: #888; font-style: italic; margin-top: 2px; }
+        .c h1 {
+          text-align: center;
+          font-size: 15pt;
+          font-weight: 700;
+          color: #1e3a5f;
+          margin: 0 0 6px 0;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+        .c .subtitle { text-align: center; font-size: 8pt; color: #777; margin-bottom: 12px; }
+        .c h2 {
+          font-size: 9.5pt;
+          font-weight: 700;
+          color: #1e3a5f;
+          margin: 14px 0 4px 0;
+          padding: 3px 0 3px 8px;
+          border-left: 3px solid #f97316;
+          background: #f7f8fa;
+        }
+        .c p { margin: 4px 0; }
         .c ul { margin: 4px 0; padding-left: 22px; list-style-type: disc; }
         .c li { margin-bottom: 2px; }
-        .c .pb { background: #f8f9fb; padding: 6px 10px; border-left: 3px solid #f97316; margin: 6px 0; }
-        .c .fl { display: block; margin: 2px 0; }
-        .c .sig { margin-top: 18px; border-top: 1.5px solid #2a3f5f; padding-top: 12px; }
-        .c .sig-line { border-top: 1px solid #333; width: 200px; display: inline-block; margin-bottom: 2px; }
-        .c .dt-line { border-bottom: 1px solid #333; width: 200px; display: inline-block; margin: 0 5px; }
-        .c table { width: 100%; margin-top: 8px; }
+        .c .parties { margin: 10px 0; }
+        .c .party {
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          padding: 8px 12px;
+          margin: 8px 0;
+          background: #fcfcfc;
+        }
+        .c .party-label {
+          font-size: 7pt;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #f97316;
+          font-weight: 700;
+          margin-bottom: 4px;
+          display: block;
+        }
+        .c .fl { display: block; margin: 2px 0; font-size: 9pt; }
+        .c .fl strong { color: #555; font-weight: 600; }
+        .c .sig {
+          margin-top: 24px;
+          border-top: 2px solid #1e3a5f;
+          padding-top: 14px;
+        }
+        .c .sig-line { border-top: 1px solid #444; width: 200px; display: inline-block; margin-bottom: 2px; }
+        .c .dt-line { border-bottom: 1px solid #444; width: 200px; display: inline-block; margin: 0 5px; }
+        .c table { width: 100%; margin-top: 10px; }
         .c td { width: 50%; vertical-align: top; padding-top: 3px; }
         .c .sig-lbl { font-size: 7.5pt; color: #666; }
       </style>
       <div class="c">
-        <div style="margin-bottom: 6px; padding-bottom: 4px; border-bottom: 2px solid #f97316;">
-          <img src="${dogLogo}" alt="CleverDog" style="height: 40px; width: auto;" />
+        <div class="header">
+          <div class="header-left">
+            <img src="${dogLogo}" alt="CleverDog" style="height: 44px; width: auto;" />
+          </div>
+          <div class="header-right">
+            <div class="company">CleverDog</div>
+            <div class="tagline">Professionell hundomsorg i Staffanstorp</div>
+          </div>
         </div>
+
         <h1>Avtal om hunddagis</h1>
+        <p class="subtitle">Avtal mellan hunddagis och hundägare</p>
 
-        <p>Detta avtal ingås mellan:</p>
-
-        <div class="pb">
-          <p><strong>Hunddagis:</strong></p>
-          <span class="fl">Företagsnamn: CleverDog</span>
-          <span class="fl">Organisationsnummer: 20020922-5325</span>
-          <span class="fl">Adress: Malmövägen 7, Staffanstorp / Johan Anders väg 61, Staffanstorp</span>
-          <span class="fl">E-post: cleverdog.aw@gmail.com</span>
+        <div class="parties">
+          <div class="party">
+            <span class="party-label">Hunddagis</span>
+            <span class="fl"><strong>Företag:</strong> CleverDog</span>
+            <span class="fl"><strong>Org.nr:</strong> 20020922-5325</span>
+            <span class="fl"><strong>Adress:</strong> Malmövägen 7 / Johan Anders väg 61, Staffanstorp</span>
+            <span class="fl"><strong>E-post:</strong> cleverdog.aw@gmail.com</span>
+          </div>
+          <div class="party">
+            <span class="party-label">Hundägare</span>
+            <span class="fl"><strong>Namn:</strong> ${contractData.customerName || '______________________________'}</span>
+            <span class="fl"><strong>Personnummer:</strong> ${contractData.personalNumber || '______________________________'}</span>
+            <span class="fl"><strong>Adress:</strong> ${contractData.customerAddress ? contractData.customerAddress + (contractData.customerCity ? ', ' + contractData.customerCity : '') : '______________________________'}</span>
+            <span class="fl"><strong>Telefon:</strong> ${contractData.customerPhone || '______________________________'}</span>
+            <span class="fl"><strong>E-post:</strong> ${contractData.customerEmail || '______________________________'}</span>
+          </div>
         </div>
 
-        <p>och</p>
-
-        <div class="pb">
-          <p><strong>Hundägare:</strong></p>
-          <span class="fl">Namn: ${contractData.customerName || '______________________________'}</span>
-          <span class="fl">Personnummer: ${contractData.personalNumber || '______________________________'}</span>
-          <span class="fl">Adress: ${contractData.customerAddress ? contractData.customerAddress + (contractData.customerCity ? ', ' + contractData.customerCity : '') : '______________________________'}</span>
-          <span class="fl">Telefon: ${contractData.customerPhone || '______________________________'}</span>
-          <span class="fl">E-post: ${contractData.customerEmail || '______________________________'}</span>
-        </div>
-
-        <p>gällande nedanstående hund.</p>
+        <p>Avtalet gäller nedanstående hund.</p>
 
         <div class="s">
           <h2>1. Uppgifter om hunden</h2>
-          <span class="fl">Hundens namn: ${contractData.dogName || ''}</span>
-          <span class="fl">Ras: ${contractData.dogBreed || ''}</span>
-          <span class="fl">Kön: ${contractData.dogGender || ''}</span>
-          <span class="fl">Födelsedatum: ${contractData.dogBirthDate || ''}</span>
-          <span class="fl">Chipnummer: ${contractData.chipNumber || ''}</span>
-          <span class="fl">Försäkringsbolag: ${contractData.dogInsuranceCompany || ''}</span>
-          <span class="fl">Försäkringsnummer: ${contractData.dogInsuranceNumber || ''}</span>
+          <div class="party">
+            <span class="fl"><strong>Hundens namn:</strong> ${contractData.dogName || ''}</span>
+            <span class="fl"><strong>Ras:</strong> ${contractData.dogBreed || ''} &nbsp;&nbsp; <strong>Kön:</strong> ${contractData.dogGender || ''}</span>
+            <span class="fl"><strong>Födelsedatum:</strong> ${contractData.dogBirthDate || ''} &nbsp;&nbsp; <strong>Chipnummer:</strong> ${contractData.chipNumber || ''}</span>
+            <span class="fl"><strong>Försäkringsbolag:</strong> ${contractData.dogInsuranceCompany || ''} &nbsp;&nbsp; <strong>Nr:</strong> ${contractData.dogInsuranceNumber || ''}</span>
+          </div>
         </div>
 
         <div class="s">
@@ -2616,24 +2669,20 @@ const AdminPage: React.FC = () => {
           <p>Hunddagiset ansvarar inte för skador, sjukdom eller olyckor som uppstår till följd av hundens eget beteende, ålder eller hälsotillstånd, såvida inte grov vårdslöshet föreligger.</p>
         </div>
 
-        <div class="s">
-          <h2>13. Godkännande</h2>
-          <p>Genom underskrift bekräftar båda parter att de har tagit del av och godkänner avtalets villkor.</p>
-        </div>
-
         <div class="sig">
+          <p style="font-size: 8pt; color: #777; margin-bottom: 6px;">Genom underskrift bekräftar parterna att de tagit del av och godkänner ovanstående villkor.</p>
           <p>Ort och datum: <span class="dt-line"></span></p>
-          <table style="margin-top: 20px;">
+          <table style="margin-top: 24px;">
             <tr>
               <td>
                 <div class="sig-line"></div>
-                <p class="sig-lbl">Hundägarens underskrift</p>
-                <p style="margin-top: 4px;">Namnförtydligande: ${contractData.customerName || '_________________________'}</p>
+                <p class="sig-lbl">Hundägare</p>
+                <p style="margin-top: 6px; font-size: 8.5pt;">${contractData.customerName || '_________________________'}</p>
               </td>
               <td>
                 <div class="sig-line"></div>
-                <p class="sig-lbl">Hunddagisets underskrift</p>
-                <p style="margin-top: 4px;">Namnförtydligande: _________________________</p>
+                <p class="sig-lbl">CleverDog</p>
+                <p style="margin-top: 6px; font-size: 8.5pt;">_________________________</p>
               </td>
             </tr>
           </table>
