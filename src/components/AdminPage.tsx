@@ -2691,149 +2691,120 @@ const AdminPage: React.FC = () => {
       `;
     }
 
-    // Create a simple contract with proper page break controls for other contract types
+    // Other contract types use the same professional design
+    const contractTitle = contractData.contractType === 'boarding' ? 'Hundpensionat' :
+      contractData.contractType === 'socialWalk' ? 'Social Promenad' :
+        contractData.contractType === 'partTime' ? 'Deltid Hunddagis' : 'Enkeldagis';
+
     let contractHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Contract</title>
-        <style>
-          @media print {
-            body { margin: 0; padding: 0; }
-            h2 { page-break-after: avoid !important; }
-            .signatures { page-break-inside: avoid !important; }
-          }
-
-          body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 9pt;
-            line-height: 1.15;
-            margin: 2mm 3mm;
-            color: #000;
-          }
-          h1 {
-            text-align: center;
-            font-size: 11pt;
-            font-weight: bold;
-            margin-bottom: 3px;
-            margin-top: 0;
-            border-bottom: 1px solid #000;
-            padding-bottom: 2px;
-            color: #2a3f5f;
-          }
-          h2 {
-            font-size: 9.5pt;
-            font-weight: bold;
-            margin-top: 3px;
-            margin-bottom: 1px;
-            color: #2a3f5f;
-            border-bottom: 0.5px solid #ddd;
-            padding-bottom: 1px;
-          }
-          p {
-            margin: 0;
-          }
-          ol, ul {
-            margin: 0;
-            padding-left: 18px;
-          }
-          li {
-            margin-bottom: 0;
-          }
-          .section {
-            margin-bottom: 2px;
-            border-left: 2px solid #e0e4e8;
-            padding-left: 5px;
-          }
-          .signatures {
-            margin-top: 8px;
-            border-top: 1px solid #ddd;
-            padding-top: 4px;
-          }
-          .signature-line {
-            border-top: 1px solid black;
-            width: 200px;
-            display: inline-block;
-            margin-bottom: 2px;
-          }
-          .date-line {
-            border-bottom: 1px solid black;
-            width: 220px;
-            display: inline-block;
-            margin: 0 5px;
-          }
-          table {
-            width: 100%;
-            margin-top: 8px;
-          }
-          td {
-            width: 50%;
-            padding-top: 3px;
-            vertical-align: top;
-          }
-          ul li, ol li { padding: 0; }
-          li ul, li ol { margin: 0; }
-          * { box-sizing: border-box; }
-          .header {
-            text-align: center;
-            margin-bottom: 3px;
-          }
-          .company-name {
-            font-weight: bold;
-            font-size: 10pt;
-            color: #2a3f5f;
-          }
-          .contract-subtitle {
-            font-style: italic;
-            font-size: 8pt;
-            color: #555;
-            margin-top: 1px;
-          }
-          .signature-name {
-            font-size: 8.5pt;
-            font-weight: bold;
-          }
-          .signature-title {
-            font-size: 7.5pt;
-            color: #555;
-            margin-top: 1px;
-          }
-        </style>
-      </head>
-      <body>
-        <div style="margin-bottom: 4px; padding-bottom: 3px; border-bottom: 2px solid #f97316;">
-          <img src="${dogLogo}" alt="CleverDog" style="height: 40px; width: auto;" />
-        </div>
+      <style>
+        .c * { box-sizing: border-box; }
+        .c {
+          font-family: Georgia, 'Times New Roman', serif;
+          font-size: 9.5pt;
+          line-height: 1.6;
+          color: #1a1a1a;
+        }
+        .c .header {
+          border-bottom: 3px solid #1e3a5f;
+          padding-bottom: 10px;
+          margin-bottom: 14px;
+          display: table;
+          width: 100%;
+        }
+        .c .header-left { display: table-cell; vertical-align: middle; width: 60px; }
+        .c .header-right { display: table-cell; vertical-align: middle; text-align: right; }
+        .c .header-right .company { font-size: 16pt; font-weight: 700; color: #1e3a5f; letter-spacing: 1px; }
+        .c .header-right .tagline { font-size: 7.5pt; color: #888; font-style: italic; margin-top: 2px; }
+        .c h1 {
+          text-align: center;
+          font-size: 15pt;
+          font-weight: 700;
+          color: #1e3a5f;
+          margin: 0 0 6px 0;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+        .c .subtitle { text-align: center; font-size: 8pt; color: #777; margin-bottom: 12px; }
+        .c h2 {
+          font-size: 9.5pt;
+          font-weight: 700;
+          color: #1e3a5f;
+          margin: 14px 0 4px 0;
+          padding: 3px 0 3px 8px;
+          border-left: 3px solid #f97316;
+          background: #f7f8fa;
+        }
+        .c p { margin: 4px 0; }
+        .c ol, .c ul { margin: 4px 0; padding-left: 22px; }
+        .c ul { list-style-type: disc; }
+        .c li { margin-bottom: 2px; }
+        .c .party {
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          padding: 8px 12px;
+          margin: 8px 0;
+          background: #fcfcfc;
+        }
+        .c .party-label {
+          font-size: 7pt;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #f97316;
+          font-weight: 700;
+          margin-bottom: 4px;
+          display: block;
+        }
+        .c .fl { display: block; margin: 2px 0; font-size: 9pt; }
+        .c .fl strong { color: #555; font-weight: 600; }
+        .c .sig {
+          margin-top: 24px;
+          border-top: 2px solid #1e3a5f;
+          padding-top: 14px;
+        }
+        .c .sig-line { border-top: 1px solid #444; width: 200px; display: inline-block; margin-bottom: 2px; }
+        .c .dt-line { border-bottom: 1px solid #444; width: 200px; display: inline-block; margin: 0 5px; }
+        .c table { width: 100%; margin-top: 10px; }
+        .c td { width: 50%; vertical-align: top; padding-top: 3px; }
+        .c .sig-lbl { font-size: 7.5pt; color: #666; }
+      </style>
+      <div class="c">
         <div class="header">
-          <div class="company-name">CleverDog</div>
-          <div class="contract-subtitle">För hundens bästa</div>
+          <div class="header-left">
+            <img src="${dogLogo}" alt="CleverDog" style="height: 44px; width: auto;" />
+          </div>
+          <div class="header-right">
+            <div class="company">CleverDog</div>
+            <div class="tagline">Professionell hundomsorg i Staffanstorp</div>
+          </div>
         </div>
 
-        <h1>AVTAL ${contractData.contractType === 'boarding' ? 'HUNDPENSIONAT' :
-          contractData.contractType === 'socialWalk' ? 'SOCIAL PROMENAD' :
-            contractData.contractType === 'partTime' ? 'DELTID HUNDDAGIS' : 'ENKELDAGIS'}</h1>
+        <h1>Avtal om ${contractTitle}</h1>
+        <p class="subtitle">Ingånget den ${today}</p>
 
-        <p>Ingånget den ${today} mellan:</p>
-        <ol>
-          <li>CleverDog, beläget på Malmövägen 7, Staffanstorp / Johan Anders väg 61, Staffanstorp, e-post cleverdog.aw@gmail.com, organisationsnummer 20020922-5325,
-            företrätt av Alicja Wekwert, hädanefter kallad "Hunddagiset", och</li>
-          <li>${contractData.customerName} bosatt i ${contractData.customerCity} på ${contractData.customerAddress}, personnummer ${contractData.personalNumber},
-            hädanefter kallad "Ägaren", avseende omsorg om hunden:</li>
-        </ol>
+        <div class="party">
+          <span class="party-label">Hunddagis</span>
+          <span class="fl"><strong>Företag:</strong> CleverDog, företrätt av Alicja Wekwert</span>
+          <span class="fl"><strong>Org.nr:</strong> 20020922-5325</span>
+          <span class="fl"><strong>Adress:</strong> Malmövägen 7 / Johan Anders väg 61, Staffanstorp</span>
+          <span class="fl"><strong>E-post:</strong> cleverdog.aw@gmail.com</span>
+        </div>
 
-        <ul class="avoid-break">
-          <li>Hundens namn: ${contractData.dogName}</li>
-          <li>Ras: ${contractData.dogBreed}</li>
-          <li>Ålder: ${contractData.dogAge} år</li>
-          <li>Kön: ${contractData.dogGender || ''}</li>
-          <li>Födelsedatum: ${contractData.dogBirthDate || ''}</li>
-          <li>Mikrochip-/ tatueringnummer: ${contractData.chipNumber}</li>
-          <li>Försäkringsbolag: ${contractData.dogInsuranceCompany || ''}</li>
-          <li>Försäkringsnummer: ${contractData.dogInsuranceNumber || ''}</li>
-        </ul>
+        <div class="party">
+          <span class="party-label">Hundägare ("Ägaren")</span>
+          <span class="fl"><strong>Namn:</strong> ${contractData.customerName}</span>
+          <span class="fl"><strong>Personnummer:</strong> ${contractData.personalNumber}</span>
+          <span class="fl"><strong>Adress:</strong> ${contractData.customerAddress}, ${contractData.customerCity}</span>
+        </div>
 
-        <div class="section avoid-break">
+        <div class="party">
+          <span class="party-label">Hund</span>
+          <span class="fl"><strong>Namn:</strong> ${contractData.dogName} &nbsp;&nbsp; <strong>Ras:</strong> ${contractData.dogBreed} &nbsp;&nbsp; <strong>Ålder:</strong> ${contractData.dogAge} år</span>
+          <span class="fl"><strong>Kön:</strong> ${contractData.dogGender || ''} &nbsp;&nbsp; <strong>Födelsedatum:</strong> ${contractData.dogBirthDate || ''}</span>
+          <span class="fl"><strong>Chipnummer:</strong> ${contractData.chipNumber} &nbsp;&nbsp; <strong>Försäkring:</strong> ${contractData.dogInsuranceCompany || ''} / ${contractData.dogInsuranceNumber || ''}</span>
+        </div>
+
+        <div class="s">
           <h2>§1 Avtalets föremål</h2>
           <ol>
             ${contractData.contractType === 'partTime' ? `
@@ -2885,7 +2856,7 @@ const AdminPage: React.FC = () => {
           </ol>
         </div>
 
-        <div class="section avoid-break">
+        <div class="s">
           <h2>§2 Ägarens ansvar</h2>
           <ol>
             <li>Ägaren intygar att hunden är frisk, har aktuella vaccinationer och inte uppvisar aggressivt beteende.</li>
@@ -2910,7 +2881,7 @@ const AdminPage: React.FC = () => {
           </ol>
         </div>
 
-        <div class="section avoid-break">
+        <div class="s">
           <h2>§3 Avgifter</h2>
           <ol>
             ${contractData.contractType === 'partTime' ? `
@@ -2930,7 +2901,7 @@ const AdminPage: React.FC = () => {
           </ol>
         </div>
 
-        <div class="section avoid-break">
+        <div class="s">
           <h2>§4 Ansvar</h2>
           <ol>
             <li>Hunddagiset förbinder sig att se till hundens säkerhet, men ansvarar inte för skador som uppstår vid naturliga interaktioner mellan hundar.</li>
@@ -2938,7 +2909,7 @@ const AdminPage: React.FC = () => {
           </ol>
         </div>
 
-        <div class="section avoid-break">
+        <div class="s">
           <h2>§5 Avtalstid och uppsägning</h2>
           <ol>
             ${contractData.contractType === 'singleDay' ? `
@@ -2952,7 +2923,7 @@ const AdminPage: React.FC = () => {
           </ol>
         </div>
 
-        <div class="section avoid-break">
+        <div class="s">
           <h2>§6 Slutbestämmelser</h2>
           <ol>
             <li>För frågor som inte regleras i detta avtal gäller bestämmelserna i svensk lag.</li>
@@ -2960,26 +2931,25 @@ const AdminPage: React.FC = () => {
           </ol>
         </div>
 
-        <div class="signatures avoid-break">
-          <p>Ort och datum: <span class="date-line"></span></p>
-
-          <table style="margin-top: 25px;">
+        <div class="sig">
+          <p style="font-size: 8pt; color: #777; margin-bottom: 6px;">Genom underskrift bekräftar parterna att de tagit del av och godkänner ovanstående villkor.</p>
+          <p>Ort och datum: <span class="dt-line"></span></p>
+          <table style="margin-top: 24px;">
             <tr>
               <td>
-                <div class="signature-line"></div>
-                <p class="signature-name">CleverDog, Alicja Wekwert</p>
-                <p class="signature-title">Verksamhetsägare</p>
+                <div class="sig-line"></div>
+                <p class="sig-lbl">CleverDog, Alicja Wekwert</p>
+                <p style="margin-top: 6px; font-size: 8.5pt;">Verksamhetsägare</p>
               </td>
               <td>
-                <div class="signature-line"></div>
-                <p class="signature-name">${contractData.customerName}</p>
-                <p class="signature-title">Hundägare</p>
+                <div class="sig-line"></div>
+                <p class="sig-lbl">${contractData.customerName}</p>
+                <p style="margin-top: 6px; font-size: 8.5pt;">Hundägare</p>
               </td>
             </tr>
           </table>
         </div>
-      </body>
-      </html>
+      </div>
     `;
 
     return contractHTML;
