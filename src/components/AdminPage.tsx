@@ -2691,10 +2691,249 @@ const AdminPage: React.FC = () => {
       `;
     }
 
+    // Part-time contract uses the same comprehensive template as daycare
+    if (contractData.contractType === 'partTime') {
+      return `
+      <style>
+        .c * { box-sizing: border-box; }
+        .c {
+          font-family: Georgia, 'Times New Roman', serif;
+          font-size: 9.5pt;
+          line-height: 1.6;
+          color: #1a1a1a;
+        }
+        .c .header {
+          border-bottom: 3px solid #1e3a5f;
+          padding-bottom: 10px;
+          margin-bottom: 14px;
+          display: table;
+          width: 100%;
+        }
+        .c .header-left { display: table-cell; vertical-align: middle; width: 60px; }
+        .c .header-right { display: table-cell; vertical-align: middle; text-align: right; }
+        .c .header-right .company { font-size: 16pt; font-weight: 700; color: #1e3a5f; letter-spacing: 1px; }
+        .c .header-right .tagline { font-size: 7.5pt; color: #888; font-style: italic; margin-top: 2px; }
+        .c h1 {
+          text-align: center;
+          font-size: 15pt;
+          font-weight: 700;
+          color: #1e3a5f;
+          margin: 0 0 6px 0;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+        .c .subtitle { text-align: center; font-size: 8pt; color: #777; margin-bottom: 12px; }
+        .c h2 {
+          font-size: 9.5pt;
+          font-weight: 700;
+          color: #1e3a5f;
+          margin: 14px 0 4px 0;
+          padding: 3px 0 3px 8px;
+          border-left: 3px solid #f97316;
+          background: #f7f8fa;
+        }
+        .c p { margin: 4px 0; }
+        .c ul { margin: 4px 0; padding-left: 22px; list-style-type: disc; }
+        .c li { margin-bottom: 2px; }
+        .c .parties { margin: 10px 0; }
+        .c .party {
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          padding: 8px 12px;
+          margin: 8px 0;
+          background: #fcfcfc;
+        }
+        .c .party-label {
+          font-size: 7pt;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #f97316;
+          font-weight: 700;
+          margin-bottom: 4px;
+          display: block;
+        }
+        .c .fl { display: block; margin: 2px 0; font-size: 9pt; }
+        .c .fl strong { color: #555; font-weight: 600; }
+        .c .sig {
+          margin-top: 24px;
+          border-top: 2px solid #1e3a5f;
+          padding-top: 14px;
+        }
+        .c .sig-line { border-top: 1px solid #444; width: 200px; display: inline-block; margin-bottom: 2px; }
+        .c .dt-line { border-bottom: 1px solid #444; width: 200px; display: inline-block; margin: 0 5px; }
+        .c table { width: 100%; margin-top: 10px; }
+        .c td { width: 50%; vertical-align: top; padding-top: 3px; }
+        .c .sig-lbl { font-size: 7.5pt; color: #666; }
+      </style>
+      <div class="c">
+        <div class="header">
+          <div class="header-left">
+            <img src="${dogLogo}" alt="CleverDog" style="height: 44px; width: auto;" />
+          </div>
+          <div class="header-right">
+            <div class="company">CleverDog</div>
+            <div class="tagline">Professionell hundomsorg i Staffanstorp</div>
+          </div>
+        </div>
+
+        <h1>Avtal om deltid hunddagis</h1>
+        <p class="subtitle">Avtal mellan hunddagis och hundägare</p>
+
+        <div class="parties">
+          <div class="party">
+            <span class="party-label">Hunddagis</span>
+            <span class="fl"><strong>Företag:</strong> CleverDog</span>
+            <span class="fl"><strong>Org.nr:</strong> 20020922-5325</span>
+            <span class="fl"><strong>Adress:</strong> Malmövägen 7 / Johan Anders väg 61, Staffanstorp</span>
+            <span class="fl"><strong>E-post:</strong> cleverdog.aw@gmail.com</span>
+          </div>
+          <div class="party">
+            <span class="party-label">Hundägare</span>
+            <span class="fl"><strong>Namn:</strong> ${contractData.customerName || '______________________________'}</span>
+            <span class="fl"><strong>Personnummer:</strong> ${contractData.personalNumber || '______________________________'}</span>
+            <span class="fl"><strong>Adress:</strong> ${contractData.customerAddress ? contractData.customerAddress + (contractData.customerCity ? ', ' + contractData.customerCity : '') : '______________________________'}</span>
+            <span class="fl"><strong>Telefon:</strong> ${contractData.customerPhone || '______________________________'}</span>
+            <span class="fl"><strong>E-post:</strong> ${contractData.customerEmail || '______________________________'}</span>
+          </div>
+        </div>
+
+        <p>Avtalet gäller nedanstående hund.</p>
+
+        <div class="s">
+          <h2>1. Uppgifter om hunden</h2>
+          <div class="party">
+            <span class="fl"><strong>Hundens namn:</strong> ${contractData.dogName || ''}</span>
+            <span class="fl"><strong>Ras:</strong> ${contractData.dogBreed || ''} &nbsp;&nbsp; <strong>Kön:</strong> ${contractData.dogGender || ''}</span>
+            <span class="fl"><strong>Födelsedatum:</strong> ${contractData.dogBirthDate || ''} &nbsp;&nbsp; <strong>Chipnummer:</strong> ${contractData.chipNumber || ''}</span>
+            <span class="fl"><strong>Försäkringsbolag:</strong> ${contractData.dogInsuranceCompany || ''} &nbsp;&nbsp; <strong>Nr:</strong> ${contractData.dogInsuranceNumber || ''}</span>
+          </div>
+        </div>
+
+        <div class="s">
+          <h2>2. Avtalets omfattning</h2>
+          <p>Hunddagiset åtar sig att tillhandahålla tillsyn, omsorg, rastning och aktivering av hunden ${contractData.daysPerWeek} dagar i veckan, i en trygg och säker miljö, i enlighet med gällande lagstiftning samt Jordbruksverkets föreskrifter.</p>
+          <p>Hunden vistas i box tillsammans med andra hundar eller enskilt beroende på behov, temperament och hälsotillstånd.</p>
+        </div>
+
+        <div class="s">
+          <h2>3. Hundägarens ansvar</h2>
+          <p>Hundägaren ansvarar för att:</p>
+          <ul>
+            <li>Lämna korrekta och fullständiga uppgifter om hundens hälsa och beteende</li>
+            <li>Informera om sjukdom, medicinering, löp eller andra förändringar</li>
+            <li>Säkerställa att hunden är försäkrad under hela avtalstiden</li>
+          </ul>
+          <p>Hundar med aggressivt eller olämpligt beteende kan nekas plats.</p>
+        </div>
+
+        <div class="s">
+          <h2>4. Vaccinationer</h2>
+          <p>För att hunden ska kunna vistas på hunddagiset krävs att den är fullt vaccinerad enligt gällande rekommendationer.</p>
+          <p>Obligatoriska vaccinationer är:</p>
+          <ul>
+            <li>Valpsjuka (CDV)</li>
+            <li>Hepatit (HCC)</li>
+            <li>Parvovirus (CPV)</li>
+            <li>Kennelhosta</li>
+            <li>Leptospiros</li>
+            <li>Rabies</li>
+          </ul>
+          <p>Hundägaren ansvarar för att samtliga vaccinationer är giltiga och uppdaterade under hela avtalstiden. Hunddagiset har rätt att begära giltigt vaccinationsintyg.</p>
+          <p>Hund som inte uppfyller vaccinationskraven kan nekas plats utan rätt till reducering eller återbetalning av avgift.</p>
+        </div>
+
+        <div class="s">
+          <h2>5. Hunddagisets ansvar</h2>
+          <p>Hunddagiset ansvarar för:</p>
+          <ul>
+            <li>Daglig tillsyn och omsorg</li>
+            <li>Professionell och trygg hantering av hundarna</li>
+            <li>Rutiner för hygien, säkerhet och djurvälfärd</li>
+          </ul>
+          <p>Vid sjukdom eller olycka har hunddagiset rätt att kontakta veterinär. Samtliga kostnader belastar hundägaren.</p>
+        </div>
+
+        <div class="s">
+          <h2>6. Öppettider, hämtning och förseningsavgift</h2>
+          <p>Hunddagisets ordinarie öppettider är:</p>
+          <ul>
+            <li>Måndag–torsdag: till kl. 18.00</li>
+            <li>Fredag: till kl. 17.00</li>
+          </ul>
+          <p>Hunden ska hämtas senast vid angiven stängningstid.</p>
+          <p>Vid försenad hämtning debiteras 200 SEK per påbörjad timme.</p>
+          <p>Hämtning kan ske upp till en timme efter stängning, dock senast kl. 19.00.</p>
+          <p>Om hunden inte hämtas senast kl. 19.00 övergår vistelsen automatiskt till hundpensionat, och hundägaren debiteras extra enligt gällande prislista för hundpensionat.</p>
+        </div>
+
+        <div class="s">
+          <h2>7. Röda dagar och helgdagar</h2>
+          <p>Hunddagiset är stängt på samtliga röda dagar och helgdagar enligt svensk kalender.</p>
+          <p>Dagen före röd dag är hunddagiset öppet till kl. 14.00.</p>
+          <p>Hämtning ska ske senast vid denna tid. Försenad hämtning debiteras enligt gällande villkor.</p>
+        </div>
+
+        <div class="s">
+          <h2>8. Semester</h2>
+          <p>Hunddagiset har 28 dagars semester per år.</p>
+          <p>Under semestertiden sker ingen reducering eller återbetalning av månadsavgiften.</p>
+          <p>Avgiften avser en reserverad plats på hunddagiset och gäller oavsett faktisk närvaro.</p>
+        </div>
+
+        <div class="s">
+          <h2>9. Löp</h2>
+          <p>Om en tik börjar löpa och samtliga boxar avsedda för löptikar redan är upptagna, kan hunden inte tas emot på hunddagiset under löpperioden. Hunden ska då stanna hemma tills löpet är avslutat.</p>
+          <p>Ingen reducering eller återbetalning av avgiften sker under denna period.</p>
+        </div>
+
+        <div class="s">
+          <h2>10. Betalning</h2>
+          <p>Avgift enligt överenskommet abonnemang: ${contractData.price ? contractData.price + ' SEK/månad' : '__________ SEK/månad'}.</p>
+          <p>Betalning sker månadsvis enligt faktura.</p>
+          <p>Vid utebliven betalning kan platsen sägas upp med omedelbar verkan.</p>
+        </div>
+
+        <div class="s">
+          <h2>11. Uppsägning</h2>
+          <p>Uppsägningstiden är en (1) kalendermånad och räknas från nästkommande månadsskifte, oavsett vilket datum uppsägningen lämnas in.</p>
+          <p>Exempel:</p>
+          <ul>
+            <li>Om uppsägning sker 15 januari 2026, gäller platsen och avgiften till och med 1 mars 2026.</li>
+            <li>Om uppsägning sker 1 januari 2026, gäller platsen och avgiften till och med 1 mars 2026.</li>
+          </ul>
+          <p>Under uppsägningstiden debiteras full avgift oavsett faktisk närvaro.</p>
+        </div>
+
+        <div class="s">
+          <h2>12. Ansvarsbegränsning</h2>
+          <p>Hunddagiset ansvarar inte för skador, sjukdom eller olyckor som uppstår till följd av hundens eget beteende, ålder eller hälsotillstånd, såvida inte grov vårdslöshet föreligger.</p>
+        </div>
+
+        <div class="sig">
+          <p style="font-size: 8pt; color: #777; margin-bottom: 6px;">Genom underskrift bekräftar parterna att de tagit del av och godkänner ovanstående villkor.</p>
+          <p>Ort och datum: <span class="dt-line"></span></p>
+          <table style="margin-top: 24px;">
+            <tr>
+              <td>
+                <div class="sig-line"></div>
+                <p class="sig-lbl">Hundägare</p>
+                <p style="margin-top: 6px; font-size: 8.5pt;">${contractData.customerName || '_________________________'}</p>
+              </td>
+              <td>
+                <div class="sig-line"></div>
+                <p class="sig-lbl">CleverDog</p>
+                <p style="margin-top: 6px; font-size: 8.5pt;">_________________________</p>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      `;
+    }
+
     // Other contract types use the same professional design
     const contractTitle = contractData.contractType === 'boarding' ? 'Hundpensionat' :
-      contractData.contractType === 'socialWalk' ? 'Social Promenad' :
-        contractData.contractType === 'partTime' ? 'Deltid Hunddagis' : 'Enkeldagis';
+      contractData.contractType === 'socialWalk' ? 'Social Promenad' : 'Enkeldagis';
 
     let contractHTML = `
       <style>
@@ -2807,19 +3046,7 @@ const AdminPage: React.FC = () => {
         <div class="s">
           <h2>§1 Avtalets föremål</h2>
           <ol>
-            ${contractData.contractType === 'partTime' ? `
-            <li>Hunddagiset åtar sig att ta hand om Ägarens hund ${contractData.daysPerWeek} dagar i veckan och tillhandahålla:
-              <ul>
-                <li>socialisering med andra hundar,</li>
-                <li>grundläggande lydnadsträning,</li>
-                <li>lek och fysisk aktivitet,</li>
-                <li>utfodring (enligt överenskommelse med Ägaren),</li>
-                <li>säkerhet och tillsyn.</li>
-              </ul>
-            </li>
-            <li>Omsorgen erbjuds på vardagar mellan kl. 7:00 och 18:00 (17* Fredag).</li>
-            <li>Ägaren åtar sig att lämna och hämta hunden i tid.</li>
-            ` : contractData.contractType === 'boarding' ? `
+            ${contractData.contractType === 'boarding' ? `
             <li>Hunddagiset åtar sig att ta hand om Ägarens hund under perioden ${formatDate(contractData.startDate)} till ${formatDate(contractData.endDate)} och tillhandahålla:
               <ul>
                 <li>boende och övernattning,</li>
@@ -2884,11 +3111,7 @@ const AdminPage: React.FC = () => {
         <div class="s">
           <h2>§3 Avgifter</h2>
           <ol>
-            ${contractData.contractType === 'partTime' ? `
-            <li>Kostnaden för deltid hunddagis är ${contractData.price}kr per månad och ska betalas senast den 27 varje månad.</li>
-            <li>Vid frånvaro återbetalas inte avgiften.</li>
-            <li>Dagiset har rätt till 25 semesterdagar per år. Dessa dagar är inkluderade i det månatliga abonnemanget och ersätts inte ekonomiskt.</li>
-            ` : contractData.contractType === 'boarding' ? `
+            ${contractData.contractType === 'boarding' ? `
             <li>Kostnaden för hundpensionat är ${contractData.price}kr totalt för hela vistelsen och ska betalas i samband med lämning av hunden.</li>
             <li>Vid avbokning mindre än 7 dagar före vistelsen debiteras 50% av priset.</li>
             ` : contractData.contractType === 'singleDay' ? `
