@@ -1588,7 +1588,7 @@ export const getStaffSchedules = async (employeeId?: string, startDate?: string,
 
     if (error) throw error;
 
-    return (data || []) as StaffSchedule[];
+    return (data || []) as unknown as StaffSchedule[];
   } catch (error) {
     console.error('Error fetching staff schedules:', error);
     const saved = localStorage.getItem('cleverStaffSchedules');
@@ -1710,7 +1710,7 @@ export const getStaffAbsences = async (employeeId?: string, status?: 'pending' |
 
     if (error) throw error;
 
-    return (data || []) as StaffAbsence[];
+    return (data || []) as unknown as StaffAbsence[];
   } catch (error) {
     console.error('Error fetching staff absences:', error);
     const saved = localStorage.getItem('cleverStaffAbsences');
