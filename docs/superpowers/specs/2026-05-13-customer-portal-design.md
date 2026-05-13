@@ -334,6 +334,10 @@ src/components/admin/
 
 **Designen godkänd av användaren 2026-05-13 efter brainstorming-session. Klar för implementationsplan.**
 
+**Implementationsstatus 2026-05-13 (v1):** Alla 26 tasks i planen är klara på branchen `feat/customer-portal`. Build passerar (`npm run build`). Säkerhetsadvisors visar bara förväntade pre-existing warnings (`applications` anon insert för formulärintag, `get_user_role`/`handle_new_user` pre-existing definer-funktioner, leaked password protection som måste aktiveras manuellt i Supabase-konsolen). De nya `is_admin_user()` och `current_customer_id()` är `SECURITY DEFINER` by design — de behöver bypass:a RLS för att fungera inom policies; advisorvarningarna är kosmetiska.
+
+Malmö-rensningen i v1 är medvetet kirurgisk: synliga UI-ingångar (dashboard-tiles, mobile-menu-knappar, conditional rendering i Footer/Hero/About/Contact) är borta, plus själva filerna (`MalmoPage`, `src/components/malmo/`, `LocationSelector`, `AdminPage.tsx.backup`). Lib-typer (`'malmo' | 'staffanstorp'`), `PRICES.malmo`-blocket, i18n-keys och DB CHECK-constraints är medvetet *kvar* för att inte bryta admin på historisk data — städas i en framtida dedikerad migrering om så önskas.
+
 ---
 
 ## Bilaga A — Faktisk Supabase-state (inspekterad 2026-05-13 via MCP)
