@@ -333,3 +333,66 @@ src/components/admin/
 ## 13. Status
 
 **Designen godkänd av användaren 2026-05-13 efter brainstorming-session. Klar för implementationsplan.**
+
+---
+
+## Bilaga A — Faktisk Supabase-state (inspekterad 2026-05-13 via MCP)
+
+Den verkliga DB:n är mer fullbordad än `database.types.ts` antyder. Detta avsnitt dokumenterar avvikelser från huvuddesignen och konkreta åtgärder.
+
+### A.1 Tabeller som redan finns
+
+| Tabell | Status / kommentar |
+| --- | --- |
+| `dogs` | Har redan `email`, `gender`, `birth_date`, `chip_number`, `owner_address`, `owner_city`, `owner_personal_number`, `insurance_company`, `insurance_number`. CHECK på `type` inkluderar redan `'singleDay'` och `'boarding'`. `locations` är `jsonb` (ej textarray). Endast `photo_url` och `customer_notes` saknas. |
+| `boarding_records` | Existerar; används av admin för dagens pensionatsregister. Vi **låter den ligga kvar** för befintlig admin-vy. Nya pensionatsbokningar från kund går till nya `bookings`-tabellen. Migrering av historik är ej i scope för v1. |
+| `applications` | Existerande "intresseanmälan"-tabell med matching mot hund (`matched_dog_id`, `matched_by`, `status: 'matched' \| 'added'`). Vi rör inte den; men `customers` kan kopplas till `application_id` på sikt för spårbarhet. |
+| `admin_users` | Befintlig roll-tabell (admin/employee/platschef) kopplad till `auth.users`. **Återanvänds** för admin-bypass-policies. |
+| `employees`, `meetings`, `planning_history`, `box_settings`, `staff_schedules`, `staff_absences` | Admin-tabeller. Påverkar inte kundsidan, men flera har Malmö i CHECK constraints. |
+
+### A.2 Säkerhetsfynd som måste hanteras
+
+**Kritiskt — för öppna RLS-policies:**
+- `dogs`, `boarding_records`, `planning_history`, `box_settings` har policyn `"Allow all operations"` med `USING (true) WITH CHECK (true)` för `public`. Detta betyder att **vem som helst med anon-key kan göra vad som helst** mot dessa tabeller. När kunder börjar logga in mot samma projekt är detta inte längre acceptabelt.
+
+**Åtgärd i v1:** Ersätt "Allow all operations" på dessa tabeller med scopeade policies:
+- Admin/employee/platschef → full access (via `admin_users`-lookup)
+- Inloggad kund → SELECT/UPDATE bara på `dogs` kopplade via `customer_dogs`
+- Anon → ingen direkt access (frontend tvingas via auth)
+
+**Mindre fynd:**
+- `get_user_role`, `handle_new_user` (SECURITY DEFINER) callable av anon/authenticated — bör låsas till `service_role` eller får uttryckliga REVOKE EXECUTE FROM anon, authenticated
+- Sex funktioner saknar `search_path`-pinning — kan fixas i samma migrering: `ALTER FUNCTION … SET search_path = public, pg_temp;`
+- Auth-inställning: aktivera leaked password protection (HaveIBeenPwned) — gör manuellt i Supabase-konsolen, ingen migrering behövs
+
+### A.3 Malmö-borttagning — DB-bit
+
+Malmö finns i CHECK-constraints på följande tabeller:
+- `boarding_records.location`
+- `planning_history.location`
+- `box_settings.location`
+- `meetings.location`
+- `applications.location`
+- `employees.location` (inkluderar även `'both'`)
+- `staff_schedules.location`
+
+**Beslut för v1:** Vi **rör inte** dessa constraints i denna iteration. Historiska rader med `location='malmo'` förblir oförändrade. Frontkoden slutar skapa malmö-rader, men DB tillåter dem tekniskt. Detta är medvetet — risken för datakorruption från en CHECK-ändring är högre än nyttan i v1.
+
+(Om vi vill rensa senare: skriv en separat städ-migrering som arkiverar malmö-rader, droppar gamla constraints och skapar nya utan `'malmo'`.)
+
+### A.4 Storage
+
+Inga buckets finns idag. Vi skapar `dog-photos` med:
+- Public read (för att admin och kund båda ska kunna visa via URL utan signing)
+- Authenticated upload bara
+- 5 MB filgräns
+- Tillåtna MIME: `image/jpeg`, `image/png`, `image/webp`
+
+### A.5 Justeringar mot huvuddesignen
+
+1. **`dogs`-ändringar:** Bara `photo_url` och `customer_notes` läggs till. Resten finns redan.
+2. **`bookings`-tabellen** skapas som planerat. Pensionat hanteras där, inte i `boarding_records` (legacy).
+3. **`recurring_schedule`** skapas som planerat — knyts till `dog_id`.
+4. **RLS-arbete** är större än vad huvudspecen antyder: vi måste *ersätta* befintliga "Allow all operations" på fyra tabeller. Implementations-planen ska ha ett tydligt steg för detta innan kundsystemet rullas ut.
+5. **Edge function för invite:** behövs som tidigare. Sätts upp via `supabase functions deploy` eller motsvarande MCP-anrop.
+
