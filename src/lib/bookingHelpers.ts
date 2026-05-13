@@ -1,0 +1,119 @@
+import { supabase } from './supabase';
+import type { Database } from './database.types';
+
+export type BookingRow = Database['public']['Tables']['bookings']['Row'];
+
+export type DayStatus =
+  | 'scheduled' | 'extra' | 'cancelled' | 'pending' | 'rejected' | 'boarding' | 'none';
+
+export type DayInfo = {
+  date: string;
+  weekday: number;
+  status: DayStatus;
+  bookingId?: string;
+  notes?: string;
+};
+
+const pad = (n: number) => n.toString().padStart(2, '0');
+const isoDate = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
+const toMonFirst = (jsDay: number) => (jsDay + 6) % 7;
+
+export const getDaysForMonth = async (
+  dogId: string,
+  year: number,
+  month: number,
+): Promise<DayInfo[]> => {
+  if (!supabase) return [];
+
+  const lastDay = new Date(year, month + 1, 0);
+  const start = isoDate(year, month, 1);
+  const end = isoDate(year, month, lastDay.getDate());
+
+  const [schedRes, bookingsRes] = await Promise.all([
+    supabase.from('recurring_schedule').select('weekday')
+      .eq('dog_id', dogId).eq('active', true),
+    supabase.from('bookings').select('*')
+      .eq('dog_id', dogId).lte('start_date', end).gte('end_date', start),
+  ]);
+
+  const recurring = new Set((schedRes.data ?? []).map(r => r.weekday as number));
+  const bookings = bookingsRes.data ?? [];
+
+  const days: DayInfo[] = [];
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const dateStr = isoDate(year, month, d);
+    const weekday = toMonFirst(new Date(year, month, d).getDay());
+    const booking = bookings.find(b => b.start_date <= dateStr && b.end_date >= dateStr);
+
+    let status: DayStatus = 'none';
+    if (booking) {
+      if (booking.booking_type === 'boarding') status = 'boarding';
+      else if (booking.status === 'pending') status = 'pending';
+      else if (booking.status === 'rejected') status = 'rejected';
+      else if (booking.booking_type === 'cancelled' || booking.status === 'cancelled') status = 'cancelled';
+      else if (booking.booking_type === 'extra') status = 'extra';
+      else status = 'scheduled';
+    } else if (recurring.has(weekday)) {
+      status = 'scheduled';
+    }
+
+    days.push({
+      date: dateStr,
+      weekday,
+      status,
+      bookingId: booking?.id,
+      notes: booking?.notes ?? undefined,
+    });
+  }
+  return days;
+};
+
+export const upsertBooking = async (params: {
+  id?: string;
+  dog_id: string;
+  customer_id: string;
+  start_date: string;
+  end_date: string;
+  booking_type: 'scheduled' | 'extra' | 'cancelled' | 'boarding' | 'single_day';
+  status?: 'confirmed' | 'pending' | 'rejected' | 'cancelled';
+  notes?: string;
+}): Promise<BookingRow> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const status = params.status ??
+    (params.booking_type === 'boarding' || params.booking_type === 'single_day' ? 'pending' : 'confirmed');
+  const row = { ...params, status };
+  if (row.id) {
+    const { id, ...rest } = row;
+    const { data, error } = await supabase.from('bookings').update(rest).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  }
+  const { data, error } = await supabase.from('bookings').insert(row).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const deleteBooking = async (id: string) => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { error } = await supabase.from('bookings').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export const setRecurringSchedule = async (dogId: string, weekdays: number[]) => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  await supabase.from('recurring_schedule').delete().eq('dog_id', dogId);
+  if (weekdays.length === 0) return;
+  const rows = weekdays.map(w => ({ dog_id: dogId, weekday: w, active: true }));
+  const { error } = await supabase.from('recurring_schedule').insert(rows);
+  if (error) throw error;
+};
+
+export const getRecurringSchedule = async (dogId: string): Promise<number[]> => {
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from('recurring_schedule')
+    .select('weekday')
+    .eq('dog_id', dogId)
+    .eq('active', true);
+  return (data ?? []).map(r => r.weekday as number);
+};

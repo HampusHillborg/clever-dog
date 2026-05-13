@@ -8,6 +8,7 @@ const AdminPage = lazy(() => import('./components/AdminPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'))
 const CustomerDashboardPage = lazy(() => import('./pages/CustomerDashboardPage'))
+const CustomerDogPage = lazy(() => import('./pages/CustomerDogPage'))
 import { BookingProvider } from './components/BookingContext'
 import './App.css'
 
@@ -37,6 +38,11 @@ function App() {
             <Route path="/kund" element={
               <Suspense fallback={<Loading />}>
                 <ProtectedCustomerRoute><CustomerDashboardPage /></ProtectedCustomerRoute>
+              </Suspense>
+            } />
+            <Route path="/kund/hund/:id" element={
+              <Suspense fallback={<Loading />}>
+                <ProtectedCustomerRoute><CustomerDogPage /></ProtectedCustomerRoute>
               </Suspense>
             } />
           </Routes>
