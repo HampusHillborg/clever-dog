@@ -42,6 +42,10 @@ import {
 import { PRICES, VAT_RATE } from '../lib/prices';
 import { signIn, signOut, getCurrentUser, onAuthStateChange, setPassword as setUserPassword, type AuthUser } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import CustomersTab from './admin/CustomersTab';
+import BookingRequestsTab from './admin/BookingRequestsTab';
+import MessagesAdminTab from './admin/MessagesAdminTab';
+import StatsTab from './admin/StatsTab';
 
 interface ContractData {
   // Common fields
@@ -152,7 +156,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats';
 
 type UserRole = 'admin' | 'employee' | 'platschef';
 
@@ -7573,6 +7577,14 @@ const AdminPage: React.FC = () => {
         return renderMySchedule();
       case 'my-absences':
         return renderMyAbsences();
+      case 'customers':
+        return (userRole === 'admin' || userRole === 'platschef') ? <CustomersTab /> : renderDashboard();
+      case 'booking-requests':
+        return <BookingRequestsTab />;
+      case 'admin-messages':
+        return <MessagesAdminTab />;
+      case 'customer-stats':
+        return (userRole === 'admin' || userRole === 'platschef') ? <StatsTab /> : renderDashboard();
       default:
         return renderDashboard();
     }
@@ -8037,7 +8049,11 @@ const AdminPage: React.FC = () => {
                                     currentView === 'settings' ? 'Inställningar' :
                                       currentView === 'applications' ? 'Ansökningar' :
                                         currentView === 'meetings' ? 'Möten' :
-                                          'Dashboard'}
+                                          currentView === 'customers' ? 'Kunder' :
+                                            currentView === 'booking-requests' ? 'Bokningsförfrågningar' :
+                                              currentView === 'admin-messages' ? 'Meddelanden' :
+                                                currentView === 'customer-stats' ? 'Kund-statistik' :
+                                                  'Dashboard'}
               </h1>
               <div className="ml-auto sm:ml-4">
                 <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${userRole === 'admin'
@@ -8170,6 +8186,36 @@ const AdminPage: React.FC = () => {
                 >
                   <div className="font-semibold">Inställningar</div>
                 </button>
+                {(userRole === 'admin' || userRole === 'platschef') && (
+                  <button
+                    onClick={() => { setCurrentView('customers'); setIsMobileMenuOpen(false); }}
+                    className={`p-3 text-left rounded-lg transition-colors ${currentView === 'customers' ? 'bg-teal-100 text-teal-800' : 'bg-gray-50 hover:bg-gray-100'}`}
+                  >
+                    <div className="font-semibold">Kunder</div>
+                    <div className="text-xs text-gray-600">Kundkonton &amp; invites</div>
+                  </button>
+                )}
+                <button
+                  onClick={() => { setCurrentView('booking-requests'); setIsMobileMenuOpen(false); }}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'booking-requests' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="font-semibold">Förfrågningar</div>
+                  <div className="text-xs text-gray-600">Pensionat &amp; enstaka</div>
+                </button>
+                <button
+                  onClick={() => { setCurrentView('admin-messages'); setIsMobileMenuOpen(false); }}
+                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'admin-messages' ? 'bg-sky-100 text-sky-800' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="font-semibold">Meddelanden</div>
+                </button>
+                {(userRole === 'admin' || userRole === 'platschef') && (
+                  <button
+                    onClick={() => { setCurrentView('customer-stats'); setIsMobileMenuOpen(false); }}
+                    className={`p-3 text-left rounded-lg transition-colors ${currentView === 'customer-stats' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-50 hover:bg-gray-100'}`}
+                  >
+                    <div className="font-semibold">Kund-statistik</div>
+                  </button>
+                )}
               </div>
             </div>
           )}

@@ -1845,3 +1845,136 @@ export const deleteStaffAbsence = async (id: string): Promise<void> => {
   }
 };
 
+// =============================================================================
+// CUSTOMER PORTAL — customers, customer_dogs, bookings, messages
+// =============================================================================
+
+import type { Database } from './database.types';
+
+export type Customer = Database['public']['Tables']['customers']['Row'];
+export type CustomerInsert = Database['public']['Tables']['customers']['Insert'];
+export type BookingRow = Database['public']['Tables']['bookings']['Row'];
+
+export const getCustomers = async (): Promise<Customer[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getCustomers', error); return []; }
+  return data ?? [];
+};
+
+export const saveCustomer = async (c: CustomerInsert & { id?: string }): Promise<Customer> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  if (c.id) {
+    const { id, ...rest } = c;
+    const { data, error } = await supabase.from('customers').update(rest).eq('id', id).select().single();
+    if (error) throw error;
+    return data;
+  }
+  const { data, error } = await supabase.from('customers').insert(c).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const deleteCustomer = async (id: string) => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { error } = await supabase.from('customers').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export const getCustomerDogIds = async (customerId: string): Promise<string[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('customer_dogs')
+    .select('dog_id')
+    .eq('customer_id', customerId);
+  if (error) { console.error('getCustomerDogIds', error); return []; }
+  return (data ?? []).map(r => r.dog_id);
+};
+
+export const setCustomerDogs = async (customerId: string, dogIds: string[]) => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  await supabase.from('customer_dogs').delete().eq('customer_id', customerId);
+  if (dogIds.length === 0) return;
+  const rows = dogIds.map(dog_id => ({ customer_id: customerId, dog_id }));
+  const { error } = await supabase.from('customer_dogs').insert(rows);
+  if (error) throw error;
+};
+
+export const inviteCustomer = async (customerId: string): Promise<{ ok: boolean; error?: string }> => {
+  if (!supabase) return { ok: false, error: 'Supabase ej konfigurerad' };
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { ok: false, error: 'Ej inloggad' };
+  const baseUrl = (supabase as unknown as { supabaseUrl: string }).supabaseUrl;
+  const url = `${baseUrl}/functions/v1/invite-customer`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'authorization': `Bearer ${session.access_token}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ customer_id: customerId }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) return { ok: false, error: json.error || `HTTP ${res.status}` };
+  return { ok: true };
+};
+
+// Bookings — pending requests for admin
+export type PendingBooking = BookingRow & {
+  dogs: { name: string; breed: string } | null;
+  customers: { name: string; email: string } | null;
+};
+
+export const getPendingBookings = async (): Promise<PendingBooking[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*, dogs(name, breed), customers(name, email)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true });
+  if (error) { console.error('getPendingBookings', error); return []; }
+  return (data ?? []) as unknown as PendingBooking[];
+};
+
+export const approveBooking = async (id: string) => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { error } = await supabase.from('bookings').update({ status: 'confirmed' }).eq('id', id);
+  if (error) throw error;
+};
+
+export const rejectBooking = async (id: string, response?: string) => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { error } = await supabase.from('bookings').update({
+    status: 'rejected',
+    admin_response: response ?? null,
+  }).eq('id', id);
+  if (error) throw error;
+};
+
+// Admin messages
+export const getAllMessageThreads = async () => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*, customers(name, email), dogs(name)')
+    .order('created_at', { ascending: false });
+  if (error) { console.error('getAllMessageThreads', error); return []; }
+  return data ?? [];
+};
+
+export const sendStaffMessage = async (params: { customer_id: string; dog_id?: string | null; body: string }) => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Ej inloggad');
+  const { error } = await supabase.from('messages').insert({
+    customer_id: params.customer_id,
+    dog_id: params.dog_id ?? null,
+    sender_role: 'staff',
+    sender_user_id: session.user.id,
+    body: params.body,
+  });
+  if (error) throw error;
+};
