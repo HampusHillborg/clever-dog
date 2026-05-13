@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import BookingForm from './BookingForm';
-import MalmoBookingForm from './malmo/MalmoBookingForm';
 
 interface BookingContextType {
   openBookingForm: (location?: string) => void;
@@ -19,25 +18,19 @@ export const useBooking = () => {
 
 export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
-  const [isMalmoBookingFormOpen, setIsMalmoBookingFormOpen] = useState(false);
-  const openBookingForm = (location?: string) => {
-    if (location === 'malmo') {
-      setIsMalmoBookingFormOpen(true);
-    } else {
-      setIsBookingFormOpen(true);
-    }
+
+  const openBookingForm = (_location?: string) => {
+    setIsBookingFormOpen(true);
   };
 
   const closeBookingForm = () => {
     setIsBookingFormOpen(false);
-    setIsMalmoBookingFormOpen(false);
   };
 
   return (
     <BookingContext.Provider value={{ openBookingForm, closeBookingForm }}>
       {children}
       <BookingForm isOpen={isBookingFormOpen} onClose={closeBookingForm} />
-      <MalmoBookingForm isOpen={isMalmoBookingFormOpen} onClose={closeBookingForm} />
     </BookingContext.Provider>
   );
-}; 
+};

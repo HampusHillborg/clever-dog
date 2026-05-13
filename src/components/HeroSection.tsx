@@ -27,10 +27,10 @@ BookingButton.displayName = 'BookingButton';
 const ContentSection = memo(({ t, openBookingForm, location }: { t: any, openBookingForm: () => void, location?: string }) => (
   <>
     <h1 className="text-3xl md:text-6xl font-bold text-white mb-4 md:mb-6">
-      {location === 'malmo' ? t('welcome') + ' - Malmö' : location === 'staffanstorp' ? t('welcome') + ' - Staffanstorp' : t('welcome')}
+      {location === 'staffanstorp' ? t('welcome') + ' - Staffanstorp' : t('welcome')}
     </h1>
     <p className="text-lg md:text-xl text-white mb-6 md:mb-8 max-w-2xl mx-auto">
-      {location === 'malmo' ? t('locationSelector.malmo.description') : location === 'staffanstorp' ? t('locationSelector.staffanstorp.description') : t('heroDescription')}
+      {location === 'staffanstorp' ? t('locationSelector.staffanstorp.description') : t('heroDescription')}
     </p>
     <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
       <a href="#about" className="btn btn-primary text-sm md:text-base py-2 px-4 md:py-3 md:px-6">

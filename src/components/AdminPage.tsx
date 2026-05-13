@@ -3473,22 +3473,6 @@ const AdminPage: React.FC = () => {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
               <div
-                onClick={() => setCurrentView('planning-malmo')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaCalendarAlt className="text-purple-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Planering Malmö</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Drag & drop planering för Malmö</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
-                    Live planering
-                  </span>
-                </div>
-              </div>
-
-              <div
                 onClick={() => setCurrentView('planning-staffanstorp')}
                 className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-purple-200 active:scale-95 sm:hover:scale-105"
               >
@@ -3533,22 +3517,6 @@ const AdminPage: React.FC = () => {
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
               <div
-                onClick={() => setCurrentView('calendar-malmo')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaCalendarAlt className="text-indigo-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kalender Malmö</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Planeringshistorik och kalendervy</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
-                    Veckovy
-                  </span>
-                </div>
-              </div>
-
-              <div
                 onClick={() => setCurrentView('calendar-staffanstorp')}
                 className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-indigo-200 active:scale-95 sm:hover:scale-105"
               >
@@ -3573,22 +3541,6 @@ const AdminPage: React.FC = () => {
               Hundpensionat
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
-              <div
-                onClick={() => setCurrentView('boarding-malmo')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 active:scale-95 sm:hover:scale-105"
-              >
-                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full mb-3 sm:mb-4 mx-auto">
-                  <FaDog className="text-red-600 text-xl sm:text-2xl" />
-                </div>
-                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Pensionat Malmö</h4>
-                <p className="text-center text-gray-600 text-xs sm:text-sm">Hundpensionat registreringar</p>
-                <div className="mt-2 sm:mt-3 text-center">
-                  <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                    {boardingRecords.filter(r => r.location === 'malmo').length} registreringar
-                  </span>
-                </div>
-              </div>
-
               <div
                 onClick={() => setCurrentView('boarding-staffanstorp')}
                 className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-red-200 active:scale-95 sm:hover:scale-105"
@@ -8104,17 +8056,6 @@ const AdminPage: React.FC = () => {
                 )}
                 <button
                   onClick={() => {
-                    setCurrentView('planning-malmo');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'planning-malmo' ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                >
-                  <div className="font-semibold">Planering Malmö</div>
-                  <div className="text-xs text-gray-600">Drag & drop</div>
-                </button>
-                <button
-                  onClick={() => {
                     setCurrentView('planning-staffanstorp');
                     setIsMobileMenuOpen(false);
                   }}
@@ -8123,16 +8064,6 @@ const AdminPage: React.FC = () => {
                 >
                   <div className="font-semibold">Planering Staffanstorp</div>
                   <div className="text-xs text-gray-600">Drag & drop</div>
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentView('boarding-malmo');
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'boarding-malmo' ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 hover:bg-gray-100'
-                    }`}
-                >
-                  <div className="font-semibold">Pensionat Malmö</div>
                 </button>
                 <button
                   onClick={() => {

@@ -7,11 +7,10 @@ interface ContactSectionProps {
   location?: string;
 }
 
-const ContactSection: React.FC<ContactSectionProps> = ({ location }) => {
+const ContactSection: React.FC<ContactSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
 
-  // Different email addresses for different locations
-  const email = location === 'malmo' ? 'cleverdog.malmo@gmail.com' : 'cleverdog.aw@gmail.com';
+  const email = 'cleverdog.aw@gmail.com';
   const emailLink = `mailto:${email}`;
 
   return (
@@ -45,7 +44,7 @@ const ContactSection: React.FC<ContactSectionProps> = ({ location }) => {
                 </div>
                 <div>
                   <h4 className="font-medium">{t('about.address')}</h4>
-                  <p>{location === 'malmo' ? 'Bellisgatan 13, Malmö 21232' : 'Malmövägen 7, Staffanstorp'}</p>
+                  <p>Malmövägen 7, Staffanstorp</p>
                 </div>
               </div>
 
@@ -99,10 +98,7 @@ const ContactSection: React.FC<ContactSectionProps> = ({ location }) => {
               <h3 className="text-2xl font-bold mb-6">{t('contact.location')}</h3>
               <div className="h-[350px] rounded-lg overflow-hidden">
                 <iframe
-                  src={location === 'malmo'
-                    ? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2250.123456789!2d13.000000000000000!3d55.600000000000000!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4653a2fd38b9b54f%3A0x4019b1eef694a1eb!2sBellisgatan%2013%2C%2021232%20Malm%C3%B6!5e0!3m2!1ssv!2sse!4v1689775458050!5m2!1ssv!2sse"
-                    : "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2241.611005496342!2d13.204780177205092!3d55.64265047373066!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4653a2fd38b9b54f%3A0x4019b1eef694a1eb!2sMalm%C3%B6v%C3%A4gen%207%2C%20245%2038%20Staffanstorp!5e0!3m2!1ssv!2sse!4v1689775458050!5m2!1ssv!2sse"
-                  }
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2241.611005496342!2d13.204780177205092!3d55.64265047373066!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4653a2fd38b9b54f%3A0x4019b1eef694a1eb!2sMalm%C3%B6v%C3%A4gen%207%2C%20245%2038%20Staffanstorp!5e0!3m2!1ssv!2sse!4v1689775458050!5m2!1ssv!2sse"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
