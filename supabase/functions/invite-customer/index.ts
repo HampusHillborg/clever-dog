@@ -6,7 +6,6 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SITE_URL = Deno.env.get('SITE_URL') ?? 'http://localhost:5173';
 
 const corsHeaders = {
@@ -26,16 +25,17 @@ Deno.serve(async (req) => {
   if (!authHeader.toLowerCase().startsWith('bearer ')) {
     return new Response(JSON.stringify({ error: 'Missing token' }), { status: 401, headers: responseHeaders });
   }
-
-  const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-    global: { headers: { authorization: authHeader } },
-  });
-  const { data: { user } } = await userClient.auth.getUser();
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: responseHeaders });
-  }
+  const jwt = authHeader.replace(/^bearer\s+/i, '').trim();
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  const { data: { user }, error: userErr } = await admin.auth.getUser(jwt);
+  if (userErr || !user) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid token', detail: userErr?.message ?? null }),
+      { status: 401, headers: responseHeaders },
+    );
+  }
   const { data: adminRow } = await admin
     .from('admin_users').select('id').eq('id', user.id).maybeSingle();
   if (!adminRow) {
