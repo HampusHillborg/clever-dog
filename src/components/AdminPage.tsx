@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars, FaClock } from 'react-icons/fa';
+import { FaSignOutAlt, FaFilePdf, FaLock, FaCalendarAlt, FaDog, FaPlus, FaEdit, FaTrash, FaInfoCircle, FaChartBar, FaFilter, FaCopy, FaTimes, FaBars, FaClock, FaUsers, FaInbox, FaEnvelope } from 'react-icons/fa';
 import html2pdf from 'html2pdf.js';
 import dogLogo from '../assets/images/logos/Logo.png';
 import {
@@ -3460,6 +3460,64 @@ const AdminPage: React.FC = () => {
                       PDF-generator
                     </span>
                   </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Kundportal */}
+          <div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center px-2">
+              <FaUsers className="mr-2 text-teal-600" />
+              Kundportal
+              <span className="ml-2 text-xs bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full">Nytt</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 px-2">
+              {(userRole === 'admin' || userRole === 'platschef') && (
+                <div
+                  onClick={() => setCurrentView('customers')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-teal-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-teal-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaUsers className="text-teal-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kunder</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Skapa kundkonton, koppla hundar, skicka invites</p>
+                </div>
+              )}
+
+              <div
+                onClick={() => setCurrentView('booking-requests')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaInbox className="text-yellow-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Bokningsförfrågningar</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Godkänn pensionat &amp; enstaka-dag-begäranden</p>
+              </div>
+
+              <div
+                onClick={() => setCurrentView('admin-messages')}
+                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-sky-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-sky-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaEnvelope className="text-sky-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Meddelanden</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Chatta med kunderna</p>
+              </div>
+
+              {(userRole === 'admin' || userRole === 'platschef') && (
+                <div
+                  onClick={() => setCurrentView('customer-stats')}
+                  className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaChartBar className="text-emerald-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kund-statistik</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Förväntad intäkt &amp; hundtyp-fördelning</p>
                 </div>
               )}
             </div>
