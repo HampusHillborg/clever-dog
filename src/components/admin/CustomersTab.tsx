@@ -25,9 +25,14 @@ export default function CustomersTab() {
 
   const refresh = async () => {
     setLoading(true);
-    const [c, d] = await Promise.all([getCustomers(), getDogs()]);
-    setCustomers(c);
-    setDogs(d.map(x => ({ id: x.id, name: x.name, breed: x.breed })));
+    try {
+      const [c, d] = await Promise.all([getCustomers(), getDogs()]);
+      console.log('[CustomersTab] customers:', c.length, 'dogs:', d.length);
+      setCustomers(c);
+      setDogs(d.map(x => ({ id: x.id, name: x.name, breed: x.breed })));
+    } catch (e) {
+      console.error('[CustomersTab] refresh failed', e);
+    }
     setLoading(false);
   };
 
@@ -55,16 +60,27 @@ export default function CustomersTab() {
       alert('Namn och e-post krävs');
       return;
     }
-    const { dogIds, ...rest } = editing;
-    const payload = rest as Customer;
-    const saved = await saveCustomer(payload);
-    await setCustomerDogs(saved.id, dogIds ?? []);
-    for (const did of dogIds ?? []) {
-      await setRecurringSchedule(did, schedules[did] ?? []);
+    try {
+      const { dogIds, ...rest } = editing;
+      // Strip null/undefined optionals so insert payload is clean
+      const payload = Object.fromEntries(
+        Object.entries(rest).filter(([_, v]) => v !== null && v !== undefined && v !== '')
+      ) as Customer;
+      const saved = await saveCustomer(payload);
+      if (dogIds && dogIds.length > 0) {
+        await setCustomerDogs(saved.id, dogIds);
+        for (const did of dogIds) {
+          await setRecurringSchedule(did, schedules[did] ?? []);
+        }
+      }
+      setEditing(null);
+      setSchedules({});
+      refresh();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : JSON.stringify(e);
+      console.error('saveCustomer failed', e);
+      alert(`Kunde inte spara kund: ${msg}`);
     }
-    setEditing(null);
-    setSchedules({});
-    refresh();
   };
 
   const toggleWeekday = async (dogId: string, w: number) => {

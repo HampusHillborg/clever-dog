@@ -82,11 +82,13 @@ export const getDogs = async (): Promise<Dog[]> => {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching dogs:', error);
+    console.error('[getDogs] supabase error (likely RLS/auth):', error.message, error);
     // Fallback to localStorage on error
     const saved = localStorage.getItem('cleverDogs');
     return saved ? JSON.parse(saved) : [];
   }
+
+  console.log('[getDogs] supabase returned', (data ?? []).length, 'dogs');
 
   // Transform database format to app format
   return ((data as any) || []).map((dog: any) => {
