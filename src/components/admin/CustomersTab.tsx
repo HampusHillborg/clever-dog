@@ -6,6 +6,9 @@ import {
   getDogs, inviteCustomer,
   type Customer,
 } from '../../lib/database';
+import { getRecurringSchedule, setRecurringSchedule } from '../../lib/bookingHelpers';
+
+const WEEKDAY_LABELS = ['M', 'T', 'O', 'T', 'F', 'L', 'S'];
 
 type DogLite = { id: string; name: string; breed: string };
 
@@ -17,6 +20,7 @@ export default function CustomersTab() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [dogs, setDogs] = useState<DogLite[]>([]);
   const [editing, setEditing] = useState<EditingState>(null);
+  const [schedules, setSchedules] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
 
   const refresh = async () => {
@@ -37,6 +41,11 @@ export default function CustomersTab() {
 
   const startEdit = async (c: Customer) => {
     const dogIds = await getCustomerDogIds(c.id);
+    const initial: Record<string, number[]> = {};
+    for (const did of dogIds) {
+      initial[did] = await getRecurringSchedule(did);
+    }
+    setSchedules(initial);
     setEditing({ ...c, dogIds });
   };
 
@@ -50,8 +59,24 @@ export default function CustomersTab() {
     const payload = rest as Customer;
     const saved = await saveCustomer(payload);
     await setCustomerDogs(saved.id, dogIds ?? []);
+    for (const did of dogIds ?? []) {
+      await setRecurringSchedule(did, schedules[did] ?? []);
+    }
     setEditing(null);
+    setSchedules({});
     refresh();
+  };
+
+  const toggleWeekday = async (dogId: string, w: number) => {
+    const cur = schedules[dogId] ?? [];
+    const next = cur.includes(w) ? cur.filter(x => x !== w) : [...cur, w];
+    setSchedules({ ...schedules, [dogId]: next });
+  };
+
+  const ensureSchedule = async (dogId: string) => {
+    if (schedules[dogId] !== undefined) return;
+    const w = await getRecurringSchedule(dogId);
+    setSchedules(s => ({ ...s, [dogId]: w }));
   };
 
   const remove = async (id: string) => {
@@ -126,9 +151,14 @@ export default function CustomersTab() {
         <CustomerEditorModal
           editing={editing}
           dogs={dogs}
-          onChange={setEditing}
+          schedules={schedules}
+          onChange={(c) => {
+            setEditing(c);
+            for (const did of c?.dogIds ?? []) ensureSchedule(did);
+          }}
+          onToggleWeekday={toggleWeekday}
           onSave={save}
-          onClose={() => setEditing(null)}
+          onClose={() => { setEditing(null); setSchedules({}); }}
         />
       )}
     </div>
@@ -154,16 +184,20 @@ function StatusBadge({ status }: { status: string }) {
 function CustomerEditorModal(props: {
   editing: NonNullable<EditingState>;
   dogs: DogLite[];
+  schedules: Record<string, number[]>;
   onChange: (c: EditingState) => void;
+  onToggleWeekday: (dogId: string, w: number) => void;
   onSave: () => void;
   onClose: () => void;
 }) {
-  const { editing, dogs, onChange, onSave, onClose } = props;
+  const { editing, dogs, schedules, onChange, onToggleWeekday, onSave, onClose } = props;
   const toggleDog = (id: string) => {
     const cur = new Set(editing.dogIds ?? []);
     if (cur.has(id)) cur.delete(id); else cur.add(id);
     onChange({ ...editing, dogIds: [...cur] });
   };
+
+  const linkedDogs = dogs.filter(d => (editing.dogIds ?? []).includes(d.id));
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -196,6 +230,32 @@ function CustomerEditorModal(props: {
               ))}
             </div>
           </div>
+
+          {linkedDogs.length > 0 && (
+            <div>
+              <span className="text-sm font-medium">Fasta dagar per hund</span>
+              <p className="text-xs text-gray-500 mb-2">Måndag = M, Söndag = S.</p>
+              {linkedDogs.map(d => {
+                const sched = schedules[d.id] ?? [];
+                return (
+                  <div key={d.id} className="mt-2 p-2 bg-gray-50 rounded-lg">
+                    <p className="text-sm font-medium mb-1">{d.name}</p>
+                    <div className="flex gap-1">
+                      {WEEKDAY_LABELS.map((label, w) => (
+                        <button key={w} type="button"
+                                onClick={() => onToggleWeekday(d.id, w)}
+                                className={`w-7 h-7 rounded text-sm ${
+                                  sched.includes(w) ? 'bg-primary text-white' : 'bg-white border'
+                                }`}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-2 mt-6">
           <button onClick={onClose} className="px-4 py-2 text-gray-600">Avbryt</button>
