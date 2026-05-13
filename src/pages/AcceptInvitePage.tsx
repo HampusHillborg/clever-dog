@@ -37,16 +37,10 @@ export default function AcceptInvitePage() {
       return;
     }
 
-    const { error: linkErr } = await supabase
-      .from('customers')
-      .update({
-        auth_user_id: data.user.id,
-        invite_status: 'accepted',
-        accepted_at: new Date().toISOString(),
-      })
-      .eq('email', data.user.email ?? '');
-    if (linkErr) {
-      setError(`Konto skapat men koppling misslyckades: ${linkErr.message}`);
+    const { error: claimErr } = await supabase.rpc('claim_customer_invite');
+    if (claimErr) {
+      console.error('claim_customer_invite failed', claimErr);
+      setError(`Konto skapat men koppling misslyckades: ${claimErr.message}`);
       setLoading(false);
       return;
     }

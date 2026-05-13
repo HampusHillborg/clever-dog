@@ -759,6 +759,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_customer_invite: { Args: never; Returns: unknown }
       current_customer_id: { Args: never; Returns: string }
       get_user_role: { Args: { user_id: string }; Returns: string }
       is_admin_user: { Args: never; Returns: boolean }
