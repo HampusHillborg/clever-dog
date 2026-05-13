@@ -1,0 +1,187 @@
+{
+  "planPath": "docs/superpowers/plans/2026-05-13-customer-portal.md",
+  "lastUpdated": "2026-05-13",
+  "tasks": [
+    {
+      "id": 0,
+      "subject": "Task 0: Skapa nya tabeller och storage bucket",
+      "status": "pending",
+      "description": "**Goal:** Lägg till customers, customer_dogs, bookings, recurring_schedule, messages, plus photo_url/customer_notes på dogs. Skapa dog-photos bucket.\n\n```json:metadata\n{\"files\":[\"supabase/migrations/20260513_001_customer_portal_tables.sql\"],\"verifyCommand\":\"mcp__supabase__list_tables\",\"acceptanceCriteria\":[\"Alla nya tabeller finns\",\"dogs har photo_url och customer_notes\",\"dog-photos bucket finns\"]}\n```"
+    },
+    {
+      "id": 1,
+      "subject": "Task 1: RLS-policies för nya tabeller + admin-bypass",
+      "status": "pending",
+      "blockedBy": [0],
+      "description": "**Goal:** Säkra nya tabeller med customer- och admin-policies + is_admin_user() + current_customer_id() helpers.\n\n```json:metadata\n{\"files\":[\"supabase/migrations/20260513_002_customer_portal_rls.sql\"],\"verifyCommand\":\"pg_policies query\",\"acceptanceCriteria\":[\"RLS aktivt på alla nya tabeller\",\"Minst 2 policies per tabell\"]}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Strama åt RLS på dogs/boarding_records/planning_history/box_settings",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "**Goal:** Ersätt Allow all operations med scopeade admin- och customer-policies. Fixa function search_path.\n\n```json:metadata\n{\"files\":[\"supabase/migrations/20260513_003_tighten_legacy_rls.sql\"],\"verifyCommand\":\"mcp__supabase__get_advisors type=security\",\"acceptanceCriteria\":[\"Inga policies med qual=true kvar på dessa tabeller\",\"Admin kan fortfarande använda app\"]}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Regenerera TypeScript-typer",
+      "status": "pending",
+      "blockedBy": [2],
+      "description": "**Goal:** database.types.ts matchar verkligt schema med nya tabeller och kolumner.\n\n```json:metadata\n{\"files\":[\"src/lib/database.types.ts\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"Typer för nya tabeller finns\",\"dogs.Row har photo_url och customer_notes\",\"npm run build passerar\"]}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Customer auth helpers + ProtectedCustomerRoute",
+      "status": "pending",
+      "blockedBy": [3],
+      "description": "**Goal:** customerAuth.ts (getCustomerForUser, isAdminUser, signIn/Out) och ProtectedCustomerRoute som redirectar admin->/admin, anon->/login.\n\n```json:metadata\n{\"files\":[\"src/lib/customerAuth.ts\",\"src/components/customer/ProtectedCustomerRoute.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"Exports korrekta\",\"Route redirectar rätt\"]}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: LoginPage",
+      "status": "pending",
+      "blockedBy": [4],
+      "description": "**Goal:** /login-sida med email+lösen, routar admin->/admin, kund->/kund.\n\n```json:metadata\n{\"files\":[\"src/pages/LoginPage.tsx\",\"src/components/customer/CustomerLayout.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"Formulär renderar\",\"Admin redirectas korrekt\"]}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: AcceptInvitePage",
+      "status": "pending",
+      "blockedBy": [5],
+      "description": "**Goal:** Sida som sätter lösen efter invite-länk och kopplar auth_user_id till customers.\n\n```json:metadata\n{\"files\":[\"src/pages/AcceptInvitePage.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"customers.invite_status='accepted' efter spara\"]}\n```"
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: Route-wiring i App.tsx",
+      "status": "pending",
+      "blockedBy": [6],
+      "description": "**Goal:** Registrera /login, /login/accept-invite, /kund i App.tsx utan länkar från publika sidan.\n\n```json:metadata\n{\"files\":[\"src/App.tsx\",\"src/pages/CustomerDashboardPage.tsx\"],\"verifyCommand\":\"manuell test i browser\",\"acceptanceCriteria\":[\"/login fungerar\",\"/kund redirectar om ej inloggad\"]}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: CustomersTab i admin",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "**Goal:** Admin kan lista/skapa/redigera/ta bort kunder, koppla hundar.\n\n```json:metadata\n{\"files\":[\"src/components/admin/CustomersTab.tsx\",\"src/components/AdminPage.tsx\",\"src/lib/database.ts\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"CRUD funkar\",\"Tab visas i admin-meny\"]}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Edge Function invite-customer + Bjud in-knapp",
+      "status": "pending",
+      "blockedBy": [8],
+      "description": "**Goal:** Edge function (service_role) skickar invite-mejl. CustomersTab har fungerande knapp.\n\n```json:metadata\n{\"files\":[\"supabase/functions/invite-customer/index.ts\",\"src/lib/database.ts\",\"src/components/admin/CustomersTab.tsx\"],\"verifyCommand\":\"manuell test med egen email\",\"acceptanceCriteria\":[\"Mejl kommer fram\",\"invite_status=invited efter klick\"]}\n```"
+    },
+    {
+      "id": 10,
+      "subject": "Task 10: CustomerDashboardPage med hundlista",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "**Goal:** Kund ser sina hundar som klickbara kort.\n\n```json:metadata\n{\"files\":[\"src/pages/CustomerDashboardPage.tsx\",\"src/lib/customerApi.ts\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Hälsning med namn\",\"Hundkort klickbara\"]}\n```"
+    },
+    {
+      "id": 11,
+      "subject": "Task 11: CustomerDogPage med flikar",
+      "status": "pending",
+      "blockedBy": [10],
+      "description": "**Goal:** /kund/hund/:id med 4 tabs (Info/Kalender/Meddelanden/Kontrakt) som placeholders.\n\n```json:metadata\n{\"files\":[\"src/pages/CustomerDogPage.tsx\",\"src/components/customer/DogInfoTab.tsx\",\"src/components/customer/BookingCalendar.tsx\",\"src/components/customer/MessagesTab.tsx\",\"src/components/customer/ContractView.tsx\",\"src/App.tsx\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Tabs byter innehåll\"]}\n```"
+    },
+    {
+      "id": 12,
+      "subject": "Task 12: DogInfoTab - visa+redigera grundinfo",
+      "status": "pending",
+      "blockedBy": [11],
+      "description": "**Goal:** Kunden kan ändra phone/email/address/försäkring/chip-nr.\n\n```json:metadata\n{\"files\":[\"src/components/customer/DogInfoTab.tsx\",\"src/lib/customerApi.ts\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Redigera-knapp\",\"Spara funkar\"]}\n```"
+    },
+    {
+      "id": 13,
+      "subject": "Task 13: Foto-upload till storage bucket",
+      "status": "pending",
+      "blockedBy": [12],
+      "description": "**Goal:** Kund laddar upp profilbild, sparas i dog-photos bucket, photo_url uppdateras.\n\n```json:metadata\n{\"files\":[\"src/components/customer/DogInfoTab.tsx\",\"src/lib/customerApi.ts\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Max 5MB validering\",\"Bild syns efter upload\"]}\n```"
+    },
+    {
+      "id": 14,
+      "subject": "Task 14: Kund-anteckningar i DogInfoTab",
+      "status": "pending",
+      "blockedBy": [12],
+      "description": "**Goal:** Textarea för customer_notes med spara-knapp.\n\n```json:metadata\n{\"files\":[\"src/components/customer/DogInfoTab.tsx\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Sparas i dogs.customer_notes\"]}\n```"
+    },
+    {
+      "id": 15,
+      "subject": "Task 15: bookingHelpers + recurring_schedule i admin",
+      "status": "pending",
+      "blockedBy": [3, 8],
+      "description": "**Goal:** Logik för månads-dagar (recurring+bookings+cancellations). Admin sätter fasta veckodagar per hund.\n\n```json:metadata\n{\"files\":[\"src/lib/bookingHelpers.ts\",\"src/components/admin/CustomersTab.tsx\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"getDaysForMonth funkar\",\"Toggle veckodagar i admin\"]}\n```"
+    },
+    {
+      "id": 16,
+      "subject": "Task 16: BookingCalendar - kundens kalendervy",
+      "status": "pending",
+      "blockedBy": [11, 15],
+      "description": "**Goal:** Färgkodad månadskalender med navigation + klick för åtgärder.\n\n```json:metadata\n{\"files\":[\"src/components/customer/BookingCalendar.tsx\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Färgkodning korrekt\",\"Klick visar åtgärder\"]}\n```"
+    },
+    {
+      "id": 17,
+      "subject": "Task 17: BookingRequestModal - pensionat & enstaka dag",
+      "status": "pending",
+      "blockedBy": [16],
+      "description": "**Goal:** Knappar + modal för förfrågningar med status=pending.\n\n```json:metadata\n{\"files\":[\"src/components/customer/BookingRequestModal.tsx\",\"src/components/customer/BookingCalendar.tsx\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Pending visas yellow i kalender\"]}\n```"
+    },
+    {
+      "id": 18,
+      "subject": "Task 18: BookingRequestsTab - admin godkänner/avslår",
+      "status": "pending",
+      "blockedBy": [17],
+      "description": "**Goal:** Admin-tab för att hantera pending bookings.\n\n```json:metadata\n{\"files\":[\"src/components/admin/BookingRequestsTab.tsx\",\"src/components/AdminPage.tsx\",\"src/lib/database.ts\"],\"verifyCommand\":\"manuell test end-to-end\",\"acceptanceCriteria\":[\"Godkänn -> confirmed\",\"Avslå -> rejected\"]}\n```"
+    },
+    {
+      "id": 19,
+      "subject": "Task 19: MessagesTab på kund-sidan",
+      "status": "pending",
+      "blockedBy": [11],
+      "description": "**Goal:** Chat-UI mellan kund och personal.\n\n```json:metadata\n{\"files\":[\"src/components/customer/MessagesTab.tsx\",\"src/lib/customerApi.ts\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Skicka funkar\",\"Markeras som lästa\"]}\n```"
+    },
+    {
+      "id": 20,
+      "subject": "Task 20: Admin messages-vy",
+      "status": "pending",
+      "blockedBy": [19],
+      "description": "**Goal:** Admin ser alla trådar samlat, kan svara.\n\n```json:metadata\n{\"files\":[\"src/components/admin/MessagesAdminTab.tsx\",\"src/components/AdminPage.tsx\",\"src/lib/database.ts\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Lista per kund med olästa-räknare\"]}\n```"
+    },
+    {
+      "id": 21,
+      "subject": "Task 21: ContractView för kunden",
+      "status": "pending",
+      "blockedBy": [11],
+      "description": "**Goal:** Kund ser kontraktet och kan ladda ner som PDF (återanvänd html2pdf).\n\n```json:metadata\n{\"files\":[\"src/components/customer/ContractView.tsx\",\"src/lib/contractTemplate.ts\",\"src/components/AdminPage.tsx\"],\"verifyCommand\":\"manuell test - öppna och ladda ner PDF\",\"acceptanceCriteria\":[\"PDF genereras\",\"Data korrekt\"]}\n```"
+    },
+    {
+      "id": 22,
+      "subject": "Task 22: StatsTab - admin statistik",
+      "status": "pending",
+      "blockedBy": [3],
+      "description": "**Goal:** Antal hundar per typ + förväntad månadsintäkt + antal pending förfrågningar.\n\n```json:metadata\n{\"files\":[\"src/components/admin/StatsTab.tsx\",\"src/components/AdminPage.tsx\"],\"verifyCommand\":\"manuell test\",\"acceptanceCriteria\":[\"Siffror visas\",\"Använder PRICES.staffanstorp\"]}\n```"
+    },
+    {
+      "id": 23,
+      "subject": "Task 23: Ta bort Malmö-routes och MalmoPage",
+      "status": "pending",
+      "blockedBy": [3],
+      "description": "**Goal:** Plocka bort MalmoPage, src/components/malmo/, utkommenterad route.\n\n```json:metadata\n{\"files\":[\"src/pages/MalmoPage.tsx (delete)\",\"src/components/malmo/ (delete)\",\"src/App.tsx\"],\"verifyCommand\":\"grep malmo src/ + npm run build\",\"acceptanceCriteria\":[\"Inga malmö-referenser kvar\"]}\n```"
+    },
+    {
+      "id": 24,
+      "subject": "Task 24: Ta bort Malmö från admin-views och delade komponenter",
+      "status": "pending",
+      "blockedBy": [23],
+      "description": "**Goal:** AdminView-typen + LocationSelector + Footer + Navbar + Hero/About/Contact + BookingContext + prices.ts + supabase.ts + i18n.\n\n```json:metadata\n{\"files\":[\"src/components/AdminPage.tsx\",\"src/components/LocationSelector.tsx\",\"src/components/Footer.tsx\",\"src/components/Navbar.tsx\",\"src/components/HeroSection.tsx\",\"src/components/AboutSection.tsx\",\"src/components/ContactSection.tsx\",\"src/components/BookingContext.tsx\",\"src/components/staffanstorp/StaffanstorpAboutSection.tsx\",\"src/lib/prices.ts\",\"src/lib/supabase.ts\",\"src/lib/database.ts\",\"src/i18n/locales/sv.json\",\"src/i18n/locales/pl.json\",\"src/i18n/locales/en.json\"],\"verifyCommand\":\"grep malmo src/ + npm run build\",\"acceptanceCriteria\":[\"0 malmö-träffar i src/\"]}\n```"
+    },
+    {
+      "id": 25,
+      "subject": "Task 25: Slutgenomgång och dokumentation",
+      "status": "pending",
+      "blockedBy": [9, 18, 20, 21, 22, 24],
+      "description": "**Goal:** End-to-end smoke-test + säkerhetscheck + uppdatera spec med implementations-status.\n\n```json:metadata\n{\"files\":[\"docs/superpowers/specs/2026-05-13-customer-portal-design.md\",\"docs/superpowers/notes/2026-05-13-customer-portal-handoff.md\"],\"verifyCommand\":\"e2e-smoke per plan-checklist\",\"acceptanceCriteria\":[\"Hela flödet funkar\",\"Inga security advisors röda\"]}\n```"
+    }
+  ]
+}
