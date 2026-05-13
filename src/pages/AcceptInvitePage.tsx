@@ -15,10 +15,24 @@ export default function AcceptInvitePage() {
     (async () => {
       if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
-      setHasToken(!!session);
       if (!session) {
+        setHasToken(false);
         setError('Ogiltig eller utgången inbjudningslänk. Kontakta oss för en ny.');
+        return;
       }
+      // Catch the common case where the user opened the invite link while
+      // still logged in as admin — Supabase kept the admin session and the
+      // invite token never produced a customer session. Sign them out and
+      // ask them to click the link again in a clean state.
+      const { data: adminRow } = await supabase
+        .from('admin_users').select('id').eq('id', session.user.id).maybeSingle();
+      if (adminRow) {
+        await supabase.auth.signOut();
+        setHasToken(false);
+        setError('Du var inloggad som admin när du klickade länken. Du är nu utloggad — öppna inbjudningslänken i mejlet igen (gärna i ett privat fönster).');
+        return;
+      }
+      setHasToken(true);
     })();
   }, []);
 
