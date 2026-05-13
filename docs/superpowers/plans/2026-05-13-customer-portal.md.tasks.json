@@ -1,31 +1,31 @@
 {
   "planPath": "docs/superpowers/plans/2026-05-13-customer-portal.md",
-  "lastUpdated": "2026-05-13",
+  "lastUpdated": "2026-05-13T15:30:00Z",
   "tasks": [
     {
       "id": 0,
       "subject": "Task 0: Skapa nya tabeller och storage bucket",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Lägg till customers, customer_dogs, bookings, recurring_schedule, messages, plus photo_url/customer_notes på dogs. Skapa dog-photos bucket.\n\n```json:metadata\n{\"files\":[\"supabase/migrations/20260513_001_customer_portal_tables.sql\"],\"verifyCommand\":\"mcp__supabase__list_tables\",\"acceptanceCriteria\":[\"Alla nya tabeller finns\",\"dogs har photo_url och customer_notes\",\"dog-photos bucket finns\"]}\n```"
     },
     {
       "id": 1,
       "subject": "Task 1: RLS-policies för nya tabeller + admin-bypass",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [0],
       "description": "**Goal:** Säkra nya tabeller med customer- och admin-policies + is_admin_user() + current_customer_id() helpers.\n\n```json:metadata\n{\"files\":[\"supabase/migrations/20260513_002_customer_portal_rls.sql\"],\"verifyCommand\":\"pg_policies query\",\"acceptanceCriteria\":[\"RLS aktivt på alla nya tabeller\",\"Minst 2 policies per tabell\"]}\n```"
     },
     {
       "id": 2,
       "subject": "Task 2: Strama åt RLS på dogs/boarding_records/planning_history/box_settings",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [1],
       "description": "**Goal:** Ersätt Allow all operations med scopeade admin- och customer-policies. Fixa function search_path.\n\n```json:metadata\n{\"files\":[\"supabase/migrations/20260513_003_tighten_legacy_rls.sql\"],\"verifyCommand\":\"mcp__supabase__get_advisors type=security\",\"acceptanceCriteria\":[\"Inga policies med qual=true kvar på dessa tabeller\",\"Admin kan fortfarande använda app\"]}\n```"
     },
     {
       "id": 3,
       "subject": "Task 3: Regenerera TypeScript-typer",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [2],
       "description": "**Goal:** database.types.ts matchar verkligt schema med nya tabeller och kolumner.\n\n```json:metadata\n{\"files\":[\"src/lib/database.types.ts\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"Typer för nya tabeller finns\",\"dogs.Row har photo_url och customer_notes\",\"npm run build passerar\"]}\n```"
     },
