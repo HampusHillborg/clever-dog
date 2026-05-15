@@ -25,7 +25,7 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
 };
 
-type Kind = 'booking_request' | 'booking_decision' | 'customer_message';
+type Kind = 'booking_request' | 'booking_decision' | 'customer_message' | 'staff_message';
 
 const escape = (s: string | null | undefined) =>
   (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -115,6 +115,27 @@ Deno.serve(async (req) => {
         html,
         booking.customers?.email ?? undefined,
       );
+
+      // Kvitto till kunden: vi har tagit emot förfrågan
+      if (booking.customers?.email) {
+        const customerHtml = wrap(`Vi har tagit emot din ${type.toLowerCase()}-förfrågan`, `
+          <p>Hej ${escape(booking.customers.name)},</p>
+          <p>Vi har tagit emot din förfrågan och återkommer så snart vi kan med besked.</p>
+          <ul>
+            <li><strong>Hund:</strong> ${escape(booking.dogs?.name)}</li>
+            <li><strong>Typ:</strong> ${type}</li>
+            <li><strong>Datum:</strong> ${escape(dates)}</li>
+            ${booking.notes ? `<li><strong>Dina anteckningar:</strong> ${escape(booking.notes)}</li>` : ''}
+          </ul>
+          <p>Du ser status p&aring; din f&ouml;rfr&aring;gan i <a href="${SITE_URL}/kund">kundportalen</a>.</p>
+        `);
+        await sendEmail(
+          booking.customers.email,
+          `Bekräftelse: ${type.toLowerCase()}-förfrågan mottagen`,
+          customerHtml,
+          ADMIN_EMAIL || undefined,
+        );
+      }
     }
     else if (body.kind === 'booking_decision') {
       if (!body.booking_id) throw new Error('booking_id required');
@@ -176,6 +197,36 @@ Deno.serve(async (req) => {
         `Nytt meddelande från ${msg.customers?.name}`,
         html,
         msg.customers?.email ?? undefined,
+      );
+    }
+    else if (body.kind === 'staff_message') {
+      if (!body.message_id) throw new Error('message_id required');
+
+      const { data: msg } = await admin
+        .from('messages')
+        .select('*, customers(name, email), dogs(name)')
+        .eq('id', body.message_id).single();
+      if (!msg || msg.sender_role !== 'staff') {
+        return new Response(JSON.stringify({ ok: false, skipped: 'not staff message' }), { headers });
+      }
+      if (!msg.customers?.email) {
+        return new Response(JSON.stringify({ ok: false, skipped: 'no customer email' }), { headers });
+      }
+
+      const html = wrap('Nytt meddelande från CleverDog', `
+        <p>Hej ${escape(msg.customers.name)},</p>
+        <p>Personalen har skrivit till dig${msg.dogs?.name ? ` om <strong>${escape(msg.dogs.name)}</strong>` : ''}:</p>
+        <blockquote style="border-left: 3px solid #c97b3a; padding-left: 12px; color: #444;">
+          ${escape(msg.body)}
+        </blockquote>
+        <p>Svara via <a href="${SITE_URL}/kund">kundportalen</a>.</p>
+      `);
+      // Reply-To = admin so customer can reply via inbox
+      await sendEmail(
+        msg.customers.email,
+        'Nytt meddelande från CleverDog',
+        html,
+        ADMIN_EMAIL || undefined,
       );
     }
     else {

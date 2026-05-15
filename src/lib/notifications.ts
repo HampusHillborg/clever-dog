@@ -6,7 +6,8 @@ import { supabase } from './supabase';
 type NotificationPayload =
   | { kind: 'booking_request'; booking_id: string }
   | { kind: 'booking_decision'; booking_id: string }
-  | { kind: 'customer_message'; message_id: string };
+  | { kind: 'customer_message'; message_id: string }
+  | { kind: 'staff_message'; message_id: string };
 
 export const sendNotification = async (payload: NotificationPayload): Promise<void> => {
   if (!supabase) return;

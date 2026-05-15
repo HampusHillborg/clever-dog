@@ -1971,12 +1971,13 @@ export const sendStaffMessage = async (params: { customer_id: string; dog_id?: s
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Ej inloggad');
-  const { error } = await supabase.from('messages').insert({
+  const { data, error } = await supabase.from('messages').insert({
     customer_id: params.customer_id,
     dog_id: params.dog_id ?? null,
     sender_role: 'staff',
     sender_user_id: session.user.id,
     body: params.body,
-  });
+  }).select().single();
   if (error) throw error;
+  return data;
 };

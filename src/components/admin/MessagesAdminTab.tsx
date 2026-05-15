@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAllMessageThreads, sendStaffMessage } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
+import { sendNotification } from '../../lib/notifications';
 
 type Msg = {
   id: string;
@@ -74,7 +75,8 @@ export default function MessagesAdminTab() {
 
   const send = async () => {
     if (!selectedId || !text.trim()) return;
-    await sendStaffMessage({ customer_id: selectedId, body: text });
+    const created = await sendStaffMessage({ customer_id: selectedId, body: text });
+    sendNotification({ kind: 'staff_message', message_id: created.id });
     setText('');
     load();
   };
