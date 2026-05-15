@@ -7,6 +7,7 @@ import { isAdminUser } from './lib/customerAuth';
 import { supabase } from './lib/supabase';
 import { initDeepLinks } from './lib/deepLinks';
 import { initPushNotifications } from './lib/pushNotifications';
+import NotificationToast from './components/customer/NotificationToast';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
@@ -55,6 +56,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 export default function AppMobile() {
   return (
     <div className="min-h-screen bg-light">
+      <NotificationToast />
       <BrowserRouter>
         <DeepLinkBridge />
         <AdminGuard>

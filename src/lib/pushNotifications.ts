@@ -1,6 +1,7 @@
 import { PushNotifications, type Token } from '@capacitor/push-notifications';
 import { supabase } from './supabase';
 import { isNativeApp, platform } from './platform';
+import { showToast } from '../components/customer/NotificationToast';
 
 let initialized = false;
 
@@ -38,6 +39,22 @@ export const initPushNotifications = async (): Promise<void> => {
 
   PushNotifications.addListener('registrationError', (err) => {
     console.error('[push] registration error', err);
+  });
+
+  // App foreground: OS won't show a banner, so we surface our own toast.
+  PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    showToast({
+      title: notification.title ?? 'CleverDog',
+      body: notification.body ?? '',
+    });
+  });
+
+  // Tap on a notification (banner or notification tray) — route by kind.
+  PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+    const kind = action.notification.data?.kind;
+    const target = kind === 'staff_message' ? '/kund?tab=messages' : '/kund';
+    // Hard navigate so even a cold start lands on the right screen.
+    window.location.href = target;
   });
 };
 
