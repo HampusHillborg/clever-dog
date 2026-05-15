@@ -82,27 +82,21 @@ export const signIn = async (email: string, password: string): Promise<{ success
       return { success: false, error: 'Failed to sign in' };
     }
 
-    // Get the user role from admin_users table
+    // Get the user role from admin_users table.
+    // SECURITY: do NOT auto-create an admin_users row if missing — that
+    // historically caused customers (who also have auth.users rows from the
+    // invite flow) to be silently granted employee access. Customers must
+    // never become staff implicitly. If the row is missing, sign out and
+    // refuse.
     const { data: userData, error: userError } = await supabase
       .from('admin_users')
       .select('role, email')
       .eq('id', authData.user.id)
-      .single();
+      .maybeSingle();
 
-    if (userError) {
-      console.error('Error fetching user role:', userError);
-      // If user doesn't exist in admin_users, create it with default role
-      const { error: insertError } = await supabase
-        .from('admin_users')
-        .insert({
-          id: authData.user.id,
-          email: authData.user.email || email,
-          role: 'employee',
-        } as any);
-
-      if (insertError) {
-        console.error('Error creating admin_users entry:', insertError);
-      }
+    if (userError || !userData) {
+      await supabase.auth.signOut();
+      return { success: false, error: 'Detta konto har inte access till admin-portalen.' };
     }
 
     return {

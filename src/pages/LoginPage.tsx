@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInCustomer, getCustomerForUser, isAdminUser } from '../lib/customerAuth';
+import { signInCustomer, signOutCustomer, getCustomerForUser, isAdminUser } from '../lib/customerAuth';
+import { supabase } from '../lib/supabase';
 import dogLogo from '../assets/images/logos/Logo.png';
 
 export default function LoginPage() {
@@ -25,12 +26,25 @@ export default function LoginPage() {
       navigate('/admin', { replace: true });
       return;
     }
-    const customer = await getCustomerForUser();
+    let customer = await getCustomerForUser();
+    // Self-heal: if there's an invited customer row matching this email but
+    // auth_user_id was never linked (e.g. UI hung mid-accept), claim it now.
+    if (!customer && supabase) {
+      const { error: claimErr } = await supabase.rpc('claim_customer_invite');
+      if (!claimErr) {
+        customer = await getCustomerForUser();
+      } else {
+        console.error('auto-claim failed', claimErr);
+      }
+    }
     if (customer) {
       navigate('/kund', { replace: true });
       return;
     }
-    setError('Kontot är inte aktiverat. Kontakta oss.');
+    // No admin row, no customer row — refuse and sign out so the orphan
+    // auth.users row can't be used to sneak into admin.
+    await signOutCustomer();
+    setError('Detta konto är inte kopplat till någon kund eller anställd. Kontakta oss.');
     setLoading(false);
   };
 
