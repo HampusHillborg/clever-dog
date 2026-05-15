@@ -59,8 +59,10 @@ export const uploadDogPhoto = async (dogId: string, file: File): Promise<string>
 
 export const getMyMessages = async (dogId?: string): Promise<Message[]> => {
   if (!supabase) return [];
+  // Show messages for this dog AND any general messages (dog_id IS NULL),
+  // since admin currently sends without a dog_id from the per-customer view.
   let query = supabase.from('messages').select('*').order('created_at');
-  if (dogId) query = query.eq('dog_id', dogId);
+  if (dogId) query = query.or(`dog_id.eq.${dogId},dog_id.is.null`);
   const { data, error } = await query;
   if (error) { console.error('getMyMessages', error); return []; }
   return data ?? [];
