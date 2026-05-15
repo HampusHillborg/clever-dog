@@ -9,6 +9,39 @@ import {
 import { sendNotification } from '../../lib/notifications';
 import BookingRequestModal from './BookingRequestModal';
 
+// Days/week the customer may self-book for part-time dogs. Null for
+// fulltime or unknown types (no quota enforcement).
+const quotaForType = (type: string | null | undefined): number | null => {
+  if (type === 'parttime-3') return 3;
+  if (type === 'parttime-2') return 2;
+  return null;
+};
+
+const isPartTime = (type: string | null | undefined): boolean =>
+  type === 'parttime-3' || type === 'parttime-2';
+
+// ISO week key — same week for Mon..Sun, used to group day picks.
+const isoWeekKey = (dateIso: string): string => {
+  const d = new Date(dateIso);
+  d.setHours(0, 0, 0, 0);
+  // Move to Thursday of the same week (ISO weeks are anchored on Thursday).
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  const weekNum = 1 + Math.round(
+    ((d.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7
+  );
+  return `${d.getFullYear()}-W${weekNum.toString().padStart(2, '0')}`;
+};
+
+// Cutoff: any date that is today or earlier is locked from customer edits.
+const isLockedDate = (dateIso: string): boolean => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(dateIso);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() <= today.getTime();
+};
+
 const MONTHS = [
   'Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
   'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December',
@@ -84,10 +117,31 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
 
   const firstDayWeekday = days[0]?.weekday ?? 0;
 
-  const handleAction = async (action: 'add_extra' | 'cancel' | 'undo' | 'cancel_request') => {
+  const quota = quotaForType(dog.type);
+  const partTime = isPartTime(dog.type);
+
+  // Counts confirmed scheduled days (recurring or hand-picked) in the ISO
+  // week containing `dateIso`. Cancelled days don't count; pending requests
+  // (extra) don't count either.
+  const picksInWeek = (dateIso: string): number => {
+    const key = isoWeekKey(dateIso);
+    return days.filter(d => isoWeekKey(d.date) === key && d.status === 'scheduled').length;
+  };
+
+  const handleAction = async (action: 'add_extra' | 'cancel' | 'undo' | 'cancel_request' | 'pick_day') => {
     if (!selectedDay || !customerId) return;
     try {
-      if (action === 'add_extra') {
+      if (action === 'pick_day') {
+        if (quota !== null && picksInWeek(selectedDay.date) >= quota) {
+          alert(`Du har redan valt ${quota} dagar denna vecka.`);
+          return;
+        }
+        await upsertBooking({
+          dog_id: dog.id, customer_id: customerId,
+          start_date: selectedDay.date, end_date: selectedDay.date,
+          booking_type: 'scheduled', status: 'confirmed',
+        });
+      } else if (action === 'add_extra') {
         const booking = await upsertBooking({
           dog_id: dog.id, customer_id: customerId,
           start_date: selectedDay.date, end_date: selectedDay.date,
@@ -167,8 +221,21 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
 
       <Legend />
 
+      {partTime && quota !== null && (
+        <p className="mt-2 text-xs text-gray-600">
+          Deltidsplats: du väljer {quota} dagar/vecka själv. Ändringar måste göras senast dagen innan.
+        </p>
+      )}
+
       {selectedDay && (
-        <DayActions day={selectedDay} onClose={() => setSelectedDay(null)} onAction={handleAction} />
+        <DayActions
+          day={selectedDay}
+          partTime={partTime}
+          quota={quota}
+          picksThisWeek={picksInWeek(selectedDay.date)}
+          onClose={() => setSelectedDay(null)}
+          onAction={handleAction}
+        />
       )}
 
       {requestType && customerId && (
@@ -196,17 +263,34 @@ function Legend() {
   );
 }
 
-function DayActions({ day, onClose, onAction }: {
+function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction }: {
   day: DayInfo;
+  partTime: boolean;
+  quota: number | null;
+  picksThisWeek: number;
   onClose: () => void;
-  onAction: (a: 'add_extra' | 'cancel' | 'undo' | 'cancel_request') => void;
+  onAction: (a: 'add_extra' | 'cancel' | 'undo' | 'cancel_request' | 'pick_day') => void;
 }) {
   const niceDate = day.date.split('-').reverse().join('/');
+  const locked = isLockedDate(day.date);
+  const isWeekday = day.weekday < 5; // 0=Mon ... 4=Fri
+  const quotaFull = quota !== null && picksThisWeek >= quota;
+  const canPick = partTime && day.status === 'none' && isWeekday && !locked && !quotaFull;
+  const canUnpick = partTime && day.status === 'scheduled' && !locked;
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
         <h3 className="font-bold mb-1">{niceDate}</h3>
         <p className="text-sm text-gray-500 mb-2">Status: {STATUS_LABEL[day.status]}</p>
+
+        {partTime && quota !== null && (
+          <p className="text-xs text-gray-600 mb-2">
+            {picksThisWeek} av {quota} dagar valda denna vecka
+            {quotaFull && day.status === 'none' && ' · kvoten är full'}
+          </p>
+        )}
+
         {day.status === 'rejected' && day.adminResponse && (
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3">
             <p className="text-xs font-semibold text-red-800 mb-1">Avslag-anledning</p>
@@ -217,20 +301,39 @@ function DayActions({ day, onClose, onAction }: {
           <p className="text-sm text-gray-600 mb-4 italic">Ingen anledning angiven.</p>
         )}
         {day.status !== 'rejected' && <div className="mb-2" />}
+
+        {locked && (day.status === 'scheduled' || day.status === 'none') && (
+          <p className="text-xs text-gray-500 mb-3 italic">
+            Dagen är passerad eller pågående och kan inte ändras.
+          </p>
+        )}
+
         <div className="space-y-2">
-          {day.status === 'none' && (
+          {canPick && (
+            <button onClick={() => onAction('pick_day')}
+                    className="w-full bg-green-500 text-white rounded-lg py-2">Välj denna dag</button>
+          )}
+          {canUnpick && (
+            <button onClick={() => onAction('cancel')}
+                    className="w-full bg-gray-500 text-white rounded-lg py-2">Avboka denna dag</button>
+          )}
+          {!partTime && day.status === 'none' && !locked && (
             <button onClick={() => onAction('add_extra')}
                     className="w-full bg-emerald-500 text-white rounded-lg py-2">Begär extra dag</button>
           )}
-          {(day.status === 'scheduled' || day.status === 'extra') && (
+          {!partTime && (day.status === 'scheduled' || day.status === 'extra') && !locked && (
             <button onClick={() => onAction('cancel')}
                     className="w-full bg-gray-500 text-white rounded-lg py-2">Avboka denna dag</button>
+          )}
+          {partTime && day.status === 'none' && !locked && !quotaFull && day.weekday >= 5 && (
+            <button onClick={() => onAction('add_extra')}
+                    className="w-full bg-emerald-500 text-white rounded-lg py-2">Begär extra dag</button>
           )}
           {day.status === 'pending' && day.bookingId && (
             <button onClick={() => onAction('cancel_request')}
                     className="w-full bg-gray-500 text-white rounded-lg py-2">Avbryt förfrågan</button>
           )}
-          {day.status === 'cancelled' && day.bookingId && (
+          {day.status === 'cancelled' && day.bookingId && !locked && (
             <button onClick={() => onAction('undo')}
                     className="w-full bg-primary text-white rounded-lg py-2">Ångra avbokning</button>
           )}
