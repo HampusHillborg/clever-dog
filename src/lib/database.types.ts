@@ -618,6 +618,7 @@ export type Database = {
           dog_id: string | null
           id: string
           is_read: boolean | null
+          sender_name: string | null
           sender_role: string
           sender_user_id: string | null
         }
@@ -628,6 +629,7 @@ export type Database = {
           dog_id?: string | null
           id?: string
           is_read?: boolean | null
+          sender_name?: string | null
           sender_role: string
           sender_user_id?: string | null
         }
@@ -638,6 +640,7 @@ export type Database = {
           dog_id?: string | null
           id?: string
           is_read?: boolean | null
+          sender_name?: string | null
           sender_role?: string
           sender_user_id?: string | null
         }

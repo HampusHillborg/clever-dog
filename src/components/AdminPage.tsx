@@ -9144,20 +9144,6 @@ const AdminPage: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Plats</label>
-                  <select
-                    value={employeeForm.location}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, location: e.target.value as 'malmo' | 'staffanstorp' | 'both' | '' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Välj plats</option>
-                    <option value="malmo">Malmö</option>
-                    <option value="staffanstorp">Staffanstorp</option>
-                    <option value="both">Båda</option>
-                  </select>
-                </div>
-
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Roll</label>
                   <select

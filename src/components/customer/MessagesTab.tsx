@@ -45,6 +45,11 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
             <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${
               m.sender_role === 'customer' ? 'bg-primary text-white' : 'bg-gray-100'
             }`}>
+              {m.sender_role === 'staff' && (
+                <p className="text-xs font-semibold text-gray-700 mb-1">
+                  {m.sender_name ?? 'Personal'}
+                </p>
+              )}
               <p className="text-sm whitespace-pre-wrap">{m.body}</p>
               <p className="text-xs opacity-60 mt-1">
                 {m.created_at ? new Date(m.created_at).toLocaleString('sv-SE') : ''}
