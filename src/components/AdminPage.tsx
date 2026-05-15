@@ -47,6 +47,7 @@ import BookingRequestsTab from './admin/BookingRequestsTab';
 import MessagesAdminTab from './admin/MessagesAdminTab';
 import StatsTab from './admin/StatsTab';
 import OwnerInput from './admin/OwnerInput';
+import { useAdminBadges } from './admin/useAdminBadges';
 
 interface ContractData {
   // Common fields
@@ -195,6 +196,7 @@ const AdminPage: React.FC = () => {
   const [isSettingPasswordLoading, setIsSettingPasswordLoading] = useState(false);
 
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
+  const badges = useAdminBadges(isLoggedIn);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [contracts] = useState<ContractData[]>([]);
   const [dogs, setDogs] = useState<Dog[]>([]);
@@ -3539,8 +3541,13 @@ const AdminPage: React.FC = () => {
 
               <div
                 onClick={() => setCurrentView('booking-requests')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
+                className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-yellow-200 active:scale-95 sm:hover:scale-105"
               >
+                {badges.pendingBookings > 0 && (
+                  <span className="absolute top-2 right-2 inline-flex items-center justify-center px-2 min-w-[1.5rem] h-6 rounded-full bg-red-500 text-white text-xs font-bold">
+                    {badges.pendingBookings}
+                  </span>
+                )}
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-yellow-100 rounded-full mb-3 sm:mb-4 mx-auto">
                   <FaInbox className="text-yellow-600 text-xl sm:text-2xl" />
                 </div>
@@ -3550,8 +3557,13 @@ const AdminPage: React.FC = () => {
 
               <div
                 onClick={() => setCurrentView('admin-messages')}
-                className="bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-sky-200 active:scale-95 sm:hover:scale-105"
+                className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-sky-200 active:scale-95 sm:hover:scale-105"
               >
+                {badges.unreadMessages > 0 && (
+                  <span className="absolute top-2 right-2 inline-flex items-center justify-center px-2 min-w-[1.5rem] h-6 rounded-full bg-red-500 text-white text-xs font-bold">
+                    {badges.unreadMessages}
+                  </span>
+                )}
                 <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-sky-100 rounded-full mb-3 sm:mb-4 mx-auto">
                   <FaEnvelope className="text-sky-600 text-xl sm:text-2xl" />
                 </div>
@@ -8237,16 +8249,30 @@ const AdminPage: React.FC = () => {
                 )}
                 <button
                   onClick={() => { setCurrentView('booking-requests'); setIsMobileMenuOpen(false); }}
-                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'booking-requests' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50 hover:bg-gray-100'}`}
+                  className={`relative p-3 text-left rounded-lg transition-colors ${currentView === 'booking-requests' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-50 hover:bg-gray-100'}`}
                 >
-                  <div className="font-semibold">Förfrågningar</div>
+                  <div className="font-semibold flex items-center gap-2">
+                    Förfrågningar
+                    {badges.pendingBookings > 0 && (
+                      <span className="inline-flex items-center justify-center px-1.5 min-w-[1.25rem] h-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                        {badges.pendingBookings}
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-gray-600">Pensionat &amp; enstaka</div>
                 </button>
                 <button
                   onClick={() => { setCurrentView('admin-messages'); setIsMobileMenuOpen(false); }}
-                  className={`p-3 text-left rounded-lg transition-colors ${currentView === 'admin-messages' ? 'bg-sky-100 text-sky-800' : 'bg-gray-50 hover:bg-gray-100'}`}
+                  className={`relative p-3 text-left rounded-lg transition-colors ${currentView === 'admin-messages' ? 'bg-sky-100 text-sky-800' : 'bg-gray-50 hover:bg-gray-100'}`}
                 >
-                  <div className="font-semibold">Meddelanden</div>
+                  <div className="font-semibold flex items-center gap-2">
+                    Meddelanden
+                    {badges.unreadMessages > 0 && (
+                      <span className="inline-flex items-center justify-center px-1.5 min-w-[1.25rem] h-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                        {badges.unreadMessages}
+                      </span>
+                    )}
+                  </div>
                 </button>
                 {(userRole === 'admin' || userRole === 'platschef') && (
                   <button
