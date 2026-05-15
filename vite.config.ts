@@ -4,6 +4,12 @@ import { compression } from 'vite-plugin-compression2'
 import { imagetools } from 'vite-imagetools'
 
 // https://vite.dev/config/
+// For app builds (VITE_APP_TARGET=app) we skip the .gz/.br precompression
+// plugins: the Capacitor WebView reads assets from disk so the overhead
+// is pure noise, and Android's resource merger trips on foo.js + foo.js.gz
+// looking like duplicate resources.
+const isAppBuild = process.env.VITE_APP_TARGET === 'app';
+
 export default defineConfig({
   plugins: [
     react({
@@ -15,16 +21,18 @@ export default defineConfig({
       }
     }),
     imagetools(),
-    compression({
-      algorithm: 'gzip',
-      exclude: [/\.(br)$/, /\.(gz)$/],
-      deleteOriginalAssets: false,
-    }),
-    compression({
-      algorithm: 'brotliCompress',
-      exclude: [/\.(br)$/, /\.(gz)$/],
-      deleteOriginalAssets: false,
-    }),
+    ...(isAppBuild ? [] : [
+      compression({
+        algorithm: 'gzip',
+        exclude: [/\.(br)$/, /\.(gz)$/],
+        deleteOriginalAssets: false,
+      }),
+      compression({
+        algorithm: 'brotliCompress',
+        exclude: [/\.(br)$/, /\.(gz)$/],
+        deleteOriginalAssets: false,
+      }),
+    ]),
   ],
   build: {
     cssCodeSplit: true,
