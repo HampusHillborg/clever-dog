@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dog } from '../../lib/customerApi';
 import { getMyMessages, sendMessage, markMessagesRead, type Message } from '../../lib/customerApi';
+import { sendNotification } from '../../lib/notifications';
 
 export default function MessagesTab({ dog }: { dog: Dog }) {
   const [items, setItems] = useState<Message[]>([]);
@@ -22,7 +23,8 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     if (!text.trim()) return;
     setSending(true);
     try {
-      await sendMessage({ dog_id: dog.id, body: text });
+      const created = await sendMessage({ dog_id: dog.id, body: text });
+      sendNotification({ kind: 'customer_message', message_id: created.id });
       setText('');
       refresh();
     } catch (e) {

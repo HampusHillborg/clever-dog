@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { upsertBooking } from '../../lib/bookingHelpers';
+import { sendNotification } from '../../lib/notifications';
 
 type Props = {
   dogId: string;
@@ -24,7 +25,7 @@ export default function BookingRequestModal({ dogId, customerId, type, onClose, 
 
     setSaving(true);
     try {
-      await upsertBooking({
+      const booking = await upsertBooking({
         dog_id: dogId,
         customer_id: customerId,
         start_date: start,
@@ -33,6 +34,8 @@ export default function BookingRequestModal({ dogId, customerId, type, onClose, 
         status: 'pending',
         notes: notes || undefined,
       });
+      // Notify admin (fire-and-forget)
+      sendNotification({ kind: 'booking_request', booking_id: booking.id });
       onSaved();
       onClose();
     } catch (e) {

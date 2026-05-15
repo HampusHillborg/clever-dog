@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import { getPendingBookings, approveBooking, rejectBooking, type PendingBooking } from '../../lib/database';
+import { sendNotification } from '../../lib/notifications';
 
 export default function BookingRequestsTab() {
   const [items, setItems] = useState<PendingBooking[]>([]);
@@ -15,11 +16,13 @@ export default function BookingRequestsTab() {
 
   const approve = async (id: string) => {
     await approveBooking(id);
+    sendNotification({ kind: 'booking_decision', booking_id: id });
     refresh();
   };
   const reject = async (id: string) => {
     const response = prompt('Anledning (visas för kunden, frivilligt):') ?? undefined;
     await rejectBooking(id, response);
+    sendNotification({ kind: 'booking_decision', booking_id: id });
     refresh();
   };
 

@@ -66,21 +66,22 @@ export const getMyMessages = async (dogId?: string): Promise<Message[]> => {
   return data ?? [];
 };
 
-export const sendMessage = async (params: { dog_id?: string | null; body: string }) => {
+export const sendMessage = async (params: { dog_id?: string | null; body: string }): Promise<Message> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Ej inloggad');
   const { data: cust } = await supabase
     .from('customers').select('id').eq('auth_user_id', session.user.id).maybeSingle();
   if (!cust) throw new Error('Ingen kund-koppling');
-  const { error } = await supabase.from('messages').insert({
+  const { data, error } = await supabase.from('messages').insert({
     customer_id: cust.id,
     dog_id: params.dog_id ?? null,
     sender_role: 'customer',
     sender_user_id: session.user.id,
     body: params.body,
-  });
+  }).select().single();
   if (error) throw error;
+  return data;
 };
 
 export const markMessagesRead = async (ids: string[]) => {
