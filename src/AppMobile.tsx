@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { Routes, Route, BrowserRouter, Navigate } from 'react-router-dom';
+import { Routes, Route, BrowserRouter, Navigate, useNavigate } from 'react-router-dom';
 import './i18n';
 import ProtectedCustomerRoute from './components/customer/ProtectedCustomerRoute';
 import MobileAuthGate from './components/MobileAuthGate';
 import { isAdminUser } from './lib/customerAuth';
 import { supabase } from './lib/supabase';
+import { initDeepLinks } from './lib/deepLinks';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
@@ -14,6 +15,12 @@ const CustomerDogPage = lazy(() => import('./pages/CustomerDogPage'));
 const Loading = () => (
   <div className="h-screen flex items-center justify-center">Laddar…</div>
 );
+
+function DeepLinkBridge() {
+  const navigate = useNavigate();
+  useEffect(() => { initDeepLinks(navigate); }, [navigate]);
+  return null;
+}
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<'loading' | 'admin' | 'ok'>('loading');
@@ -45,6 +52,7 @@ export default function AppMobile() {
   return (
     <div className="min-h-screen bg-light">
       <BrowserRouter>
+        <DeepLinkBridge />
         <AdminGuard>
           <Routes>
             <Route path="/" element={<Navigate to="/kund" replace />} />
