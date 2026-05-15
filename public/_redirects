@@ -1,0 +1,12 @@
+# SPA fallback: every client-side route (e.g. /login, /kund, /admin) maps
+# back to index.html so react-router can take over. This file takes
+# precedence over netlify.toml redirects and is the canonical Netlify SPA
+# routing config.
+#
+# Netlify Functions are explicitly served first, then everything else.
+
+/api/*                /.netlify/functions/:splat   200
+/.netlify/functions/* /.netlify/functions/:splat   200
+
+# Catch-all → index.html so react-router handles /login, /kund, /admin, etc.
+/*                    /index.html                  200

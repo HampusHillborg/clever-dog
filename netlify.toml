@@ -60,34 +60,17 @@
   bundle = true
   minify = true
 [build.processing.html]
-  pretty_urls = true
+  # pretty_urls strips trailing slashes and tries /<path>.html before
+  # falling back to redirects. For an SPA that means /login 404s instead
+  # of falling through to the catch-all rewrite. Keep it off.
+  pretty_urls = false
 [build.processing.images]
   compress = true
 
-# Redirects - removing the problematic .netlify redirect 
+# Redirects live in public/_redirects (more reliable than TOML for SPA
+# fallback). Only canonical/SEO redirects belong here.
 [[redirects]]
   from = "/index.html"
   to = "/"
   status = 301
   force = true
-
-[[redirects]]
-  from = "/staffanstorp"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/malmo"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/admin/*"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  conditions = {Path = ["!/index.html"]}
