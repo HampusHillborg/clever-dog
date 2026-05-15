@@ -1,0 +1,93 @@
+workflows:
+  android-internal:
+    name: Android Internal Testing
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      groups:
+        # Define in Codemagic UI -> Teams -> Environment variables.
+        # Contains GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (JSON for Play Console).
+        - google_play
+        # Vite needs VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY at build time.
+        - cleverdog_supabase
+      android_signing:
+        # Upload the keystore in Codemagic UI -> Code signing identities.
+        # Reference it here by the name you gave it.
+        - cleverdog-keystore
+      node: 22
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Install Node deps
+        script: npm ci
+      - name: Build customer-only web bundle
+        script: npm run app:build
+      - name: Sync to Android project
+        script: npx cap sync android
+      - name: Build signed AAB
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
+      - android/app/build/outputs/apk/release/*.apk
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+
+  ios-testflight:
+    name: iOS TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      groups:
+        - app_store_connect
+        - cleverdog_supabase
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: se.cleverdog.kundportal
+      xcode: latest
+      cocoapods: default
+      node: 22
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Install Node deps
+        script: npm ci
+      - name: Build customer-only web bundle
+        script: npm run app:build
+      - name: Add iOS platform if missing
+        script: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          else
+            npx cap sync ios
+          fi
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace "$CM_BUILD_DIR/ios/App/App.xcworkspace" \
+            --scheme "App"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
