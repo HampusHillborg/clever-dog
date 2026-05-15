@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInCustomer, signOutCustomer, getCustomerForUser, isAdminUser } from '../lib/customerAuth';
 import { supabase } from '../lib/supabase';
+import { initPushNotifications } from '../lib/pushNotifications';
 import dogLogo from '../assets/images/logos/Logo.png';
 
 export default function LoginPage() {
@@ -38,6 +39,7 @@ export default function LoginPage() {
       }
     }
     if (customer) {
+      void initPushNotifications();
       navigate('/kund', { replace: true });
       return;
     }

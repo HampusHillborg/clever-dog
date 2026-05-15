@@ -6,6 +6,7 @@ import MobileAuthGate from './components/MobileAuthGate';
 import { isAdminUser } from './lib/customerAuth';
 import { supabase } from './lib/supabase';
 import { initDeepLinks } from './lib/deepLinks';
+import { initPushNotifications } from './lib/pushNotifications';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
@@ -38,7 +39,10 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
         return;
       }
       const admin = await isAdminUser();
-      if (!cancelled) setState(admin ? 'admin' : 'ok');
+      if (cancelled) return;
+      setState(admin ? 'admin' : 'ok');
+      // Auto-register push for already-authenticated customers on app boot
+      if (!admin) void initPushNotifications();
     })();
     return () => { cancelled = true; };
   }, []);
