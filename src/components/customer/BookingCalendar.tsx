@@ -6,6 +6,7 @@ import {
   getDaysForMonth, upsertBooking, deleteBooking,
   type DayInfo, type DayStatus,
 } from '../../lib/bookingHelpers';
+import { sendNotification } from '../../lib/notifications';
 import BookingRequestModal from './BookingRequestModal';
 
 const MONTHS = [
@@ -32,6 +33,22 @@ const STATUS_LABEL: Record<DayStatus, string> = {
   rejected: 'Avslagen',
   boarding: 'Pensionat',
   none: 'Ledig',
+};
+
+// Short labels shown in calendar cells under the date number.
+const cellLabel = (status: DayStatus, bookingType?: string): string => {
+  if (status === 'pending') {
+    if (bookingType === 'boarding') return 'Pens. ?';
+    if (bookingType === 'single_day') return 'Enstaka ?';
+    if (bookingType === 'extra') return 'Extra ?';
+    return '?';
+  }
+  if (status === 'rejected') return 'Avslagen';
+  if (status === 'cancelled') return 'Avb.';
+  if (status === 'boarding') return 'Pens.';
+  if (status === 'extra') return 'Extra';
+  if (status === 'scheduled') return 'Dagis';
+  return '';
 };
 
 export default function BookingCalendar({ dog }: { dog: Dog }) {
@@ -67,15 +84,16 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
 
   const firstDayWeekday = days[0]?.weekday ?? 0;
 
-  const handleAction = async (action: 'add_extra' | 'cancel' | 'undo') => {
+  const handleAction = async (action: 'add_extra' | 'cancel' | 'undo' | 'cancel_request') => {
     if (!selectedDay || !customerId) return;
     try {
       if (action === 'add_extra') {
-        await upsertBooking({
+        const booking = await upsertBooking({
           dog_id: dog.id, customer_id: customerId,
           start_date: selectedDay.date, end_date: selectedDay.date,
-          booking_type: 'extra', status: 'confirmed',
+          booking_type: 'extra', status: 'pending',
         });
+        sendNotification({ kind: 'booking_request', booking_id: booking.id });
       } else if (action === 'cancel') {
         if (selectedDay.bookingId) {
           await upsertBooking({
@@ -92,6 +110,8 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
           });
         }
       } else if (action === 'undo' && selectedDay.bookingId) {
+        await deleteBooking(selectedDay.bookingId);
+      } else if (action === 'cancel_request' && selectedDay.bookingId) {
         await deleteBooking(selectedDay.bookingId);
       }
       setSelectedDay(null);
@@ -129,14 +149,16 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
           {Array.from({ length: firstDayWeekday }).map((_, i) => <div key={`pad-${i}`} />)}
           {days.map(d => {
             const dayNum = parseInt(d.date.slice(8), 10);
+            const label = cellLabel(d.status, d.bookingType);
             return (
               <button
                 key={d.date}
                 onClick={() => setSelectedDay(d)}
-                className={`aspect-square rounded border text-center flex items-center justify-center hover:ring-2 hover:ring-primary ${STATUS_STYLE[d.status]}`}
+                className={`aspect-square rounded border hover:ring-2 hover:ring-primary flex flex-col items-center justify-center px-0.5 ${STATUS_STYLE[d.status]}`}
                 title={STATUS_LABEL[d.status]}
               >
-                {dayNum}
+                <span className="leading-none">{dayNum}</span>
+                {label && <span className="text-[8px] leading-tight mt-0.5 truncate w-full">{label}</span>}
               </button>
             );
           })}
@@ -177,7 +199,7 @@ function Legend() {
 function DayActions({ day, onClose, onAction }: {
   day: DayInfo;
   onClose: () => void;
-  onAction: (a: 'add_extra' | 'cancel' | 'undo') => void;
+  onAction: (a: 'add_extra' | 'cancel' | 'undo' | 'cancel_request') => void;
 }) {
   const niceDate = day.date.split('-').reverse().join('/');
   return (
@@ -188,11 +210,15 @@ function DayActions({ day, onClose, onAction }: {
         <div className="space-y-2">
           {day.status === 'none' && (
             <button onClick={() => onAction('add_extra')}
-                    className="w-full bg-emerald-500 text-white rounded-lg py-2">Boka extra dag</button>
+                    className="w-full bg-emerald-500 text-white rounded-lg py-2">Begär extra dag</button>
           )}
           {(day.status === 'scheduled' || day.status === 'extra') && (
             <button onClick={() => onAction('cancel')}
                     className="w-full bg-gray-500 text-white rounded-lg py-2">Avboka denna dag</button>
+          )}
+          {day.status === 'pending' && day.bookingId && (
+            <button onClick={() => onAction('cancel_request')}
+                    className="w-full bg-gray-500 text-white rounded-lg py-2">Avbryt förfrågan</button>
           )}
           {day.status === 'cancelled' && day.bookingId && (
             <button onClick={() => onAction('undo')}

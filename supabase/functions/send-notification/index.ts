@@ -30,15 +30,17 @@ type Kind = 'booking_request' | 'booking_decision' | 'customer_message';
 const escape = (s: string | null | undefined) =>
   (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(to: string, subject: string, html: string, replyTo?: string) {
   if (!RESEND_API_KEY) throw new Error('RESEND_API_KEY not configured');
+  const payload: Record<string, unknown> = { from: RESEND_FROM, to, subject, html };
+  if (replyTo) payload.reply_to = replyTo;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${RESEND_API_KEY}`,
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ from: RESEND_FROM, to, subject, html }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -106,7 +108,13 @@ Deno.serve(async (req) => {
         </ul>
         <p>Logga in på <a href="${SITE_URL}/admin">admin-portalen</a> för att godkänna eller avslå.</p>
       `);
-      await sendEmail(ADMIN_EMAIL, `Ny ${type.toLowerCase()}-förfrågan från ${booking.customers?.name}`, html);
+      // Reply-To = customer email so admin can reply directly from inbox
+      await sendEmail(
+        ADMIN_EMAIL,
+        `Ny ${type.toLowerCase()}-förfrågan från ${booking.customers?.name}`,
+        html,
+        booking.customers?.email ?? undefined,
+      );
     }
     else if (body.kind === 'booking_decision') {
       if (!body.booking_id) throw new Error('booking_id required');
@@ -139,7 +147,8 @@ Deno.serve(async (req) => {
         </ul>
         <p>Se din kalender på <a href="${SITE_URL}/kund">kundportalen</a>.</p>
       `);
-      await sendEmail(booking.customers.email, subject, html);
+      // Reply-To = admin email so customer can write back to staff
+      await sendEmail(booking.customers.email, subject, html, ADMIN_EMAIL || undefined);
     }
     else if (body.kind === 'customer_message') {
       if (!body.message_id) throw new Error('message_id required');
@@ -161,7 +170,13 @@ Deno.serve(async (req) => {
         </blockquote>
         <p>Svara via <a href="${SITE_URL}/admin">admin-portalen</a>.</p>
       `);
-      await sendEmail(ADMIN_EMAIL, `Nytt meddelande från ${msg.customers?.name}`, html);
+      // Reply-To = customer email so admin can reply via inbox
+      await sendEmail(
+        ADMIN_EMAIL,
+        `Nytt meddelande från ${msg.customers?.name}`,
+        html,
+        msg.customers?.email ?? undefined,
+      );
     }
     else {
       return new Response(JSON.stringify({ error: 'unknown kind' }), { status: 400, headers });

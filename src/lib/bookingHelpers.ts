@@ -11,6 +11,7 @@ export type DayInfo = {
   weekday: number;
   status: DayStatus;
   bookingId?: string;
+  bookingType?: string; // 'scheduled' (recurring) | 'extra' | 'cancelled' | 'boarding' | 'single_day'
   notes?: string;
 };
 
@@ -46,15 +47,18 @@ export const getDaysForMonth = async (
     const booking = bookings.find(b => b.start_date <= dateStr && b.end_date >= dateStr);
 
     let status: DayStatus = 'none';
+    let bookingType: string | undefined = undefined;
     if (booking) {
-      if (booking.booking_type === 'boarding') status = 'boarding';
-      else if (booking.status === 'pending') status = 'pending';
+      bookingType = booking.booking_type;
+      if (booking.status === 'pending') status = 'pending';
       else if (booking.status === 'rejected') status = 'rejected';
+      else if (booking.booking_type === 'boarding') status = 'boarding';
       else if (booking.booking_type === 'cancelled' || booking.status === 'cancelled') status = 'cancelled';
       else if (booking.booking_type === 'extra') status = 'extra';
       else status = 'scheduled';
     } else if (recurring.has(weekday)) {
       status = 'scheduled';
+      bookingType = 'scheduled';
     }
 
     days.push({
@@ -62,6 +66,7 @@ export const getDaysForMonth = async (
       weekday,
       status,
       bookingId: booking?.id,
+      bookingType,
       notes: booking?.notes ?? undefined,
     });
   }
