@@ -9,16 +9,24 @@ export const initPushNotifications = async (): Promise<void> => {
   if (!isNativeApp() || !supabase || initialized) return;
   initialized = true;
 
-  let perm = await PushNotifications.checkPermissions();
-  if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
-    perm = await PushNotifications.requestPermissions();
-  }
-  if (perm.receive !== 'granted') {
-    initialized = false; // allow retry later
+  try {
+    let perm = await PushNotifications.checkPermissions();
+    if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
+      perm = await PushNotifications.requestPermissions();
+    }
+    if (perm.receive !== 'granted') {
+      initialized = false; // allow retry later
+      return;
+    }
+
+    await PushNotifications.register();
+  } catch (e) {
+    // FCM not configured (missing google-services.json) or any other
+    // native-side failure — log and continue so the app stays usable.
+    console.warn('[push] init skipped:', e);
+    initialized = false;
     return;
   }
-
-  await PushNotifications.register();
 
   PushNotifications.addListener('registration', async (token: Token) => {
     console.log('[push] token registered');
