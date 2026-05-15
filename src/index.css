@@ -18,24 +18,34 @@
   }
 
   body {
-    @apply font-sans text-dark bg-light;
-    overflow-x: hidden; /* Prevent horizontal scroll */
+    @apply font-sans text-dark bg-light antialiased;
+    overflow-x: hidden;
     width: 100%;
     position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
+    @apply font-bold tracking-tight;
   }
 
-  /* Enhanced focus styles for accessibility - excluding logo */
-  a:focus, button:focus, input:focus, select:focus, textarea:focus {
-    @apply outline-none ring-2 ring-primary ring-offset-2;
+  /* Focus rings only when keyboard-driving (no orange halo on every tap) */
+  :focus { outline: none; }
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-light;
   }
 
-  /* Remove focus styles from logo button */
-  .logo-button:focus {
+  /* Logo escapes the global focus ring */
+  .logo-button:focus,
+  .logo-button:focus-visible {
     @apply ring-0 ring-offset-0 outline-none;
+  }
+
+  /* Mobile input zoom prevention: 16px font in form fields */
+  input, select, textarea {
+    font-size: 16px;
   }
 }
 
@@ -112,6 +122,13 @@
   .section-with-paws {
     @apply relative overflow-hidden;
   }
+
+  /* Hide scrollbars but keep scroll behavior — used by horizontal pill nav */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
 
   /* Icon circle gradient */
   .icon-circle {

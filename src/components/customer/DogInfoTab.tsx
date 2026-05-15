@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaSave, FaTimes, FaCamera, FaStickyNote } from 'react-icons/fa';
 import { updateMyDog, uploadDogPhoto, type Dog } from '../../lib/customerApi';
 import { pickPhoto } from '../../lib/photoPicker';
 
@@ -19,6 +19,7 @@ export default function DogInfoTab({ dog, onUpdate }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Partial<Dog>>(dog);
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const save = async () => {
     setSaving(true);
@@ -42,6 +43,7 @@ export default function DogInfoTab({ dog, onUpdate }: Props) {
   };
 
   const handlePhotoUpload = async (file: File) => {
+    setUploadingPhoto(true);
     try {
       const url = await uploadDogPhoto(dog.id, file);
       onUpdate({ ...dog, photo_url: url });
@@ -49,76 +51,112 @@ export default function DogInfoTab({ dog, onUpdate }: Props) {
       const msg = err instanceof Error ? err.message : 'Kunde inte ladda upp';
       alert(msg);
     }
+    setUploadingPhoto(false);
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-3xl text-gray-500 shrink-0">
+    <div className="space-y-4">
+      {/* Photo card */}
+      <div className="bg-white rounded-2xl shadow-card p-5 flex items-center gap-4">
+        <div className="relative w-24 h-24 rounded-2xl bg-orange-100 overflow-hidden flex items-center justify-center text-3xl font-bold text-orange-700 shrink-0 ring-2 ring-white shadow-card">
           {dog.photo_url
             ? <img src={dog.photo_url} alt={dog.name} className="w-full h-full object-cover" />
             : dog.name?.[0]?.toUpperCase()}
+          {uploadingPhoto && (
+            <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs font-semibold text-orange-700">…</div>
+          )}
         </div>
-        <button
-          type="button"
-          className="text-sm text-primary hover:underline"
-          onClick={async () => {
-            const picked = await pickPhoto();
-            if (picked) handlePhotoUpload(picked.file);
-          }}
-        >
-          Byt foto
-        </button>
+        <div className="flex-1">
+          <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-1">Profilbild</p>
+          <p className="text-sm text-gray-600 mb-2">Hjälper oss känna igen din hund.</p>
+          <button
+            type="button"
+            onClick={async () => {
+              const picked = await pickPhoto();
+              if (picked) handlePhotoUpload(picked.file);
+            }}
+            disabled={uploadingPhoto}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-orange-700 disabled:opacity-50"
+          >
+            <FaCamera className="text-xs" />
+            {dog.photo_url ? 'Byt foto' : 'Lägg till foto'}
+          </button>
+        </div>
       </div>
 
-      {!editing ? (
-        <>
-          <div className="flex justify-between">
-            <h2 className="font-semibold">Grundinfo</h2>
-            <button onClick={() => { setDraft(dog); setEditing(true); }}
-                    className="flex items-center gap-2 text-sm text-primary hover:underline">
-              <FaEdit /> Redigera
-            </button>
-          </div>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <Item k="Namn" v={dog.name} />
-            <Item k="Ras" v={dog.breed} />
-            <Item k="Ålder" v={dog.age} />
-            <Item k="Telefon" v={dog.phone} />
-            <Item k="E-post" v={dog.email} />
-            <Item k="Adress" v={dog.owner_address} />
-            <Item k="Stad" v={dog.owner_city} />
-            <Item k="Försäkringsbolag" v={dog.insurance_company} />
-            <Item k="Försäkringsnr" v={dog.insurance_number} />
-            <Item k="Chip-nr" v={dog.chip_number} />
-          </dl>
-        </>
-      ) : (
-        <>
-          <div className="flex justify-between">
-            <h2 className="font-semibold">Redigera grundinfo</h2>
-            <div className="flex gap-2">
-              <button onClick={() => setEditing(false)} className="text-gray-500"><FaTimes /></button>
-              <button onClick={save} disabled={saving} className="text-primary"><FaSave /></button>
+      {/* Info card */}
+      <div className="bg-white rounded-2xl shadow-card p-5">
+        {!editing ? (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-base">Grundinfo</h2>
+              <button
+                onClick={() => { setDraft(dog); setEditing(true); }}
+                className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-orange-700 px-2 py-1 rounded-lg hover:bg-orange-50"
+              >
+                <FaEdit className="text-xs" /> Redigera
+              </button>
             </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {FIELDS.map(([key, label]) => (
-              <label key={String(key)} className="block">
-                <span className="text-xs text-gray-500">{label}</span>
-                <input
-                  value={(draft[key] as string | null | undefined) ?? ''}
-                  onChange={e => setDraft({ ...draft, [key]: e.target.value })}
-                  className="mt-1 w-full rounded-lg border-gray-300"
-                />
-              </label>
-            ))}
-          </div>
-        </>
-      )}
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <Item k="Namn" v={dog.name} />
+              <Item k="Ras" v={dog.breed} />
+              <Item k="Ålder" v={dog.age} />
+              <Item k="Telefon" v={dog.phone} />
+              <Item k="E-post" v={dog.email} />
+              <Item k="Adress" v={dog.owner_address} />
+              <Item k="Stad" v={dog.owner_city} />
+              <Item k="Försäkringsbolag" v={dog.insurance_company} />
+              <Item k="Försäkringsnr" v={dog.insurance_number} />
+              <Item k="Chip-nr" v={dog.chip_number} />
+            </dl>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-base">Redigera grundinfo</h2>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setEditing(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 flex items-center justify-center"
+                  aria-label="Avbryt"
+                >
+                  <FaTimes className="text-xs" />
+                </button>
+                <button
+                  onClick={save}
+                  disabled={saving}
+                  className="w-8 h-8 rounded-lg bg-primary text-white hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center"
+                  aria-label="Spara"
+                >
+                  <FaSave className="text-xs" />
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {FIELDS.map(([key, label]) => (
+                <label key={String(key)} className="block">
+                  <span className="text-xs font-medium text-gray-600">{label}</span>
+                  <input
+                    value={(draft[key] as string | null | undefined) ?? ''}
+                    onChange={e => setDraft({ ...draft, [key]: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-primary transition-colors"
+                  />
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
-      <div className="border-t pt-4">
-        <h3 className="font-semibold mb-2">Mina anteckningar</h3>
+      {/* Notes card */}
+      <div className="bg-white rounded-2xl shadow-card p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <FaStickyNote className="text-orange-500 text-sm" />
+          <h3 className="font-semibold text-base">Mina anteckningar</h3>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">
+          Allergier, mediciner, mat, beteenden personalen bör känna till.
+        </p>
         <CustomerNotesEditor dog={dog} onUpdate={onUpdate} />
       </div>
     </div>
@@ -126,7 +164,12 @@ export default function DogInfoTab({ dog, onUpdate }: Props) {
 }
 
 function Item({ k, v }: { k: string; v: string | null | undefined }) {
-  return <div><dt className="text-gray-500 text-xs">{k}</dt><dd>{v || '—'}</dd></div>;
+  return (
+    <div>
+      <dt className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">{k}</dt>
+      <dd className="text-dark mt-0.5">{v || <span className="text-gray-300">—</span>}</dd>
+    </div>
+  );
 }
 
 function CustomerNotesEditor({ dog, onUpdate }: Props) {
@@ -153,12 +196,15 @@ function CustomerNotesEditor({ dog, onUpdate }: Props) {
         value={text}
         onChange={e => { setText(e.target.value); setDirty(true); }}
         rows={4}
-        placeholder="T.ex. allergier, mediciner, mat, beteenden personalen bör känna till…"
-        className="w-full rounded-lg border-gray-300"
+        placeholder="Skriv något…"
+        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:bg-white focus:border-primary transition-colors resize-none"
       />
       {dirty && (
-        <button onClick={save} disabled={saving}
-                className="mt-2 bg-primary text-white px-4 py-2 rounded-lg text-sm">
+        <button
+          onClick={save}
+          disabled={saving}
+          className="mt-3 inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-orange-600 disabled:opacity-50 active:scale-95 transition-all"
+        >
           {saving ? 'Sparar…' : 'Spara anteckningar'}
         </button>
       )}

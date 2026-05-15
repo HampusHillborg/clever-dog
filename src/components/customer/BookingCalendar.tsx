@@ -176,42 +176,59 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
     }
   };
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+
   return (
-    <div className="bg-white rounded-2xl shadow p-4">
-      <div className="flex gap-2 mb-3 flex-wrap">
+    <div className="bg-white rounded-2xl shadow-card p-4 sm:p-5">
+      <div className="flex gap-2 mb-4 flex-wrap">
         <button onClick={() => setRequestType('boarding')}
-                className="bg-purple-100 text-purple-900 px-3 py-1.5 rounded-lg text-sm hover:bg-purple-200">
+                className="bg-purple-50 text-purple-900 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-purple-100 transition-colors border border-purple-200">
           + Begär pensionat
         </button>
         <button onClick={() => setRequestType('single_day')}
-                className="bg-yellow-100 text-yellow-900 px-3 py-1.5 rounded-lg text-sm hover:bg-yellow-200">
+                className="bg-amber-50 text-amber-900 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-amber-100 transition-colors border border-amber-200">
           + Begär enstaka dag
         </button>
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded"><FaChevronLeft /></button>
-        <h3 className="font-semibold">{MONTHS[month]} {year}</h3>
-        <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded"><FaChevronRight /></button>
+        <button
+          onClick={prevMonth}
+          className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Föregående månad"
+        >
+          <FaChevronLeft className="text-sm" />
+        </button>
+        <h3 className="font-semibold text-base">{MONTHS[month]} {year}</h3>
+        <button
+          onClick={nextMonth}
+          className="w-9 h-9 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Nästa månad"
+        >
+          <FaChevronRight className="text-sm" />
+        </button>
       </div>
 
-      {loading ? <p>Laddar…</p> : (
+      {loading ? (
+        <CalendarSkeleton />
+      ) : (
         <div className="grid grid-cols-7 gap-1 text-xs">
           {WEEKDAYS.map(w => (
-            <div key={w} className="text-center font-semibold text-gray-500 py-1">{w}</div>
+            <div key={w} className="text-center font-semibold text-gray-400 py-1 text-[10px] uppercase tracking-wide">{w}</div>
           ))}
           {Array.from({ length: firstDayWeekday }).map((_, i) => <div key={`pad-${i}`} />)}
           {days.map(d => {
             const dayNum = parseInt(d.date.slice(8), 10);
             const label = cellLabel(d.status, d.bookingType);
+            const isToday = d.date === todayIso;
             return (
               <button
                 key={d.date}
                 onClick={() => setSelectedDay(d)}
-                className={`aspect-square rounded border hover:ring-2 hover:ring-primary flex flex-col items-center justify-center px-0.5 ${STATUS_STYLE[d.status]}`}
+                className={`aspect-square rounded-lg border-2 hover:scale-[1.04] active:scale-95 flex flex-col items-center justify-center px-0.5 transition-transform ${STATUS_STYLE[d.status]} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}`}
                 title={STATUS_LABEL[d.status]}
               >
-                <span className="leading-none">{dayNum}</span>
+                <span className={`leading-none text-sm ${isToday ? 'font-bold' : 'font-medium'}`}>{dayNum}</span>
                 {label && <span className="text-[8px] leading-tight mt-0.5 truncate w-full">{label}</span>}
               </button>
             );
@@ -222,9 +239,15 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
       <Legend />
 
       {partTime && quota !== null && (
-        <p className="mt-2 text-xs text-gray-600">
-          Deltidsplats: du väljer {quota} dagar/vecka själv. Ändringar måste göras senast dagen innan.
-        </p>
+        <div className="mt-3 rounded-xl bg-orange-50 border border-orange-200 px-3 py-2.5 flex items-start gap-2">
+          <div className="w-7 h-7 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+            {quota}
+          </div>
+          <p className="text-xs text-orange-900 leading-snug">
+            <span className="font-semibold">Deltidsplats:</span> du väljer själv {quota} dagar per vecka.
+            Ändringar måste göras senast dagen innan.
+          </p>
+        </div>
       )}
 
       {selectedDay && (
@@ -251,14 +274,35 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
   );
 }
 
-function Legend() {
+function CalendarSkeleton() {
   return (
-    <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-600">
-      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-100 border border-green-300" /> Inbokad</span>
-      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-emerald-200 border border-emerald-400" /> Extra</span>
-      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-200 border border-gray-300" /> Avbokad</span>
-      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300" /> Väntar</span>
-      <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-100 border border-purple-300" /> Pensionat</span>
+    <div className="grid grid-cols-7 gap-1 animate-pulse">
+      {Array.from({ length: 7 }).map((_, i) => (
+        <div key={`h-${i}`} className="h-4 bg-gray-100 rounded" />
+      ))}
+      {Array.from({ length: 35 }).map((_, i) => (
+        <div key={`c-${i}`} className="aspect-square bg-gray-100 rounded-lg" />
+      ))}
+    </div>
+  );
+}
+
+function Legend() {
+  const items: { color: string; label: string }[] = [
+    { color: 'bg-green-100 border-green-300', label: 'Inbokad' },
+    { color: 'bg-emerald-200 border-emerald-400', label: 'Extra' },
+    { color: 'bg-gray-200 border-gray-300', label: 'Avbokad' },
+    { color: 'bg-yellow-100 border-yellow-300', label: 'Väntar' },
+    { color: 'bg-purple-100 border-purple-300', label: 'Pensionat' },
+  ];
+  return (
+    <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-600">
+      {items.map(i => (
+        <span key={i.label} className="flex items-center gap-1.5">
+          <span className={`w-3 h-3 rounded border ${i.color}`} />
+          <span>{i.label}</span>
+        </span>
+      ))}
     </div>
   );
 }
@@ -279,10 +323,14 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction }: 
   const canUnpick = partTime && day.status === 'scheduled' && !locked;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
-        <h3 className="font-bold mb-1">{niceDate}</h3>
-        <p className="text-sm text-gray-500 mb-2">Status: {STATUS_LABEL[day.status]}</p>
+    <div className="fixed inset-0 bg-dark/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-fade-in" onClick={onClose}>
+      <div
+        className="bg-white rounded-t-3xl sm:rounded-3xl p-6 max-w-sm w-full shadow-lift animate-slide-in-top"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
+        <h3 className="font-bold text-lg mb-1 tracking-tight">{niceDate}</h3>
+        <p className="text-sm text-gray-500 mb-3">Status: <span className="font-medium text-gray-700">{STATUS_LABEL[day.status]}</span></p>
 
         {partTime && quota !== null && (
           <p className="text-xs text-gray-600 mb-2">

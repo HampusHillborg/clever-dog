@@ -5,8 +5,15 @@ import { signOutCustomer } from '../lib/customerAuth';
 import MessagesAdminTab from '../components/admin/MessagesAdminTab';
 import TodayAttendanceTab from '../components/admin/TodayAttendanceTab';
 import { getStaffSchedules, type StaffSchedule } from '../lib/database';
+import dogLogo from '../assets/images/logos/Logo.png';
 
 type Tab = 'today' | 'messages' | 'schedule';
+
+const TAB_LABEL: Record<Tab, string> = {
+  today: 'Idag',
+  messages: 'Meddelanden',
+  schedule: 'Mitt schema',
+};
 
 export default function AdminMobilePage() {
   const [tab, setTab] = useState<Tab>('today');
@@ -18,32 +25,43 @@ export default function AdminMobilePage() {
 
   return (
     <div className="min-h-screen bg-light flex flex-col">
-      <header className="bg-white border-b px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-        <h1 className="font-bold text-lg">CleverDog · Personal</h1>
+      <header className="bg-white/85 backdrop-blur-md border-b border-gray-200/70 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <img src={dogLogo} alt="" className="h-8 w-8 object-contain shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold">CleverDog · Personal</p>
+            <h1 className="font-bold text-base truncate">{TAB_LABEL[tab]}</h1>
+          </div>
+        </div>
         <button
           onClick={logout}
-          className="text-sm text-gray-500 hover:text-gray-900 flex items-center gap-1"
+          className="w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center transition-colors"
+          aria-label="Logga ut"
         >
-          <FaSignOutAlt /> Logga ut
+          <FaSignOutAlt className="text-sm" />
         </button>
       </header>
 
-      <main className="flex-1 overflow-y-auto pb-24">
-        <div className="p-3">
+      <main className="flex-1 overflow-y-auto pb-28">
+        <div className="p-3 sm:p-4 max-w-3xl mx-auto w-full">
           {tab === 'today' && <TodayAttendanceTab />}
           {tab === 'messages' && <MessagesAdminTab />}
           {tab === 'schedule' && <MyScheduleView />}
         </div>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t flex z-20"
-           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <TabButton active={tab === 'today'} onClick={() => setTab('today')}
-                   icon={<FaDog />} label="Idag" />
-        <TabButton active={tab === 'messages'} onClick={() => setTab('messages')}
-                   icon={<FaEnvelope />} label="Meddelanden" />
-        <TabButton active={tab === 'schedule'} onClick={() => setTab('schedule')}
-                   icon={<FaCalendarAlt />} label="Mitt schema" />
+      <nav
+        className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200/70 z-20"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex max-w-3xl mx-auto px-2 py-1.5">
+          <TabButton active={tab === 'today'} onClick={() => setTab('today')}
+                     icon={<FaDog />} label="Idag" />
+          <TabButton active={tab === 'messages'} onClick={() => setTab('messages')}
+                     icon={<FaEnvelope />} label="Meddelanden" />
+          <TabButton active={tab === 'schedule'} onClick={() => setTab('schedule')}
+                     icon={<FaCalendarAlt />} label="Schema" />
+        </div>
       </nav>
     </div>
   );
@@ -55,12 +73,20 @@ function TabButton({ active, onClick, icon, label }: {
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex flex-col items-center gap-1 py-3 ${
-        active ? 'text-primary' : 'text-gray-500'
-      }`}
+      className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-colors active:scale-95"
     >
-      <span className="text-xl">{icon}</span>
-      <span className="text-xs">{label}</span>
+      <span
+        className={`flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${
+          active
+            ? 'bg-orange-100 text-orange-700'
+            : 'text-gray-400'
+        }`}
+      >
+        <span className="text-lg">{icon}</span>
+      </span>
+      <span className={`text-[11px] font-medium ${active ? 'text-orange-700' : 'text-gray-500'}`}>
+        {label}
+      </span>
     </button>
   );
 }
