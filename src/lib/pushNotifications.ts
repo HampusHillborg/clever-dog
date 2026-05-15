@@ -1,12 +1,12 @@
 import { PushNotifications, type Token } from '@capacitor/push-notifications';
 import { supabase } from './supabase';
-import { isNativeApp, platform } from './platform';
+import { isNativeApp, isPushEnabled, platform } from './platform';
 import { showToast } from '../components/customer/NotificationToast';
 
 let initialized = false;
 
 export const initPushNotifications = async (): Promise<void> => {
-  if (!isNativeApp() || !supabase || initialized) return;
+  if (!isNativeApp() || !isPushEnabled() || !supabase || initialized) return;
   initialized = true;
 
   try {

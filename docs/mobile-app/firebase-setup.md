@@ -31,6 +31,15 @@ the secret keys/files.
 7. Skip the "Add Firebase SDK" and "Verify installation" steps — Capacitor's
    push plugin handles the SDK wiring.
 
+8. **Enable push in the app build** by adding `VITE_PUSH_ENABLED=true` to
+   your local `.env.local` (or set it inline when building). Push is gated
+   behind this flag because without `google-services.json` the native
+   Firebase init crashes the Activity right after the permission prompt.
+   ```powershell
+   echo "VITE_PUSH_ENABLED=true" >> .env.local
+   npm run app:sync
+   ```
+
 ## Step 3 — Generate a service account key for the edge function
 
 The edge function needs to authenticate to the FCM HTTP v1 API. It uses a
