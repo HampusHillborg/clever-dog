@@ -46,6 +46,7 @@ import CustomersTab from './admin/CustomersTab';
 import BookingRequestsTab from './admin/BookingRequestsTab';
 import MessagesAdminTab from './admin/MessagesAdminTab';
 import StatsTab from './admin/StatsTab';
+import OwnerInput from './admin/OwnerInput';
 
 interface ContractData {
   // Common fields
@@ -229,7 +230,8 @@ const AdminPage: React.FC = () => {
     gender: '',
     birthDate: '',
     insuranceCompany: '',
-    insuranceNumber: ''
+    insuranceNumber: '',
+    ownerCustomerId: null as string | null,
   });
   const [planningStaffanstorp, setPlanningStaffanstorp] = useState<Cage[]>([]);
   const [planningMalmo, setPlanningMalmo] = useState<Cage[]>([]);
@@ -1457,8 +1459,8 @@ const AdminPage: React.FC = () => {
       insuranceNumber: dogForm.insuranceNumber || undefined
     };
 
-    // Save to database
-    saveDogToDb(newDog).then((savedDog) => {
+    // Save to database, then link to customer (existing or newly created)
+    saveDogToDb(newDog).then(async (savedDog) => {
       // Update local state
       let updatedDogs;
       if (editingDog) {
@@ -1468,6 +1470,40 @@ const AdminPage: React.FC = () => {
       }
       setDogs(updatedDogs);
       localStorage.setItem('cleverDogs', JSON.stringify(updatedDogs));
+
+      // Customer linking
+      try {
+        const { saveCustomer, setCustomerDogs, getCustomerDogIds, getCustomers } = await import('../lib/database');
+        let customerId = dogForm.ownerCustomerId;
+        if (!customerId && dogForm.owner.trim()) {
+          // Try to reuse an existing customer with the same email if email matches; otherwise create new
+          const allCustomers = await getCustomers();
+          const existing = dogForm.email
+            ? allCustomers.find(c => c.email.toLowerCase() === dogForm.email.toLowerCase())
+            : undefined;
+          if (existing) {
+            customerId = existing.id;
+          } else {
+            const created = await saveCustomer({
+              name: dogForm.owner.trim(),
+              email: dogForm.email?.trim() || `${savedDog.id}@noemail.local`,
+              phone: dogForm.phone || null,
+              address: dogForm.ownerAddress || null,
+              city: dogForm.ownerCity || null,
+              personal_number: dogForm.ownerPersonalNumber || null,
+            } as any);
+            customerId = created.id;
+          }
+        }
+        if (customerId) {
+          const currentDogIds = await getCustomerDogIds(customerId);
+          if (!currentDogIds.includes(savedDog.id)) {
+            await setCustomerDogs(customerId, [...currentDogIds, savedDog.id]);
+          }
+        }
+      } catch (linkErr) {
+        console.error('Failed to link customer to dog:', linkErr);
+      }
     }).catch((error) => {
       console.error('Error saving dog:', error);
       // Fallback to localStorage
@@ -1482,7 +1518,7 @@ const AdminPage: React.FC = () => {
     });
     setIsDogModalOpen(false);
     setEditingDog(null);
-    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '', gender: '', birthDate: '', insuranceCompany: '', insuranceNumber: '' });
+    setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '', gender: '', birthDate: '', insuranceCompany: '', insuranceNumber: '', ownerCustomerId: null });
   };
 
   const deleteDog = async (id: string) => {
@@ -1502,9 +1538,23 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const openDogModal = (dog?: Dog) => {
+  const openDogModal = async (dog?: Dog) => {
     if (dog) {
       setEditingDog(dog);
+      // Look up which customer (if any) is linked to this dog so the
+      // owner selector shows "linked to existing customer" instead of
+      // proposing to create a new one.
+      let linkedCustomerId: string | null = null;
+      try {
+        const { supabase } = await import('../lib/supabase');
+        if (supabase) {
+          const { data } = await supabase
+            .from('customer_dogs').select('customer_id').eq('dog_id', dog.id).limit(1).maybeSingle();
+          linkedCustomerId = data?.customer_id ?? null;
+        }
+      } catch (e) {
+        console.error('lookup customer_dogs failed', e);
+      }
       setDogForm({
         name: dog.name,
         breed: dog.breed,
@@ -1523,11 +1573,12 @@ const AdminPage: React.FC = () => {
         gender: dog.gender || '',
         birthDate: dog.birthDate || '',
         insuranceCompany: dog.insuranceCompany || '',
-        insuranceNumber: dog.insuranceNumber || ''
+        insuranceNumber: dog.insuranceNumber || '',
+        ownerCustomerId: linkedCustomerId,
       });
     } else {
       setEditingDog(null);
-      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '', gender: '', birthDate: '', insuranceCompany: '', insuranceNumber: '' });
+      setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '', gender: '', birthDate: '', insuranceCompany: '', insuranceNumber: '', ownerCustomerId: null });
     }
     setIsDogModalOpen(true);
   };
@@ -8457,14 +8508,21 @@ const AdminPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ägare *</label>
-                  <input
-                    type="text"
-                    value={dogForm.owner}
-                    onChange={(e) => setDogForm({ ...dogForm, owner: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="e.g., Tina Eriksson"
-                    disabled={userRole === 'employee'}
-                  />
+                  {userRole === 'employee' ? (
+                    <input
+                      type="text"
+                      value={dogForm.owner}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                    />
+                  ) : (
+                    <OwnerInput
+                      value={dogForm.owner}
+                      customerId={dogForm.ownerCustomerId}
+                      onChange={(name, id) => setDogForm({ ...dogForm, owner: name, ownerCustomerId: id })}
+                      emailHint={dogForm.email}
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
