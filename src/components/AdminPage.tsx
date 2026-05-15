@@ -46,6 +46,8 @@ import CustomersTab from './admin/CustomersTab';
 import BookingRequestsTab from './admin/BookingRequestsTab';
 import MessagesAdminTab from './admin/MessagesAdminTab';
 import StatsTab from './admin/StatsTab';
+import TodayAttendanceTab from './admin/TodayAttendanceTab';
+import EconomyTab from './admin/EconomyTab';
 import OwnerInput from './admin/OwnerInput';
 import { useAdminBadges } from './admin/useAdminBadges';
 import { sendNotification } from '../lib/notifications';
@@ -159,7 +161,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats' | 'today' | 'economy';
 
 type UserRole = 'admin' | 'employee' | 'platschef';
 
@@ -3541,6 +3543,30 @@ const AdminPage: React.FC = () => {
                   </div>
                   <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kunder</h4>
                   <p className="text-center text-gray-600 text-xs sm:text-sm">Skapa kundkonton, koppla hundar, skicka invites</p>
+                </div>
+              )}
+
+              <div
+                onClick={() => setCurrentView('today')}
+                className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-green-200 active:scale-95 sm:hover:scale-105"
+              >
+                <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                  <FaDog className="text-green-600 text-xl sm:text-2xl" />
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Idag · Incheckning</h4>
+                <p className="text-center text-gray-600 text-xs sm:text-sm">Checka in/ut dagens hundar</p>
+              </div>
+
+              {(userRole === 'admin' || userRole === 'platschef') && (
+                <div
+                  onClick={() => setCurrentView('economy')}
+                  className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-emerald-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaChartBar className="text-emerald-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Ekonomi</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Månadskostnad per kund</p>
                 </div>
               )}
 
@@ -7808,6 +7834,10 @@ const AdminPage: React.FC = () => {
         return <MessagesAdminTab />;
       case 'customer-stats':
         return (userRole === 'admin' || userRole === 'platschef') ? <StatsTab /> : renderDashboard();
+      case 'today':
+        return <TodayAttendanceTab />;
+      case 'economy':
+        return (userRole === 'admin' || userRole === 'platschef') ? <EconomyTab /> : renderDashboard();
       default:
         return renderDashboard();
     }
@@ -8276,7 +8306,9 @@ const AdminPage: React.FC = () => {
                                             currentView === 'booking-requests' ? 'Bokningsförfrågningar' :
                                               currentView === 'admin-messages' ? 'Meddelanden' :
                                                 currentView === 'customer-stats' ? 'Kund-statistik' :
-                                                  'Dashboard'}
+                                                  currentView === 'today' ? 'Idag · Incheckning' :
+                                                    currentView === 'economy' ? 'Ekonomi' :
+                                                      'Dashboard'}
               </h1>
               <div className="ml-auto sm:ml-4">
                 <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${userRole === 'admin'
