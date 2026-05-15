@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
-import { capacitorStorage } from './sessionPersistence';
 
 // Supabase configuration
 // Get these from your Supabase project settings (Settings > API)
@@ -22,18 +21,11 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   });
 }
 
-// Create Supabase client
+// Create Supabase client. Uses Supabase's default localStorage adapter,
+// which works in both the web browser and inside the Capacitor WebView
+// (WebView localStorage persists per-app between launches).
 export const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
-  ? createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        // capacitorStorage is async; supabase-js v2 accepts an async storage
-        // adapter even though the type still expects a sync one.
-        storage: capacitorStorage as never,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-      },
-    })
+  ? createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
 console.log('Supabase client created:', supabase !== null);

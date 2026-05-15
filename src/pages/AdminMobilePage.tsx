@@ -1,13 +1,10 @@
 import { useEffect, useState } from 'react';
-import { FaEnvelope, FaCalendarAlt, FaSignOutAlt, FaDog, FaCheck, FaUndo } from 'react-icons/fa';
+import { FaEnvelope, FaCalendarAlt, FaSignOutAlt, FaDog } from 'react-icons/fa';
 import { supabase } from '../lib/supabase';
 import { signOutCustomer } from '../lib/customerAuth';
 import MessagesAdminTab from '../components/admin/MessagesAdminTab';
+import TodayAttendanceTab from '../components/admin/TodayAttendanceTab';
 import { getStaffSchedules, type StaffSchedule } from '../lib/database';
-import {
-  getTodaysScheduledDogs, checkInDog, checkOutDog, undoCheckIn, undoCheckOut,
-  type AttendanceEntry,
-} from '../lib/attendance';
 
 type Tab = 'today' | 'messages' | 'schedule';
 
@@ -33,7 +30,7 @@ export default function AdminMobilePage() {
 
       <main className="flex-1 overflow-y-auto pb-24">
         <div className="p-3">
-          {tab === 'today' && <TodayTab />}
+          {tab === 'today' && <TodayAttendanceTab />}
           {tab === 'messages' && <MessagesAdminTab />}
           {tab === 'schedule' && <MyScheduleView />}
         </div>
@@ -65,145 +62,6 @@ function TabButton({ active, onClick, icon, label }: {
       <span className="text-xl">{icon}</span>
       <span className="text-xs">{label}</span>
     </button>
-  );
-}
-
-function TodayTab() {
-  const [entries, setEntries] = useState<AttendanceEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<string | null>(null);
-
-  const refresh = async () => {
-    setEntries(await getTodaysScheduledDogs());
-  };
-  useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
-
-  const action = async (dogId: string, fn: () => Promise<void>) => {
-    setBusy(dogId);
-    try {
-      await fn();
-      await refresh();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Något gick fel';
-      alert(msg);
-    }
-    setBusy(null);
-  };
-
-  if (loading) return <p className="text-center text-gray-400 mt-8">Laddar hundar…</p>;
-
-  const pending = entries.filter(e => !e.checked_in_at);
-  const here = entries.filter(e => e.checked_in_at && !e.checked_out_at);
-  const gone = entries.filter(e => e.checked_in_at && e.checked_out_at);
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Idag · {entries.length} hundar</h2>
-
-      <Section title={`Att checka in (${pending.length})`} variant="pending">
-        {pending.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id}>
-            <button
-              onClick={() => action(e.dog_id, () => checkInDog(e.dog_id))}
-              disabled={busy === e.dog_id}
-              className="bg-green-500 text-white px-4 py-2 rounded-lg disabled:opacity-50 flex items-center gap-1"
-            >
-              <FaCheck /> Checka in
-            </button>
-          </Row>
-        ))}
-      </Section>
-
-      <Section title={`Här just nu (${here.length})`} variant="here">
-        {here.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id}>
-            <div className="flex gap-2">
-              <button
-                onClick={() => action(e.dog_id, () => undoCheckIn(e.dog_id))}
-                disabled={busy === e.dog_id}
-                className="text-gray-500 px-2 py-2 rounded-lg disabled:opacity-50"
-                title="Ångra incheckning"
-              >
-                <FaUndo />
-              </button>
-              <button
-                onClick={() => action(e.dog_id, () => checkOutDog(e.dog_id))}
-                disabled={busy === e.dog_id}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-              >
-                Checka ut
-              </button>
-            </div>
-          </Row>
-        ))}
-      </Section>
-
-      <Section title={`Hämtade (${gone.length})`} variant="gone">
-        {gone.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id}>
-            <button
-              onClick={() => action(e.dog_id, () => undoCheckOut(e.dog_id))}
-              disabled={busy === e.dog_id}
-              className="text-gray-500 px-2 py-2 rounded-lg disabled:opacity-50"
-              title="Ångra utcheckning"
-            >
-              <FaUndo />
-            </button>
-          </Row>
-        ))}
-      </Section>
-    </div>
-  );
-}
-
-function Section({ title, variant, children }: {
-  title: string;
-  variant: 'pending' | 'here' | 'gone';
-  children: React.ReactNode;
-}) {
-  const childArr = Array.isArray(children) ? children : [children];
-  const filtered = childArr.filter(Boolean);
-  if (filtered.length === 0) return null;
-  const headerColor = variant === 'pending'
-    ? 'text-yellow-800'
-    : variant === 'here' ? 'text-green-800' : 'text-gray-500';
-  return (
-    <div>
-      <h3 className={`text-sm font-semibold uppercase tracking-wide mb-2 px-1 ${headerColor}`}>
-        {title}
-      </h3>
-      <div className="bg-white rounded-2xl shadow divide-y">{filtered}</div>
-    </div>
-  );
-}
-
-function Row({ entry, busy, children }: {
-  entry: AttendanceEntry;
-  busy: boolean;
-  children: React.ReactNode;
-}) {
-  const typeLabel = entry.booking_type === 'boarding'
-    ? 'Pensionat'
-    : entry.booking_type === 'extra' ? 'Extra'
-    : entry.booking_type === 'single_day' ? 'Enstaka' : 'Dagis';
-  const timeFmt = (iso: string | null) => {
-    if (!iso) return null;
-    const d = new Date(iso);
-    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-  };
-  return (
-    <div className={`p-3 flex items-center justify-between gap-3 ${busy ? 'opacity-50' : ''}`}>
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate">{entry.dog_name}</p>
-        <p className="text-xs text-gray-500 truncate">{entry.breed} · {entry.owner}</p>
-        <p className="text-xs text-gray-600 mt-0.5">
-          <span className="inline-block bg-gray-100 px-2 py-0.5 rounded">{typeLabel}</span>
-          {entry.checked_in_at && <span className="ml-2">In {timeFmt(entry.checked_in_at)}</span>}
-          {entry.checked_out_at && <span className="ml-2">Ut {timeFmt(entry.checked_out_at)}</span>}
-        </p>
-      </div>
-      <div className="shrink-0">{children}</div>
-    </div>
   );
 }
 
