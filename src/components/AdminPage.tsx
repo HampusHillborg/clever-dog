@@ -305,7 +305,7 @@ const AdminPage: React.FC = () => {
     email: '',
     date: '',
     time: '',
-    location: 'malmo' as 'malmo' | 'staffanstorp'
+    location: 'staffanstorp' as 'malmo' | 'staffanstorp'
   });
 
   // Load box settings from database on mount
@@ -5122,19 +5122,6 @@ const AdminPage: React.FC = () => {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-3 sm:mb-4">
             {/* Location Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Plats</label>
-              <select
-                value={statisticsFilter.location}
-                onChange={(e) => setStatisticsFilter(prev => ({ ...prev, location: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">Alla platser</option>
-                <option value="malmo">Malmö</option>
-                <option value="staffanstorp">Staffanstorp</option>
-              </select>
-            </div>
-
             {/* Period Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Period</label>
@@ -5552,24 +5539,7 @@ const AdminPage: React.FC = () => {
             </div>
 
             {/* Filter controls */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-gray-200">
-              {/* Location Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FaFilter className="inline mr-1" /> Plats
-                </label>
-                <select
-                  value={dogsLocationFilter}
-                  onChange={(e) => setDogsLocationFilter(e.target.value as 'all' | 'malmo' | 'staffanstorp' | 'both')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                >
-                  <option value="all">Alla platser</option>
-                  <option value="malmo">Malmö</option>
-                  <option value="staffanstorp">Staffanstorp</option>
-                  <option value="both">Båda platserna</option>
-                </select>
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-gray-200">
               {/* Type Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -6398,15 +6368,6 @@ const AdminPage: React.FC = () => {
               <option value="added">Tillagda</option>
             </select>
 
-            <select
-              value={applicationsLocationFilter}
-              onChange={(e) => setApplicationsLocationFilter(e.target.value as any)}
-              className="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-            >
-              <option value="all">Alla platser</option>
-              <option value="malmo">Malmö</option>
-              <option value="staffanstorp">Staffanstorp</option>
-            </select>
           </div>
         </div>
 
@@ -6929,18 +6890,6 @@ const AdminPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Plats *</label>
-                  <select
-                    value={scheduleForm.location}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value as 'malmo' | 'staffanstorp' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Välj plats</option>
-                    <option value="malmo">Malmö</option>
-                    <option value="staffanstorp">Staffanstorp</option>
-                  </select>
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
@@ -7428,7 +7377,7 @@ const AdminPage: React.FC = () => {
           email: '',
           date: new Date().toISOString().split('T')[0],
           time: '',
-          location: 'malmo'
+          location: 'staffanstorp'
         });
       }
       setIsMeetingModalOpen(true);
@@ -7728,19 +7677,6 @@ const AdminPage: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Plats
-                  </label>
-                  <select
-                    value={meetingForm.location}
-                    onChange={(e) => setMeetingForm({ ...meetingForm, location: e.target.value as 'malmo' | 'staffanstorp' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-                  >
-                    <option value="malmo">Malmö</option>
-                    <option value="staffanstorp">Staffanstorp</option>
-                  </select>
-                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
