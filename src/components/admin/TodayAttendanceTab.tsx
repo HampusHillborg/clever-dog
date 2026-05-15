@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { FaCheck, FaUndo, FaDog } from 'react-icons/fa';
+import { FaCheck, FaUndo, FaDog, FaCamera } from 'react-icons/fa';
 import {
   getTodaysScheduledDogs, checkInDog, checkOutDog, undoCheckIn, undoCheckOut,
   type AttendanceEntry,
 } from '../../lib/attendance';
+import PostActivityModal from './PostActivityModal';
 
 const typeLabel = (t: string | undefined): string => {
   if (t === 'boarding') return 'Pensionat';
@@ -29,6 +30,7 @@ export default function TodayAttendanceTab() {
   const [entries, setEntries] = useState<AttendanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [postingFor, setPostingFor] = useState<AttendanceEntry | null>(null);
 
   const refresh = async () => setEntries(await getTodaysScheduledDogs());
   useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
@@ -79,7 +81,7 @@ export default function TodayAttendanceTab() {
 
       <Section title={`Att checka in (${pending.length})`} headerClass="text-yellow-800">
         {pending.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id}>
+          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id} onPost={() => setPostingFor(e)}>
             <button
               onClick={() => act(e.dog_id, () => checkInDog(e.dog_id))}
               disabled={busy === e.dog_id}
@@ -93,7 +95,7 @@ export default function TodayAttendanceTab() {
 
       <Section title={`Här just nu (${here.length})`} headerClass="text-green-800">
         {here.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id}>
+          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id} onPost={() => setPostingFor(e)}>
             <div className="flex gap-1.5">
               <button
                 onClick={() => act(e.dog_id, () => undoCheckIn(e.dog_id))}
@@ -117,7 +119,7 @@ export default function TodayAttendanceTab() {
 
       <Section title={`Hämtade (${gone.length})`} headerClass="text-gray-500">
         {gone.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id} muted>
+          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id} muted onPost={() => setPostingFor(e)}>
             <button
               onClick={() => act(e.dog_id, () => undoCheckOut(e.dog_id))}
               disabled={busy === e.dog_id}
@@ -129,6 +131,15 @@ export default function TodayAttendanceTab() {
           </Row>
         ))}
       </Section>
+
+      {postingFor && (
+        <PostActivityModal
+          dogId={postingFor.dog_id}
+          dogName={postingFor.dog_name}
+          onClose={() => setPostingFor(null)}
+          onPosted={() => setPostingFor(null)}
+        />
+      )}
     </div>
   );
 }
@@ -156,10 +167,11 @@ function Section({ title, headerClass, children }: {
   );
 }
 
-function Row({ entry, busy, muted, children }: {
+function Row({ entry, busy, muted, onPost, children }: {
   entry: AttendanceEntry;
   busy: boolean;
   muted?: boolean;
+  onPost?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -184,7 +196,19 @@ function Row({ entry, busy, muted, children }: {
           </div>
         </div>
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="shrink-0 flex items-center gap-1.5">
+        {onPost && (
+          <button
+            onClick={onPost}
+            className="w-10 h-10 rounded-xl text-orange-700 bg-orange-50 hover:bg-orange-100 flex items-center justify-center"
+            title="Posta uppdatering till album"
+            aria-label="Posta uppdatering"
+          >
+            <FaCamera className="text-sm" />
+          </button>
+        )}
+        {children}
+      </div>
     </div>
   );
 }

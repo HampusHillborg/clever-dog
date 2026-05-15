@@ -3,6 +3,7 @@ import type { Database } from './database.types';
 
 export type Dog = Database['public']['Tables']['dogs']['Row'];
 export type Message = Database['public']['Tables']['messages']['Row'];
+export type DogActivity = Database['public']['Tables']['dog_activities']['Row'];
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -89,4 +90,68 @@ export const sendMessage = async (params: { dog_id?: string | null; body: string
 export const markMessagesRead = async (ids: string[]) => {
   if (!supabase || ids.length === 0) return;
   await supabase.from('messages').update({ is_read: true }).in('id', ids);
+};
+
+// Activity / "album" feed — staff posts photos + captions, customers read.
+export const getDogActivities = async (dogId: string, limit = 60): Promise<DogActivity[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('dog_activities')
+    .select('*')
+    .eq('dog_id', dogId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getDogActivities', error); return []; }
+  return data ?? [];
+};
+
+export const postDogActivity = async (params: {
+  dog_id: string;
+  file?: File | null;
+  body?: string | null;
+}): Promise<DogActivity> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const body = (params.body ?? '').trim() || null;
+  let photo_url: string | null = null;
+
+  if (params.file) {
+    if (params.file.size > MAX_PHOTO_SIZE) throw new Error('Max filstorlek 5 MB');
+    if (!ALLOWED_PHOTO_TYPES.includes(params.file.type)) throw new Error('Endast JPG, PNG eller WEBP');
+    const ext = (params.file.name.split('.').pop() ?? 'jpg').toLowerCase();
+    const path = `${params.dog_id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from('dog-activities').upload(path, params.file, { upsert: false });
+    if (upErr) throw upErr;
+    const { data: pub } = supabase.storage.from('dog-activities').getPublicUrl(path);
+    photo_url = pub.publicUrl;
+  }
+
+  if (!photo_url && !body) throw new Error('Foto eller text krävs');
+
+  // Capture poster name from the employees table at insert time so
+  // customers see "Hampus / Anna" without needing direct DB access.
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user.id;
+  let posted_by_name: string | null = null;
+  if (userId) {
+    const { data: emp } = await supabase
+      .from('employees').select('name').eq('id', userId).maybeSingle();
+    posted_by_name = emp?.name ?? null;
+  }
+
+  const { data, error } = await supabase.from('dog_activities').insert({
+    dog_id: params.dog_id,
+    photo_url,
+    body,
+    posted_by: userId ?? null,
+    posted_by_name,
+  }).select().single();
+  if (error) throw error;
+  return data;
+};
+
+export const deleteDogActivity = async (id: string): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { error } = await supabase.from('dog_activities').delete().eq('id', id);
+  if (error) throw error;
 };

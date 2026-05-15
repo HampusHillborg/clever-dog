@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FaBell } from 'react-icons/fa';
 
 export type ToastPayload = { title: string; body: string };
 
@@ -32,7 +33,7 @@ export default function NotificationToast() {
           className="bg-white border border-gray-200/80 rounded-2xl shadow-pop p-3.5 pointer-events-auto flex items-start gap-3 animate-slide-in-top"
         >
           <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
-            <span className="text-base">🔔</span>
+            <FaBell className="text-sm" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm leading-tight truncate">{t.title}</p>

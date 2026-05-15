@@ -21,11 +21,22 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   });
 }
 
-// Create Supabase client. Uses Supabase's default localStorage adapter,
-// which works in both the web browser and inside the Capacitor WebView
-// (WebView localStorage persists per-app between launches).
+// Create Supabase client. Uses the default localStorage adapter, which
+// works in both the web browser and inside the Capacitor WebView. WebView
+// localStorage persists per-app between launches — combined with
+// persistSession + autoRefreshToken, this gives us a true "stay logged
+// in" experience without needing a separate native keychain integration.
 export const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
-  ? createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
+  ? createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        // Default storageKey kept ("sb-<projectRef>-auth-token") so existing
+        // logins survive deploys. The remaining flags make the "stay logged
+        // in" behaviour explicit instead of relying on Supabase defaults.
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
   : null;
 
 console.log('Supabase client created:', supabase !== null);

@@ -366,6 +366,44 @@ export type Database = {
         }
         Relationships: []
       }
+      dog_activities: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          dog_id: string
+          id: string
+          photo_url: string | null
+          posted_by: string | null
+          posted_by_name: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          dog_id: string
+          id?: string
+          photo_url?: string | null
+          posted_by?: string | null
+          posted_by_name?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          dog_id?: string
+          id?: string
+          photo_url?: string | null
+          posted_by?: string | null
+          posted_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_activities_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dog_attendance: {
         Row: {
           checked_in_at: string | null
