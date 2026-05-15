@@ -8,6 +8,8 @@ import { supabase } from './lib/supabase';
 import { initDeepLinks } from './lib/deepLinks';
 import { initPushNotifications } from './lib/pushNotifications';
 import NotificationToast from './components/customer/NotificationToast';
+import { isNativeApp } from './lib/platform';
+import { StatusBar, Style } from '@capacitor/status-bar';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
@@ -54,6 +56,13 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppMobile() {
+  useEffect(() => {
+    if (!isNativeApp()) return;
+    // Dark icons/text on the cream background.
+    StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: '#fcf5ee' }).catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-light">
       <NotificationToast />

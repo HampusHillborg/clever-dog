@@ -50,3 +50,24 @@ It includes:
 The app uses the same `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as the
 web. They're embedded into the JS bundle at build time. If you change them,
 re-run `npm run app:sync`.
+
+## App icon and splash screen
+
+The app currently uses Capacitor's default green/white CleverDog placeholder
+icon. To replace with the real brand mark:
+
+1. Produce a **1024×1024 PNG** of the CleverDog logo (the existing
+   `src/assets/images/logos/Logo.png` is only 311×346 — too small).
+   - Full bleed on a light/cream background works best.
+   - No transparency (iOS auto-rejects icons with alpha).
+2. Save it as `resources/icon.png` in the repo root.
+3. Optionally save a splash master as `resources/splash.png` (2732×2732,
+   logo centered with lots of padding).
+4. Run:
+   ```powershell
+   npx capacitor-assets generate --android
+   ```
+   (Add `--ios` once we have the iOS project on Codemagic.)
+5. Commit the generated `android/app/src/main/res/mipmap-*` and
+   `android/app/src/main/res/drawable-*` files.
+

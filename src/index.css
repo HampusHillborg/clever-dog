@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Capacitor / iOS notch safety. Web browsers don't define safe-area-inset-*
+   so the @supports guard keeps padding 0 there. */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
