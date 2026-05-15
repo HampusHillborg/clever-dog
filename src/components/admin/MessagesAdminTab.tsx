@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getAllMessageThreads, sendStaffMessage } from '../../lib/database';
+import { supabase } from '../../lib/supabase';
 
 type Msg = {
   id: string;
@@ -59,6 +60,16 @@ export default function MessagesAdminTab() {
     if (!selectedId) return;
     const conversation = allMessages.filter(m => m.customer_id === selectedId);
     setMessages(conversation);
+    // Mark all unread customer messages in this thread as read
+    const unreadIds = conversation
+      .filter(m => m.sender_role === 'customer' && !m.is_read)
+      .map(m => m.id);
+    if (unreadIds.length > 0 && supabase) {
+      supabase.from('messages').update({ is_read: true }).in('id', unreadIds).then(() => {
+        // Refresh threads so unread badges disappear
+        load();
+      });
+    }
   }, [selectedId, allMessages]);
 
   const send = async () => {
