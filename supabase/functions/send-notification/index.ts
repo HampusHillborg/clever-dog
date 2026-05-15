@@ -11,6 +11,7 @@
 // 'customer_message'. Admins can trigger 'booking_decision'.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { sendPushToTokens, lookupTokensForUser } from './push.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -170,6 +171,28 @@ Deno.serve(async (req) => {
       `);
       // Reply-To = admin email so customer can write back to staff
       await sendEmail(booking.customers.email, subject, html, ADMIN_EMAIL || undefined);
+
+      // Push notification (non-fatal). booking.customer_id is the customers.id;
+      // we need the auth.users.id which lives on customers.auth_user_id.
+      if (booking.customer_id) {
+        const { data: cust } = await admin
+          .from('customers')
+          .select('auth_user_id')
+          .eq('id', booking.customer_id)
+          .maybeSingle();
+        if (cust?.auth_user_id) {
+          const tokens = await lookupTokensForUser(admin as never, cust.auth_user_id);
+          if (tokens.length > 0) {
+            const pushBody = approved
+              ? `${escape(booking.dogs?.name)}: ${dates} är godkänd`
+              : `Din förfrågan blev avslagen. Se kalendern för detaljer.`;
+            await sendPushToTokens(tokens, subject, pushBody, {
+              kind: 'booking_decision',
+              booking_id: booking.id,
+            });
+          }
+        }
+      }
     }
     else if (body.kind === 'customer_message') {
       if (!body.message_id) throw new Error('message_id required');
@@ -228,6 +251,26 @@ Deno.serve(async (req) => {
         html,
         ADMIN_EMAIL || undefined,
       );
+
+      // Push notification — fan out to all of this customer's devices.
+      if (msg.customer_id) {
+        const { data: cust } = await admin
+          .from('customers')
+          .select('auth_user_id')
+          .eq('id', msg.customer_id)
+          .maybeSingle();
+        if (cust?.auth_user_id) {
+          const tokens = await lookupTokensForUser(admin as never, cust.auth_user_id);
+          if (tokens.length > 0) {
+            await sendPushToTokens(
+              tokens,
+              'Nytt meddelande från CleverDog',
+              String(msg.body).slice(0, 120),
+              { kind: 'staff_message', message_id: msg.id },
+            );
+          }
+        }
+      }
     }
     else if (body.kind === 'application_decision') {
       if (!body.application_id) throw new Error('application_id required');
