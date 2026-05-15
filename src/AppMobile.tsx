@@ -1,8 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, BrowserRouter, Navigate, useNavigate } from 'react-router-dom';
 import './i18n';
 import ProtectedCustomerRoute from './components/customer/ProtectedCustomerRoute';
-import MobileAuthGate from './components/MobileAuthGate';
 import { isAdminUser } from './lib/customerAuth';
 import { supabase } from './lib/supabase';
 import { initDeepLinks } from './lib/deepLinks';
@@ -15,6 +14,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'));
 const CustomerDashboardPage = lazy(() => import('./pages/CustomerDashboardPage'));
 const CustomerDogPage = lazy(() => import('./pages/CustomerDogPage'));
+const AdminMobilePage = lazy(() => import('./pages/AdminMobilePage'));
 
 const Loading = () => (
   <div className="h-screen flex items-center justify-center">Laddar…</div>
@@ -26,33 +26,19 @@ function DeepLinkBridge() {
   return null;
 }
 
-function AdminGuard({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<'loading' | 'admin' | 'ok'>('loading');
-
+// Boot-time auth side-effects: kick off push registration for authenticated
+// customers so they get notified without having to re-login.
+function BootEffects() {
   useEffect(() => {
-    let cancelled = false;
     (async () => {
-      if (!supabase) {
-        if (!cancelled) setState('ok');
-        return;
-      }
+      if (!supabase) return;
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        if (!cancelled) setState('ok');
-        return;
-      }
+      if (!session) return;
       const admin = await isAdminUser();
-      if (cancelled) return;
-      setState(admin ? 'admin' : 'ok');
-      // Auto-register push for already-authenticated customers on app boot
       if (!admin) void initPushNotifications();
     })();
-    return () => { cancelled = true; };
   }, []);
-
-  if (state === 'loading') return <Loading />;
-  if (state === 'admin') return <MobileAuthGate />;
-  return <>{children}</>;
+  return null;
 }
 
 export default function AppMobile() {
@@ -68,38 +54,43 @@ export default function AppMobile() {
       <NotificationToast />
       <BrowserRouter>
         <DeepLinkBridge />
-        <AdminGuard>
-          <Routes>
-            <Route path="/" element={<Navigate to="/kund" replace />} />
-            <Route path="/admin" element={<MobileAuthGate />} />
-            <Route path="/admin/*" element={<MobileAuthGate />} />
-            <Route
-              path="/login"
-              element={<Suspense fallback={<Loading />}><LoginPage /></Suspense>}
-            />
-            <Route
-              path="/login/accept-invite"
-              element={<Suspense fallback={<Loading />}><AcceptInvitePage /></Suspense>}
-            />
-            <Route
-              path="/kund"
-              element={
-                <Suspense fallback={<Loading />}>
-                  <ProtectedCustomerRoute><CustomerDashboardPage /></ProtectedCustomerRoute>
-                </Suspense>
-              }
-            />
-            <Route
-              path="/kund/hund/:id"
-              element={
-                <Suspense fallback={<Loading />}>
-                  <ProtectedCustomerRoute><CustomerDogPage /></ProtectedCustomerRoute>
-                </Suspense>
-              }
-            />
-            <Route path="*" element={<Navigate to="/kund" replace />} />
-          </Routes>
-        </AdminGuard>
+        <BootEffects />
+        <Routes>
+          <Route path="/" element={<Navigate to="/kund" replace />} />
+          <Route
+            path="/admin"
+            element={<Suspense fallback={<Loading />}><AdminMobilePage /></Suspense>}
+          />
+          <Route
+            path="/admin/*"
+            element={<Suspense fallback={<Loading />}><AdminMobilePage /></Suspense>}
+          />
+          <Route
+            path="/login"
+            element={<Suspense fallback={<Loading />}><LoginPage /></Suspense>}
+          />
+          <Route
+            path="/login/accept-invite"
+            element={<Suspense fallback={<Loading />}><AcceptInvitePage /></Suspense>}
+          />
+          <Route
+            path="/kund"
+            element={
+              <Suspense fallback={<Loading />}>
+                <ProtectedCustomerRoute><CustomerDashboardPage /></ProtectedCustomerRoute>
+              </Suspense>
+            }
+          />
+          <Route
+            path="/kund/hund/:id"
+            element={
+              <Suspense fallback={<Loading />}>
+                <ProtectedCustomerRoute><CustomerDogPage /></ProtectedCustomerRoute>
+              </Suspense>
+            }
+          />
+          <Route path="*" element={<Navigate to="/kund" replace />} />
+        </Routes>
       </BrowserRouter>
     </div>
   );

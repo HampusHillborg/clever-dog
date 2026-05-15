@@ -366,6 +366,53 @@ export type Database = {
         }
         Relationships: []
       }
+      dog_attendance: {
+        Row: {
+          checked_in_at: string | null
+          checked_in_by: string | null
+          checked_out_at: string | null
+          checked_out_by: string | null
+          created_at: string | null
+          date: string
+          dog_id: string
+          id: string
+          notes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          checked_out_at?: string | null
+          checked_out_by?: string | null
+          created_at?: string | null
+          date: string
+          dog_id: string
+          id?: string
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          checked_out_at?: string | null
+          checked_out_by?: string | null
+          created_at?: string | null
+          date?: string
+          dog_id?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_attendance_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_tokens: {
         Row: {
           created_at: string | null
