@@ -13,6 +13,7 @@ export type DayInfo = {
   bookingId?: string;
   bookingType?: string; // 'scheduled' (recurring) | 'extra' | 'cancelled' | 'boarding' | 'single_day'
   notes?: string;
+  adminResponse?: string;
 };
 
 const pad = (n: number) => n.toString().padStart(2, '0');
@@ -68,6 +69,7 @@ export const getDaysForMonth = async (
       bookingId: booking?.id,
       bookingType,
       notes: booking?.notes ?? undefined,
+      adminResponse: booking?.admin_response ?? undefined,
     });
   }
   return days;

@@ -206,7 +206,17 @@ function DayActions({ day, onClose, onAction }: {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
         <h3 className="font-bold mb-1">{niceDate}</h3>
-        <p className="text-sm text-gray-500 mb-4">Status: {STATUS_LABEL[day.status]}</p>
+        <p className="text-sm text-gray-500 mb-2">Status: {STATUS_LABEL[day.status]}</p>
+        {day.status === 'rejected' && day.adminResponse && (
+          <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3">
+            <p className="text-xs font-semibold text-red-800 mb-1">Avslag-anledning</p>
+            <p className="text-sm text-red-900 whitespace-pre-wrap">{day.adminResponse}</p>
+          </div>
+        )}
+        {day.status === 'rejected' && !day.adminResponse && (
+          <p className="text-sm text-gray-600 mb-4 italic">Ingen anledning angiven.</p>
+        )}
+        {day.status !== 'rejected' && <div className="mb-2" />}
         <div className="space-y-2">
           {day.status === 'none' && (
             <button onClick={() => onAction('add_extra')}

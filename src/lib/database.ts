@@ -744,6 +744,11 @@ export type Application = {
   // Admin notes
   admin_notes?: string;
 
+  // Rejection metadata
+  rejection_reason?: string;
+  rejected_by?: string;
+  rejected_at?: string;
+
   // Timestamps
   created_at: string;
   updated_at: string;
@@ -1938,6 +1943,19 @@ export const getPendingBookings = async (): Promise<PendingBooking[]> => {
     .eq('status', 'pending')
     .order('created_at', { ascending: true });
   if (error) { console.error('getPendingBookings', error); return []; }
+  return (data ?? []) as unknown as PendingBooking[];
+};
+
+export const getDecidedBookings = async (limit = 10, offset = 0): Promise<PendingBooking[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*, dogs(name, breed), customers(name, email)')
+    .in('status', ['confirmed', 'rejected'])
+    .in('booking_type', ['boarding', 'single_day', 'extra'])
+    .order('updated_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) { console.error('getDecidedBookings', error); return []; }
   return (data ?? []) as unknown as PendingBooking[];
 };
 

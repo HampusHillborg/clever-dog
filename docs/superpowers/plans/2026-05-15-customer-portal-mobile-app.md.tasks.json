@@ -1,0 +1,95 @@
+{
+  "planPath": "docs/superpowers/plans/2026-05-15-customer-portal-mobile-app.md",
+  "tasks": [
+    {
+      "id": 0,
+      "subject": "Task 0: Install Capacitor and scaffold config",
+      "status": "pending",
+      "description": "**Goal:** Add Capacitor deps + capacitor.config.ts pointing at dist/.\n\n```json:metadata\n{\"files\": [\"capacitor.config.ts\", \"package.json\", \"docs/mobile-app/README.md\"], \"verifyCommand\": \"npx cap --version && npm run build\", \"acceptanceCriteria\": [\"npx cap --version prints 6.x\", \"capacitor.config.ts has appId se.cleverdog.kundportal\", \"npm run build succeeds\"]}\n```"
+    },
+    {
+      "id": 1,
+      "subject": "Task 1: App-only route tree (hide marketing + admin)",
+      "status": "pending",
+      "blockedBy": [0],
+      "description": "**Goal:** Mobile bundle contains only /login, /kund routes. Admins see 'use web portal' screen.\n\n```json:metadata\n{\"files\": [\"src/AppMobile.tsx\", \"src/main.tsx\", \"src/components/MobileAuthGate.tsx\", \"src/lib/platform.ts\"], \"verifyCommand\": \"npm run app:build && Get-ChildItem dist/assets/js | Select-String AdminPage\", \"acceptanceCriteria\": [\"No AdminPage chunk in app bundle\", \"Admin login shows MobileAuthGate\", \"Customer login lands on /kund\"]}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Add Android platform and first run",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "**Goal:** android/ project committed, app launches on emulator showing login.\n\n```json:metadata\n{\"files\": [\"android/\", \".gitignore\"], \"verifyCommand\": \"npx cap sync android\", \"acceptanceCriteria\": [\"android/ committed\", \"npx cap sync succeeds\", \"App runs on emulator, login screen visible, sign-in lands on /kund\"]}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: cleverdog:// URL scheme + deep-link handler",
+      "status": "pending",
+      "blockedBy": [2],
+      "description": "**Goal:** App handles cleverdog:// links and routes to right page.\n\n```json:metadata\n{\"files\": [\"android/app/src/main/AndroidManifest.xml\", \"src/lib/deepLinks.ts\", \"src/AppMobile.tsx\"], \"verifyCommand\": \"manual: paste cleverdog://kund into emulator browser\", \"acceptanceCriteria\": [\"Intent filter for cleverdog scheme\", \"appUrlOpen listener navigates to correct path\", \"Supabase redirect URLs include cleverdog://login*\"]}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Native session persistence",
+      "status": "pending",
+      "blockedBy": [2],
+      "description": "**Goal:** Customer remains logged in after app close/reopen.\n\n```json:metadata\n{\"files\": [\"src/lib/sessionPersistence.ts\", \"src/lib/supabase.ts\"], \"verifyCommand\": \"manual: login -> force-quit -> reopen -> still logged in\", \"acceptanceCriteria\": [\"Supabase auth uses Capacitor Preferences on native\", \"Session survives app restart\"]}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: device_tokens table + RLS",
+      "status": "pending",
+      "description": "**Goal:** New table maps user_id -> push tokens, RLS lets users manage own.\n\n```json:metadata\n{\"files\": [\"supabase/migrations/20260520_001_device_tokens.sql\"], \"verifyCommand\": \"select policyname from pg_policies where tablename='device_tokens';\", \"acceptanceCriteria\": [\"Table exists with correct columns\", \"RLS policies: users manage own, admins read all\", \"Unique (user_id, token)\"]}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Push registration + Firebase/APNs setup",
+      "status": "pending",
+      "blockedBy": [2, 5],
+      "description": "**Goal:** App registers FCM token on login, saves to device_tokens.\n\n```json:metadata\n{\"files\": [\"src/lib/pushNotifications.ts\", \"src/AppMobile.tsx\", \"src/pages/LoginPage.tsx\", \"android/app/google-services.json\", \"docs/mobile-app/firebase-setup.md\"], \"verifyCommand\": \"manual: login on emulator -> permission prompt -> token row in device_tokens\", \"acceptanceCriteria\": [\"Permission prompt on first login\", \"FCM token saved to device_tokens row\", \"Firebase setup docs cover Android + iOS\"]}\n```"
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: Edge function sends push alongside email",
+      "status": "pending",
+      "blockedBy": [5, 6],
+      "description": "**Goal:** send-notification fans out to FCM for booking_decision, staff_message.\n\n```json:metadata\n{\"files\": [\"supabase/functions/send-notification/push.ts\", \"supabase/functions/send-notification/index.ts\"], \"verifyCommand\": \"manual: admin approves booking -> push arrives on emulator\", \"acceptanceCriteria\": [\"Push arrives for booking decisions + staff messages\", \"Email still works (additive)\", \"Push failure does not 500 the function\"]}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: Foreground toast + tap-to-navigate",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "**Goal:** In-app toast for foreground pushes; tap any push navigates to right screen.\n\n```json:metadata\n{\"files\": [\"src/components/customer/NotificationToast.tsx\", \"src/lib/pushNotifications.ts\", \"src/AppMobile.tsx\"], \"verifyCommand\": \"manual: send test push, see toast / tap to navigate\", \"acceptanceCriteria\": [\"Foreground push shows toast for 5s\", \"Tap routes by data.kind\"]}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Splash, icons, status bar, safe-area",
+      "status": "pending",
+      "blockedBy": [2],
+      "description": "**Goal:** Native feel - branded splash, icon, status bar, notch safety.\n\n```json:metadata\n{\"files\": [\"public/icon-source.png\", \"android/app/src/main/res/\", \"src/AppMobile.tsx\", \"src/index.css\"], \"verifyCommand\": \"manual: visual check on Pixel 7 Pro emulator\", \"acceptanceCriteria\": [\"App icon shows CleverDog logo\", \"Splash with logo on #fcf5ee\", \"Status bar dark text on light bg\", \"No clipping on notched devices\"]}\n```"
+    },
+    {
+      "id": 10,
+      "subject": "Task 10: Native camera picker for dog photos",
+      "status": "pending",
+      "blockedBy": [2],
+      "description": "**Goal:** Native action sheet for camera/photo library on iOS/Android.\n\n```json:metadata\n{\"files\": [\"src/lib/photoPicker.ts\", \"src/components/customer/\"], \"verifyCommand\": \"manual: tap photo upload on Android emulator\", \"acceptanceCriteria\": [\"Native picker on app\", \"Web fallback still works on dev\", \"Upload to Supabase storage unchanged\"]}\n```"
+    },
+    {
+      "id": 11,
+      "subject": "Task 11: Codemagic CI for iOS TestFlight + Android internal",
+      "status": "pending",
+      "blockedBy": [3, 4, 9, 10],
+      "description": "**Goal:** Push to main triggers Codemagic, uploads to TestFlight + Play internal.\n\n```json:metadata\n{\"files\": [\"codemagic.yaml\", \"docs/mobile-app/store-submission.md\"], \"verifyCommand\": \"git push -> watch Codemagic dashboard\", \"acceptanceCriteria\": [\"First Codemagic run green\", \"TestFlight build appears in 30 min\", \"Play Internal track shows build\"]}\n```"
+    },
+    {
+      "id": 12,
+      "subject": "Task 12: Production submission to App Store + Play Store",
+      "status": "pending",
+      "blockedBy": [11],
+      "description": "**Goal:** Store listings complete, first prod build submitted.\n\n```json:metadata\n{\"files\": [\"docs/mobile-app/store-submission.md\"], \"verifyCommand\": \"App Store/Play Console listing dashboards\", \"acceptanceCriteria\": [\"App Store listing complete with screenshots\", \"Play Store listing complete\", \"Privacy policy hosted with mobile section\", \"First build submitted for review\"]}\n```"
+    }
+  ],
+  "lastUpdated": "2026-05-15T00:00:00Z"
+}

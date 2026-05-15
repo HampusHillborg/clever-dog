@@ -25,7 +25,7 @@ const cors = {
   'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
 };
 
-type Kind = 'booking_request' | 'booking_decision' | 'customer_message' | 'staff_message';
+type Kind = 'booking_request' | 'booking_decision' | 'customer_message' | 'staff_message' | 'application_decision';
 
 const escape = (s: string | null | undefined) =>
   (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers });
   }
 
-  let body: { kind?: Kind; booking_id?: string; message_id?: string } = {};
+  let body: { kind?: Kind; booking_id?: string; message_id?: string; application_id?: string } = {};
   try { body = await req.json(); } catch { /* empty */ }
   if (!body.kind) return new Response(JSON.stringify({ error: 'kind required' }), { status: 400, headers });
 
@@ -228,6 +228,38 @@ Deno.serve(async (req) => {
         html,
         ADMIN_EMAIL || undefined,
       );
+    }
+    else if (body.kind === 'application_decision') {
+      if (!body.application_id) throw new Error('application_id required');
+
+      const { data: app } = await admin
+        .from('applications')
+        .select('owner_name, owner_email, dog_name, service_type, status, rejection_reason')
+        .eq('id', body.application_id).single();
+      if (!app) throw new Error('application not found');
+      if (!app.owner_email) {
+        return new Response(JSON.stringify({ ok: false, skipped: 'no owner email' }), { headers });
+      }
+
+      const approved = app.status === 'approved' || app.status === 'matched' || app.status === 'added';
+      const subject = approved
+        ? `Din ansökan om plats hos CleverDog är godkänd`
+        : `Din ansökan om plats hos CleverDog blev avslagen`;
+      const html = wrap(subject, `
+        <p>Hej ${escape(app.owner_name)},</p>
+        <p>${approved
+          ? 'Din ansökan har godkänts! Vi återkommer med nästa steg.'
+          : 'Tack för din ansökan. Tyvärr kan vi inte erbjuda en plats just nu.'}</p>
+        <ul>
+          <li><strong>Hund:</strong> ${escape(app.dog_name)}</li>
+          <li><strong>Tjänst:</strong> ${escape(app.service_type)}</li>
+          ${!approved && app.rejection_reason
+            ? `<li><strong>Anledning:</strong> ${escape(app.rejection_reason)}</li>`
+            : ''}
+        </ul>
+        ${!approved ? '<p>Har du frågor om beslutet? Svara på det här mejlet så återkommer vi.</p>' : ''}
+      `);
+      await sendEmail(app.owner_email, subject, html, ADMIN_EMAIL || undefined);
     }
     else {
       return new Response(JSON.stringify({ error: 'unknown kind' }), { status: 400, headers });

@@ -48,6 +48,7 @@ import MessagesAdminTab from './admin/MessagesAdminTab';
 import StatsTab from './admin/StatsTab';
 import OwnerInput from './admin/OwnerInput';
 import { useAdminBadges } from './admin/useAdminBadges';
+import { sendNotification } from '../lib/notifications';
 
 interface ContractData {
   // Common fields
@@ -284,6 +285,10 @@ const AdminPage: React.FC = () => {
   const [applicationsLocationFilter, setApplicationsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp'>('all');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [applicationMatchingDogs, setApplicationMatchingDogs] = useState<Dog[]>([]);
+  const [rejectModalApp, setRejectModalApp] = useState<Application | null>(null);
+  const [rejectionDraft, setRejectionDraft] = useState('');
+  const [rejectingNow, setRejectingNow] = useState(false);
+  const [historyVisible, setHistoryVisible] = useState(10);
 
   // Meetings state
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -6212,21 +6217,69 @@ const AdminPage: React.FC = () => {
   };
 
   // Update application status
+  const refreshApplications = async () => {
+    const filters: { status?: string; location?: string } = {};
+    if (applicationsFilter !== 'all') filters.status = applicationsFilter;
+    if (applicationsLocationFilter !== 'all') filters.location = applicationsLocationFilter;
+    setApplications(await getApplications(filters));
+  };
+
   const handleUpdateApplicationStatus = async (application: Application, newStatus: Application['status']) => {
+    if (newStatus === 'rejected') {
+      setRejectionDraft(application.rejection_reason ?? '');
+      setRejectModalApp(application);
+      return;
+    }
     try {
+      const wasNotApproved = application.status !== 'approved' && application.status !== 'matched' && application.status !== 'added';
+      const movingToApproved = newStatus === 'approved' || newStatus === 'matched' || newStatus === 'added';
       await updateApplication(application.id, { status: newStatus });
-      const filters: { status?: string; location?: string } = {};
-      if (applicationsFilter !== 'all') {
-        filters.status = applicationsFilter;
+      await refreshApplications();
+      if (selectedApplication?.id === application.id) {
+        setSelectedApplication({ ...application, status: newStatus });
       }
-      if (applicationsLocationFilter !== 'all') {
-        filters.location = applicationsLocationFilter;
+      if (wasNotApproved && movingToApproved) {
+        sendNotification({ kind: 'application_decision', application_id: application.id });
       }
-      const updatedApplications = await getApplications(filters);
-      setApplications(updatedApplications);
     } catch (error) {
       console.error('Error updating application status:', error);
       alert('Fel uppstod vid uppdatering av ansökan');
+    }
+  };
+
+  const handleConfirmRejection = async () => {
+    if (!rejectModalApp) return;
+    const reason = rejectionDraft.trim();
+    if (!reason) {
+      alert('Du måste ange en anledning.');
+      return;
+    }
+    setRejectingNow(true);
+    try {
+      await updateApplication(rejectModalApp.id, {
+        status: 'rejected',
+        rejection_reason: reason,
+        rejected_by: currentUser?.id,
+        rejected_at: new Date().toISOString(),
+      });
+      sendNotification({ kind: 'application_decision', application_id: rejectModalApp.id });
+      await refreshApplications();
+      if (selectedApplication?.id === rejectModalApp.id) {
+        setSelectedApplication({
+          ...rejectModalApp,
+          status: 'rejected',
+          rejection_reason: reason,
+          rejected_by: currentUser?.id,
+          rejected_at: new Date().toISOString(),
+        });
+      }
+      setRejectModalApp(null);
+      setRejectionDraft('');
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      alert('Fel uppstod vid avslag av ansökan');
+    } finally {
+      setRejectingNow(false);
     }
   };
 
@@ -6235,17 +6288,7 @@ const AdminPage: React.FC = () => {
     if (confirm('Är du säker på att du vill ta bort denna ansökan? Detta går inte att ångra.')) {
       try {
         await deleteApplication(id);
-
-        // Refresh list
-        const filters: { status?: string; location?: string } = {};
-        if (applicationsFilter !== 'all') {
-          filters.status = applicationsFilter;
-        }
-        if (applicationsLocationFilter !== 'all') {
-          filters.location = applicationsLocationFilter;
-        }
-        const updatedApplications = await getApplications(filters);
-        setApplications(updatedApplications);
+        await refreshApplications();
       } catch (error) {
         console.error('Error deleting application:', error);
         alert('Ett fel uppstod när ansökan skulle tas bort.');
@@ -6276,6 +6319,55 @@ const AdminPage: React.FC = () => {
         </span>
       );
     };
+
+    const HISTORY_STATUSES: Application['status'][] = ['approved', 'rejected', 'matched', 'added'];
+    const activeApps = filteredApplications.filter(a => !HISTORY_STATUSES.includes(a.status));
+    const historyApps = filteredApplications.filter(a => HISTORY_STATUSES.includes(a.status));
+    const showSplit = applicationsFilter === 'all';
+
+    const renderRow = (application: Application) => (
+      <div
+        key={application.id}
+        className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${selectedApplication?.id === application.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}
+        onClick={() => handleSelectApplication(application)}
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-2 sm:gap-0">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                {application.dog_name}
+              </h3>
+              {getStatusBadge(application.status)}
+              <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+                {application.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm text-gray-600">
+              <div><span className="font-medium">Ägare:</span> {application.owner_name}</div>
+              <div><span className="font-medium">Telefon:</span> {application.owner_phone || 'Saknas'}</div>
+              <div><span className="font-medium">E-post:</span> <span className="truncate block">{application.owner_email}</span></div>
+              <div><span className="font-medium">Tjänst:</span> {application.service_type}</div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              {new Date(application.created_at).toLocaleDateString('sv-SE')} {new Date(application.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            {application.status === 'rejected' && application.rejection_reason && (
+              <div className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded px-2 py-1 inline-block max-w-full">
+                <span className="font-semibold">Avslag-anledning:</span> {application.rejection_reason}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={(e) => handleDeleteApplication(e, application.id)}
+            className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors ml-2"
+            title="Ta bort ansökan"
+          >
+            <FaTrash />
+          </button>
+        </div>
+      </div>
+    );
 
     return (
       <div className="space-y-3 sm:space-y-6">
@@ -6310,64 +6402,57 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Applications List */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          {filteredApplications.length === 0 ? (
-            <div className="p-6 sm:p-8 text-center text-gray-500 text-sm sm:text-base">
-              Inga ansökningar hittades
+        {showSplit ? (
+          <>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                Aktiva ({activeApps.length})
+              </h3>
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                {activeApps.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500 text-sm">Inga aktiva ansökningar.</div>
+                ) : (
+                  <div className="divide-y divide-gray-200">{activeApps.map(renderRow)}</div>
+                )}
+              </div>
             </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {filteredApplications.map((application) => (
-                <div
-                  key={application.id}
-                  className={`p-3 sm:p-4 hover:bg-gray-50 cursor-pointer transition-colors ${selectedApplication?.id === application.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                    }`}
-                  onClick={() => handleSelectApplication(application)}
-                >
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-2 sm:gap-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                          {application.dog_name}
-                        </h3>
-                        {getStatusBadge(application.status)}
-                        <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-                          {application.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">Ägare:</span> {application.owner_name}
-                        </div>
-                        <div>
-                          <span className="font-medium">Telefon:</span> {application.owner_phone || 'Saknas'}
-                        </div>
-                        <div>
-                          <span className="font-medium">E-post:</span> <span className="truncate block">{application.owner_email}</span>
-                        </div>
-                        <div>
-                          <span className="font-medium">Tjänst:</span> {application.service_type}
-                        </div>
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500">
-                        {new Date(application.created_at).toLocaleDateString('sv-SE')} {new Date(application.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={(e) => handleDeleteApplication(e, application.id)}
-                      className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors ml-2"
-                      title="Ta bort ansökan"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
+                Historik ({historyApps.length})
+              </h3>
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                {historyApps.length === 0 ? (
+                  <div className="p-6 text-center text-gray-500 text-sm">Ingen historik ännu.</div>
+                ) : (
+                  <>
+                    <div className="divide-y divide-gray-200">
+                      {historyApps.slice(0, historyVisible).map(renderRow)}
+                    </div>
+                    {historyVisible < historyApps.length && (
+                      <button
+                        onClick={() => setHistoryVisible(v => v + 10)}
+                        className="w-full py-3 text-sm text-gray-600 hover:text-gray-900 border-t border-gray-200"
+                      >
+                        Visa fler ({historyApps.length - historyVisible} kvar)
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            {filteredApplications.length === 0 ? (
+              <div className="p-6 sm:p-8 text-center text-gray-500 text-sm sm:text-base">
+                Inga ansökningar hittades
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">{filteredApplications.map(renderRow)}</div>
+            )}
+          </div>
+        )}
 
         {/* Application Detail Modal */}
         {selectedApplication && (
@@ -6407,6 +6492,31 @@ const AdminPage: React.FC = () => {
                     </select>
                   </div>
                 </div>
+
+                {selectedApplication.status === 'rejected' && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                    <h4 className="font-semibold text-red-900 mb-2">Avslag</h4>
+                    {selectedApplication.rejection_reason ? (
+                      <p className="text-sm text-red-900 whitespace-pre-wrap mb-2">{selectedApplication.rejection_reason}</p>
+                    ) : (
+                      <p className="text-sm text-red-700 italic mb-2">Ingen anledning angiven.</p>
+                    )}
+                    {selectedApplication.rejected_at && (
+                      <p className="text-xs text-red-700">
+                        {new Date(selectedApplication.rejected_at).toLocaleString('sv-SE')}
+                      </p>
+                    )}
+                    <button
+                      onClick={() => {
+                        setRejectionDraft(selectedApplication.rejection_reason ?? '');
+                        setRejectModalApp(selectedApplication);
+                      }}
+                      className="mt-2 text-xs text-red-800 hover:text-red-900 underline"
+                    >
+                      Redigera anledning
+                    </button>
+                  </div>
+                )}
 
                 {/* Owner Information */}
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -6597,6 +6707,46 @@ const AdminPage: React.FC = () => {
                     Lägg till som ny hund
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {rejectModalApp && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                Avslå ansökan: {rejectModalApp.dog_name}
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Anledningen skickas till kunden via mejl och syns i historiken.
+              </p>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Anledning <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={rejectionDraft}
+                onChange={(e) => setRejectionDraft(e.target.value)}
+                rows={5}
+                autoFocus
+                placeholder="T.ex. Vi har tyvärr inga lediga platser i den valda gruppen just nu."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm"
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  onClick={() => { setRejectModalApp(null); setRejectionDraft(''); }}
+                  disabled={rejectingNow}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleConfirmRejection}
+                  disabled={rejectingNow || !rejectionDraft.trim()}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                >
+                  {rejectingNow ? 'Sparar…' : 'Avslå & skicka mejl'}
+                </button>
               </div>
             </div>
           </div>
