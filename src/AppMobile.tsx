@@ -71,6 +71,8 @@ export default function AppMobile() {
         <AdminGuard>
           <Routes>
             <Route path="/" element={<Navigate to="/kund" replace />} />
+            <Route path="/admin" element={<MobileAuthGate />} />
+            <Route path="/admin/*" element={<MobileAuthGate />} />
             <Route
               path="/login"
               element={<Suspense fallback={<Loading />}><LoginPage /></Suspense>}
