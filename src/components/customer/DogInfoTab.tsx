@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import { updateMyDog, uploadDogPhoto, type Dog } from '../../lib/customerApi';
+import { pickPhoto } from '../../lib/photoPicker';
 
 type Props = { dog: Dog; onUpdate: (d: Dog) => void };
 
@@ -58,19 +59,16 @@ export default function DogInfoTab({ dog, onUpdate }: Props) {
             ? <img src={dog.photo_url} alt={dog.name} className="w-full h-full object-cover" />
             : dog.name?.[0]?.toUpperCase()}
         </div>
-        <label className="text-sm text-primary cursor-pointer hover:underline">
+        <button
+          type="button"
+          className="text-sm text-primary hover:underline"
+          onClick={async () => {
+            const picked = await pickPhoto();
+            if (picked) handlePhotoUpload(picked.file);
+          }}
+        >
           Byt foto
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handlePhotoUpload(f);
-              e.target.value = '';
-            }}
-          />
-        </label>
+        </button>
       </div>
 
       {!editing ? (
