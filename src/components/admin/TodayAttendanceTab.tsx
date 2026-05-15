@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import { FaCheck, FaUndo, FaDog, FaCamera } from 'react-icons/fa';
+import { FaCheck, FaUndo, FaDog, FaCamera, FaPlus } from 'react-icons/fa';
 import {
   getTodaysScheduledDogs, checkInDog, checkOutDog, undoCheckIn, undoCheckOut,
+  checkOutGuest, undoCheckOutGuest, removeAttendanceEntry,
   type AttendanceEntry,
 } from '../../lib/attendance';
 import PostActivityModal from './PostActivityModal';
+import DogInfoModal from './DogInfoModal';
+import AddDogToTodayModal from './AddDogToTodayModal';
 
 const typeLabel = (t: string | undefined): string => {
   if (t === 'boarding') return 'Pensionat';
@@ -31,12 +34,14 @@ export default function TodayAttendanceTab() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [postingFor, setPostingFor] = useState<AttendanceEntry | null>(null);
+  const [infoFor, setInfoFor] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const refresh = async () => setEntries(await getTodaysScheduledDogs());
   useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
 
-  const act = async (dogId: string, fn: () => Promise<void>) => {
-    setBusy(dogId);
+  const act = async (busyKey: string, fn: () => Promise<void>) => {
+    setBusy(busyKey);
     try {
       await fn();
       await refresh();
@@ -45,6 +50,15 @@ export default function TodayAttendanceTab() {
     }
     setBusy(null);
   };
+
+  const keyFor = (e: AttendanceEntry) => e.dog_id ?? `guest:${e.id}`;
+
+  const actionForCheckOut = (e: AttendanceEntry) =>
+    e.dog_id ? checkOutDog(e.dog_id) : checkOutGuest(e.id!);
+  const actionForUndoCheckIn = (e: AttendanceEntry) =>
+    e.dog_id ? undoCheckIn(e.dog_id) : removeAttendanceEntry(e.id!);
+  const actionForUndoCheckOut = (e: AttendanceEntry) =>
+    e.dog_id ? undoCheckOut(e.dog_id) : undoCheckOutGuest(e.id!);
 
   if (loading) return <TodaySkeleton />;
 
@@ -62,12 +76,20 @@ export default function TodayAttendanceTab() {
           <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">{todayStr}</p>
           <h2 className="text-2xl font-bold tracking-tight">Idag · {entries.length} hundar</h2>
         </div>
-        <div className="flex gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs">
           <Pill color="yellow" label={`${pending.length} att checka in`} />
           <Pill color="green" label={`${here.length} här`} />
           <Pill color="gray" label={`${gone.length} hämtade`} />
         </div>
       </div>
+
+      <button
+        onClick={() => setAdding(true)}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-white shadow-card border border-dashed border-gray-300 text-gray-600 hover:text-primary hover:border-primary hover:bg-orange-50/40 transition-colors"
+      >
+        <FaPlus className="text-xs" />
+        <span className="text-sm font-medium">Lägg till hund manuellt</span>
+      </button>
 
       {entries.length === 0 && (
         <div className="bg-white rounded-2xl shadow-card p-8 text-center">
@@ -80,64 +102,85 @@ export default function TodayAttendanceTab() {
       )}
 
       <Section title={`Att checka in (${pending.length})`} headerClass="text-yellow-800">
-        {pending.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id} onPost={() => setPostingFor(e)}>
-            <button
-              onClick={() => act(e.dog_id, () => checkInDog(e.dog_id))}
-              disabled={busy === e.dog_id}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-xl font-medium disabled:opacity-50 flex items-center gap-1.5 shadow-card active:scale-95 transition-all"
-            >
-              <FaCheck className="text-xs" /> Checka in
-            </button>
-          </Row>
-        ))}
+        {pending.map(e => {
+          const k = keyFor(e);
+          return (
+            <Row key={k} entry={e} busy={busy === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+              <button
+                onClick={() => e.dog_id && act(k, () => checkInDog(e.dog_id!))}
+                disabled={busy === k || !e.dog_id}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-xl font-medium disabled:opacity-50 flex items-center gap-1.5 shadow-card active:scale-95 transition-all"
+              >
+                <FaCheck className="text-xs" /> Checka in
+              </button>
+            </Row>
+          );
+        })}
       </Section>
 
       <Section title={`Här just nu (${here.length})`} headerClass="text-green-800">
-        {here.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id} onPost={() => setPostingFor(e)}>
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => act(e.dog_id, () => undoCheckIn(e.dog_id))}
-                disabled={busy === e.dog_id}
-                className="w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center disabled:opacity-50"
-                title="Ångra incheckning"
-              >
-                <FaUndo className="text-xs" />
-              </button>
-              <button
-                onClick={() => act(e.dog_id, () => checkOutDog(e.dog_id))}
-                disabled={busy === e.dog_id}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-medium disabled:opacity-50 shadow-card active:scale-95 transition-all"
-              >
-                Checka ut
-              </button>
-            </div>
-          </Row>
-        ))}
+        {here.map(e => {
+          const k = keyFor(e);
+          return (
+            <Row key={k} entry={e} busy={busy === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => act(k, () => actionForUndoCheckIn(e))}
+                  disabled={busy === k}
+                  className="w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center disabled:opacity-50"
+                  title="Ångra incheckning"
+                >
+                  <FaUndo className="text-xs" />
+                </button>
+                <button
+                  onClick={() => act(k, () => actionForCheckOut(e))}
+                  disabled={busy === k}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-medium disabled:opacity-50 shadow-card active:scale-95 transition-all"
+                >
+                  Checka ut
+                </button>
+              </div>
+            </Row>
+          );
+        })}
       </Section>
 
       <Section title={`Hämtade (${gone.length})`} headerClass="text-gray-500">
-        {gone.map(e => (
-          <Row key={e.dog_id} entry={e} busy={busy === e.dog_id} muted onPost={() => setPostingFor(e)}>
-            <button
-              onClick={() => act(e.dog_id, () => undoCheckOut(e.dog_id))}
-              disabled={busy === e.dog_id}
-              className="w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center disabled:opacity-50"
-              title="Ångra utcheckning"
-            >
-              <FaUndo className="text-xs" />
-            </button>
-          </Row>
-        ))}
+        {gone.map(e => {
+          const k = keyFor(e);
+          return (
+            <Row key={k} entry={e} busy={busy === k} muted onPost={e.dog_id ? () => setPostingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+              <button
+                onClick={() => act(k, () => actionForUndoCheckOut(e))}
+                disabled={busy === k}
+                className="w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center disabled:opacity-50"
+                title="Ångra utcheckning"
+              >
+                <FaUndo className="text-xs" />
+              </button>
+            </Row>
+          );
+        })}
       </Section>
 
-      {postingFor && (
+      {postingFor && postingFor.dog_id && (
         <PostActivityModal
           dogId={postingFor.dog_id}
           dogName={postingFor.dog_name}
           onClose={() => setPostingFor(null)}
           onPosted={() => setPostingFor(null)}
+        />
+      )}
+
+      {infoFor && (
+        <DogInfoModal dogId={infoFor} onClose={() => setInfoFor(null)} />
+      )}
+
+      {adding && (
+        <AddDogToTodayModal
+          excludeDogIds={entries.map(e => e.dog_id).filter((id): id is string => Boolean(id))}
+          onClose={() => setAdding(false)}
+          onAdded={() => { setAdding(false); refresh(); }}
         />
       )}
     </div>
@@ -167,16 +210,21 @@ function Section({ title, headerClass, children }: {
   );
 }
 
-function Row({ entry, busy, muted, onPost, children }: {
+function Row({ entry, busy, muted, onPost, onInfo, children }: {
   entry: AttendanceEntry;
   busy: boolean;
   muted?: boolean;
   onPost?: () => void;
+  onInfo?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <div className={`p-3 flex items-center justify-between gap-3 transition-opacity ${busy ? 'opacity-50' : muted ? 'opacity-70' : ''}`}>
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <button
+        onClick={onInfo}
+        disabled={!onInfo}
+        className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-gray-50 -m-1 p-1 rounded-lg disabled:hover:bg-transparent"
+      >
         <div className="w-11 h-11 rounded-xl bg-orange-100 text-orange-700 font-semibold flex items-center justify-center text-base shrink-0">
           {entry.dog_name[0]?.toUpperCase()}
         </div>
@@ -195,7 +243,7 @@ function Row({ entry, busy, muted, onPost, children }: {
             )}
           </div>
         </div>
-      </div>
+      </button>
       <div className="shrink-0 flex items-center gap-1.5">
         {onPost && (
           <button

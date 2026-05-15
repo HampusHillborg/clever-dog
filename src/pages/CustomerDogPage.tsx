@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  FaHome, FaCalendarAlt, FaCommentDots, FaImages, FaFileContract, FaChevronDown, FaSignOutAlt,
+  FaHome, FaCalendarAlt, FaCommentDots, FaImages, FaUser, FaChevronDown, FaSignOutAlt,
 } from 'react-icons/fa';
+import HomeFeedTab from '../components/customer/HomeFeedTab';
 import DogInfoTab from '../components/customer/DogInfoTab';
 import BookingCalendar from '../components/customer/BookingCalendar';
 import MessagesTab from '../components/customer/MessagesTab';
@@ -13,14 +14,14 @@ import { getMyDog, getMyDogs, type Dog } from '../lib/customerApi';
 import { signOutCustomer } from '../lib/customerAuth';
 import dogLogo from '../assets/images/logos/Logo.png';
 
-type TabKey = 'info' | 'calendar' | 'album' | 'messages' | 'contract';
+type TabKey = 'home' | 'calendar' | 'album' | 'messages' | 'profile';
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-  { key: 'info',     label: 'Hem',          icon: <FaHome /> },
-  { key: 'calendar', label: 'Kalender',     icon: <FaCalendarAlt /> },
-  { key: 'album',    label: 'Album',        icon: <FaImages /> },
-  { key: 'messages', label: 'Chat',         icon: <FaCommentDots /> },
-  { key: 'contract', label: 'Kontrakt',     icon: <FaFileContract /> },
+  { key: 'home',     label: 'Hem',      icon: <FaHome /> },
+  { key: 'calendar', label: 'Kalender', icon: <FaCalendarAlt /> },
+  { key: 'album',    label: 'Album',    icon: <FaImages /> },
+  { key: 'messages', label: 'Chat',     icon: <FaCommentDots /> },
+  { key: 'profile',  label: 'Profil',   icon: <FaUser /> },
 ];
 
 const TYPE_LABEL: Record<string, string> = {
@@ -36,7 +37,7 @@ export default function CustomerDogPage() {
   const navigate = useNavigate();
   const [dog, setDog] = useState<Dog | null>(null);
   const [allDogs, setAllDogs] = useState<Dog[]>([]);
-  const [tab, setTab] = useState<TabKey>('info');
+  const [tab, setTab] = useState<TabKey>('home');
   const [loading, setLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -102,16 +103,17 @@ export default function CustomerDogPage() {
       </header>
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto">
-        {tab === 'info' && (
-          <div className="space-y-4">
-            <DogHero dog={dog} />
-            <DogInfoTab dog={dog} onUpdate={setDog} />
-          </div>
-        )}
+        {tab === 'home' && <HomeFeedTab dog={dog} onJumpTo={(t) => setTab(t)} />}
         {tab === 'calendar' && <BookingCalendar dog={dog} />}
         {tab === 'album' && <AlbumTab dog={dog} />}
         {tab === 'messages' && <MessagesTab dog={dog} />}
-        {tab === 'contract' && <ContractView dog={dog} />}
+        {tab === 'profile' && (
+          <div className="space-y-4">
+            <DogHero dog={dog} />
+            <DogInfoTab dog={dog} onUpdate={setDog} />
+            <ContractView dog={dog} />
+          </div>
+        )}
       </main>
 
       <nav

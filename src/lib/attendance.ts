@@ -2,12 +2,12 @@ import { supabase } from './supabase';
 
 export type AttendanceEntry = {
   id: string | null;          // null until first check-in
-  dog_id: string;
+  dog_id: string | null;      // null for free-text guest entries
   dog_name: string;
   breed: string;
   owner: string;
-  source: 'recurring' | 'booking';
-  booking_type?: string;       // 'scheduled' | 'extra' | 'boarding' | 'single_day'
+  source: 'recurring' | 'booking' | 'manual' | 'guest';
+  booking_type?: string;       // 'scheduled' | 'extra' | 'boarding' | 'single_day' | 'manual'
   checked_in_at: string | null;
   checked_out_at: string | null;
 };
@@ -87,20 +87,108 @@ export const getTodaysScheduledDogs = async (): Promise<AttendanceEntry[]> => {
 
   type AttendanceRow = {
     id: string;
-    dog_id: string;
+    dog_id: string | null;
+    guest_name: string | null;
+    guest_owner: string | null;
     checked_in_at: string | null;
     checked_out_at: string | null;
   };
+  const guestEntries: AttendanceEntry[] = [];
   for (const a of (attendanceRes.data ?? []) as AttendanceRow[]) {
-    const entry = byDog.get(a.dog_id);
-    if (entry) {
-      entry.id = a.id;
-      entry.checked_in_at = a.checked_in_at;
-      entry.checked_out_at = a.checked_out_at;
+    if (a.dog_id) {
+      const entry = byDog.get(a.dog_id);
+      if (entry) {
+        entry.id = a.id;
+        entry.checked_in_at = a.checked_in_at;
+        entry.checked_out_at = a.checked_out_at;
+        continue;
+      }
+      // Confirmed-attendance for a dog that isn't on today's roster
+      // (e.g. recurring schedule was off, or admin added manually).
+      // Show it anyway so staff can still check it out.
+      byDog.set(a.dog_id, {
+        id: a.id,
+        dog_id: a.dog_id,
+        dog_name: '?',
+        breed: '',
+        owner: '',
+        source: 'manual',
+        booking_type: 'manual',
+        checked_in_at: a.checked_in_at,
+        checked_out_at: a.checked_out_at,
+      });
+      continue;
+    }
+    if (a.guest_name) {
+      guestEntries.push({
+        id: a.id,
+        dog_id: null,
+        dog_name: a.guest_name,
+        breed: '',
+        owner: a.guest_owner ?? '',
+        source: 'guest',
+        booking_type: 'manual',
+        checked_in_at: a.checked_in_at,
+        checked_out_at: a.checked_out_at,
+      });
     }
   }
 
-  return Array.from(byDog.values()).sort((a, b) => a.dog_name.localeCompare(b.dog_name));
+  return [
+    ...Array.from(byDog.values()),
+    ...guestEntries,
+  ].sort((a, b) => a.dog_name.localeCompare(b.dog_name));
+};
+
+// Manually add a known dog to today's roster (creates a checked-in row).
+export const addDogToToday = async (dogId: string): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Ej inloggad');
+  const now = new Date().toISOString();
+  const { error } = await supabase.from('dog_attendance').upsert(
+    {
+      dog_id: dogId,
+      date: todayIso(),
+      checked_in_at: now,
+      checked_in_by: session.user.id,
+      updated_at: now,
+    },
+    { onConflict: 'dog_id,date' },
+  );
+  if (error) throw error;
+};
+
+// Free-text guest (no dog row in DB). Checks them in immediately.
+export const addGuestToToday = async (params: { name: string; owner?: string }): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Ej inloggad');
+  const now = new Date().toISOString();
+  const { error } = await supabase.from('dog_attendance').insert({
+    dog_id: null,
+    guest_name: params.name,
+    guest_owner: params.owner ?? null,
+    date: todayIso(),
+    checked_in_at: now,
+    checked_in_by: session.user.id,
+    updated_at: now,
+  });
+  if (error) throw error;
+};
+
+// Helper for picker UI: every active dog, name-sorted.
+export type DogPickerItem = { id: string; name: string; breed: string; owner: string };
+
+export const listAllDogsForPicker = async (): Promise<DogPickerItem[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('dogs')
+    .select('id, name, breed, owner, is_active')
+    .eq('is_active', true)
+    .order('name');
+  if (error || !data) { console.error('listAllDogsForPicker', error); return []; }
+  return data.map(d => ({ id: d.id, name: d.name, breed: d.breed, owner: d.owner }));
 };
 
 export const checkInDog = async (dogId: string): Promise<void> => {
@@ -155,5 +243,34 @@ export const undoCheckOut = async (dogId: string): Promise<void> => {
     .from('dog_attendance')
     .update({ checked_out_at: null, checked_out_by: null, updated_at: new Date().toISOString() })
     .eq('dog_id', dogId).eq('date', todayIso());
+  if (error) throw error;
+};
+
+// Guest / manual-entry variants — operate by the attendance row id, since
+// a guest doesn't have a dogs row to key off.
+export const checkOutGuest = async (entryId: string): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { data: { session } } = await supabase.auth.getSession();
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('dog_attendance')
+    .update({ checked_out_at: now, checked_out_by: session?.user.id ?? null, updated_at: now })
+    .eq('id', entryId);
+  if (error) throw error;
+};
+
+export const undoCheckOutGuest = async (entryId: string): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { error } = await supabase
+    .from('dog_attendance')
+    .update({ checked_out_at: null, checked_out_by: null, updated_at: new Date().toISOString() })
+    .eq('id', entryId);
+  if (error) throw error;
+};
+
+// Remove a guest entry entirely (undo manual add).
+export const removeAttendanceEntry = async (entryId: string): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { error } = await supabase.from('dog_attendance').delete().eq('id', entryId);
   if (error) throw error;
 };

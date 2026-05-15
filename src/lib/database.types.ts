@@ -412,7 +412,9 @@ export type Database = {
           checked_out_by: string | null
           created_at: string | null
           date: string
-          dog_id: string
+          dog_id: string | null
+          guest_name: string | null
+          guest_owner: string | null
           id: string
           notes: string | null
           updated_at: string | null
@@ -424,7 +426,9 @@ export type Database = {
           checked_out_by?: string | null
           created_at?: string | null
           date: string
-          dog_id: string
+          dog_id?: string | null
+          guest_name?: string | null
+          guest_owner?: string | null
           id?: string
           notes?: string | null
           updated_at?: string | null
@@ -436,7 +440,9 @@ export type Database = {
           checked_out_by?: string | null
           created_at?: string | null
           date?: string
-          dog_id?: string
+          dog_id?: string | null
+          guest_name?: string | null
+          guest_owner?: string | null
           id?: string
           notes?: string | null
           updated_at?: string | null

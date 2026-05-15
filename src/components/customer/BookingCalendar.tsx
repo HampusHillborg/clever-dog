@@ -7,6 +7,7 @@ import {
   type DayInfo, type DayStatus,
 } from '../../lib/bookingHelpers';
 import { sendNotification } from '../../lib/notifications';
+import { getHolidayInfo, holidayName } from '../../lib/swedishHolidays';
 import BookingRequestModal from './BookingRequestModal';
 
 // Days/week the customer may self-book for part-time dogs. Null for
@@ -219,14 +220,32 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
           {Array.from({ length: firstDayWeekday }).map((_, i) => <div key={`pad-${i}`} />)}
           {days.map(d => {
             const dayNum = parseInt(d.date.slice(8), 10);
-            const label = cellLabel(d.status, d.bookingType);
+            const holiday = getHolidayInfo(d.date);
+            const closed = holiday.kind === 'closed';
+            const halfDay = holiday.kind === 'half_day';
+            const label = closed
+              ? 'Stängt'
+              : halfDay
+                ? 'Öppet → 14'
+                : cellLabel(d.status, d.bookingType);
             const isToday = d.date === todayIso;
+            const cellClass = closed
+              ? 'bg-rose-50 text-rose-400 border-rose-200'
+              : halfDay
+                ? 'bg-amber-50 text-amber-900 border-amber-200'
+                : STATUS_STYLE[d.status];
+            const title = closed
+              ? `Stängt · ${holidayName(d.date) ?? 'Helg'}`
+              : halfDay
+                ? `Öppet till 14:00 · dagen före ${holiday.beforeName}`
+                : STATUS_LABEL[d.status];
             return (
               <button
                 key={d.date}
-                onClick={() => setSelectedDay(d)}
-                className={`aspect-square rounded-lg border-2 hover:scale-[1.04] active:scale-95 flex flex-col items-center justify-center px-0.5 transition-transform ${STATUS_STYLE[d.status]} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}`}
-                title={STATUS_LABEL[d.status]}
+                onClick={() => closed ? undefined : setSelectedDay(d)}
+                disabled={closed}
+                className={`aspect-square rounded-lg border-2 ${closed ? '' : 'hover:scale-[1.04] active:scale-95'} flex flex-col items-center justify-center px-0.5 transition-transform ${cellClass} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''} ${closed ? 'cursor-default opacity-70' : ''}`}
+                title={title}
               >
                 <span className={`leading-none text-sm ${isToday ? 'font-bold' : 'font-medium'}`}>{dayNum}</span>
                 {label && <span className="text-[8px] leading-tight mt-0.5 truncate w-full">{label}</span>}
@@ -291,9 +310,10 @@ function Legend() {
   const items: { color: string; label: string }[] = [
     { color: 'bg-green-100 border-green-300', label: 'Inbokad' },
     { color: 'bg-emerald-200 border-emerald-400', label: 'Extra' },
-    { color: 'bg-gray-200 border-gray-300', label: 'Avbokad' },
     { color: 'bg-yellow-100 border-yellow-300', label: 'Väntar' },
     { color: 'bg-purple-100 border-purple-300', label: 'Pensionat' },
+    { color: 'bg-rose-50 border-rose-200', label: 'Stängt' },
+    { color: 'bg-amber-50 border-amber-200', label: 'Öppet → 14' },
   ];
   return (
     <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-600">
