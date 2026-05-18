@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FaCheck, FaUndo, FaDog, FaCamera, FaPlus, FaClipboardCheck, FaChevronDown } from 'react-icons/fa';
 import {
   getTodaysScheduledDogs, checkInDog, checkOutDog, undoCheckIn, undoCheckOut,
-  checkOutGuest, undoCheckOutGuest, removeAttendanceEntry,
+  checkOutGuest, undoCheckOutGuest, removeAttendanceEntry, checkInBulk,
   type AttendanceEntry,
 } from '../../lib/attendance';
 import PostActivityModal from './PostActivityModal';
@@ -187,6 +187,24 @@ export default function TodayAttendanceTab() {
     });
   };
 
+  // Batch check-in all pending dogs (optimistic)
+  const handleBatchCheckIn = (pendingEntries: AttendanceEntry[]) => {
+    const dogIds = pendingEntries.map(e => e.dog_id).filter((id): id is string => Boolean(id));
+    if (dogIds.length === 0) return;
+    tapMedium();
+    const now = new Date().toISOString();
+    const prev = entries;
+    const pendingKeys = new Set(pendingEntries.map(e => keyFor(e)));
+    setEntries(cur => cur.map(entry =>
+      pendingKeys.has(keyFor(entry)) ? { ...entry, checked_in_at: now } : entry
+    ));
+
+    void checkInBulk(dogIds).catch(() => {
+      setEntries(prev);
+      showToast({ title: 'Batch-incheckning misslyckades', body: 'Försök igen' });
+    });
+  };
+
   if (loading) return <TodaySkeleton />;
 
   const filtered = sortEntries(entries.filter(e => filterEntry(e, filter)), sort);
@@ -273,6 +291,16 @@ export default function TodayAttendanceTab() {
           <p className="font-semibold mb-1">Inga hundar inplanerade idag</p>
           <p className="text-sm text-gray-500">Njut av en lugn dag, eller dubbelkolla schemaläggningen.</p>
         </div>
+      )}
+
+      {pending.length >= 3 && (
+        <button
+          onClick={() => handleBatchCheckIn(pending)}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-green-500 hover:bg-green-600 active:scale-[0.98] text-white font-semibold shadow-card transition-all"
+        >
+          <FaCheck className="text-sm" />
+          Markera alla väntande som ankomna ({pending.length})
+        </button>
       )}
 
       <Section title={`Att checka in (${pending.length})`} headerClass="text-yellow-800">

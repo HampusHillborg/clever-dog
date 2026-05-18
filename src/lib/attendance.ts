@@ -210,6 +210,25 @@ export const checkInDog = async (dogId: string): Promise<void> => {
   if (error) throw error;
 };
 
+// Batch check-in for multiple dogs at once (e.g. "Mark all pending as arrived").
+export const checkInBulk = async (dogIds: string[]): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  if (dogIds.length === 0) return;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Ej inloggad');
+  const now = new Date().toISOString();
+  const date = todayIso();
+  const rows = dogIds.map(dog_id => ({
+    dog_id,
+    date,
+    checked_in_at: now,
+    checked_in_by: session.user.id,
+    updated_at: now,
+  }));
+  const { error } = await supabase.from('dog_attendance').upsert(rows, { onConflict: 'dog_id,date' });
+  if (error) throw error;
+};
+
 export const checkOutDog = async (dogId: string): Promise<void> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { data: { session } } = await supabase.auth.getSession();
