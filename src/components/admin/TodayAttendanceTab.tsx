@@ -9,7 +9,8 @@ import PostActivityModal from './PostActivityModal';
 import DogInfoModal from './DogInfoModal';
 import AddDogToTodayModal from './AddDogToTodayModal';
 import DailyReportModal from './DailyReportModal';
-import { tapMedium, notifySuccess } from '../../lib/haptics';
+import { tapMedium } from '../../lib/haptics';
+import { showToast } from '../customer/NotificationToast';
 
 const typeLabel = (t: string | undefined): string => {
   if (t === 'boarding') return 'Pensionat';
@@ -35,6 +36,7 @@ export default function TodayAttendanceTab() {
   const [entries, setEntries] = useState<AttendanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [justCheckedIn, setJustCheckedIn] = useState<string | null>(null);
   const [postingFor, setPostingFor] = useState<AttendanceEntry | null>(null);
   const [reportingFor, setReportingFor] = useState<AttendanceEntry | null>(null);
   const [infoFor, setInfoFor] = useState<string | null>(null);
@@ -43,27 +45,77 @@ export default function TodayAttendanceTab() {
   const refresh = async () => setEntries(await getTodaysScheduledDogs());
   useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
 
-  const act = async (busyKey: string, fn: () => Promise<void>) => {
-    tapMedium();
-    setBusy(busyKey);
-    try {
-      await fn();
-      await refresh();
-      notifySuccess();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Något gick fel');
-    }
-    setBusy(null);
-  };
-
   const keyFor = (e: AttendanceEntry) => e.dog_id ?? `guest:${e.id}`;
 
-  const actionForCheckOut = (e: AttendanceEntry) =>
-    e.dog_id ? checkOutDog(e.dog_id) : checkOutGuest(e.id!);
-  const actionForUndoCheckIn = (e: AttendanceEntry) =>
-    e.dog_id ? undoCheckIn(e.dog_id) : removeAttendanceEntry(e.id!);
-  const actionForUndoCheckOut = (e: AttendanceEntry) =>
-    e.dog_id ? undoCheckOut(e.dog_id) : undoCheckOutGuest(e.id!);
+  // Optimistic check-in: immediately move dog to "here", then call backend
+  const handleCheckIn = (e: AttendanceEntry) => {
+    if (!e.dog_id) return;
+    const k = keyFor(e);
+    tapMedium();
+    const now = new Date().toISOString();
+    const prev = entries;
+    // Optimistic update
+    setEntries(cur => cur.map(entry =>
+      keyFor(entry) === k ? { ...entry, checked_in_at: now } : entry
+    ));
+    setJustCheckedIn(k);
+    setTimeout(() => setJustCheckedIn(v => v === k ? null : v), 1000);
+
+    void checkInDog(e.dog_id).catch(() => {
+      setEntries(prev);
+      showToast({ title: 'Kunde inte spara', body: 'Försök igen' });
+    });
+  };
+
+  // Optimistic check-out: immediately move dog to "gone", then call backend
+  const handleCheckOut = (e: AttendanceEntry) => {
+    const k = keyFor(e);
+    tapMedium();
+    const now = new Date().toISOString();
+    const prev = entries;
+    // Optimistic update
+    setEntries(cur => cur.map(entry =>
+      keyFor(entry) === k ? { ...entry, checked_out_at: now } : entry
+    ));
+
+    const fn = e.dog_id ? checkOutDog(e.dog_id) : checkOutGuest(e.id!);
+    void fn.catch(() => {
+      setEntries(prev);
+      showToast({ title: 'Kunde inte spara', body: 'Försök igen' });
+    });
+  };
+
+  // Undo check-in (optimistic)
+  const handleUndoCheckIn = (e: AttendanceEntry) => {
+    const k = keyFor(e);
+    tapMedium();
+    const prev = entries;
+    setEntries(cur => cur.map(entry =>
+      keyFor(entry) === k ? { ...entry, checked_in_at: null } : entry
+    ));
+
+    const fn = e.dog_id ? undoCheckIn(e.dog_id) : removeAttendanceEntry(e.id!);
+    void fn.catch(() => {
+      setEntries(prev);
+      showToast({ title: 'Kunde inte spara', body: 'Försök igen' });
+    });
+  };
+
+  // Undo check-out (optimistic)
+  const handleUndoCheckOut = (e: AttendanceEntry) => {
+    const k = keyFor(e);
+    tapMedium();
+    const prev = entries;
+    setEntries(cur => cur.map(entry =>
+      keyFor(entry) === k ? { ...entry, checked_out_at: null } : entry
+    ));
+
+    const fn = e.dog_id ? undoCheckOut(e.dog_id) : undoCheckOutGuest(e.id!);
+    void fn.catch(() => {
+      setEntries(prev);
+      showToast({ title: 'Kunde inte spara', body: 'Försök igen' });
+    });
+  };
 
   if (loading) return <TodaySkeleton />;
 
@@ -110,10 +162,10 @@ export default function TodayAttendanceTab() {
         {pending.map(e => {
           const k = keyFor(e);
           return (
-            <Row key={k} entry={e} busy={busy === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+            <Row key={k} entry={e} busy={busy === k} justCheckedIn={justCheckedIn === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
               <button
-                onClick={() => e.dog_id && act(k, () => checkInDog(e.dog_id!))}
-                disabled={busy === k || !e.dog_id}
+                onClick={() => handleCheckIn(e)}
+                disabled={!e.dog_id}
                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2.5 rounded-xl font-medium disabled:opacity-50 flex items-center gap-1.5 shadow-card active:scale-95 transition-all"
               >
                 <FaCheck className="text-xs" /> Checka in
@@ -127,10 +179,10 @@ export default function TodayAttendanceTab() {
         {here.map(e => {
           const k = keyFor(e);
           return (
-            <Row key={k} entry={e} busy={busy === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+            <Row key={k} entry={e} busy={busy === k} justCheckedIn={justCheckedIn === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
               <div className="flex gap-1.5">
                 <button
-                  onClick={() => act(k, () => actionForUndoCheckIn(e))}
+                  onClick={() => handleUndoCheckIn(e)}
                   disabled={busy === k}
                   className="w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center disabled:opacity-50"
                   title="Ångra incheckning"
@@ -138,7 +190,7 @@ export default function TodayAttendanceTab() {
                   <FaUndo className="text-xs" />
                 </button>
                 <button
-                  onClick={() => act(k, () => actionForCheckOut(e))}
+                  onClick={() => handleCheckOut(e)}
                   disabled={busy === k}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-medium disabled:opacity-50 shadow-card active:scale-95 transition-all"
                 >
@@ -154,9 +206,9 @@ export default function TodayAttendanceTab() {
         {gone.map(e => {
           const k = keyFor(e);
           return (
-            <Row key={k} entry={e} busy={busy === k} muted onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+            <Row key={k} entry={e} busy={busy === k} muted justCheckedIn={false} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
               <button
-                onClick={() => act(k, () => actionForUndoCheckOut(e))}
+                onClick={() => handleUndoCheckOut(e)}
                 disabled={busy === k}
                 className="w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center disabled:opacity-50"
                 title="Ångra utcheckning"
@@ -224,17 +276,18 @@ function Section({ title, headerClass, children }: {
   );
 }
 
-function Row({ entry, busy, muted, onPost, onReport, onInfo, children }: {
+function Row({ entry, busy, muted, justCheckedIn, onPost, onReport, onInfo, children }: {
   entry: AttendanceEntry;
   busy: boolean;
   muted?: boolean;
+  justCheckedIn: boolean;
   onPost?: () => void;
   onReport?: () => void;
   onInfo?: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <div className={`p-3 transition-opacity ${busy ? 'opacity-50' : muted ? 'opacity-70' : ''}`}>
+    <div className={`p-3 transition-all ${busy ? 'opacity-50' : muted ? 'opacity-70' : ''} ${justCheckedIn ? 'bg-green-50 animate-pulse' : ''}`}>
       <button
         onClick={onInfo}
         disabled={!onInfo}
