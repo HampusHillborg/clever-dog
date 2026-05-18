@@ -89,21 +89,33 @@ export default function TodayAttendanceTab() {
   const [sort, setSort] = useState<SortType>('name');
   const [sortOpen, setSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
+  const [collapsed, setCollapsed] = useState<Record<'pending' | 'here' | 'gone', boolean>>({
+    pending: false, here: false, gone: true,
+  });
 
   const refresh = async () => setEntries(await getTodaysScheduledDogs());
   useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
 
-  // Load persisted filter/sort
+  // Load persisted filter/sort/collapsed
   useEffect(() => {
     const f = localStorage.getItem(FILTER_KEY) as FilterType | null;
     const s = localStorage.getItem(SORT_KEY) as SortType | null;
     if (f && FILTER_OPTIONS.some(o => o.value === f)) setFilter(f);
     if (s && SORT_OPTIONS.some(o => o.value === s)) setSort(s);
+    try {
+      const c = localStorage.getItem('admin.today.collapsed');
+      if (c) setCollapsed(prev => ({ ...prev, ...JSON.parse(c) }));
+    } catch { /* ignore */ }
   }, []);
 
-  // Persist filter/sort on change
+  // Persist filter/sort/collapsed on change
   useEffect(() => { localStorage.setItem(FILTER_KEY, filter); }, [filter]);
   useEffect(() => { localStorage.setItem(SORT_KEY, sort); }, [sort]);
+  useEffect(() => { localStorage.setItem('admin.today.collapsed', JSON.stringify(collapsed)); }, [collapsed]);
+
+  const toggleCollapsed = (section: 'pending' | 'here' | 'gone') => {
+    setCollapsed(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   // Close sort dropdown on outside click
   useEffect(() => {
@@ -303,7 +315,12 @@ export default function TodayAttendanceTab() {
         </button>
       )}
 
-      <Section title={`Att checka in (${pending.length})`} headerClass="text-yellow-800">
+      <CollapsibleSection
+        title={`Att checka in (${pending.length})`}
+        headerClass="text-yellow-800"
+        collapsed={collapsed.pending}
+        onToggle={() => toggleCollapsed('pending')}
+      >
         {pending.map(e => {
           const k = keyFor(e);
           return (
@@ -318,9 +335,14 @@ export default function TodayAttendanceTab() {
             </Row>
           );
         })}
-      </Section>
+      </CollapsibleSection>
 
-      <Section title={`Här just nu (${here.length})`} headerClass="text-green-800">
+      <CollapsibleSection
+        title={`Här just nu (${here.length})`}
+        headerClass="text-green-800"
+        collapsed={collapsed.here}
+        onToggle={() => toggleCollapsed('here')}
+      >
         {here.map(e => {
           const k = keyFor(e);
           return (
@@ -345,9 +367,14 @@ export default function TodayAttendanceTab() {
             </Row>
           );
         })}
-      </Section>
+      </CollapsibleSection>
 
-      <Section title={`Hämtade (${gone.length})`} headerClass="text-gray-500">
+      <CollapsibleSection
+        title={`Hämtade (${gone.length})`}
+        headerClass="text-gray-500"
+        collapsed={collapsed.gone}
+        onToggle={() => toggleCollapsed('gone')}
+      >
         {gone.map(e => {
           const k = keyFor(e);
           return (
@@ -363,7 +390,7 @@ export default function TodayAttendanceTab() {
             </Row>
           );
         })}
-      </Section>
+      </CollapsibleSection>
 
       {postingFor && postingFor.dog_id && (
         <PostActivityModal
@@ -378,6 +405,9 @@ export default function TodayAttendanceTab() {
         <DailyReportModal
           dogId={reportingFor.dog_id}
           dogName={reportingFor.dog_name}
+          otherDogsToday={entries
+            .filter(e => e.dog_id && e.dog_id !== reportingFor.dog_id)
+            .map(e => ({ id: e.dog_id!, name: e.dog_name }))}
           onClose={() => setReportingFor(null)}
           onSaved={() => setReportingFor(null)}
         />
@@ -407,16 +437,30 @@ function Pill({ color, label }: { color: 'yellow' | 'green' | 'gray'; label: str
   return <span className={`px-2.5 py-1 rounded-full font-medium ${styles[color]}`}>{label}</span>;
 }
 
-function Section({ title, headerClass, children }: {
-  title: string; headerClass: string; children: React.ReactNode;
+function CollapsibleSection({ title, headerClass, collapsed, onToggle, children }: {
+  title: string;
+  headerClass: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
 }) {
   const arr = Array.isArray(children) ? children : [children];
   const filtered = arr.filter(Boolean);
   if (filtered.length === 0) return null;
   return (
     <div>
-      <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 px-1 ${headerClass}`}>{title}</h3>
-      <div className="bg-white rounded-2xl shadow-card divide-y divide-gray-100 overflow-hidden">{filtered}</div>
+      <button
+        onClick={onToggle}
+        className={`flex items-center gap-1.5 w-full text-left mb-2 px-1 group`}
+      >
+        <h3 className={`text-xs font-semibold uppercase tracking-wide flex-1 ${headerClass}`}>{title}</h3>
+        <FaChevronDown
+          className={`text-[10px] transition-transform text-gray-400 group-hover:text-gray-600 ${collapsed ? '' : 'rotate-180'}`}
+        />
+      </button>
+      {!collapsed && (
+        <div className="bg-white rounded-2xl shadow-card divide-y divide-gray-100 overflow-hidden">{filtered}</div>
+      )}
     </div>
   );
 }

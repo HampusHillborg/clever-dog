@@ -318,6 +318,33 @@ export const getStaffWorkingToday = async (location = 'staffanstorp'): Promise<s
   return (data ?? []).map(r => r.name);
 };
 
+// Batch-upsert the same report fields to multiple dogs for today.
+export const upsertDailyReportBulk = async (dogIds: string[], patch: DailyReportPatch): Promise<void> => {
+  if (!supabase || dogIds.length === 0) return;
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user.id;
+  let posted_by_name: string | null = null;
+  if (userId) {
+    const { data: emp } = await supabase
+      .from('employees').select('name').eq('id', userId).maybeSingle();
+    posted_by_name = emp?.name ?? null;
+  }
+  const date = todayIso();
+  const now = new Date().toISOString();
+  const rows = dogIds.map(dog_id => ({
+    dog_id,
+    date,
+    ...patch,
+    posted_by: userId ?? null,
+    posted_by_name,
+    updated_at: now,
+  }));
+  const { error } = await supabase
+    .from('dog_daily_reports')
+    .upsert(rows, { onConflict: 'dog_id,date' });
+  if (error) throw error;
+};
+
 export const upsertDailyReport = async (dogId: string, patch: DailyReportPatch): Promise<DailyReport> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { data: { session } } = await supabase.auth.getSession();
