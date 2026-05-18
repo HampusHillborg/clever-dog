@@ -12,7 +12,8 @@ import { getHolidayInfo, holidayName } from '../../lib/swedishHolidays';
 import { getClosures } from '../../lib/closures';
 import { tapLight, notifySuccess } from '../../lib/haptics';
 import { todayLocalIso } from '../../lib/localDate';
-import BookingRequestModal from './BookingRequestModal';
+import { BTN } from '../../lib/uiTokens';
+import BookingWizardSheet from './BookingWizardSheet';
 
 // Days/week the customer may self-book for part-time dogs. Null for
 // fulltime or unknown types (no quota enforcement).
@@ -98,7 +99,7 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
   const [coOwnerCount, setCoOwnerCount] = useState(0);
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [requestType, setRequestType] = useState<'boarding' | 'single_day' | null>(null);
+  const [showWizard, setShowWizard] = useState(false);
   const [closures, setClosures] = useState<Map<string, string>>(new Map());
 
   const refresh = async () => {
@@ -205,13 +206,11 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
   return (
     <div className="bg-white rounded-2xl shadow-card p-4 sm:p-5">
       <div className="flex gap-2 mb-4 flex-wrap">
-        <button onClick={() => setRequestType('boarding')}
-                className="bg-purple-50 text-purple-900 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-purple-100 transition-colors border border-purple-200">
-          + Begär pensionat
-        </button>
-        <button onClick={() => setRequestType('single_day')}
-                className="bg-amber-50 text-amber-900 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-amber-100 transition-colors border border-amber-200">
-          + Begär enstaka dag
+        <button
+          onClick={() => setShowWizard(true)}
+          className={BTN.primary + ' w-full sm:w-auto'}
+        >
+          + Boka ny dag eller pensionat
         </button>
       </div>
 
@@ -313,15 +312,12 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
         />
       )}
 
-      {requestType && customerId && (
-        <BookingRequestModal
-          dogId={dog.id}
-          customerId={customerId}
-          type={requestType}
-          onClose={() => setRequestType(null)}
-          onSaved={refresh}
-        />
-      )}
+      <BookingWizardSheet
+        open={showWizard}
+        onClose={() => setShowWizard(false)}
+        dog={dog}
+        onSuccess={refresh}
+      />
     </div>
   );
 }
