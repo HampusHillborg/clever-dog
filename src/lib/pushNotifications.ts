@@ -60,7 +60,10 @@ export const initPushNotifications = async (): Promise<void> => {
   // Tap on a notification (banner or notification tray) — route by kind.
   PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
     const kind = action.notification.data?.kind;
-    const target = kind === 'staff_message' ? '/kund?tab=messages' : '/kund';
+    const target =
+      kind === 'staff_message' ? '/kund?tab=messages' :
+      kind === 'customer_message' ? '/admin' :
+      '/kund';
     // Hard navigate so even a cold start lands on the right screen.
     window.location.href = target;
   });

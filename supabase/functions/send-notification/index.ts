@@ -30,6 +30,17 @@ async function pushToUser(
   ]);
 }
 
+// Returnera alla auth_user_ids för admins/personalen (admin_users-tabellen).
+// Används för att fan-outa push-notiser till personalen vid t.ex.
+// nytt kund-meddelande.
+async function adminAuthUserIds(
+  admin: ReturnType<typeof createClient>,
+): Promise<string[]> {
+  const { data } = await admin.from('admin_users').select('id');
+  const rows = (data ?? []) as Array<{ id: string }>;
+  return rows.map(r => r.id).filter((u): u is string => !!u);
+}
+
 // Returnera alla auth_user_ids för kunder kopplade till en hund.
 // Om dogId är null (legacy-meddelanden utan koppling) — använd
 // fallbackCustomerId direkt så vi inte tappar pushen.
@@ -237,30 +248,39 @@ Deno.serve(async (req) => {
     }
     else if (body.kind === 'customer_message') {
       if (!body.message_id) throw new Error('message_id required');
-      if (!ADMIN_EMAIL) return new Response(JSON.stringify({ ok: false, skipped: 'no admin email' }), { headers });
 
       const { data: msg } = await admin
         .from('messages')
-        .select('*, customers(name, email), dogs(name)')
+        .select('*')
         .eq('id', body.message_id).single();
       if (!msg || msg.sender_role !== 'customer') {
         return new Response(JSON.stringify({ ok: false, skipped: 'not customer message' }), { headers });
       }
 
-      const html = wrap('Nytt meddelande från kund', `
-        <p><strong>${escape(msg.customers?.name)}</strong> (${escape(msg.customers?.email)})
-        ${msg.dogs?.name ? `om <strong>${escape(msg.dogs.name)}</strong>` : ''} skrev:</p>
-        <blockquote style="border-left: 3px solid #c97b3a; padding-left: 12px; color: #444;">
-          ${escape(msg.body)}
-        </blockquote>
-        <p>Svara via <a href="${SITE_URL}/admin">admin-portalen</a>.</p>
-      `);
-      // Reply-To = customer email so admin can reply via inbox
-      await sendEmail(
-        ADMIN_EMAIL,
-        `Nytt meddelande från ${msg.customers?.name}`,
-        html,
-        msg.customers?.email ?? undefined,
+      // Hämta kundens namn så push-titeln blir "Nytt meddelande från X".
+      let senderName = 'En kund';
+      if (msg.customer_id) {
+        const { data: c } = await admin
+          .from('customers')
+          .select('name')
+          .eq('id', msg.customer_id)
+          .maybeSingle();
+        senderName = (c as { name?: string } | null)?.name ?? senderName;
+      }
+
+      // Push till alla admins/personalen. Email-notiser för chat är avstängda
+      // — push räcker eftersom personalen sitter i admin-appen.
+      const adminUids = await adminAuthUserIds(admin);
+      await Promise.all(
+        adminUids.map(uid =>
+          pushToUser(
+            admin,
+            uid,
+            `Nytt meddelande från ${senderName}`,
+            String(msg.body).slice(0, 120),
+            { kind: 'customer_message', message_id: msg.id },
+          ),
+        ),
       );
     }
     else if (body.kind === 'staff_message') {
@@ -268,32 +288,15 @@ Deno.serve(async (req) => {
 
       const { data: msg } = await admin
         .from('messages')
-        .select('*, customers(name, email), dogs(name)')
+        .select('*')
         .eq('id', body.message_id).single();
       if (!msg || msg.sender_role !== 'staff') {
         return new Response(JSON.stringify({ ok: false, skipped: 'not staff message' }), { headers });
       }
-      if (!msg.customers?.email) {
-        return new Response(JSON.stringify({ ok: false, skipped: 'no customer email' }), { headers });
-      }
 
-      const html = wrap('Nytt meddelande från CleverDog', `
-        <p>Hej ${escape(msg.customers.name)},</p>
-        <p>Personalen har skrivit till dig${msg.dogs?.name ? ` om <strong>${escape(msg.dogs.name)}</strong>` : ''}:</p>
-        <blockquote style="border-left: 3px solid #c97b3a; padding-left: 12px; color: #444;">
-          ${escape(msg.body)}
-        </blockquote>
-        <p>Svara via <a href="${SITE_URL}/kund">kundportalen</a>.</p>
-      `);
-      // Reply-To = admin so customer can reply via inbox
-      await sendEmail(
-        msg.customers.email,
-        'Nytt meddelande från CleverDog',
-        html,
-        ADMIN_EMAIL || undefined,
-      );
-
-      // Push notification — fan-out till alla co-owners.
+      // Email-notiser för chat avstängda — bara push fan-outas till
+      // alla co-owners så kunden får notis i appen utan att översvämmas
+      // av mejl.
       const msgRecipients = await coOwnerAuthUserIds(
         admin,
         msg.dog_id ?? null,

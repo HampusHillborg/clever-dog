@@ -41,6 +41,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     setSending(true);
     try {
       const created = await sendMessage({ dog_id: dog.id, body: text });
+      // Triggrar push till admins (email-utskicket borttaget i edge-funktionen v10).
       sendNotification({ kind: 'customer_message', message_id: created.id });
       setText('');
       refresh();
