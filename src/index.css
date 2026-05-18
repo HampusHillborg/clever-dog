@@ -130,6 +130,28 @@
   }
   .scrollbar-none::-webkit-scrollbar { display: none; }
 
+  /* Subtle diagonal stripe pattern for "closed"-state calendar cells.
+     A repeating-linear-gradient of two near-equal pastel tones reads as
+     "unavailable" without being loud. */
+  .pattern-stripes-closed {
+    background-image: repeating-linear-gradient(
+      135deg,
+      #fef2f2 0px,
+      #fef2f2 6px,
+      #fee2e2 6px,
+      #fee2e2 12px
+    );
+  }
+  .pattern-stripes-half {
+    background-image: repeating-linear-gradient(
+      135deg,
+      #fffbeb 0px,
+      #fffbeb 6px,
+      #fef3c7 6px,
+      #fef3c7 12px
+    );
+  }
+
   /* Icon circle gradient */
   .icon-circle {
     @apply w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0;

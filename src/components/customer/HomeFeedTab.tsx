@@ -8,6 +8,7 @@ import {
   getDogActivities, getMyMessages, getDailyReport, reportHasContent,
   type Dog, type DogActivity, type Message, type DailyReport,
 } from '../../lib/customerApi';
+import GoogleReviewCTA from './GoogleReviewCTA';
 
 type NextDay = {
   date: string;          // ISO YYYY-MM-DD
@@ -168,6 +169,9 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
           onClick={() => onJumpTo('album')}
         />
       </div>
+
+      {/* Google review prompt — renders only when VITE_GOOGLE_PLACE_ID is set */}
+      <GoogleReviewCTA />
     </div>
   );
 }
@@ -383,7 +387,10 @@ async function getNextScheduledDay(dogId: string): Promise<NextDay | null> {
     }
   }
 
-  // Sweep day by day; first hit wins.
+  // Sweep day by day; first hit wins. When a date matches BOTH a recurring
+  // weekday and an extra booking, prefer 'scheduled' — the customer thinks
+  // of it as their normal dagis-dag, not as an extra. Boarding overrides
+  // everything because it implies the dog is here overnight.
   const cursor = new Date(today);
   while (cursor.toISOString().slice(0, 10) <= horizonIso) {
     const iso = cursor.toISOString().slice(0, 10);
@@ -392,13 +399,18 @@ async function getNextScheduledDay(dogId: string): Promise<NextDay | null> {
       continue;
     }
     const booked = confirmed.find(c => c.date === iso);
-    if (booked) {
-      return makeNext(iso, booked.bookingType, today);
-    }
     // ISO weekday: 1=Mon..7=Sun; recurring_schedule uses 0=Mon..6=Sun
     const monFirst = (cursor.getDay() + 6) % 7;
-    if (recurring.has(monFirst)) {
+    const hasRecurring = recurring.has(monFirst);
+
+    if (booked && booked.bookingType === 'boarding') {
+      return makeNext(iso, 'boarding', today);
+    }
+    if (hasRecurring) {
       return makeNext(iso, 'scheduled', today);
+    }
+    if (booked) {
+      return makeNext(iso, booked.bookingType, today);
     }
     cursor.setDate(cursor.getDate() + 1);
   }

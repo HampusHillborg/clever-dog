@@ -366,6 +366,33 @@ export type Database = {
         }
         Relationships: []
       }
+      dagis_closures: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          date: string
+          id: string
+          reason: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          date: string
+          id?: string
+          reason: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          date?: string
+          id?: string
+          reason?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       dog_daily_reports: {
         Row: {
           activity_level: string | null

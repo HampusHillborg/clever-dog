@@ -48,6 +48,7 @@ import MessagesAdminTab from './admin/MessagesAdminTab';
 import StatsTab from './admin/StatsTab';
 import TodayAttendanceTab from './admin/TodayAttendanceTab';
 import EconomyTab from './admin/EconomyTab';
+import ClosuresAdminTab from './admin/ClosuresAdminTab';
 import OwnerInput from './admin/OwnerInput';
 import { useAdminBadges } from './admin/useAdminBadges';
 import { sendNotification } from '../lib/notifications';
@@ -161,7 +162,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats' | 'today' | 'economy' | 'staffanstorp-hub';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats' | 'today' | 'economy' | 'staffanstorp-hub' | 'closures';
 type StaffanstorpSubTab = 'planning' | 'calendar' | 'boarding';
 
 type UserRole = 'admin' | 'employee' | 'platschef';
@@ -3569,6 +3570,19 @@ const AdminPage: React.FC = () => {
                   </div>
                   <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Ekonomi</h4>
                   <p className="text-center text-gray-600 text-xs sm:text-sm">Månadskostnad per kund</p>
+                </div>
+              )}
+
+              {(userRole === 'admin' || userRole === 'platschef') && (
+                <div
+                  onClick={() => setCurrentView('closures')}
+                  className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-rose-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-rose-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaCalendarAlt className="text-rose-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Stängda dagar</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Semestrar &amp; egna stängningar</p>
                 </div>
               )}
 
@@ -7760,6 +7774,8 @@ const AdminPage: React.FC = () => {
         return (userRole === 'admin' || userRole === 'platschef') ? <EconomyTab /> : renderDashboard();
       case 'staffanstorp-hub':
         return renderStaffanstorpHub();
+      case 'closures':
+        return (userRole === 'admin' || userRole === 'platschef') ? <ClosuresAdminTab /> : renderDashboard();
       default:
         return renderDashboard();
     }
@@ -8231,7 +8247,8 @@ const AdminPage: React.FC = () => {
                                                   currentView === 'today' ? 'Idag · Incheckning' :
                                                     currentView === 'economy' ? 'Ekonomi' :
                                                       currentView === 'staffanstorp-hub' ? 'Staffanstorp' :
-                                                        'Dashboard'}
+                                                        currentView === 'closures' ? 'Stängda dagar' :
+                                                          'Dashboard'}
               </h1>
               <div className="ml-auto sm:ml-4">
                 <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold ${userRole === 'admin'

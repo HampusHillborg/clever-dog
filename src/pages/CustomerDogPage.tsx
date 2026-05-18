@@ -10,6 +10,7 @@ import MessagesTab from '../components/customer/MessagesTab';
 import ContractView from '../components/customer/ContractView';
 import AlbumTab from '../components/customer/AlbumTab';
 import NotificationToast from '../components/customer/NotificationToast';
+import DailyReportsHistory from '../components/customer/DailyReportsHistory';
 import { getMyDog, getMyDogs, type Dog } from '../lib/customerApi';
 import { signOutCustomer } from '../lib/customerAuth';
 import dogLogo from '../assets/images/logos/Logo.png';
@@ -111,6 +112,7 @@ export default function CustomerDogPage() {
           <div className="space-y-4">
             <DogHero dog={dog} />
             <DogInfoTab dog={dog} onUpdate={setDog} />
+            <DailyReportsHistory dogId={dog.id} dogName={dog.name} />
             <ContractView dog={dog} />
           </div>
         )}
