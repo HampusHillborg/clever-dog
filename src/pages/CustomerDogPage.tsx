@@ -9,13 +9,9 @@ import HomeFeedTab from '../components/customer/HomeFeedTab';
 import DogInfoTab from '../components/customer/DogInfoTab';
 import BookingCalendar from '../components/customer/BookingCalendar';
 import MessagesTab from '../components/customer/MessagesTab';
-import ContractView from '../components/customer/ContractView';
 import AlbumTab from '../components/customer/AlbumTab';
 import NotificationToast from '../components/customer/NotificationToast';
-import DailyReportsHistory from '../components/customer/DailyReportsHistory';
 import VaccinationsCard from '../components/customer/VaccinationsCard';
-import AccountSettingsCard from '../components/customer/AccountSettingsCard';
-import StaffDirectoryCard from '../components/customer/StaffDirectoryCard';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import DogPills from '../components/customer/DogPills';
 import OnboardingSheet, { hasSeenOnboarding } from '../components/customer/OnboardingSheet';
@@ -134,10 +130,6 @@ export default function CustomerDogPage() {
             <DogHero dog={dog} />
             <DogInfoTab dog={dog} onUpdate={setDog} />
             <VaccinationsCard dogId={dog.id} />
-            <DailyReportsHistory dogId={dog.id} dogName={dog.name} />
-            <ContractView dog={dog} />
-            <StaffDirectoryCard />
-            <AccountSettingsCard />
           </div>
         )}
         {tab === 'more' && (
