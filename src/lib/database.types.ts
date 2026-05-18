@@ -393,6 +393,53 @@ export type Database = {
         }
         Relationships: []
       }
+      dog_vaccinations: {
+        Row: {
+          id: string
+          dog_id: string
+          vaccine_type: string
+          label: string | null
+          given_on: string | null
+          expires_on: string
+          notes: string | null
+          updated_by: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          dog_id: string
+          vaccine_type: string
+          label?: string | null
+          given_on?: string | null
+          expires_on: string
+          notes?: string | null
+          updated_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          dog_id?: string
+          vaccine_type?: string
+          label?: string | null
+          given_on?: string | null
+          expires_on?: string
+          notes?: string | null
+          updated_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_vaccinations_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dog_daily_reports: {
         Row: {
           activity_level: string | null

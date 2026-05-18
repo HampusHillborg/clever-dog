@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import {
   FaCalendarAlt, FaImages, FaCommentDots, FaCheckCircle, FaClock,
   FaSmile, FaMeh, FaFrown, FaPaw, FaBolt, FaUtensils, FaClipboardCheck,
+  FaSyringe,
 } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import {
   getDogActivities, getMyMessages, getDailyReport, reportHasContent,
-  type Dog, type DogActivity, type Message, type DailyReport,
+  getVaccinations, vaccinationStatus, VACCINE_LABELS,
+  type Dog, type DogActivity, type Message, type DailyReport, type Vaccination,
 } from '../../lib/customerApi';
 import GoogleReviewCTA from './GoogleReviewCTA';
 
@@ -54,16 +56,18 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
   const [latestMsg, setLatestMsg] = useState<Message | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [todayReport, setTodayReport] = useState<DailyReport | null>(null);
+  const [vaccineWarnings, setVaccineWarnings] = useState<Vaccination[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [n, acts, msgs, report] = await Promise.all([
+      const [n, acts, msgs, report, vacs] = await Promise.all([
         getNextScheduledDay(dog.id),
         getDogActivities(dog.id, 1),
         getMyMessages(dog.id),
         getDailyReport(dog.id),
+        getVaccinations(dog.id),
       ]);
       setNext(n);
       setLatestActivity(acts[0] ?? null);
@@ -71,6 +75,12 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
       setLatestMsg(sortedMsgs[0] ?? null);
       setUnreadCount(msgs.filter(m => m.sender_role === 'staff' && !m.is_read).length);
       setTodayReport(reportHasContent(report) ? report : null);
+      // Only surface vaccines that are expired or expiring soon — never
+      // the calm "OK" or "missing" cases, which would just be noise.
+      setVaccineWarnings(vacs.filter(v => {
+        const s = vaccinationStatus(v.expires_on);
+        return s === 'expired' || s === 'expiring';
+      }));
       setLoading(false);
     })();
   }, [dog.id]);
@@ -91,6 +101,11 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
 
       {/* Next/today card — the headliner */}
       <NextDayCard next={next} onOpen={() => onJumpTo('calendar')} />
+
+      {/* Vaccine warnings (only when expired or expiring within 30 dgr) */}
+      {vaccineWarnings.length > 0 && (
+        <VaccineWarning warnings={vaccineWarnings} onOpen={() => onJumpTo('profile')} />
+      )}
 
       {/* Today's report from staff (only when filled in) */}
       {todayReport && <DailyReportCard report={todayReport} dogName={dog.name} />}
@@ -239,6 +254,41 @@ function QuickAction({ icon, label, desc, onClick }: {
       </div>
       <p className="font-semibold text-sm">{label}</p>
       <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+    </button>
+  );
+}
+
+function VaccineWarning({ warnings, onOpen }: { warnings: Vaccination[]; onOpen: () => void }) {
+  const expired = warnings.filter(v => vaccinationStatus(v.expires_on) === 'expired');
+  const hasExpired = expired.length > 0;
+
+  return (
+    <button
+      onClick={onOpen}
+      className={`w-full text-left rounded-2xl shadow-card overflow-hidden hover:shadow-pop active:scale-[0.99] transition-all ${
+        hasExpired ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'
+      }`}
+    >
+      <div className="p-4 flex items-start gap-3">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+          hasExpired ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+        }`}>
+          <FaSyringe />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`text-[11px] uppercase tracking-wide font-semibold ${
+            hasExpired ? 'text-red-800' : 'text-amber-800'
+          }`}>
+            {hasExpired ? 'Vaccination utgången' : 'Vaccination går ut snart'}
+          </p>
+          <p className="text-sm font-semibold mt-0.5 leading-tight">
+            {warnings.map(v => VACCINE_LABELS[v.vaccine_type] ?? v.label ?? 'Vaccin').join(', ')}
+          </p>
+          <p className="text-xs text-gray-700 mt-0.5">
+            Uppdatera i Profil-fliken så vi vet att din hund är skyddad.
+          </p>
+        </div>
+      </div>
     </button>
   );
 }

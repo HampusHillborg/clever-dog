@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { compression } from 'vite-plugin-compression2'
 import { imagetools } from 'vite-imagetools'
+import pkg from './package.json' with { type: 'json' }
 
 // https://vite.dev/config/
 // For app builds (VITE_APP_TARGET=app) we skip the .gz/.br precompression
@@ -11,6 +12,9 @@ import { imagetools } from 'vite-imagetools'
 const isAppBuild = process.env.VITE_APP_TARGET === 'app';
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
+  },
   plugins: [
     react({
       // Optimize React bundle size

@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  FaHome, FaCalendarAlt, FaCommentDots, FaImages, FaUser, FaChevronDown, FaSignOutAlt,
+  FaHome, FaCalendarAlt, FaCommentDots, FaImages, FaUser, FaChevronDown,
+  FaSignOutAlt, FaSyncAlt,
 } from 'react-icons/fa';
+import { usePullToRefresh } from '../lib/pullToRefresh';
 import HomeFeedTab from '../components/customer/HomeFeedTab';
 import DogInfoTab from '../components/customer/DogInfoTab';
 import BookingCalendar from '../components/customer/BookingCalendar';
@@ -11,6 +13,10 @@ import ContractView from '../components/customer/ContractView';
 import AlbumTab from '../components/customer/AlbumTab';
 import NotificationToast from '../components/customer/NotificationToast';
 import DailyReportsHistory from '../components/customer/DailyReportsHistory';
+import VaccinationsCard from '../components/customer/VaccinationsCard';
+import AccountSettingsCard from '../components/customer/AccountSettingsCard';
+import StaffDirectoryCard from '../components/customer/StaffDirectoryCard';
+import OnboardingSheet, { hasSeenOnboarding } from '../components/customer/OnboardingSheet';
 import { getMyDog, getMyDogs, type Dog } from '../lib/customerApi';
 import { signOutCustomer } from '../lib/customerAuth';
 import dogLogo from '../assets/images/logos/Logo.png';
@@ -41,6 +47,18 @@ export default function CustomerDogPage() {
   const [tab, setTab] = useState<TabKey>('home');
   const [loading, setLoading] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
+  const [refreshTick, setRefreshTick] = useState(0);
+
+  const refresh = useCallback(async () => {
+    if (!id) return;
+    const d = await getMyDog(id);
+    setDog(d);
+    // Bump tick so child tabs re-fetch their own data through their useEffect deps.
+    setRefreshTick(t => t + 1);
+  }, [id]);
+
+  const { ref: scrollRef, pulledPx, refreshing } = usePullToRefresh<HTMLElement>(refresh);
 
   useEffect(() => {
     if (!id) return;
@@ -77,6 +95,7 @@ export default function CustomerDogPage() {
   return (
     <div className="min-h-screen bg-light flex flex-col">
       <NotificationToast />
+      {showOnboarding && <OnboardingSheet onDone={() => setShowOnboarding(false)} />}
 
       <header className="bg-white/85 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200/70">
         <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
@@ -103,17 +122,34 @@ export default function CustomerDogPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto">
-        {tab === 'home' && <HomeFeedTab dog={dog} onJumpTo={(t) => setTab(t)} />}
-        {tab === 'calendar' && <BookingCalendar dog={dog} />}
-        {tab === 'album' && <AlbumTab dog={dog} />}
-        {tab === 'messages' && <MessagesTab dog={dog} />}
+      <main ref={scrollRef} className="flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto relative">
+        {/* Pull-to-refresh indicator */}
+        {(pulledPx > 0 || refreshing) && (
+          <div
+            className="absolute top-0 left-0 right-0 flex items-center justify-center pointer-events-none transition-all"
+            style={{ height: `${Math.max(pulledPx, refreshing ? 48 : 0)}px` }}
+          >
+            <div
+              className={`w-9 h-9 rounded-full bg-white shadow-card flex items-center justify-center text-primary ${refreshing ? 'animate-spin' : ''}`}
+              style={{ transform: `rotate(${pulledPx * 4}deg)` }}
+            >
+              <FaSyncAlt className="text-sm" />
+            </div>
+          </div>
+        )}
+        {tab === 'home' && <HomeFeedTab key={refreshTick} dog={dog} onJumpTo={(t) => setTab(t)} />}
+        {tab === 'calendar' && <BookingCalendar key={refreshTick} dog={dog} />}
+        {tab === 'album' && <AlbumTab key={refreshTick} dog={dog} />}
+        {tab === 'messages' && <MessagesTab key={refreshTick} dog={dog} />}
         {tab === 'profile' && (
-          <div className="space-y-4">
+          <div key={refreshTick} className="space-y-4">
             <DogHero dog={dog} />
             <DogInfoTab dog={dog} onUpdate={setDog} />
+            <VaccinationsCard dogId={dog.id} />
             <DailyReportsHistory dogId={dog.id} dogName={dog.name} />
             <ContractView dog={dog} />
+            <StaffDirectoryCard />
+            <AccountSettingsCard />
           </div>
         )}
       </main>

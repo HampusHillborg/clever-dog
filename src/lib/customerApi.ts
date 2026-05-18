@@ -5,6 +5,26 @@ export type Dog = Database['public']['Tables']['dogs']['Row'];
 export type Message = Database['public']['Tables']['messages']['Row'];
 export type DogActivity = Database['public']['Tables']['dog_activities']['Row'];
 export type DailyReport = Database['public']['Tables']['dog_daily_reports']['Row'];
+export type Vaccination = Database['public']['Tables']['dog_vaccinations']['Row'];
+
+export const VACCINE_LABELS: Record<string, string> = {
+  rabies: 'Rabies',
+  dhppi: 'Valpsjuka/parvo/hepatit (DHPPi)',
+  kennel_cough: 'Kennelhosta',
+  other: 'Annat',
+};
+
+export type VaccinationStatus = 'valid' | 'expiring' | 'expired' | 'missing';
+
+export const vaccinationStatus = (expires: string | null | undefined): VaccinationStatus => {
+  if (!expires) return 'missing';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(expires + 'T00:00:00');
+  const days = Math.floor((d.getTime() - today.getTime()) / 86400000);
+  if (days < 0) return 'expired';
+  if (days <= 30) return 'expiring';
+  return 'valid';
+};
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -205,6 +225,52 @@ export type DailyReportPatch = {
   activity_level?: 'low' | 'normal' | 'high' | null;
   pooped?: boolean | null;
   note?: string | null;
+};
+
+// Vaccinations
+export const getVaccinations = async (dogId: string): Promise<Vaccination[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('dog_vaccinations')
+    .select('*')
+    .eq('dog_id', dogId)
+    .order('expires_on');
+  if (error) { console.error('getVaccinations', error); return []; }
+  return data ?? [];
+};
+
+export type VaccinationPatch = {
+  vaccine_type: 'rabies' | 'dhppi' | 'kennel_cough' | 'other';
+  label?: string | null;
+  given_on?: string | null;
+  expires_on: string;
+  notes?: string | null;
+};
+
+export const upsertVaccination = async (dogId: string, patch: VaccinationPatch): Promise<Vaccination> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data, error } = await supabase
+    .from('dog_vaccinations')
+    .upsert(
+      {
+        dog_id: dogId,
+        ...patch,
+        updated_by: session?.user.id ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'dog_id,vaccine_type' },
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+export const deleteVaccination = async (id: string): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { error } = await supabase.from('dog_vaccinations').delete().eq('id', id);
+  if (error) throw error;
 };
 
 export const upsertDailyReport = async (dogId: string, patch: DailyReportPatch): Promise<DailyReport> => {

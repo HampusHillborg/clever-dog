@@ -140,7 +140,7 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
     return days.filter(d => isoWeekKey(d.date) === key && d.status === 'scheduled').length;
   };
 
-  const handleAction = async (action: 'add_extra' | 'cancel' | 'undo' | 'cancel_request' | 'pick_day') => {
+  const handleAction = async (action: 'add_extra' | 'cancel' | 'undo' | 'cancel_request' | 'pick_day' | 'cancel_boarding') => {
     if (!selectedDay || !customerId) return;
     try {
       if (action === 'pick_day') {
@@ -178,6 +178,11 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
       } else if (action === 'undo' && selectedDay.bookingId) {
         await deleteBooking(selectedDay.bookingId);
       } else if (action === 'cancel_request' && selectedDay.bookingId) {
+        await deleteBooking(selectedDay.bookingId);
+      } else if (action === 'cancel_boarding' && selectedDay.bookingId) {
+        if (!confirm('Avboka hela pensionat-bokningen? Detta tar bort alla nätter.')) {
+          return;
+        }
         await deleteBooking(selectedDay.bookingId);
       }
       setSelectedDay(null);
@@ -351,7 +356,7 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction }: 
   quota: number | null;
   picksThisWeek: number;
   onClose: () => void;
-  onAction: (a: 'add_extra' | 'cancel' | 'undo' | 'cancel_request' | 'pick_day') => void;
+  onAction: (a: 'add_extra' | 'cancel' | 'undo' | 'cancel_request' | 'pick_day' | 'cancel_boarding') => void;
 }) {
   const niceDate = day.date.split('-').reverse().join('/');
   const locked = isLockedDate(day.date);
@@ -418,6 +423,10 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction }: 
           {day.status === 'pending' && day.bookingId && (
             <button onClick={() => onAction('cancel_request')}
                     className="w-full bg-gray-500 text-white rounded-lg py-2">Avbryt förfrågan</button>
+          )}
+          {day.status === 'boarding' && day.bookingId && !locked && (
+            <button onClick={() => onAction('cancel_boarding')}
+                    className="w-full bg-gray-500 text-white rounded-lg py-2">Avboka pensionat</button>
           )}
           {day.status === 'cancelled' && day.bookingId && !locked && (
             <button onClick={() => onAction('undo')}
