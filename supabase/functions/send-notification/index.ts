@@ -30,6 +30,34 @@ async function pushToUser(
   ]);
 }
 
+// Returnera alla auth_user_ids för kunder kopplade till en hund.
+// Om dogId är null (legacy-meddelanden utan koppling) — använd
+// fallbackCustomerId direkt så vi inte tappar pushen.
+async function coOwnerAuthUserIds(
+  admin: ReturnType<typeof createClient>,
+  dogId: string | null,
+  fallbackCustomerId: string | null,
+): Promise<string[]> {
+  if (!dogId) {
+    if (!fallbackCustomerId) return [];
+    const { data } = await admin
+      .from('customers')
+      .select('auth_user_id')
+      .eq('id', fallbackCustomerId)
+      .maybeSingle();
+    const uid = (data as { auth_user_id: string | null } | null)?.auth_user_id ?? null;
+    return uid ? [uid] : [];
+  }
+  const { data } = await admin
+    .from('customer_dogs')
+    .select('customers(auth_user_id)')
+    .eq('dog_id', dogId);
+  const rows = (data ?? []) as Array<{ customers: { auth_user_id: string | null } | null }>;
+  return rows
+    .map(r => r.customers?.auth_user_id)
+    .filter((u): u is string => !!u);
+}
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
@@ -189,23 +217,23 @@ Deno.serve(async (req) => {
       // Reply-To = admin email so customer can write back to staff
       await sendEmail(booking.customers.email, subject, html, ADMIN_EMAIL || undefined);
 
-      // Push notification (non-fatal) — fan-out FCM + APNs in parallel.
-      if (booking.customer_id) {
-        const { data: cust } = await admin
-          .from('customers')
-          .select('auth_user_id')
-          .eq('id', booking.customer_id)
-          .maybeSingle();
-        if (cust?.auth_user_id) {
-          const pushBody = approved
-            ? `${escape(booking.dogs?.name)}: ${dates} är godkänd`
-            : `Din förfrågan blev avslagen. Se kalendern för detaljer.`;
-          await pushToUser(admin, cust.auth_user_id, subject, pushBody, {
+      // Push notification (non-fatal) — fan-out till alla co-owners.
+      const recipients = await coOwnerAuthUserIds(
+        admin,
+        booking.dog_id ?? null,
+        booking.customer_id ?? null,
+      );
+      const pushBody = approved
+        ? `${escape(booking.dogs?.name)}: ${dates} är godkänd`
+        : `Din förfrågan blev avslagen. Se kalendern för detaljer.`;
+      await Promise.all(
+        recipients.map(uid =>
+          pushToUser(admin, uid, subject, pushBody, {
             kind: 'booking_decision',
             booking_id: booking.id,
-          });
-        }
-      }
+          }),
+        ),
+      );
     }
     else if (body.kind === 'customer_message') {
       if (!body.message_id) throw new Error('message_id required');
@@ -265,23 +293,23 @@ Deno.serve(async (req) => {
         ADMIN_EMAIL || undefined,
       );
 
-      // Push notification — fan out to all of this customer's devices.
-      if (msg.customer_id) {
-        const { data: cust } = await admin
-          .from('customers')
-          .select('auth_user_id')
-          .eq('id', msg.customer_id)
-          .maybeSingle();
-        if (cust?.auth_user_id) {
-          await pushToUser(
+      // Push notification — fan-out till alla co-owners.
+      const msgRecipients = await coOwnerAuthUserIds(
+        admin,
+        msg.dog_id ?? null,
+        msg.customer_id ?? null,
+      );
+      await Promise.all(
+        msgRecipients.map(uid =>
+          pushToUser(
             admin,
-            cust.auth_user_id,
+            uid,
             'Nytt meddelande från CleverDog',
             String(msg.body).slice(0, 120),
             { kind: 'staff_message', message_id: msg.id },
-          );
-        }
-      }
+          ),
+        ),
+      );
     }
     else if (body.kind === 'application_decision') {
       if (!body.application_id) throw new Error('application_id required');
