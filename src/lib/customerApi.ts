@@ -102,7 +102,7 @@ export const sendMessage = async (params: { dog_id?: string | null; body: string
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Ej inloggad');
   const { data: cust } = await supabase
-    .from('customers').select('id').eq('auth_user_id', session.user.id).maybeSingle();
+    .from('customers').select('id, name').eq('auth_user_id', session.user.id).maybeSingle();
   if (!cust) throw new Error('Ingen kund-koppling');
   const { data, error } = await supabase.from('messages').insert({
     customer_id: cust.id,
@@ -110,9 +110,31 @@ export const sendMessage = async (params: { dog_id?: string | null; body: string
     sender_role: 'customer',
     sender_user_id: session.user.id,
     body: params.body,
+    sender_name: cust.name ?? null,
   }).select().single();
   if (error) throw error;
   return data;
+};
+
+// Antal kunder kopplade till denna hund. Använder dog_co_owners()-RPC
+// (security definer) för att gå runt customer_dogs RLS som annars bara
+// visar mina egna rader — inte co-owners.
+export const getDogCoOwnerCount = async (dogId: string): Promise<number> => {
+  if (!supabase) return 0;
+  // RPC returnerar setof uuid; Supabase JS ger oss en array av objekt med
+  // nyckeln "dog_co_owners" (funktionens namn).
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: Array<{ dog_co_owners: string }> | null; error: unknown }>)(
+    'dog_co_owners',
+    { p_dog_id: dogId },
+  );
+  if (error) {
+    console.error('getDogCoOwnerCount', error);
+    return 0;
+  }
+  return (data ?? []).length;
 };
 
 export const markMessagesRead = async (ids: string[]) => {

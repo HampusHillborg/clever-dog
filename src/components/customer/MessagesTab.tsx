@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaPaperPlane, FaCommentDots } from 'react-icons/fa';
 import type { Dog } from '../../lib/customerApi';
-import { getMyMessages, sendMessage, markMessagesRead, type Message } from '../../lib/customerApi';
+import { getMyMessages, sendMessage, markMessagesRead, getDogCoOwnerCount, firstNameOf, type Message } from '../../lib/customerApi';
 import { sendNotification } from '../../lib/notifications';
 import { tapLight } from '../../lib/haptics';
 
@@ -18,6 +18,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [coOwnerCount, setCoOwnerCount] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
 
   const refresh = async () => {
@@ -28,7 +29,10 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     if (unreadStaffIds.length > 0) markMessagesRead(unreadStaffIds);
   };
 
-  useEffect(() => { refresh(); }, [dog.id]);
+  useEffect(() => {
+    refresh();
+    getDogCoOwnerCount(dog.id).then(setCoOwnerCount);
+  }, [dog.id]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [items.length]);
 
   const send = async () => {
@@ -64,22 +68,29 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
                 key={m.id}
                 className={`flex ${isMine ? 'justify-end' : 'justify-start'} ${sameAuthor ? 'mt-1' : 'mt-3'}`}
               >
-                <div
-                  className={`max-w-[82%] px-4 py-2.5 ${
-                    isMine
-                      ? 'bg-primary text-white rounded-2xl rounded-br-md shadow-card'
-                      : 'bg-white text-dark rounded-2xl rounded-bl-md border border-gray-200'
-                  }`}
-                >
-                  {!isMine && (!sameAuthor || !prev) && (
-                    <p className="text-[11px] font-semibold text-orange-700 mb-0.5">
-                      {m.sender_name ?? 'Personal'}
+                <div className="flex flex-col items-end max-w-[82%]">
+                  {isMine && coOwnerCount >= 2 && m.sender_name && (
+                    <p className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold mb-0.5 self-end">
+                      {firstNameOf(m.sender_name)}
                     </p>
                   )}
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
-                  <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
-                    {m.created_at ? formatTime(m.created_at) : ''}
-                  </p>
+                  <div
+                    className={`w-full px-4 py-2.5 ${
+                      isMine
+                        ? 'bg-primary text-white rounded-2xl rounded-br-md shadow-card'
+                        : 'bg-white text-dark rounded-2xl rounded-bl-md border border-gray-200'
+                    }`}
+                  >
+                    {!isMine && (!sameAuthor || !prev) && (
+                      <p className="text-[11px] font-semibold text-orange-700 mb-0.5">
+                        {m.sender_name ?? 'Personal'}
+                      </p>
+                    )}
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
+                    <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
+                      {m.created_at ? formatTime(m.created_at) : ''}
+                    </p>
+                  </div>
                 </div>
               </div>
             );
