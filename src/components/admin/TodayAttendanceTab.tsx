@@ -234,11 +234,11 @@ function Row({ entry, busy, muted, onPost, onReport, onInfo, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className={`p-3 flex items-center justify-between gap-3 transition-opacity ${busy ? 'opacity-50' : muted ? 'opacity-70' : ''}`}>
+    <div className={`p-3 transition-opacity ${busy ? 'opacity-50' : muted ? 'opacity-70' : ''}`}>
       <button
         onClick={onInfo}
         disabled={!onInfo}
-        className="flex items-center gap-3 flex-1 min-w-0 text-left hover:bg-gray-50 -m-1 p-1 rounded-lg disabled:hover:bg-transparent"
+        className="flex items-center gap-3 w-full text-left hover:bg-gray-50 -m-1 p-1 rounded-lg disabled:hover:bg-transparent"
       >
         <div className="w-11 h-11 rounded-xl bg-orange-100 text-orange-700 font-semibold flex items-center justify-center text-base shrink-0">
           {entry.dog_name[0]?.toUpperCase()}
@@ -246,7 +246,7 @@ function Row({ entry, busy, muted, onPost, onReport, onInfo, children }: {
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{entry.dog_name}</p>
           <p className="text-xs text-gray-500 truncate">{entry.breed} · {entry.owner}</p>
-          <div className="flex items-center gap-2 mt-1 text-[11px]">
+          <div className="flex items-center gap-2 mt-1 text-[11px] flex-wrap">
             <span className={`px-1.5 py-0.5 rounded font-medium ${typeStyle(entry.booking_type)}`}>
               {typeLabel(entry.booking_type)}
             </span>
@@ -259,28 +259,32 @@ function Row({ entry, busy, muted, onPost, onReport, onInfo, children }: {
           </div>
         </div>
       </button>
-      <div className="shrink-0 flex items-center gap-1.5">
-        {onReport && (
-          <button
-            onClick={onReport}
-            className="w-10 h-10 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center"
-            title="Dagrapport"
-            aria-label="Dagrapport"
-          >
-            <FaClipboardCheck className="text-sm" />
-          </button>
-        )}
-        {onPost && (
-          <button
-            onClick={onPost}
-            className="w-10 h-10 rounded-xl text-orange-700 bg-orange-50 hover:bg-orange-100 flex items-center justify-center"
-            title="Posta uppdatering till album"
-            aria-label="Posta uppdatering"
-          >
-            <FaCamera className="text-sm" />
-          </button>
-        )}
-        {children}
+      <div className="mt-2.5 pl-14 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          {onReport && (
+            <button
+              onClick={onReport}
+              className="w-9 h-9 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center"
+              title="Dagrapport"
+              aria-label="Dagrapport"
+            >
+              <FaClipboardCheck className="text-sm" />
+            </button>
+          )}
+          {onPost && (
+            <button
+              onClick={onPost}
+              className="w-9 h-9 rounded-lg text-orange-700 bg-orange-50 hover:bg-orange-100 flex items-center justify-center"
+              title="Posta uppdatering till album"
+              aria-label="Posta uppdatering"
+            >
+              <FaCamera className="text-sm" />
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {children}
+        </div>
       </div>
     </div>
   );

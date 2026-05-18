@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  FaHome, FaCalendarAlt, FaCommentDots, FaImages, FaUser, FaChevronDown,
-  FaSignOutAlt, FaSyncAlt,
+  FaHome, FaCalendarAlt, FaCommentDots, FaImages, FaUser,
+  FaSyncAlt,
 } from 'react-icons/fa';
 import { usePullToRefresh } from '../lib/pullToRefresh';
 import HomeFeedTab from '../components/customer/HomeFeedTab';
@@ -16,10 +16,11 @@ import DailyReportsHistory from '../components/customer/DailyReportsHistory';
 import VaccinationsCard from '../components/customer/VaccinationsCard';
 import AccountSettingsCard from '../components/customer/AccountSettingsCard';
 import StaffDirectoryCard from '../components/customer/StaffDirectoryCard';
+import CustomerHeader from '../components/customer/CustomerHeader';
+import DogPills from '../components/customer/DogPills';
 import OnboardingSheet, { hasSeenOnboarding } from '../components/customer/OnboardingSheet';
 import { getMyDog, getMyDogs, type Dog } from '../lib/customerApi';
-import { signOutCustomer } from '../lib/customerAuth';
-import dogLogo from '../assets/images/logos/Logo.png';
+import { getCustomerForUser, signOutCustomer } from '../lib/customerAuth';
 
 type TabKey = 'home' | 'calendar' | 'album' | 'messages' | 'profile';
 
@@ -44,9 +45,9 @@ export default function CustomerDogPage() {
   const navigate = useNavigate();
   const [dog, setDog] = useState<Dog | null>(null);
   const [allDogs, setAllDogs] = useState<Dog[]>([]);
+  const [customerName, setCustomerName] = useState('');
   const [tab, setTab] = useState<TabKey>('home');
   const [loading, setLoading] = useState(true);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
   const [refreshTick, setRefreshTick] = useState(0);
 
@@ -63,9 +64,10 @@ export default function CustomerDogPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    Promise.all([getMyDog(id), getMyDogs()]).then(([d, all]) => {
+    Promise.all([getMyDog(id), getMyDogs(), getCustomerForUser()]).then(([d, all, c]) => {
       setDog(d);
       setAllDogs(all);
+      setCustomerName(c?.name ?? '');
       setLoading(false);
     });
   }, [id]);
@@ -98,28 +100,12 @@ export default function CustomerDogPage() {
       {showOnboarding && <OnboardingSheet onDone={() => setShowOnboarding(false)} />}
 
       <header className="bg-white/85 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200/70">
-        <div className="max-w-3xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-          <img src={dogLogo} alt="" className="h-8 w-8 object-contain shrink-0" />
-
-          <DogSwitcher
-            current={dog}
-            others={allDogs.filter(d => d.id !== dog.id)}
-            open={pickerOpen}
-            onToggle={() => setPickerOpen(v => !v)}
-            onPick={(other) => {
-              setPickerOpen(false);
-              navigate(`/kund/hund/${other.id}`);
-            }}
-          />
-
-          <button
-            onClick={logout}
-            className="w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center transition-colors shrink-0"
-            aria-label="Logga ut"
-          >
-            <FaSignOutAlt className="text-sm" />
-          </button>
-        </div>
+        <CustomerHeader customerName={customerName} onLogout={logout} />
+        <DogPills
+          dogs={allDogs}
+          activeId={dog.id}
+          onPick={(other) => navigate(`/kund/hund/${other.id}`)}
+        />
       </header>
 
       <main ref={scrollRef} className="flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto relative">
@@ -195,58 +181,6 @@ function TabButton({ active, onClick, icon, label }: {
   );
 }
 
-function DogSwitcher({ current, others, open, onToggle, onPick }: {
-  current: Dog;
-  others: Dog[];
-  open: boolean;
-  onToggle: () => void;
-  onPick: (d: Dog) => void;
-}) {
-  return (
-    <div className="relative flex-1 flex justify-center">
-      <button
-        onClick={onToggle}
-        disabled={others.length === 0}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors max-w-full ${
-          others.length === 0 ? 'cursor-default' : 'hover:bg-gray-100'
-        }`}
-      >
-        <span className="w-7 h-7 rounded-full bg-orange-100 overflow-hidden flex items-center justify-center text-xs font-bold text-orange-700 shrink-0">
-          {current.photo_url
-            ? <img src={current.photo_url} alt="" className="w-full h-full object-cover" />
-            : current.name?.[0]?.toUpperCase()}
-        </span>
-        <span className="font-semibold text-sm truncate">{current.name}</span>
-        {others.length > 0 && (
-          <FaChevronDown className={`text-xs text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
-        )}
-      </button>
-
-      {open && others.length > 0 && (
-        <div className="absolute top-full mt-1.5 bg-white rounded-2xl shadow-pop py-1.5 z-40 min-w-[200px] border border-gray-100">
-          {others.map(d => (
-            <button
-              key={d.id}
-              onClick={() => onPick(d)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-left"
-            >
-              <span className="w-7 h-7 rounded-full bg-orange-100 overflow-hidden flex items-center justify-center text-xs font-bold text-orange-700 shrink-0">
-                {d.photo_url
-                  ? <img src={d.photo_url} alt="" className="w-full h-full object-cover" />
-                  : d.name?.[0]?.toUpperCase()}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{d.name}</p>
-                <p className="text-xs text-gray-500 truncate">{d.breed}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function DogHero({ dog }: { dog: Dog }) {
   return (
     <div className="bg-white rounded-3xl shadow-card p-4 sm:p-5 flex items-center gap-4 relative overflow-hidden">
@@ -272,9 +206,13 @@ function DogHero({ dog }: { dog: Dog }) {
 function DogPageSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="bg-white border-b border-gray-200 px-4 py-2.5 flex justify-between items-center">
+      <div className="bg-white border-b border-gray-200 max-w-3xl mx-auto px-4 py-2.5 flex items-center gap-3">
         <div className="w-8 h-8 bg-gray-100 rounded" />
-        <div className="w-32 h-8 bg-gray-100 rounded-full" />
+        <div className="w-9 h-9 bg-gray-100 rounded-full" />
+        <div className="flex-1 space-y-1">
+          <div className="h-2 w-16 bg-gray-100 rounded" />
+          <div className="h-3 w-24 bg-gray-100 rounded" />
+        </div>
         <div className="w-9 h-9 bg-gray-100 rounded-full" />
       </div>
       <div className="max-w-3xl mx-auto px-4 pt-5 space-y-4">

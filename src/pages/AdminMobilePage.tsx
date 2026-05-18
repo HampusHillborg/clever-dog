@@ -1,23 +1,38 @@
 import { useEffect, useState } from 'react';
-import { FaEnvelope, FaCalendarAlt, FaSignOutAlt, FaDog } from 'react-icons/fa';
+import { FaEnvelope, FaCalendarAlt, FaSignOutAlt, FaDog, FaInbox } from 'react-icons/fa';
 import { supabase } from '../lib/supabase';
 import { signOutCustomer } from '../lib/customerAuth';
+import { getCurrentUser, type UserRole } from '../lib/auth';
 import MessagesAdminTab from '../components/admin/MessagesAdminTab';
 import TodayAttendanceTab from '../components/admin/TodayAttendanceTab';
+import BookingRequestsTab from '../components/admin/BookingRequestsTab';
+import { useAdminBadges } from '../components/admin/useAdminBadges';
 import { getStaffSchedules, type StaffSchedule } from '../lib/database';
 import { todayLocalIso, toLocalIsoDate } from '../lib/localDate';
 import dogLogo from '../assets/images/logos/Logo.png';
 
-type Tab = 'today' | 'messages' | 'schedule';
+type Tab = 'today' | 'bookings' | 'messages' | 'schedule';
 
 const TAB_LABEL: Record<Tab, string> = {
   today: 'Idag',
+  bookings: 'Förfrågningar',
   messages: 'Meddelanden',
   schedule: 'Mitt schema',
 };
 
 export default function AdminMobilePage() {
   const [tab, setTab] = useState<Tab>('today');
+  const [role, setRole] = useState<UserRole | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const user = await getCurrentUser();
+      if (user) setRole(user.role);
+    })();
+  }, []);
+
+  const canManageBookings = role === 'admin' || role === 'platschef';
+  const badges = useAdminBadges(canManageBookings);
 
   const logout = async () => {
     await signOutCustomer();
@@ -46,6 +61,7 @@ export default function AdminMobilePage() {
       <main className="flex-1 overflow-y-auto pb-28">
         <div className="p-3 sm:p-4 max-w-3xl mx-auto w-full">
           {tab === 'today' && <TodayAttendanceTab />}
+          {tab === 'bookings' && canManageBookings && <BookingRequestsTab />}
           {tab === 'messages' && <MessagesAdminTab />}
           {tab === 'schedule' && <MyScheduleView />}
         </div>
@@ -58,6 +74,10 @@ export default function AdminMobilePage() {
         <div className="flex max-w-3xl mx-auto px-2 py-1.5">
           <TabButton active={tab === 'today'} onClick={() => setTab('today')}
                      icon={<FaDog />} label="Idag" />
+          {canManageBookings && (
+            <TabButton active={tab === 'bookings'} onClick={() => setTab('bookings')}
+                       icon={<FaInbox />} label="Förfrågningar" badge={badges.pendingBookings} />
+          )}
           <TabButton active={tab === 'messages'} onClick={() => setTab('messages')}
                      icon={<FaEnvelope />} label="Meddelanden" />
           <TabButton active={tab === 'schedule'} onClick={() => setTab('schedule')}
@@ -68,24 +88,29 @@ export default function AdminMobilePage() {
   );
 }
 
-function TabButton({ active, onClick, icon, label }: {
-  active: boolean; onClick: () => void; icon: React.ReactNode; label: string;
+function TabButton({ active, onClick, icon, label, badge }: {
+  active: boolean; onClick: () => void; icon: React.ReactNode; label: string; badge?: number;
 }) {
   return (
     <button
       onClick={onClick}
-      className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-colors active:scale-95"
+      className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-colors active:scale-95 min-w-0"
     >
       <span
-        className={`flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${
+        className={`relative flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${
           active
             ? 'bg-orange-100 text-orange-700'
             : 'text-gray-400'
         }`}
       >
         <span className="text-lg">{icon}</span>
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
       </span>
-      <span className={`text-[11px] font-medium ${active ? 'text-orange-700' : 'text-gray-500'}`}>
+      <span className={`text-[10px] font-medium truncate max-w-full ${active ? 'text-orange-700' : 'text-gray-500'}`}>
         {label}
       </span>
     </button>
