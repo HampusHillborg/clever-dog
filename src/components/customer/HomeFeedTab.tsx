@@ -7,7 +7,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import {
   getDogActivities, getMyMessages, getDailyReport, reportHasContent,
-  getVaccinations, vaccinationStatus, VACCINE_LABELS,
+  getVaccinations, vaccinationStatus, VACCINE_LABELS, getStaffWorkingToday,
   type Dog, type DogActivity, type Message, type DailyReport, type Vaccination,
 } from '../../lib/customerApi';
 import GoogleReviewCTA from './GoogleReviewCTA';
@@ -59,17 +59,19 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
   const [unreadCount, setUnreadCount] = useState(0);
   const [todayReport, setTodayReport] = useState<DailyReport | null>(null);
   const [vaccineWarnings, setVaccineWarnings] = useState<Vaccination[]>([]);
+  const [todayStaff, setTodayStaff] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [n, acts, msgs, report, vacs] = await Promise.all([
+      const [n, acts, msgs, report, vacs, staff] = await Promise.all([
         getNextScheduledDay(dog.id),
         getDogActivities(dog.id, 1),
         getMyMessages(dog.id),
         getDailyReport(dog.id),
         getVaccinations(dog.id),
+        getStaffWorkingToday(),
       ]);
       setNext(n);
       setLatestActivity(acts[0] ?? null);
@@ -83,6 +85,7 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
         const s = vaccinationStatus(v.expires_on);
         return s === 'expired' || s === 'expiring';
       }));
+      setTodayStaff(staff);
       setLoading(false);
     })();
   }, [dog.id]);
@@ -100,6 +103,13 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
           {customerFirstName ? `Hej ${customerFirstName}!` : 'Hej!'}
         </h1>
       </div>
+
+      {/* Idag jobbar-rad — diskret rad, ingen padding-kort */}
+      {todayStaff.length > 0 && (
+        <p className="text-xs text-gray-600">
+          <span aria-hidden="true">👋</span> Idag jobbar: <span className="font-medium">{todayStaff.join(', ')}</span>
+        </p>
+      )}
 
       {/* Next/today card — the headliner */}
       <NextDayCard next={next} onOpen={() => onJumpTo('calendar')} />

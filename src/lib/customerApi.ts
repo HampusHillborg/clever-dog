@@ -302,6 +302,22 @@ export const deleteVaccination = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
+export const getStaffWorkingToday = async (location = 'staffanstorp'): Promise<string[]> => {
+  if (!supabase) return [];
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: Array<{ name: string }> | null; error: unknown }>)(
+    'staff_working_today',
+    { loc: location },
+  );
+  if (error) {
+    console.error('getStaffWorkingToday', error);
+    return [];
+  }
+  return (data ?? []).map(r => r.name);
+};
+
 export const upsertDailyReport = async (dogId: string, patch: DailyReportPatch): Promise<DailyReport> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { data: { session } } = await supabase.auth.getSession();
