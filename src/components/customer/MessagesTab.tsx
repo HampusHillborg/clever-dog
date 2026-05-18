@@ -4,14 +4,11 @@ import type { Dog } from '../../lib/customerApi';
 import { getMyMessages, sendMessage, markMessagesRead, getDogCoOwnerCount, firstNameOf, type Message } from '../../lib/customerApi';
 import { sendNotification } from '../../lib/notifications';
 import { tapLight } from '../../lib/haptics';
+import { dayLabel, fmtHm, isLastOwnInSequence } from '../../lib/messageGrouping';
 
-const formatTime = (iso: string): string => {
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  if (sameDay) return d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-  return d.toLocaleString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-};
+// Visa bara HH:MM inuti bubblan — datumet kommer från datum-stickern ovanför.
+const formatTime = (iso: string): string =>
+  new Date(iso).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
 
 export default function MessagesTab({ dog }: { dog: Dog }) {
   const [items, setItems] = useState<Message[]>([]);
@@ -60,42 +57,70 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
         ) : items.length === 0 ? (
           <EmptyChat />
         ) : (
-          items.map((m, idx) => {
-            const prev = items[idx - 1];
-            const sameAuthor = prev?.sender_role === m.sender_role;
-            const isMine = m.sender_role === 'customer';
-            return (
-              <div
-                key={m.id}
-                className={`flex ${isMine ? 'justify-end' : 'justify-start'} ${sameAuthor ? 'mt-1' : 'mt-3'}`}
-              >
-                <div className="flex flex-col items-end max-w-[82%]">
-                  {isMine && coOwnerCount >= 2 && m.sender_name && (
-                    <p className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold mb-0.5 self-end">
-                      {firstNameOf(m.sender_name)}
-                    </p>
+          (() => {
+            let lastDayLabel = '';
+            return items.map((m, idx) => {
+              const prev = items[idx - 1];
+              const sameAuthor = prev?.sender_role === m.sender_role;
+              const isMine = m.sender_role === 'customer';
+              const isLastOwn = isLastOwnInSequence(items, idx, 'customer');
+
+              // Datum-sticker när dagen byter
+              const currentDayLabel = m.created_at ? dayLabel(m.created_at) : '';
+              const showDaySticker = currentDayLabel !== lastDayLabel;
+              if (showDaySticker) lastDayLabel = currentDayLabel;
+
+              return (
+                <div key={m.id}>
+                  {/* Datum-sticker */}
+                  {showDaySticker && currentDayLabel && (
+                    <div className="text-center text-[11px] uppercase tracking-wide text-gray-400 my-2 select-none">
+                      {currentDayLabel}
+                    </div>
                   )}
+
+                  {/* Meddelandebubbla */}
                   <div
-                    className={`w-full px-4 py-2.5 ${
-                      isMine
-                        ? 'bg-primary text-white rounded-2xl rounded-br-md shadow-card'
-                        : 'bg-white text-dark rounded-2xl rounded-bl-md border border-gray-200'
-                    }`}
+                    className={`flex ${isMine ? 'justify-end' : 'justify-start'} ${sameAuthor ? 'mt-1' : 'mt-3'}`}
                   >
-                    {!isMine && (!sameAuthor || !prev) && (
-                      <p className="text-[11px] font-semibold text-orange-700 mb-0.5">
-                        {m.sender_name ?? 'Personal'}
-                      </p>
-                    )}
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
-                    <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
-                      {m.created_at ? formatTime(m.created_at) : ''}
-                    </p>
+                    <div className="flex flex-col items-end max-w-[82%]">
+                      {isMine && coOwnerCount >= 2 && m.sender_name && (
+                        <p className="text-[10px] uppercase tracking-wide text-gray-400 font-semibold mb-0.5 self-end">
+                          {firstNameOf(m.sender_name)}
+                        </p>
+                      )}
+                      <div
+                        className={`w-full px-4 py-2.5 ${
+                          isMine
+                            ? 'bg-primary text-white rounded-2xl rounded-br-md shadow-card'
+                            : 'bg-white text-dark rounded-2xl rounded-bl-md border border-gray-200'
+                        }`}
+                      >
+                        {!isMine && (!sameAuthor || !prev) && (
+                          <p className="text-[11px] font-semibold text-orange-700 mb-0.5">
+                            {m.sender_name ?? 'Personal'}
+                          </p>
+                        )}
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
+                        <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
+                          {m.created_at ? formatTime(m.created_at) : ''}
+                        </p>
+                      </div>
+
+                      {/* Read-receipt — visas bara under SENASTE egna meddelandet i sviten */}
+                      {isMine && isLastOwn && (
+                        <p className="text-[10px] text-gray-400 mt-0.5 self-end">
+                          {m.read_at
+                            ? `✓✓ Läst ${fmtHm(m.read_at)}`
+                            : `✓ Skickat ${m.created_at ? fmtHm(m.created_at) : ''}`}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            });
+          })()
         )}
         <div ref={endRef} />
       </div>
