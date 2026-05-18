@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { FaCheck, FaUndo, FaDog, FaCamera, FaPlus, FaClipboardCheck } from 'react-icons/fa';
+import { useEffect, useRef, useState } from 'react';
+import { FaCheck, FaUndo, FaDog, FaCamera, FaPlus, FaClipboardCheck, FaChevronDown } from 'react-icons/fa';
 import {
   getTodaysScheduledDogs, checkInDog, checkOutDog, undoCheckIn, undoCheckOut,
   checkOutGuest, undoCheckOutGuest, removeAttendanceEntry,
@@ -32,6 +32,50 @@ const fmtTime = (iso: string | null): string | null => {
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 };
 
+type FilterType = 'all' | 'dagis' | 'extra' | 'boarding';
+type SortType = 'name' | 'recent' | 'status';
+
+const FILTER_KEY = 'admin.today.filter';
+const SORT_KEY = 'admin.today.sort';
+
+const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
+  { value: 'all', label: 'Alla' },
+  { value: 'dagis', label: 'Dagis' },
+  { value: 'extra', label: 'Extra' },
+  { value: 'boarding', label: 'Pensionat' },
+];
+
+const SORT_OPTIONS: { value: SortType; label: string }[] = [
+  { value: 'name', label: 'Namn ▲' },
+  { value: 'recent', label: 'Senaste ändring' },
+  { value: 'status', label: 'Status' },
+];
+
+function filterEntry(e: AttendanceEntry, filter: FilterType): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'dagis') return !e.booking_type || e.booking_type === 'scheduled' || e.booking_type === 'manual';
+  if (filter === 'extra') return e.booking_type === 'extra';
+  if (filter === 'boarding') return e.booking_type === 'boarding';
+  return true;
+}
+
+function sortEntries(arr: AttendanceEntry[], sort: SortType): AttendanceEntry[] {
+  return [...arr].sort((a, b) => {
+    if (sort === 'name') return a.dog_name.localeCompare(b.dog_name, 'sv');
+    if (sort === 'recent') {
+      const ta = a.checked_out_at ?? a.checked_in_at ?? '';
+      const tb = b.checked_out_at ?? b.checked_in_at ?? '';
+      return tb.localeCompare(ta);
+    }
+    if (sort === 'status') {
+      // pending(0) < here(1) < gone(2)
+      const rank = (e: AttendanceEntry) => !e.checked_in_at ? 0 : !e.checked_out_at ? 1 : 2;
+      return rank(a) - rank(b);
+    }
+    return 0;
+  });
+}
+
 export default function TodayAttendanceTab() {
   const [entries, setEntries] = useState<AttendanceEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,9 +85,35 @@ export default function TodayAttendanceTab() {
   const [reportingFor, setReportingFor] = useState<AttendanceEntry | null>(null);
   const [infoFor, setInfoFor] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [sort, setSort] = useState<SortType>('name');
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   const refresh = async () => setEntries(await getTodaysScheduledDogs());
   useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
+
+  // Load persisted filter/sort
+  useEffect(() => {
+    const f = localStorage.getItem(FILTER_KEY) as FilterType | null;
+    const s = localStorage.getItem(SORT_KEY) as SortType | null;
+    if (f && FILTER_OPTIONS.some(o => o.value === f)) setFilter(f);
+    if (s && SORT_OPTIONS.some(o => o.value === s)) setSort(s);
+  }, []);
+
+  // Persist filter/sort on change
+  useEffect(() => { localStorage.setItem(FILTER_KEY, filter); }, [filter]);
+  useEffect(() => { localStorage.setItem(SORT_KEY, sort); }, [sort]);
+
+  // Close sort dropdown on outside click
+  useEffect(() => {
+    if (!sortOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sortOpen]);
 
   const keyFor = (e: AttendanceEntry) => e.dog_id ?? `guest:${e.id}`;
 
@@ -119,12 +189,14 @@ export default function TodayAttendanceTab() {
 
   if (loading) return <TodaySkeleton />;
 
-  const pending = entries.filter(e => !e.checked_in_at);
-  const here = entries.filter(e => e.checked_in_at && !e.checked_out_at);
-  const gone = entries.filter(e => e.checked_in_at && e.checked_out_at);
+  const filtered = sortEntries(entries.filter(e => filterEntry(e, filter)), sort);
+  const pending = filtered.filter(e => !e.checked_in_at);
+  const here = filtered.filter(e => e.checked_in_at && !e.checked_out_at);
+  const gone = filtered.filter(e => e.checked_in_at && e.checked_out_at);
   const todayStr = new Date().toLocaleDateString('sv-SE', {
     weekday: 'long', day: 'numeric', month: 'long',
   });
+  const currentSortLabel = SORT_OPTIONS.find(o => o.value === sort)?.label ?? 'Sortera';
 
   return (
     <div className="space-y-5">
@@ -137,6 +209,51 @@ export default function TodayAttendanceTab() {
           <Pill color="yellow" label={`${pending.length} att checka in`} />
           <Pill color="green" label={`${here.length} här`} />
           <Pill color="gray" label={`${gone.length} hämtade`} />
+        </div>
+      </div>
+
+      {/* Filter chips + sort */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-1 flex-wrap">
+          {FILTER_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setFilter(opt.value)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                filter === opt.value
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative shrink-0" ref={sortRef}>
+          <button
+            onClick={() => setSortOpen(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+          >
+            {currentSortLabel}
+            <FaChevronDown className={`text-[10px] transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {sortOpen && (
+            <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lift border border-gray-100 overflow-hidden z-20 min-w-[160px]">
+              {SORT_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => { setSort(opt.value); setSortOpen(false); }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                    sort === opt.value
+                      ? 'bg-orange-50 text-primary font-semibold'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
