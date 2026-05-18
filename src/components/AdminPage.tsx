@@ -37,7 +37,9 @@ import {
   type Meeting,
   type Employee,
   type StaffSchedule,
-  type StaffAbsence
+  type StaffAbsence,
+  getDogCustomers,
+  type Customer
 } from '../lib/database';
 import { PRICES, VAT_RATE } from '../lib/prices';
 import { signIn, signOut, getCurrentUser, onAuthStateChange, setPassword as setUserPassword, type AuthUser } from '../lib/auth';
@@ -434,6 +436,7 @@ const AdminPage: React.FC = () => {
     }
   }, [currentView, currentPlanningDate]);
   const [draggedDog, setDraggedDog] = useState<Dog | null>(null);
+  const [linkedCustomers, setLinkedCustomers] = useState<Customer[]>([]);
 
   // Function to create initial cages based on box settings
   const createInitialCages = (location: 'staffanstorp' | 'malmo') => {
@@ -1556,17 +1559,14 @@ const AdminPage: React.FC = () => {
       // Look up which customer (if any) is linked to this dog so the
       // owner selector shows "linked to existing customer" instead of
       // proposing to create a new one.
-      let linkedCustomerId: string | null = null;
+      let linkedCustomersResult: Customer[] = [];
       try {
-        const { supabase } = await import('../lib/supabase');
-        if (supabase) {
-          const { data } = await supabase
-            .from('customer_dogs').select('customer_id').eq('dog_id', dog.id).limit(1).maybeSingle();
-          linkedCustomerId = data?.customer_id ?? null;
-        }
+        linkedCustomersResult = await getDogCustomers(dog.id);
       } catch (e) {
-        console.error('lookup customer_dogs failed', e);
+        console.error('getDogCustomers failed', e);
       }
+      setLinkedCustomers(linkedCustomersResult);
+      const linkedCustomerId = linkedCustomersResult[0]?.id ?? null;
       setDogForm({
         name: dog.name,
         breed: dog.breed,
@@ -1590,6 +1590,7 @@ const AdminPage: React.FC = () => {
       });
     } else {
       setEditingDog(null);
+      setLinkedCustomers([]);
       setDogForm({ name: '', breed: '', age: '', owner: '', phone: '', email: '', notes: '', locations: ['staffanstorp'], type: '', isActive: true, ownerAddress: '', ownerCity: '', ownerPersonalNumber: '', chipNumber: '', gender: '', birthDate: '', insuranceCompany: '', insuranceNumber: '', ownerCustomerId: null });
     }
     setIsDogModalOpen(true);
@@ -8663,6 +8664,12 @@ const AdminPage: React.FC = () => {
                       onChange={(name, id) => setDogForm({ ...dogForm, owner: name, ownerCustomerId: id })}
                       emailHint={dogForm.email}
                     />
+                  )}
+                  {linkedCustomers.length > 1 && (
+                    <div className="mt-1 text-sm text-gray-500">
+                      <strong>Alla ägare:</strong>{' '}
+                      {linkedCustomers.map(c => c.name).join(', ')}
+                    </div>
                   )}
                 </div>
                 <div>
