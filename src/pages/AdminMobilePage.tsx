@@ -5,6 +5,7 @@ import { signOutCustomer } from '../lib/customerAuth';
 import MessagesAdminTab from '../components/admin/MessagesAdminTab';
 import TodayAttendanceTab from '../components/admin/TodayAttendanceTab';
 import { getStaffSchedules, type StaffSchedule } from '../lib/database';
+import { todayLocalIso, toLocalIsoDate } from '../lib/localDate';
 import dogLogo from '../assets/images/logos/Logo.png';
 
 type Tab = 'today' | 'messages' | 'schedule';
@@ -100,10 +101,10 @@ function MyScheduleView() {
       if (!supabase) { setLoading(false); return; }
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setLoading(false); return; }
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayLocalIso();
       const horizon = new Date();
       horizon.setMonth(horizon.getMonth() + 2);
-      const end = horizon.toISOString().slice(0, 10);
+      const end = toLocalIsoDate(horizon);
       const data = await getStaffSchedules(session.user.id, today, end);
       setSchedules(data);
       setLoading(false);

@@ -11,6 +11,7 @@ import {
   type Dog, type DogActivity, type Message, type DailyReport, type Vaccination,
 } from '../../lib/customerApi';
 import GoogleReviewCTA from './GoogleReviewCTA';
+import { toLocalIsoDate } from '../../lib/localDate';
 
 type NextDay = {
   date: string;          // ISO YYYY-MM-DD
@@ -394,10 +395,10 @@ async function getNextScheduledDay(dogId: string): Promise<NextDay | null> {
   if (!supabase) return null;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayIso = today.toISOString().slice(0, 10);
+  const todayIso = toLocalIsoDate(today);
   const horizon = new Date(today);
   horizon.setDate(today.getDate() + 60);
-  const horizonIso = horizon.toISOString().slice(0, 10);
+  const horizonIso = toLocalIsoDate(horizon);
 
   const [bookingsRes, recurringRes] = await Promise.all([
     supabase
@@ -429,7 +430,7 @@ async function getNextScheduledDay(dogId: string): Promise<NextDay | null> {
     let cur = new Date(b.start_date);
     const end = new Date(b.end_date);
     while (cur <= end) {
-      const iso = cur.toISOString().slice(0, 10);
+      const iso = toLocalIsoDate(cur);
       if (iso >= todayIso) {
         confirmed.push({ date: iso, bookingType: b.booking_type });
       }
@@ -442,8 +443,8 @@ async function getNextScheduledDay(dogId: string): Promise<NextDay | null> {
   // of it as their normal dagis-dag, not as an extra. Boarding overrides
   // everything because it implies the dog is here overnight.
   const cursor = new Date(today);
-  while (cursor.toISOString().slice(0, 10) <= horizonIso) {
-    const iso = cursor.toISOString().slice(0, 10);
+  while (toLocalIsoDate(cursor) <= horizonIso) {
+    const iso = toLocalIsoDate(cursor);
     if (cancelled.has(iso)) {
       cursor.setDate(cursor.getDate() + 1);
       continue;

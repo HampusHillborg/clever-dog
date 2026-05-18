@@ -26,14 +26,18 @@ const VET_FIELDS: Array<[keyof Dog, string]> = [
 
 export default function DogInfoTab({ dog, onUpdate }: Props) {
   const [editing, setEditing] = useState(false);
+  const [editingHealth, setEditingHealth] = useState(false);
   const [draft, setDraft] = useState<Partial<Dog>>(dog);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const save = async () => {
+  // Patch only the columns that belong to the section currently being
+  // saved — avoids accidentally overwriting a half-edited field with the
+  // value from `dog` if the user only touched one of the two cards.
+  const saveSection = async (section: 'info' | 'health') => {
     setSaving(true);
     try {
-      const updated = await updateMyDog(dog.id, {
+      const updates: Partial<Dog> = section === 'info' ? {
         phone: draft.phone ?? dog.phone,
         email: draft.email ?? null,
         owner_address: draft.owner_address ?? null,
@@ -41,20 +45,26 @@ export default function DogInfoTab({ dog, onUpdate }: Props) {
         insurance_company: draft.insurance_company ?? null,
         insurance_number: draft.insurance_number ?? null,
         chip_number: draft.chip_number ?? null,
+      } : {
         vet_name: draft.vet_name ?? null,
         vet_phone: draft.vet_phone ?? null,
         emergency_contact_name: draft.emergency_contact_name ?? null,
         emergency_contact_phone: draft.emergency_contact_phone ?? null,
         medical_notes: draft.medical_notes ?? null,
-      });
+      };
+      const updated = await updateMyDog(dog.id, updates);
       onUpdate(updated as Dog);
-      setEditing(false);
+      if (section === 'info') setEditing(false);
+      else setEditingHealth(false);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Kunde inte spara';
       alert(`Kunde inte spara: ${msg}`);
     }
     setSaving(false);
   };
+
+  const save = () => saveSection('info');
+  const saveHealth = () => saveSection('health');
 
   const handlePhotoUpload = async (file: File) => {
     setUploadingPhoto(true);
@@ -164,11 +174,39 @@ export default function DogInfoTab({ dog, onUpdate }: Props) {
 
       {/* Health & vet card */}
       <div className="bg-white rounded-2xl shadow-card p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <FaUserMd className="text-red-600 text-sm" />
-          <h3 className="font-semibold text-base">Hälsa & veterinär</h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <FaUserMd className="text-red-600 text-sm" />
+            <h3 className="font-semibold text-base">Hälsa & veterinär</h3>
+          </div>
+          {!editingHealth ? (
+            <button
+              onClick={() => { setDraft({ ...draft, ...dog }); setEditingHealth(true); }}
+              className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-orange-700 px-2 py-1 rounded-lg hover:bg-orange-50"
+            >
+              <FaEdit className="text-xs" /> Redigera
+            </button>
+          ) : (
+            <div className="flex gap-1">
+              <button
+                onClick={() => setEditingHealth(false)}
+                className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-500 flex items-center justify-center"
+                aria-label="Avbryt"
+              >
+                <FaTimes className="text-xs" />
+              </button>
+              <button
+                onClick={saveHealth}
+                disabled={saving}
+                className="w-8 h-8 rounded-lg bg-primary text-white hover:bg-orange-600 disabled:opacity-50 flex items-center justify-center"
+                aria-label="Spara"
+              >
+                <FaSave className="text-xs" />
+              </button>
+            </div>
+          )}
         </div>
-        {!editing ? (
+        {!editingHealth ? (
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <Item k="Veterinär" v={dog.vet_name} />
             <Item k="Veterinär · telefon" v={dog.vet_phone} />
@@ -195,7 +233,7 @@ export default function DogInfoTab({ dog, onUpdate }: Props) {
             <FaExclamationTriangle className="text-xs" />
             Akuta uppgifter — allergier, mediciner, kroniska sjukdomar
           </p>
-          {!editing ? (
+          {!editingHealth ? (
             <p className="text-sm leading-relaxed whitespace-pre-wrap">
               {dog.medical_notes || <span className="text-gray-300">—</span>}
             </p>

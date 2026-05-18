@@ -3,6 +3,7 @@ import { FaTimes, FaMoon, FaSun, FaInfoCircle } from 'react-icons/fa';
 import { upsertBooking } from '../../lib/bookingHelpers';
 import { sendNotification } from '../../lib/notifications';
 import { PRICES } from '../../lib/prices';
+import { todayLocalIso } from '../../lib/localDate';
 
 type Props = {
   dogId: string;
@@ -27,7 +28,7 @@ export default function BookingRequestModal({ dogId, customerId, type, onClose, 
   const [saving, setSaving] = useState(false);
 
   const title = type === 'boarding' ? 'Begär pensionat' : 'Begär enstaka dag';
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayLocalIso();
 
   // Estimate based on default Staffanstorp tier — final amount lands in
   // Ekonomi-fliken after staff approves and dates are confirmed.

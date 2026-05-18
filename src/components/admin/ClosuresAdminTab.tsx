@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FaCalendarTimes, FaPlus, FaTrash } from 'react-icons/fa';
 import { listClosuresInRange, addClosure, removeClosure, type Closure } from '../../lib/closures';
+import { toLocalIsoDate } from '../../lib/localDate';
 
 const fmtDate = (iso: string): string => {
   const d = new Date(iso + 'T00:00:00');
@@ -18,12 +19,12 @@ export default function ClosuresAdminTab() {
   const [error, setError] = useState('');
 
   const today = new Date();
-  const todayIso = today.toISOString().slice(0, 10);
+  const todayIso = toLocalIsoDate(today);
   const horizon = new Date(today);
   horizon.setFullYear(today.getFullYear() + 2);
 
   const refresh = async () => {
-    const data = await listClosuresInRange(todayIso, horizon.toISOString().slice(0, 10));
+    const data = await listClosuresInRange(todayIso, toLocalIsoDate(horizon));
     setItems(data);
     setLoading(false);
   };

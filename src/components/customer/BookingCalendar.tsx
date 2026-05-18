@@ -10,6 +10,7 @@ import { sendNotification } from '../../lib/notifications';
 import { getHolidayInfo, holidayName } from '../../lib/swedishHolidays';
 import { getClosures } from '../../lib/closures';
 import { tapLight, notifySuccess } from '../../lib/haptics';
+import { todayLocalIso } from '../../lib/localDate';
 import BookingRequestModal from './BookingRequestModal';
 
 // Days/week the customer may self-book for part-time dogs. Null for
@@ -196,7 +197,7 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
     }
   };
 
-  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayIso = todayLocalIso();
 
   return (
     <div className="bg-white rounded-2xl shadow-card p-4 sm:p-5">

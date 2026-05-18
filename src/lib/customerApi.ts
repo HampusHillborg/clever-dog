@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { Database } from './database.types';
+import { todayLocalIso } from './localDate';
 
 export type Dog = Database['public']['Tables']['dogs']['Row'];
 export type Message = Database['public']['Tables']['messages']['Row'];
@@ -179,7 +180,7 @@ export const deleteDogActivity = async (id: string): Promise<void> => {
 
 // Daily report card — one row per (dog, date). All fields optional;
 // customer only sees the report when at least one field is filled in.
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => todayLocalIso();
 
 export const getDailyReport = async (dogId: string, date?: string): Promise<DailyReport | null> => {
   if (!supabase) return null;

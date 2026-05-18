@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { todayLocalIso } from './localDate';
 
 export type AttendanceEntry = {
   id: string | null;          // null until first check-in
@@ -13,7 +14,7 @@ export type AttendanceEntry = {
 };
 
 const toMonFirst = (jsDay: number) => (jsDay + 6) % 7;
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => todayLocalIso();
 
 // Returns the set of dogs that are expected today: recurring-schedule dogs
 // for today's weekday plus any confirmed bookings spanning today, minus
