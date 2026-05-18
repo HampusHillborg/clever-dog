@@ -137,9 +137,12 @@ export const getDogCoOwnerCount = async (dogId: string): Promise<number> => {
   return (data ?? []).length;
 };
 
-export const markMessagesRead = async (ids: string[]) => {
+export const markMessagesRead = async (ids: string[]): Promise<void> => {
   if (!supabase || ids.length === 0) return;
-  await supabase.from('messages').update({ is_read: true }).in('id', ids);
+  await supabase
+    .from('messages')
+    .update({ is_read: true, read_at: new Date().toISOString() })
+    .in('id', ids);
 };
 
 // Activity / "album" feed — staff posts photos + captions, customers read.

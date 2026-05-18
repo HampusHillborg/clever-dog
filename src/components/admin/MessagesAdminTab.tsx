@@ -66,7 +66,7 @@ export default function MessagesAdminTab() {
       .filter(m => m.sender_role === 'customer' && !m.is_read)
       .map(m => m.id);
     if (unreadIds.length > 0 && supabase) {
-      supabase.from('messages').update({ is_read: true }).in('id', unreadIds).then(() => {
+      supabase.from('messages').update({ is_read: true, read_at: new Date().toISOString() }).in('id', unreadIds).then(() => {
         // Refresh threads so unread badges disappear
         load();
       });
