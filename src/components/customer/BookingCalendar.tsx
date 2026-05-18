@@ -9,6 +9,7 @@ import {
 import { sendNotification } from '../../lib/notifications';
 import { getHolidayInfo, holidayName } from '../../lib/swedishHolidays';
 import { getClosures } from '../../lib/closures';
+import { tapLight, notifySuccess } from '../../lib/haptics';
 import BookingRequestModal from './BookingRequestModal';
 
 // Days/week the customer may self-book for part-time dogs. Null for
@@ -148,11 +149,13 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
           alert(`Du har redan valt ${quota} dagar denna vecka.`);
           return;
         }
+        tapLight();
         await upsertBooking({
           dog_id: dog.id, customer_id: customerId,
           start_date: selectedDay.date, end_date: selectedDay.date,
           booking_type: 'scheduled', status: 'confirmed',
         });
+        notifySuccess();
       } else if (action === 'add_extra') {
         const booking = await upsertBooking({
           dog_id: dog.id, customer_id: customerId,

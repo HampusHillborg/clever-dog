@@ -3,6 +3,7 @@ import { FaPaperPlane, FaCommentDots } from 'react-icons/fa';
 import type { Dog } from '../../lib/customerApi';
 import { getMyMessages, sendMessage, markMessagesRead, type Message } from '../../lib/customerApi';
 import { sendNotification } from '../../lib/notifications';
+import { tapLight } from '../../lib/haptics';
 
 const formatTime = (iso: string): string => {
   const d = new Date(iso);
@@ -32,6 +33,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
 
   const send = async () => {
     if (!text.trim()) return;
+    tapLight();
     setSending(true);
     try {
       const created = await sendMessage({ dog_id: dog.id, body: text });

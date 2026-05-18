@@ -9,6 +9,7 @@ import PostActivityModal from './PostActivityModal';
 import DogInfoModal from './DogInfoModal';
 import AddDogToTodayModal from './AddDogToTodayModal';
 import DailyReportModal from './DailyReportModal';
+import { tapMedium, notifySuccess } from '../../lib/haptics';
 
 const typeLabel = (t: string | undefined): string => {
   if (t === 'boarding') return 'Pensionat';
@@ -43,10 +44,12 @@ export default function TodayAttendanceTab() {
   useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
 
   const act = async (busyKey: string, fn: () => Promise<void>) => {
+    tapMedium();
     setBusy(busyKey);
     try {
       await fn();
       await refresh();
+      notifySuccess();
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Något gick fel');
     }
