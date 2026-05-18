@@ -1,9 +1,33 @@
 # Kund- & Adminapp UX v2 — Design Spec
 
 **Datum:** 2026-05-18
-**Status:** Utkast — godkänd design, väntar på spec-review
+**Status:** Utkast — godkänd design, uppdaterad efter WIP-inventering 2026-05-18 (multi-owner-fixar + greeting-bugg)
 **Ägare:** Hampus Hillborg
 **Föregående spec:** [`2026-05-13-customer-portal-design.md`](./2026-05-13-customer-portal-design.md) (v1, levererad)
+
+## 0. Inventering — WIP som redan är delvis byggt
+
+När specen skrevs fanns oincheckad WIP som bygger delar av Tema 1. Innan vi börjar implementera ska denna kod committas eller integreras i tema-arbetet, inte dubbleras:
+
+**Nya filer (oincheckade):**
+- `src/components/customer/CustomerHeader.tsx` — sticky-header med kundens förnamn + initialer-avatar + logga-ut-knapp
+- `src/components/customer/DogPills.tsx` — horisontell pill-rad för multi-hund-väljaren (visas bara om kund har 2+ hundar)
+
+**Modifierade filer (oincheckade):**
+- `src/pages/CustomerDashboardPage.tsx` — krymt till en redirect till `/kund/hund/:firstDogId`, visar bara empty-state om kunden saknar hundar
+- `src/pages/CustomerDogPage.tsx` — använder CustomerHeader + DogPills istället för gammal DogSwitcher; hämtar `customerName` via `getCustomerForUser()` och propsar in
+- `src/pages/AdminMobilePage.tsx` — ny "Förfrågningar"-flik (gated till admin/platschef) med röd badge-räknare
+- `src/components/admin/TodayAttendanceTab.tsx` — row-omdesign: action-knappar (rapport, kamera) flyttade till en rad under hund-namn istället för bredvid
+
+**Detta innebär att Tema 1 är ca 40% förbyggt redan.** Spec-sektionerna nedan markerar vad som är gjort vs vad som återstår.
+
+## 0.1 Akut bugg: greeting på Hem-fliken
+
+`src/components/customer/HomeFeedTab.tsx:99` säger `Hej {dog.name}!` — det är hunden som hälsas, inte kunden. Ska vara `Hej {customerFirstName}!`.
+
+**Fix:** Propsa ner `customerName` (eller bara förnamnet) från `CustomerDogPage.tsx:48` till `HomeFeedTab`. CustomerHeader gör redan denna split med `firstNameOf(name)` — extrahera helpern och återanvänd.
+
+Detta är en 5-minuters quick win och bör committas direkt (eller som första PR i Tema 1).
 
 ---
 
@@ -16,7 +40,9 @@ Specen är paketerad som **Foundation + 4 teman** (Approach C i brainstorm-sessi
 ## 2. Scope
 
 ### In scope
+- **Greeting-fix** (sektion 0.1) — Hej-strängen ska säga kundens namn, inte hundens
 - **Foundation** — låsa knappstil, statusfärger, sheet/modal-regel, empty state-mall, save-knapp-beteende, tap-target-regel
+- **Tema 0.5 — Multi-owner fungerar end-to-end** — bookings + messages + push-notiser fungerar för co-owners, admin ser alla ägare per hund
 - **Tema 1 — Profil-fliken** rensad: bara hund-relaterad info; Kontrakt / Inställningar / Personal / Rapport-historik flyttas ut
 - **Tema 1b — "Idag jobbar"-rad** på Hem-fliken, hämtad från `staff_schedules`
 - **Tema 1c — Personalkort utan titlar** (Ägare/Platschef/Personal-etiketter bort på kundsidan)
@@ -96,6 +122,165 @@ Konsekvens: i `BookingCalendar.tsx` slås `STATUS_STYLE.scheduled` (grön) och `
 ### 3.5 Test
 - Visuell smoke: öppna varje skärm som rör vid någon foundation-komponent, jämför före/efter — inga regressions.
 - `npm run build` ska passera utan TS-errors.
+
+## 3.6 Tema 0.5 — Multi-owner fungerar end-to-end
+
+### 3.6.1 Bakgrund — nuläget (2026-05-18)
+
+DB-schemat (`customer_dogs`, M:N via `primary key (customer_id, dog_id)`) tillåter att flera kunder är kopplade till samma hund. Men implementeringen är ojämn:
+
+| Yta | Status | Anledning |
+|---|---|---|
+| Lista hundar | ✅ Funkar | `getMyDogs` filtrerar via `customer_dogs`-länken |
+| Hund-info / hälsa / vacciner | ✅ Funkar | RLS filtrerar via subquery på `customer_dogs` |
+| Daglig rapport, album | ✅ Funkar | Samma RLS-mönster |
+| **Bokningar** | ❌ Brutet | RLS-policyn `customer_id = current_customer_id()` (migration `20260513_002_customer_portal_rls.sql:56,66,70`) — bara den kund som *skapade* bokningen ser den. Co-owner ser inte partnerns bokningar i sin kalender |
+| **Meddelanden** | ❌ Brutet | RLS: `customer_id = current_customer_id()` (rad 104, 109, 116) — varje kunds konversation är privat. Co-owner ser inte partnerns chat |
+| **Push-notiser** | ❌ Brutet | `supabase/functions/send-notification/index.ts:193,269` slår på `booking.customer_id` resp. `msg.customer_id` — bara en kunds device-tokens hämtas |
+| Admin: visa alla ägare per hund | ❌ Saknas | `AdminPage.tsx:1564` använder `.limit(1).maybeSingle()` — bara första ägaren visas |
+| Admin UI: lägga flera ägare per hund | ⚠️ Funkar tekniskt | Bara via "redigera kund A → kryssa hund X" + "redigera kund B → kryssa hund X". Ingen översikt över co-owners |
+
+**Konsekvens:** Mamma och pappa båda inbjudna till samma hund → ser hunden, kan läsa rapporter — men kan inte se varandras bokningar eller chat-konversationer. Notiser går bara till en av dem.
+
+### 3.6.2 Mål
+
+En hund med två (eller fler) co-owners ska bete sig som om båda är "samma användare" mot hundens timeline: båda ser samma bokningar, samma chat, båda får notiser.
+
+### 3.6.3 Datamodell-beslut: behåll `customer_id` på bookings + messages
+
+Vi *behåller* `customer_id` på `bookings` och `messages` som "vem initierade raden" (för audit/visning av avsändare), men ändrar **RLS** så att läs-/skrivåtkomst baseras på `dog_id`-länken istället för `customer_id`.
+
+```sql
+-- ny helper för att hitta alla customer_ids som är kopplade till en hund
+create or replace function public.dog_co_owners(p_dog_id uuid)
+returns setof uuid
+language sql stable security definer
+set search_path = public, pg_temp
+as $$
+  select customer_id from public.customer_dogs where dog_id = p_dog_id;
+$$;
+revoke execute on function public.dog_co_owners(uuid) from anon;
+grant execute on function public.dog_co_owners(uuid) to authenticated;
+
+-- och: en boolean-helper "ser jag denna hund?"
+create or replace function public.customer_sees_dog(p_dog_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from public.customer_dogs
+    where dog_id = p_dog_id
+      and customer_id = public.current_customer_id()
+  );
+$$;
+revoke execute on function public.customer_sees_dog(uuid) from anon;
+grant execute on function public.customer_sees_dog(uuid) to authenticated;
+```
+
+**Ny RLS för bookings:**
+```sql
+drop policy if exists "customers read own bookings" on public.bookings;
+create policy "co-owners read bookings" on public.bookings
+  for select using (public.customer_sees_dog(dog_id) or public.is_admin_user());
+
+drop policy if exists "customers insert own bookings" on public.bookings;
+create policy "co-owners insert bookings" on public.bookings
+  for insert with check (
+    public.customer_sees_dog(dog_id)
+    and customer_id = public.current_customer_id() -- vi sätter alltid initiatör
+  );
+
+drop policy if exists "customers update own bookings" on public.bookings;
+create policy "co-owners update bookings" on public.bookings
+  for update using (public.customer_sees_dog(dog_id) or public.is_admin_user());
+```
+
+**Ny RLS för messages:** samma mönster — `dog_id`-baserad åtkomst. Detta kräver att alla meddelanden har `dog_id` satt (idag är det `references dogs(id) on delete set null` — kan vara null för "allmänna" konversationer). Beslut: i v2 *kräver* vi `dog_id` på alla nya meddelanden för att RLS ska fungera. Befintliga rader med `dog_id IS NULL` (commit 5964453) hanteras med en separat fall-back-policy:
+
+```sql
+drop policy if exists "customers read own messages" on public.messages;
+create policy "co-owners read messages" on public.messages
+  for select using (
+    (dog_id is not null and public.customer_sees_dog(dog_id))
+    or (dog_id is null and customer_id = public.current_customer_id())  -- legacy
+    or public.is_admin_user()
+  );
+
+drop policy if exists "customers insert own messages" on public.messages;
+create policy "co-owners insert messages" on public.messages
+  for insert with check (
+    dog_id is not null
+    and public.customer_sees_dog(dog_id)
+    and customer_id = public.current_customer_id()
+    and sender_user_id = auth.uid()
+  );
+```
+
+(Vi kräver `dog_id is not null` vid INSERT så vi inte skapar nya rader utan koppling. Befintliga null-rader fortsätter funka för läsning.)
+
+### 3.6.4 Push-notiser till alla co-owners
+
+`supabase/functions/send-notification/index.ts` slår på `booking.customer_id` / `msg.customer_id` och hämtar en kunds devices. Ny logik:
+
+För `booking_decision`:
+- Hämta `booking.dog_id` → kör `dog_co_owners(dog_id)` → fan-out push till alla co-owners device-tokens
+
+För `staff_message`:
+- Hämta `msg.dog_id` → kör `dog_co_owners(dog_id)` → fan-out till alla co-owners
+
+Edge function-ändringen är begränsad till SQL-query och fan-out-loopen. Datamodellen för `push_subscriptions` behöver inte ändras.
+
+### 3.6.5 Admin: "Vem äger denna hund?"
+
+I `AdminPage.tsx:1559–1569` (hund-redigerings-flöde): ersätt `.limit(1).maybeSingle()` med ett anrop som returnerar ALLA länkade kunder, och visa dem som en lista i hund-redigerarens "Ägare"-sektion.
+
+Ny helper i `database.ts`:
+```ts
+export const getDogCustomers = async (dogId: string): Promise<Customer[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('customer_dogs')
+    .select('customer:customers(*)')
+    .eq('dog_id', dogId);
+  if (error) { console.error('getDogCustomers', error); return []; }
+  return (data ?? []).map((r: any) => r.customer).filter(Boolean) as Customer[];
+};
+```
+
+UI: i hund-redigeraren, sektion "Ägare", lista alla länkade kunder med möjlighet att lägga till/ta bort. Symmetriskt mot `CustomersTab.tsx`s hund-väljare.
+
+### 3.6.6 Kund-UI: visa avsändare bland co-owners
+
+På chat-sidan (Tema 3) och bokningar-vyn ska kunden se *vilken* co-owner som skickade meddelandet / skapade bokningen, så det inte blir förvirrande.
+
+- Messages: bredvid varje kund-meddelandes bubbla, om sender_user_id != min user_id → visa "(från Pappa)" eller motsvarande små förtydligare.
+- Bokningskalendern: vid tap på en bokning → popover visar "Bokad av Pappa 12 maj" om annan co-owner skapade.
+
+### 3.6.7 Filer
+
+**Nya migrations:**
+- `supabase/migrations/<timestamp>_co_owners_rls.sql` — `dog_co_owners()`, `customer_sees_dog()`, nya RLS-policies på bookings + messages
+
+**Modifierade:**
+- `supabase/functions/send-notification/index.ts` — fan-out till alla co-owners
+- `src/lib/database.ts` — ny `getDogCustomers(dogId)`
+- `src/components/AdminPage.tsx` — ersätt `limit(1).maybeSingle()`-lookup med multi-owner-vy
+- `src/components/customer/MessagesTab.tsx` — visa avsändare när annan co-owner
+- `src/components/customer/BookingCalendar.tsx` — visa "Bokad av X" i popover när annan co-owner skapade bokningen
+
+### 3.6.8 Funktionalitet som inte får tappas
+- Existerande single-owner-fall (vanligaste) måste fortsätta funka oförändrat — testa med en kund + en hund efter RLS-ändring
+- Befintliga meddelanden med `dog_id IS NULL` ska fortsätta läsbara (legacy-fallback i RLS)
+- Admin-fall-back: admin ska se ALLT som tidigare via `is_admin_user()`
+- Push-notiser till befintliga single-owner-fall ska fortsätta funka oförändrat (fan-out till en kund = samma som idag)
+
+### 3.6.9 Test
+- **RLS-smoke**: skapa två test-kunder A + B, länka båda till samma hund. Logga in som A → boka extra dag. Logga in som B → ska se bokningen i sin kalender.
+- A skickar meddelande om hunden → B ser konversationen.
+- Admin godkänner bokningen → båda A och B får push.
+- Skapa hund-only-för-A → logga in som B → ska INTE se den.
+- `npm run build` passerar; befintliga single-owner-flöden fungerar.
 
 ## 4. Tema 1 — Profil-fliken rensad + omorganiserad
 
@@ -465,13 +650,23 @@ Användningsfall: alla mår bra på en lugn dag, personalen vill inte fylla i sa
 
 | # | Tema | Storlek | Beroenden |
 |---|---|---|---|
-| 0 | Foundation (tokens, Sheet, SaveButton, EmptyState) | S | — |
-| 1 | Profil-rensning + Mer-flik + kugghjul + StaffCard utan titlar + "Idag jobbar" | M | Foundation |
+| Pre-0 | **Greeting-fix** + commita WIP (CustomerHeader, DogPills, AdminMobilePage Förfrågningar-flik, TodayAttendance row-omdesign) | XS | — |
+| 0 | Foundation (tokens, Sheet, SaveButton, EmptyState) | S | Pre-0 committat |
+| 0.5 | **Multi-owner-fixar** (RLS, push fan-out, admin co-owner-vy) | M | Foundation |
+| 1 | Profil-rensning + Mer-flik + kugghjul + StaffCard utan titlar + "Idag jobbar" | M (delvis förbyggt) | Foundation, 0.5 |
 | 4 | Adminappens Idag-vy (optimistic, filter, batch, multi-report) | M | Foundation |
-| 2 | Bokningswizard | M | Foundation |
-| 3 | Meddelanden 2.0 (read-receipts, gruppering) | S | Foundation, DB-migration |
+| 2 | Bokningswizard | M | Foundation, 0.5 |
+| 3 | Meddelanden 2.0 (read-receipts, gruppering) | S | Foundation, 0.5, DB-migration |
 
-Anledning till ordning: Foundation först (osynlig men låser kvalitet). Sedan Tema 1 (störst kund-värde, mest synlig förändring). Tema 4 nästa (personalens dagliga arbete). Tema 2 efter (bokningar är inte daglig friktion utan veckovis). Tema 3 sist (read-receipts ger inkrementellt värde).
+Anledning till ordning:
+
+- **Pre-0** (greeting-fix + commita WIP) först eftersom det är trivialt och rensar oincheckad kod som annars kommer i vägen.
+- **Foundation** låser designspråket.
+- **Tema 0.5 (Multi-owner)** kommer tidigt eftersom Tema 2 (bokningswizard) och Tema 3 (meddelanden) båda är beroende av att den underliggande datamodellen är multi-owner-säker — bygger vi om bokningsflödet ovanpå brutet RLS får vi göra om det. Pris-prio: hellre fixa RLS innan vi rör boknings-UI.
+- **Tema 1** efter (störst kund-värde, mest synlig förändring; redan ~40% byggt i WIP).
+- **Tema 4** parallellt eller efter Tema 1 (personalens dagliga arbete, oberoende av kund-UI).
+- **Tema 2** efter (bokningar är inte daglig friktion utan veckovis), kräver multi-owner-fix.
+- **Tema 3** sist (read-receipts ger inkrementellt värde), kräver multi-owner-fix.
 
 ## 11. Testplan — övergripande
 
@@ -494,4 +689,9 @@ Smoke-testflöden per tema är specificerade i 3.5, 4.8, 5.5, 7.6, 8.7, 9.8.
 
 **Designen presenterad 2026-05-18, godkänd ("Kör") av användaren med tillägget "se till så att alla funktionalitet funkar" — fångat i sektion 2 "Funktionalitet som MÅSTE fortsätta fungera" + per-tema-funktionalitetslistor och testplaner.**
 
-Klar för spec-review → implementationsplan via `writing-plans`-skill (en plan per tema eller en samlad — beslut vid plan-skapande).
+**Uppdaterad 2026-05-18:** Efter inventering av oincheckad WIP och verifiering av multi-owner-stöd lades tre saker till:
+1. Sektion 0 (WIP-inventering) — flaggar att Tema 1 är ~40% förbyggt och måste committas/integreras före vidare arbete
+2. Sektion 0.1 (greeting-fix) — `HomeFeedTab.tsx:99` säger "Hej {dog.name}" istället för kundens namn
+3. Sektion 3.6 (Tema 0.5 — Multi-owner) — RLS på bookings + messages filtrerar idag på `customer_id` istället för `dog_id`-koppling, så co-owners ser inte varandras bokningar/chat; push fan-outs är också single-owner. Lades till som blocker före Tema 2 och 3.
+
+Klar för spec-review → implementationsplan via `writing-plans`-skill (sannolikt en plan per tema, börjar med Pre-0 → Foundation → Tema 0.5).
