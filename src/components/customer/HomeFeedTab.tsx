@@ -48,9 +48,10 @@ const bookingTypeLabel = (t: string): string => {
   return 'Dagis';
 };
 
-export default function HomeFeedTab({ dog, onJumpTo }: {
+export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
   dog: Dog;
   onJumpTo: (tab: 'calendar' | 'album' | 'messages' | 'profile') => void;
+  customerFirstName: string;
 }) {
   const [next, setNext] = useState<NextDay | null>(null);
   const [latestActivity, setLatestActivity] = useState<DogActivity | null>(null);
@@ -96,7 +97,7 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
           {new Date().toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
         <h1 className="text-2xl font-bold tracking-tight mt-1">
-          Hej {dog.name}!
+          {customerFirstName ? `Hej ${customerFirstName}!` : 'Hej!'}
         </h1>
       </div>
 

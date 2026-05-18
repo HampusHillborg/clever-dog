@@ -1,16 +1,12 @@
 import { FaSignOutAlt } from 'react-icons/fa';
 import dogLogo from '../../assets/images/logos/Logo.png';
+import { firstNameOf } from '../../lib/customerApi';
 
 const initialsFor = (name: string): string => {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
-};
-
-const firstNameOf = (name: string): string => {
-  const first = name.trim().split(/\s+/)[0];
-  return first ?? '';
 };
 
 export default function CustomerHeader({ customerName, onLogout }: {

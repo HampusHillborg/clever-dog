@@ -19,7 +19,7 @@ import StaffDirectoryCard from '../components/customer/StaffDirectoryCard';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import DogPills from '../components/customer/DogPills';
 import OnboardingSheet, { hasSeenOnboarding } from '../components/customer/OnboardingSheet';
-import { getMyDog, getMyDogs, type Dog } from '../lib/customerApi';
+import { getMyDog, getMyDogs, firstNameOf, type Dog } from '../lib/customerApi';
 import { getCustomerForUser, signOutCustomer } from '../lib/customerAuth';
 
 type TabKey = 'home' | 'calendar' | 'album' | 'messages' | 'profile';
@@ -123,7 +123,7 @@ export default function CustomerDogPage() {
             </div>
           </div>
         )}
-        {tab === 'home' && <HomeFeedTab key={refreshTick} dog={dog} onJumpTo={(t) => setTab(t)} />}
+        {tab === 'home' && <HomeFeedTab key={refreshTick} dog={dog} onJumpTo={(t) => setTab(t)} customerFirstName={firstNameOf(customerName)} />}
         {tab === 'calendar' && <BookingCalendar key={refreshTick} dog={dog} />}
         {tab === 'album' && <AlbumTab key={refreshTick} dog={dog} />}
         {tab === 'messages' && <MessagesTab key={refreshTick} dog={dog} />}

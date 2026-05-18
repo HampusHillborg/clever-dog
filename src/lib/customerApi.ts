@@ -17,6 +17,12 @@ export const VACCINE_LABELS: Record<string, string> = {
 
 export type VaccinationStatus = 'valid' | 'expiring' | 'expired' | 'missing';
 
+// Hämta förnamnet ur en hel namnsträng. Tom input → tom sträng.
+export const firstNameOf = (name: string | null | undefined): string => {
+  const first = (name ?? '').trim().split(/\s+/)[0];
+  return first ?? '';
+};
+
 export const vaccinationStatus = (expires: string | null | undefined): VaccinationStatus => {
   if (!expires) return 'missing';
   const today = new Date(); today.setHours(0, 0, 0, 0);
