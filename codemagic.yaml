@@ -71,6 +71,25 @@ workflows:
           else
             npx cap sync ios
           fi
+      - name: Patch Info.plist + entitlements
+        script: |
+          chmod +x scripts/patch-ios-config.sh
+          ./scripts/patch-ios-config.sh
+      - name: Generate iOS icon + splash assets
+        script: |
+          npx capacitor-assets generate --ios
+      - name: Drop in GoogleService-Info.plist if available
+        script: |
+          # Upload the file in Codemagic UI -> Teams -> Code signing identities
+          # OR Environment variables (as a file). When present, copy it into
+          # place so Firebase init succeeds at runtime. When absent, the
+          # build still works but push notifications will no-op.
+          if [ -n "${GOOGLE_SERVICE_INFO_PLIST:-}" ]; then
+            echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
+            echo "GoogleService-Info.plist installed."
+          else
+            echo "GOOGLE_SERVICE_INFO_PLIST not set — push notifications will no-op."
+          fi
       - name: Install CocoaPods
         script: |
           cd ios/App

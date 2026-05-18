@@ -7,6 +7,12 @@ let initialized = false;
 
 export const initPushNotifications = async (): Promise<void> => {
   if (!isNativeApp() || !isPushEnabled() || !supabase || initialized) return;
+  // iOS support TBD: @capacitor/push-notifications emits an APNs token, but
+  // our send-notification edge function sends via FCM v1. To support iOS
+  // properly we need @capacitor-community/fcm (Capacitor 8 build pending)
+  // or a separate APNs send path. For now: silently skip on iOS so the rest
+  // of the app stays functional. Email notifications still fire.
+  if (platform() === 'ios') return;
   initialized = true;
 
   try {

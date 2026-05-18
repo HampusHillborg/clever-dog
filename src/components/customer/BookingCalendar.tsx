@@ -226,29 +226,34 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
             const label = closed
               ? 'Stängt'
               : halfDay
-                ? 'Öppet → 14'
+                ? 'Till 14'
                 : cellLabel(d.status, d.bookingType);
             const isToday = d.date === todayIso;
             const cellClass = closed
-              ? 'bg-rose-50 text-rose-400 border-rose-200'
+              ? 'bg-red-50 text-red-700 border-red-300'
               : halfDay
-                ? 'bg-amber-50 text-amber-900 border-amber-200'
+                ? 'bg-amber-50 text-amber-900 border-amber-300'
                 : STATUS_STYLE[d.status];
             const title = closed
               ? `Stängt · ${holidayName(d.date) ?? 'Helg'}`
               : halfDay
                 ? `Öppet till 14:00 · dagen före ${holiday.beforeName}`
                 : STATUS_LABEL[d.status];
+            const labelClass = closed
+              ? 'text-[9px] font-bold leading-tight mt-0.5 truncate w-full uppercase tracking-wide text-red-600'
+              : halfDay
+                ? 'text-[9px] font-semibold leading-tight mt-0.5 truncate w-full text-amber-800'
+                : 'text-[8px] leading-tight mt-0.5 truncate w-full';
             return (
               <button
                 key={d.date}
                 onClick={() => closed ? undefined : setSelectedDay(d)}
                 disabled={closed}
-                className={`aspect-square rounded-lg border-2 ${closed ? '' : 'hover:scale-[1.04] active:scale-95'} flex flex-col items-center justify-center px-0.5 transition-transform ${cellClass} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''} ${closed ? 'cursor-default opacity-70' : ''}`}
+                className={`aspect-square rounded-lg border-2 ${closed ? '' : 'hover:scale-[1.04] active:scale-95'} flex flex-col items-center justify-center px-0.5 transition-transform ${cellClass} ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''} ${closed ? 'cursor-default' : ''}`}
                 title={title}
               >
-                <span className={`leading-none text-sm ${isToday ? 'font-bold' : 'font-medium'}`}>{dayNum}</span>
-                {label && <span className="text-[8px] leading-tight mt-0.5 truncate w-full">{label}</span>}
+                <span className={`leading-none text-sm ${isToday ? 'font-bold' : closed ? 'font-bold' : 'font-medium'}`}>{dayNum}</span>
+                {label && <span className={labelClass}>{label}</span>}
               </button>
             );
           })}
@@ -312,8 +317,8 @@ function Legend() {
     { color: 'bg-emerald-200 border-emerald-400', label: 'Extra' },
     { color: 'bg-yellow-100 border-yellow-300', label: 'Väntar' },
     { color: 'bg-purple-100 border-purple-300', label: 'Pensionat' },
-    { color: 'bg-rose-50 border-rose-200', label: 'Stängt' },
-    { color: 'bg-amber-50 border-amber-200', label: 'Öppet → 14' },
+    { color: 'bg-red-50 border-red-300', label: 'Stängt' },
+    { color: 'bg-amber-50 border-amber-300', label: 'Till 14' },
   ];
   return (
     <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-600">

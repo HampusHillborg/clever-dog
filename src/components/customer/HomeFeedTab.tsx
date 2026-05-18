@@ -44,7 +44,7 @@ const bookingTypeLabel = (t: string): string => {
 
 export default function HomeFeedTab({ dog, onJumpTo }: {
   dog: Dog;
-  onJumpTo: (tab: 'calendar' | 'album' | 'messages') => void;
+  onJumpTo: (tab: 'calendar' | 'album' | 'messages' | 'profile') => void;
 }) {
   const [next, setNext] = useState<NextDay | null>(null);
   const [latestActivity, setLatestActivity] = useState<DogActivity | null>(null);
@@ -145,7 +145,7 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
         </button>
       )}
 
-      {/* Quick actions */}
+      {/* Quick actions — chat lives on the message preview card above, not here */}
       <div className="grid grid-cols-2 gap-3">
         <QuickAction
           icon={<FaCalendarAlt />}
@@ -154,10 +154,10 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
           onClick={() => onJumpTo('calendar')}
         />
         <QuickAction
-          icon={<FaCommentDots />}
-          label="Skriv till oss"
-          desc="Frågor & ändringar"
-          onClick={() => onJumpTo('messages')}
+          icon={<FaImages />}
+          label="Album"
+          desc="Bilder från dagiset"
+          onClick={() => onJumpTo('album')}
         />
       </div>
     </div>

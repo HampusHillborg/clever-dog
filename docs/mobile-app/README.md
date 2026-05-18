@@ -1,33 +1,60 @@
 # CleverDog Mobile App — Dev Workflow
 
-The kundportal (`/login`, `/kund`) is shipped as a native iOS + Android app using
-Capacitor. The web build is the same code; Capacitor wraps it in a native shell.
+The kundportal (`/login`, `/kund`, `/admin`) is shipped as a native iOS + Android app
+using Capacitor. The web build is the same TypeScript/React code; Capacitor
+wraps it in a native shell.
 
-## First-time setup
+## First-time setup (Windows)
 
-1. Install [Android Studio](https://developer.android.com/studio) on Windows.
-   - During setup, install at minimum: Android SDK Platform 34, an emulator
+1. Install [Android Studio](https://developer.android.com/studio).
+   - During setup install at minimum: Android SDK Platform 34, an emulator
      with Google Play Services (required for FCM push), and the build tools.
-2. Sign up for [Codemagic](https://codemagic.io) for iOS builds (we don't have a Mac).
-3. Run `npm install` (installs Capacitor with everything else).
-4. Run `npm run app:sync` to build the customer-only web bundle and copy it
+2. Sign up for [Codemagic](https://codemagic.io) for iOS builds — we don't
+   have a Mac.
+3. `npm install` (installs Capacitor with everything else).
+4. `npm run app:sync` — builds the customer-only web bundle and copies it
    into the Android project.
 
-## Daily loop (Android — works on Windows)
+## Daily loop — Android (works on Windows)
 
 - Edit code in `src/` as normal.
-- `npm run app:sync` — rebuilds the web bundle (`VITE_APP_TARGET=app`) and
+- `npm run app:sync` rebuilds the web bundle (`VITE_APP_TARGET=app`) and
   syncs it into `android/`.
-- `npm run app:android` — opens Android Studio. Click ▶ to run on emulator
+- `npm run app:android` opens Android Studio. Click ▶ to run on emulator
   or a connected device.
+- Build a debug APK from CLI:
+  ```powershell
+  cd android
+  .\gradlew assembleDebug
+  ```
+  Output: `android\app\build\outputs\apk\debug\app-debug.apk`. Install on a
+  connected device with `adb install -r <path>`.
 
-## Daily loop (iOS — runs on Codemagic)
+## Daily loop — iOS (runs on Codemagic, never touches Windows)
 
-We can't build iOS apps on Windows. The workflow:
+Codemagic builds iOS in the cloud each time you push to `main`:
 
-- Push to `main` → Codemagic auto-builds → uploads to TestFlight.
-- Use Android emulator for fast iteration; the code is identical so anything
-  that works on Android will work on iOS modulo platform-specific bugs.
+1. Push to `main` →
+2. Codemagic spins up a Mac mini, runs the `ios-testflight` workflow in
+   `codemagic.yaml`:
+   - `npm ci` + `npm run app:build`
+   - `npx cap add ios` (generates the iOS project from scratch)
+   - `scripts/patch-ios-config.sh` injects the bits Capacitor doesn't
+     ship by default (URL scheme `cleverdog://`, camera/photo usage
+     descriptions, push entitlement, background mode)
+   - `npx capacitor-assets generate --ios` builds the iOS icon + splash
+     from `resources/icon.png` and `resources/splash.png`
+   - `pod install`, signs, builds an IPA
+3. The IPA uploads to TestFlight automatically.
+4. Apple's TestFlight app on your iPhone shows the new build within ~5 min.
+
+For Code­magic to succeed you must once-only:
+- Enroll in the Apple Developer Program ($99/yr) and create the
+  app record in App Store Connect (see `store-submission.md` step A1–A2).
+- Generate an App Store Connect API key and hook Codemagic to it via
+  **Teams → Integrations → App Store Connect**.
+- Set environment group `cleverdog_supabase` with
+  `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`.
 
 ## What goes into the app bundle?
 
@@ -35,39 +62,50 @@ When `VITE_APP_TARGET=app`, `src/main.tsx` loads `AppMobile.tsx` instead of
 `App.tsx`. That excludes:
 
 - Marketing site (`/`, `/staffanstorp`)
-- Admin (`/admin`)
+- Old admin web (`/admin` route uses `AdminMobilePage` in the app)
 
 It includes:
 
-- `/login` (same role-aware logic as web — admins see a "use the web portal"
-  screen instead of being routed to `/admin`)
-- `/login/accept-invite`
-- `/kund` (customer dashboard)
-- `/kund/hund/:id`
+- `/login` and `/login/accept-invite`
+- `/kund` and `/kund/hund/:id` (customer flow)
+- `/admin` and `/admin/*` → renders `AdminMobilePage` for staff
 
 ## Important env vars
 
-The app uses the same `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as the
-web. They're embedded into the JS bundle at build time. If you change them,
-re-run `npm run app:sync`.
+Embedded in the JS bundle at build time. If you change them, re-run
+`npm run app:sync` (and on iOS push to `main` to trigger Codemagic).
 
-## App icon and splash screen
+| Var | Required | Notes |
+|---|:---:|---|
+| `VITE_SUPABASE_URL` | yes | |
+| `VITE_SUPABASE_ANON_KEY` | yes | |
+| `VITE_APP_TARGET` | yes (= `app`) | set by `npm run app:build` |
+| `VITE_PUSH_ENABLED` | optional | set to `true` only after dropping in `google-services.json` for Android |
 
-The app currently uses Capacitor's default green/white CleverDog placeholder
-icon. To replace with the real brand mark:
+## App icon and splash
 
-1. Produce a **1024×1024 PNG** of the CleverDog logo (the existing
-   `src/assets/images/logos/Logo.png` is only 311×346 — too small).
-   - Full bleed on a light/cream background works best.
-   - No transparency (iOS auto-rejects icons with alpha).
-2. Save it as `resources/icon.png` in the repo root.
-3. Optionally save a splash master as `resources/splash.png` (2732×2732,
-   logo centered with lots of padding).
-4. Run:
-   ```powershell
-   npx capacitor-assets generate --android
-   ```
-   (Add `--ios` once we have the iOS project on Codemagic.)
-5. Commit the generated `android/app/src/main/res/mipmap-*` and
-   `android/app/src/main/res/drawable-*` files.
+Source files are at `resources/icon.png` (1024×1024) and `resources/splash.png`
+(2732×2732). They're baked onto a cream `#FDF6EC` background. Apple rejects
+icons with transparency, so all alpha is flattened.
 
+To regenerate all platform-specific sizes:
+```powershell
+npx capacitor-assets generate --android
+```
+(iOS is auto-regenerated by Codemagic each build.)
+
+## Push notifications
+
+| Platform | Status |
+|---|---|
+| Android | Works once `android/app/google-services.json` is present and `VITE_PUSH_ENABLED=true`. Tokens land in `device_tokens`; edge function sends via FCM v1. |
+| iOS | Disabled in code for now — `@capacitor/push-notifications` returns APNs tokens but our edge function only knows FCM v1. iOS users still get email notifications until `@capacitor-community/fcm` ships a Capacitor-8-compatible release, or we add an APNs send path. |
+
+## Common Codemagic build failures
+
+| Symptom | Fix |
+|---|---|
+| `signing failed` first iOS build | Check **App Store Connect API key** access = Admin, and that the bundle ID `se.cleverdog.kundportal` is registered in Developer Portal. |
+| `pod install` hangs | Codemagic mac_mini_m2 instance is busy — retry. |
+| `Build IPA` succeeds but TestFlight is empty | Apple processes builds for 5–15 min. Check **App Store Connect → TestFlight** tab. |
+| Android: `bundleRelease` fails on signing | Re-upload the keystore at **Codemagic → Teams → Code signing identities** with the name `cleverdog-keystore`. |
