@@ -121,15 +121,22 @@ export async function sendPushToTokens(
 type AdminClient = {
   from: (table: string) => {
     select: (cols: string) => {
-      eq: (col: string, val: string) => Promise<{ data: { token: string }[] | null }>;
+      eq: (col: string, val: string) => Promise<{ data: { token: string; platform: string }[] | null }>;
     };
   };
 };
 
+export type PlatformTokens = { android: string[]; ios: string[] };
+
 export async function lookupTokensForUser(
   admin: AdminClient,
   userId: string,
-): Promise<string[]> {
-  const { data } = await admin.from('device_tokens').select('token').eq('user_id', userId);
-  return (data ?? []).map((r) => r.token);
+): Promise<PlatformTokens> {
+  const { data } = await admin.from('device_tokens').select('token,platform').eq('user_id', userId);
+  const out: PlatformTokens = { android: [], ios: [] };
+  for (const row of (data ?? [])) {
+    if (row.platform === 'ios') out.ios.push(row.token);
+    else out.android.push(row.token);
+  }
+  return out;
 }

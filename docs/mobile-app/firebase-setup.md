@@ -76,18 +76,33 @@ When you're ready:
 
 ## Step 5 — Configure APNs (Apple Push Notification service) for iOS
 
-Push on iOS goes APNs → Firebase → device. Firebase needs an APNs key.
+We send to iOS directly via APNs HTTP/2 from our edge function (FCM is
+Android-only in our setup), so the APNs key goes into **Supabase secrets**,
+not Firebase.
 
 1. In **Apple Developer Portal** → Certificates, IDs & Profiles → **Keys** →
    **Create a Key**.
 2. Enable **Apple Push Notifications service (APNs)**.
 3. Name it `CleverDog APNs`, click Continue → Register → **Download** the
-   `.p8` file.
-4. Note the **Key ID** (shown next to the key).
-5. Find your **Team ID** in Apple Developer → Membership.
-6. In Firebase console → Project Settings → **Cloud Messaging** tab →
-   **iOS app configuration** → **APNs Authentication Key** → **Upload**.
-7. Upload the `.p8`, paste Key ID and Team ID.
+   `.p8` file. (Apple lets you download once — keep it safe.)
+4. Note the **Key ID** (10 chars, shown next to the key).
+5. Find your **Team ID** in Apple Developer → Membership (10 chars).
+6. In Supabase dashboard → **Edge Functions → Secrets**, add these three:
+
+   - `APNS_AUTH_KEY_P8` → the **whole contents** of the .p8 file,
+     including the `-----BEGIN PRIVATE KEY-----` / `-----END PRIVATE KEY-----`
+     wrapping lines and the newlines between them. Paste as multi-line.
+   - `APNS_KEY_ID` → e.g. `ABCD123456`
+   - `APNS_TEAM_ID` → e.g. `XYZW987654`
+
+   Optional:
+   - `APNS_BUNDLE_ID` → defaults to `se.cleverdog.kundportal` if unset.
+   - `APNS_ENV` → defaults to `production`. Set to `sandbox` only when
+     pushing to debug builds installed via Xcode (not TestFlight).
+
+7. After saving the secrets, the next push triggered to an iOS user will
+   flow `Supabase edge function → Apple APNs → iPhone`. Check Supabase
+   **Edge Functions → Logs** for `[apns]` entries when debugging.
 
 ## Step 6 — Add Supabase redirect URLs for the app
 

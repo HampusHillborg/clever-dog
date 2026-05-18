@@ -96,10 +96,15 @@ npx capacitor-assets generate --android
 
 ## Push notifications
 
-| Platform | Status |
-|---|---|
-| Android | Works once `android/app/google-services.json` is present and `VITE_PUSH_ENABLED=true`. Tokens land in `device_tokens`; edge function sends via FCM v1. |
-| iOS | Disabled in code for now — `@capacitor/push-notifications` returns APNs tokens but our edge function only knows FCM v1. iOS users still get email notifications until `@capacitor-community/fcm` ships a Capacitor-8-compatible release, or we add an APNs send path. |
+Both platforms route through the same `send-notification` edge function;
+the function fans out per-user device tokens to FCM (Android) and APNs
+(iOS) in parallel. The same notification kinds (`booking_decision`,
+`staff_message`) work identically on both platforms.
+
+| Platform | Status | Requires |
+|---|---|---|
+| Android | Works once `android/app/google-services.json` is present and `VITE_PUSH_ENABLED=true`. | `FIREBASE_SERVICE_ACCOUNT_JSON` Supabase secret. |
+| iOS | Works once an APNs key is uploaded as Supabase secrets and `VITE_PUSH_ENABLED=true`. | `APNS_AUTH_KEY_P8`, `APNS_KEY_ID`, `APNS_TEAM_ID` Supabase secrets — see `firebase-setup.md` step 5. |
 
 ## Common Codemagic build failures
 

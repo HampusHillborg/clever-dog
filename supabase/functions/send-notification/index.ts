@@ -12,6 +12,23 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { sendPushToTokens, lookupTokensForUser } from './push.ts';
+import { sendApnsToTokens } from './apns.ts';
+// (lookupTokensForUser is consumed by pushToUser below.)
+
+// Fan-out to both push gateways for a single user.
+async function pushToUser(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+  title: string,
+  body: string,
+  data: Record<string, string>,
+): Promise<void> {
+  const tokens = await lookupTokensForUser(admin as never, userId);
+  await Promise.all([
+    tokens.android.length > 0 ? sendPushToTokens(tokens.android, title, body, data) : Promise.resolve(),
+    tokens.ios.length > 0 ? sendApnsToTokens(tokens.ios, title, body, data) : Promise.resolve(),
+  ]);
+}
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -172,8 +189,7 @@ Deno.serve(async (req) => {
       // Reply-To = admin email so customer can write back to staff
       await sendEmail(booking.customers.email, subject, html, ADMIN_EMAIL || undefined);
 
-      // Push notification (non-fatal). booking.customer_id is the customers.id;
-      // we need the auth.users.id which lives on customers.auth_user_id.
+      // Push notification (non-fatal) — fan-out FCM + APNs in parallel.
       if (booking.customer_id) {
         const { data: cust } = await admin
           .from('customers')
@@ -181,16 +197,13 @@ Deno.serve(async (req) => {
           .eq('id', booking.customer_id)
           .maybeSingle();
         if (cust?.auth_user_id) {
-          const tokens = await lookupTokensForUser(admin as never, cust.auth_user_id);
-          if (tokens.length > 0) {
-            const pushBody = approved
-              ? `${escape(booking.dogs?.name)}: ${dates} är godkänd`
-              : `Din förfrågan blev avslagen. Se kalendern för detaljer.`;
-            await sendPushToTokens(tokens, subject, pushBody, {
-              kind: 'booking_decision',
-              booking_id: booking.id,
-            });
-          }
+          const pushBody = approved
+            ? `${escape(booking.dogs?.name)}: ${dates} är godkänd`
+            : `Din förfrågan blev avslagen. Se kalendern för detaljer.`;
+          await pushToUser(admin, cust.auth_user_id, subject, pushBody, {
+            kind: 'booking_decision',
+            booking_id: booking.id,
+          });
         }
       }
     }
@@ -260,15 +273,13 @@ Deno.serve(async (req) => {
           .eq('id', msg.customer_id)
           .maybeSingle();
         if (cust?.auth_user_id) {
-          const tokens = await lookupTokensForUser(admin as never, cust.auth_user_id);
-          if (tokens.length > 0) {
-            await sendPushToTokens(
-              tokens,
-              'Nytt meddelande från CleverDog',
-              String(msg.body).slice(0, 120),
-              { kind: 'staff_message', message_id: msg.id },
-            );
-          }
+          await pushToUser(
+            admin,
+            cust.auth_user_id,
+            'Nytt meddelande från CleverDog',
+            String(msg.body).slice(0, 120),
+            { kind: 'staff_message', message_id: msg.id },
+          );
         }
       }
     }
