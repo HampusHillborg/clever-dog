@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getAllMessageThreads, sendStaffMessage } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { sendNotification } from '../../lib/notifications';
+import { dayLabel, fmtHm, isLastOwnInSequence } from '../../lib/messageGrouping';
 
 type Msg = {
   id: string;
@@ -10,6 +11,7 @@ type Msg = {
   sender_role: string;
   body: string;
   is_read: boolean | null;
+  read_at: string | null;
   created_at: string | null;
   customers: { name: string; email: string } | null;
   dogs: { name: string } | null;
@@ -107,14 +109,52 @@ export default function MessagesAdminTab() {
           {selectedId ? (
             <>
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                {[...messages].reverse().map(m => (
-                  <div key={m.id} className={`flex ${m.sender_role === 'staff' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] rounded-2xl px-4 py-2 ${m.sender_role === 'staff' ? 'bg-primary text-white' : 'bg-gray-100'}`}>
-                      <p className="text-sm whitespace-pre-wrap">{m.body}</p>
-                      <p className="text-xs opacity-60 mt-1">{m.created_at ? new Date(m.created_at).toLocaleString('sv-SE') : ''}</p>
-                    </div>
-                  </div>
-                ))}
+                {(() => {
+                  // Messages arrive newest-first from the query; reverse for chronological display.
+                  const sorted = [...messages].reverse();
+                  let lastDayLbl = '';
+                  return sorted.map((m, idx) => {
+                    const isStaff = m.sender_role === 'staff';
+                    const isLastOwn = isLastOwnInSequence(sorted, idx, 'staff');
+
+                    // Datum-sticker
+                    const currentDayLbl = m.created_at ? dayLabel(m.created_at) : '';
+                    const showDaySticker = currentDayLbl !== lastDayLbl;
+                    if (showDaySticker) lastDayLbl = currentDayLbl;
+
+                    return (
+                      <div key={m.id}>
+                        {/* Datum-sticker */}
+                        {showDaySticker && currentDayLbl && (
+                          <div className="text-center text-[11px] uppercase tracking-wide text-gray-400 my-2 select-none">
+                            {currentDayLbl}
+                          </div>
+                        )}
+
+                        {/* Meddelandebubbla */}
+                        <div className={`flex ${isStaff ? 'justify-end' : 'justify-start'}`}>
+                          <div className="flex flex-col items-end max-w-[80%]">
+                            <div className={`rounded-2xl px-4 py-2 ${isStaff ? 'bg-primary text-white' : 'bg-gray-100'}`}>
+                              <p className="text-sm whitespace-pre-wrap">{m.body}</p>
+                              <p className="text-xs opacity-60 mt-1">
+                                {m.created_at ? fmtHm(m.created_at) : ''}
+                              </p>
+                            </div>
+
+                            {/* Read-receipt — visas bara under SENASTE egna (staff) meddelandet i sviten */}
+                            {isStaff && isLastOwn && (
+                              <p className="text-[10px] text-gray-400 mt-0.5 self-end">
+                                {m.read_at
+                                  ? `✓✓ Läst ${fmtHm(m.read_at)}`
+                                  : `✓ Skickat ${m.created_at ? fmtHm(m.created_at) : ''}`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
               <div className="border-t p-3 flex gap-2">
                 <input value={text} onChange={e => setText(e.target.value)}
