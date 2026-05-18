@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaCheck, FaSpinner, FaTimes } from 'react-icons/fa';
 import { BTN } from '../../lib/uiTokens';
 
@@ -16,18 +16,24 @@ export default function SaveButton({
   className?: string;
 }) {
   const [state, setState] = useState<State>('idle');
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
 
   const handle = async () => {
     if (state !== 'idle' || disabled) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
     setState('saving');
     try {
       await onSave();
       setState('saved');
-      setTimeout(() => setState('idle'), 1200);
+      timerRef.current = setTimeout(() => setState('idle'), 1200);
     } catch (e) {
       console.error('SaveButton onSave failed:', e);
       setState('error');
-      setTimeout(() => setState('idle'), 2000);
+      timerRef.current = setTimeout(() => setState('idle'), 2000);
     }
   };
 
