@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   FaHome, FaCalendarAlt, FaCommentDots, FaImages, FaUser,
-  FaSyncAlt,
+  FaSyncAlt, FaEllipsisH,
 } from 'react-icons/fa';
 import { usePullToRefresh } from '../lib/pullToRefresh';
 import HomeFeedTab from '../components/customer/HomeFeedTab';
@@ -19,10 +19,11 @@ import StaffDirectoryCard from '../components/customer/StaffDirectoryCard';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import DogPills from '../components/customer/DogPills';
 import OnboardingSheet, { hasSeenOnboarding } from '../components/customer/OnboardingSheet';
+import MoreTab from '../components/customer/MoreTab';
 import { getMyDog, getMyDogs, firstNameOf, type Dog } from '../lib/customerApi';
 import { getCustomerForUser, signOutCustomer } from '../lib/customerAuth';
 
-type TabKey = 'home' | 'calendar' | 'album' | 'messages' | 'profile';
+type TabKey = 'home' | 'calendar' | 'album' | 'messages' | 'profile' | 'more';
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'home',     label: 'Hem',      icon: <FaHome /> },
@@ -30,6 +31,7 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'album',    label: 'Album',    icon: <FaImages /> },
   { key: 'messages', label: 'Chat',     icon: <FaCommentDots /> },
   { key: 'profile',  label: 'Profil',   icon: <FaUser /> },
+  { key: 'more',     label: 'Mer',      icon: <FaEllipsisH /> },
 ];
 
 const TYPE_LABEL: Record<string, string> = {
@@ -137,6 +139,14 @@ export default function CustomerDogPage() {
             <StaffDirectoryCard />
             <AccountSettingsCard />
           </div>
+        )}
+        {tab === 'more' && (
+          <MoreTab
+            key={refreshTick}
+            dog={dog}
+            onLogout={logout}
+            onShowOnboarding={() => setShowOnboarding(true)}
+          />
         )}
       </main>
 
