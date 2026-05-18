@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
-import { FaTimes, FaPhone, FaEnvelope, FaMapMarkerAlt, FaIdCard, FaStickyNote } from 'react-icons/fa';
+import {
+  FaTimes, FaPhone, FaEnvelope, FaMapMarkerAlt, FaIdCard, FaStickyNote,
+  FaUserMd, FaExclamationTriangle,
+} from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 
 type DogRow = {
@@ -21,6 +24,11 @@ type DogRow = {
   notes: string | null;
   customer_notes: string | null;
   photo_url: string | null;
+  vet_name: string | null;
+  vet_phone: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  medical_notes: string | null;
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -43,7 +51,7 @@ export default function DogInfoModal({ dogId, onClose }: {
       if (!supabase) { setLoading(false); return; }
       const { data } = await supabase
         .from('dogs')
-        .select('id, name, breed, age, gender, type, owner, phone, email, owner_address, owner_city, owner_personal_number, chip_number, insurance_company, insurance_number, notes, customer_notes, photo_url')
+        .select('id, name, breed, age, gender, type, owner, phone, email, owner_address, owner_city, owner_personal_number, chip_number, insurance_company, insurance_number, notes, customer_notes, photo_url, vet_name, vet_phone, emergency_contact_name, emergency_contact_phone, medical_notes')
         .eq('id', dogId)
         .maybeSingle();
       setDog((data as DogRow | null) ?? null);
@@ -107,6 +115,48 @@ export default function DogInfoModal({ dogId, onClose }: {
         {/* Body */}
         {dog && (
           <div className="px-5 py-4 space-y-4 overflow-y-auto">
+            {/* Acute info — always rendered first so staff sees it before anything else */}
+            {(dog.medical_notes || dog.vet_name || dog.vet_phone ||
+              dog.emergency_contact_name || dog.emergency_contact_phone) && (
+              <div className="rounded-xl bg-red-50 border border-red-300 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-red-800 mb-2 flex items-center gap-1.5">
+                  <FaExclamationTriangle className="text-xs" />
+                  Akut · läs först
+                </p>
+                {dog.medical_notes && (
+                  <p className="text-sm text-red-900 whitespace-pre-wrap leading-snug mb-3">
+                    {dog.medical_notes}
+                  </p>
+                )}
+                <div className="space-y-1.5 text-sm">
+                  {dog.vet_name && (
+                    <div className="flex items-center gap-2 text-red-900">
+                      <FaUserMd className="text-xs text-red-600 shrink-0" />
+                      <span className="font-medium">Veterinär:</span>
+                      <span>{dog.vet_name}</span>
+                      {dog.vet_phone && (
+                        <a href={`tel:${dog.vet_phone}`} className="ml-auto text-red-700 hover:underline">
+                          {dog.vet_phone}
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {dog.emergency_contact_name && (
+                    <div className="flex items-center gap-2 text-red-900">
+                      <FaPhone className="text-xs text-red-600 shrink-0" />
+                      <span className="font-medium">Nödkontakt:</span>
+                      <span>{dog.emergency_contact_name}</span>
+                      {dog.emergency_contact_phone && (
+                        <a href={`tel:${dog.emergency_contact_phone}`} className="ml-auto text-red-700 hover:underline">
+                          {dog.emergency_contact_phone}
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <Group title="Ägare">
               <Item icon={<FaIdCard />} label="Namn" value={dog.owner} />
               <Item icon={<FaPhone />} label="Telefon" value={dog.phone} href={dog.phone ? `tel:${dog.phone}` : undefined} />

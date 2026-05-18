@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import {
   FaCalendarAlt, FaImages, FaCommentDots, FaCheckCircle, FaClock,
+  FaSmile, FaMeh, FaFrown, FaPaw, FaBolt, FaUtensils, FaClipboardCheck,
 } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import {
-  getDogActivities, getMyMessages, type Dog, type DogActivity, type Message,
+  getDogActivities, getMyMessages, getDailyReport, reportHasContent,
+  type Dog, type DogActivity, type Message, type DailyReport,
 } from '../../lib/customerApi';
 
 type NextDay = {
@@ -50,21 +52,24 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
   const [latestActivity, setLatestActivity] = useState<DogActivity | null>(null);
   const [latestMsg, setLatestMsg] = useState<Message | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [todayReport, setTodayReport] = useState<DailyReport | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [n, acts, msgs] = await Promise.all([
+      const [n, acts, msgs, report] = await Promise.all([
         getNextScheduledDay(dog.id),
         getDogActivities(dog.id, 1),
         getMyMessages(dog.id),
+        getDailyReport(dog.id),
       ]);
       setNext(n);
       setLatestActivity(acts[0] ?? null);
       const sortedMsgs = [...msgs].reverse();
       setLatestMsg(sortedMsgs[0] ?? null);
       setUnreadCount(msgs.filter(m => m.sender_role === 'staff' && !m.is_read).length);
+      setTodayReport(reportHasContent(report) ? report : null);
       setLoading(false);
     })();
   }, [dog.id]);
@@ -85,6 +90,9 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
 
       {/* Next/today card — the headliner */}
       <NextDayCard next={next} onOpen={() => onJumpTo('calendar')} />
+
+      {/* Today's report from staff (only when filled in) */}
+      {todayReport && <DailyReportCard report={todayReport} dogName={dog.name} />}
 
       {/* Latest album */}
       {latestActivity && (
@@ -228,6 +236,84 @@ function QuickAction({ icon, label, desc, onClick }: {
       <p className="font-semibold text-sm">{label}</p>
       <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
     </button>
+  );
+}
+
+function DailyReportCard({ report, dogName }: { report: DailyReport; dogName: string }) {
+  // Each field is conditional — only render rows the staff actually filled.
+  const moodFor = (m: string | null) => {
+    if (m === 'happy') return { icon: <FaSmile />, text: 'Glad', tone: 'text-green-600' };
+    if (m === 'neutral') return { icon: <FaMeh />, text: 'Okej', tone: 'text-yellow-600' };
+    if (m === 'rough') return { icon: <FaFrown />, text: 'Lite trist', tone: 'text-red-600' };
+    return null;
+  };
+  const foodText = (f: string | null) => {
+    if (f === 'all') return 'Åt upp allt';
+    if (f === 'some') return 'Åt lite';
+    if (f === 'none') return 'Ville inte äta';
+    return null;
+  };
+  const activityText = (a: string | null) => {
+    if (a === 'low') return 'Lugn dag';
+    if (a === 'normal') return 'Normal energi';
+    if (a === 'high') return 'Energisk dag';
+    return null;
+  };
+
+  const mood = moodFor(report.mood);
+  const food = foodText(report.food_eaten);
+  const activity = activityText(report.activity_level);
+
+  return (
+    <div className="bg-white rounded-2xl shadow-card overflow-hidden">
+      <div className="bg-emerald-50 px-4 py-2.5 border-b border-emerald-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FaClipboardCheck className="text-emerald-600 text-sm" />
+          <p className="text-[11px] uppercase tracking-wide text-emerald-800 font-semibold">
+            {dogName}s dag idag
+          </p>
+        </div>
+        {report.posted_by_name && (
+          <p className="text-[11px] text-emerald-700">av {report.posted_by_name}</p>
+        )}
+      </div>
+      <div className="p-4 space-y-2">
+        {mood && (
+          <ReportRow icon={mood.icon} label="Humör" value={mood.text} valueClass={mood.tone} />
+        )}
+        {food && (
+          <ReportRow icon={<FaUtensils />} label="Mat" value={food} />
+        )}
+        {activity && (
+          <ReportRow icon={<FaBolt />} label="Energi" value={activity} />
+        )}
+        {report.pooped !== null && (
+          <ReportRow icon={<FaPaw />} label="Bajs" value={report.pooped ? 'Ja' : 'Nej'} />
+        )}
+        {report.note && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold mb-1">
+              Från personalen
+            </p>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{report.note}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReportRow({ icon, label, value, valueClass }: {
+  icon: React.ReactNode; label: string; value: string; valueClass?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <div className={`w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 ${valueClass ?? 'text-gray-500'}`}>
+        <span className="text-xs">{icon}</span>
+      </div>
+      <span className="text-gray-500 w-16 shrink-0">{label}</span>
+      <span className={`font-medium ${valueClass ?? 'text-dark'}`}>{value}</span>
+    </div>
   );
 }
 

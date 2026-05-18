@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FaCheck, FaUndo, FaDog, FaCamera, FaPlus } from 'react-icons/fa';
+import { FaCheck, FaUndo, FaDog, FaCamera, FaPlus, FaClipboardCheck } from 'react-icons/fa';
 import {
   getTodaysScheduledDogs, checkInDog, checkOutDog, undoCheckIn, undoCheckOut,
   checkOutGuest, undoCheckOutGuest, removeAttendanceEntry,
@@ -8,6 +8,7 @@ import {
 import PostActivityModal from './PostActivityModal';
 import DogInfoModal from './DogInfoModal';
 import AddDogToTodayModal from './AddDogToTodayModal';
+import DailyReportModal from './DailyReportModal';
 
 const typeLabel = (t: string | undefined): string => {
   if (t === 'boarding') return 'Pensionat';
@@ -34,6 +35,7 @@ export default function TodayAttendanceTab() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [postingFor, setPostingFor] = useState<AttendanceEntry | null>(null);
+  const [reportingFor, setReportingFor] = useState<AttendanceEntry | null>(null);
   const [infoFor, setInfoFor] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
@@ -105,7 +107,7 @@ export default function TodayAttendanceTab() {
         {pending.map(e => {
           const k = keyFor(e);
           return (
-            <Row key={k} entry={e} busy={busy === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+            <Row key={k} entry={e} busy={busy === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
               <button
                 onClick={() => e.dog_id && act(k, () => checkInDog(e.dog_id!))}
                 disabled={busy === k || !e.dog_id}
@@ -122,7 +124,7 @@ export default function TodayAttendanceTab() {
         {here.map(e => {
           const k = keyFor(e);
           return (
-            <Row key={k} entry={e} busy={busy === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+            <Row key={k} entry={e} busy={busy === k} onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
               <div className="flex gap-1.5">
                 <button
                   onClick={() => act(k, () => actionForUndoCheckIn(e))}
@@ -149,7 +151,7 @@ export default function TodayAttendanceTab() {
         {gone.map(e => {
           const k = keyFor(e);
           return (
-            <Row key={k} entry={e} busy={busy === k} muted onPost={e.dog_id ? () => setPostingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
+            <Row key={k} entry={e} busy={busy === k} muted onPost={e.dog_id ? () => setPostingFor(e) : undefined} onReport={e.dog_id ? () => setReportingFor(e) : undefined} onInfo={e.dog_id ? () => setInfoFor(e.dog_id!) : undefined}>
               <button
                 onClick={() => act(k, () => actionForUndoCheckOut(e))}
                 disabled={busy === k}
@@ -169,6 +171,15 @@ export default function TodayAttendanceTab() {
           dogName={postingFor.dog_name}
           onClose={() => setPostingFor(null)}
           onPosted={() => setPostingFor(null)}
+        />
+      )}
+
+      {reportingFor && reportingFor.dog_id && (
+        <DailyReportModal
+          dogId={reportingFor.dog_id}
+          dogName={reportingFor.dog_name}
+          onClose={() => setReportingFor(null)}
+          onSaved={() => setReportingFor(null)}
         />
       )}
 
@@ -210,11 +221,12 @@ function Section({ title, headerClass, children }: {
   );
 }
 
-function Row({ entry, busy, muted, onPost, onInfo, children }: {
+function Row({ entry, busy, muted, onPost, onReport, onInfo, children }: {
   entry: AttendanceEntry;
   busy: boolean;
   muted?: boolean;
   onPost?: () => void;
+  onReport?: () => void;
   onInfo?: () => void;
   children: React.ReactNode;
 }) {
@@ -245,6 +257,16 @@ function Row({ entry, busy, muted, onPost, onInfo, children }: {
         </div>
       </button>
       <div className="shrink-0 flex items-center gap-1.5">
+        {onReport && (
+          <button
+            onClick={onReport}
+            className="w-10 h-10 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center"
+            title="Dagrapport"
+            aria-label="Dagrapport"
+          >
+            <FaClipboardCheck className="text-sm" />
+          </button>
+        )}
         {onPost && (
           <button
             onClick={onPost}

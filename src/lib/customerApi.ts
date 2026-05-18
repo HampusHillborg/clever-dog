@@ -4,6 +4,7 @@ import type { Database } from './database.types';
 export type Dog = Database['public']['Tables']['dogs']['Row'];
 export type Message = Database['public']['Tables']['messages']['Row'];
 export type DogActivity = Database['public']['Tables']['dog_activities']['Row'];
+export type DailyReport = Database['public']['Tables']['dog_daily_reports']['Row'];
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -154,4 +155,86 @@ export const deleteDogActivity = async (id: string): Promise<void> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { error } = await supabase.from('dog_activities').delete().eq('id', id);
   if (error) throw error;
+};
+
+// Daily report card — one row per (dog, date). All fields optional;
+// customer only sees the report when at least one field is filled in.
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+export const getDailyReport = async (dogId: string, date?: string): Promise<DailyReport | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from('dog_daily_reports')
+    .select('*')
+    .eq('dog_id', dogId)
+    .eq('date', date ?? todayIso())
+    .maybeSingle();
+  if (error) { console.error('getDailyReport', error); return null; }
+  return data;
+};
+
+export const getRecentDailyReports = async (dogId: string, limit = 14): Promise<DailyReport[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('dog_daily_reports')
+    .select('*')
+    .eq('dog_id', dogId)
+    .order('date', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getRecentDailyReports', error); return []; }
+  return (data ?? []).filter(reportHasContent);
+};
+
+// A report counts as "real" only when staff has filled in something.
+// Mood is the closest to a primary field; if all four data fields and
+// note are null/empty, treat it as not-yet-reported.
+export const reportHasContent = (r: DailyReport | null | undefined): boolean => {
+  if (!r) return false;
+  return Boolean(
+    r.mood ||
+    r.food_eaten ||
+    r.activity_level ||
+    r.pooped !== null ||
+    (r.note && r.note.trim().length > 0)
+  );
+};
+
+export type DailyReportPatch = {
+  mood?: 'happy' | 'neutral' | 'rough' | null;
+  food_eaten?: 'all' | 'some' | 'none' | null;
+  activity_level?: 'low' | 'normal' | 'high' | null;
+  pooped?: boolean | null;
+  note?: string | null;
+};
+
+export const upsertDailyReport = async (dogId: string, patch: DailyReportPatch): Promise<DailyReport> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user.id;
+
+  // Capture staff name once, only when there isn't one already on the row.
+  let posted_by_name: string | null = null;
+  if (userId) {
+    const { data: emp } = await supabase
+      .from('employees').select('name').eq('id', userId).maybeSingle();
+    posted_by_name = emp?.name ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from('dog_daily_reports')
+    .upsert(
+      {
+        dog_id: dogId,
+        date: todayIso(),
+        ...patch,
+        posted_by: userId ?? null,
+        posted_by_name,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'dog_id,date' },
+    )
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 };

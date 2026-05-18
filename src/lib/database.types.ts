@@ -366,6 +366,59 @@ export type Database = {
         }
         Relationships: []
       }
+      dog_daily_reports: {
+        Row: {
+          activity_level: string | null
+          created_at: string | null
+          date: string
+          dog_id: string
+          food_eaten: string | null
+          id: string
+          mood: string | null
+          note: string | null
+          pooped: boolean | null
+          posted_by: string | null
+          posted_by_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_level?: string | null
+          created_at?: string | null
+          date: string
+          dog_id: string
+          food_eaten?: string | null
+          id?: string
+          mood?: string | null
+          note?: string | null
+          pooped?: boolean | null
+          posted_by?: string | null
+          posted_by_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_level?: string | null
+          created_at?: string | null
+          date?: string
+          dog_id?: string
+          food_eaten?: string | null
+          id?: string
+          mood?: string | null
+          note?: string | null
+          pooped?: boolean | null
+          posted_by?: string | null
+          posted_by_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_daily_reports_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dog_activities: {
         Row: {
           body: string | null
@@ -493,12 +546,15 @@ export type Database = {
           created_at: string | null
           customer_notes: string | null
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
           gender: string | null
           id: string
           insurance_company: string | null
           insurance_number: string | null
           is_active: boolean
           locations: Json
+          medical_notes: string | null
           name: string
           notes: string | null
           owner: string
@@ -509,6 +565,8 @@ export type Database = {
           photo_url: string | null
           type: string | null
           updated_at: string | null
+          vet_name: string | null
+          vet_phone: string | null
         }
         Insert: {
           age: string
@@ -518,12 +576,15 @@ export type Database = {
           created_at?: string | null
           customer_notes?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           gender?: string | null
           id?: string
           insurance_company?: string | null
           insurance_number?: string | null
           is_active?: boolean
           locations?: Json
+          medical_notes?: string | null
           name: string
           notes?: string | null
           owner: string
@@ -534,6 +595,8 @@ export type Database = {
           photo_url?: string | null
           type?: string | null
           updated_at?: string | null
+          vet_name?: string | null
+          vet_phone?: string | null
         }
         Update: {
           age?: string
@@ -543,12 +606,15 @@ export type Database = {
           created_at?: string | null
           customer_notes?: string | null
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
           gender?: string | null
           id?: string
           insurance_company?: string | null
           insurance_number?: string | null
           is_active?: boolean
           locations?: Json
+          medical_notes?: string | null
           name?: string
           notes?: string | null
           owner?: string
@@ -559,6 +625,8 @@ export type Database = {
           photo_url?: string | null
           type?: string | null
           updated_at?: string | null
+          vet_name?: string | null
+          vet_phone?: string | null
         }
         Relationships: []
       }
