@@ -1,0 +1,22 @@
+{
+  "planPath": "docs/superpowers/plans/2026-05-18-remaining-themes.md",
+  "tasks": [
+    { "id": 0, "subject": "Task 1A: staff_working_today RPC", "status": "pending", "description": "SQL-migration för ny RPC. Returnerar dagens personalnamn. Se plan Task 1A." },
+    { "id": 1, "subject": "Task 1B: Idag jobbar-rad + StaffCard utan titlar", "status": "pending", "blockedBy": [0], "description": "HomeFeedTab rad ovanför NextDayCard + ta bort role-label. Se plan Task 1B." },
+    { "id": 2, "subject": "Task 1C: Kugghjul → AccountSettings-sheet", "status": "pending", "description": "Gear-knapp i CustomerHeader, AccountSettings i Sheet. Se plan Task 1C." },
+    { "id": 3, "subject": "Task 1D: Mer-flik i bottom-nav", "status": "pending", "description": "Ny MoreTab + 5:e flik på CustomerDogPage. Se plan Task 1D." },
+    { "id": 4, "subject": "Task 1E: Profil-fliken rensad", "status": "pending", "blockedBy": [2, 3], "description": "Ta bort 4 kort från Profil-fliken. Se plan Task 1E." },
+    { "id": 5, "subject": "Task 4A: Optimistic check-in/out", "status": "pending", "description": "TodayAttendanceTab optimistic UI. Se plan Task 4A." },
+    { "id": 6, "subject": "Task 4B: Filter + sortering", "status": "pending", "blockedBy": [5], "description": "Chips + sort i TodayAttendanceTab. Se plan Task 4B." },
+    { "id": 7, "subject": "Task 4C: Batch-action väntande", "status": "pending", "blockedBy": [5], "description": "Markera alla väntande som ankomna. Se plan Task 4C." },
+    { "id": 8, "subject": "Task 4D: Multi-report + collapsible", "status": "pending", "blockedBy": [5], "description": "Samma rapport flera hundar + collapsible sektioner. Se plan Task 4D." },
+    { "id": 9, "subject": "Task 2A: bookingPricing.ts", "status": "pending", "description": "Exakt pris-helper. Se plan Task 2A." },
+    { "id": 10, "subject": "Task 2B: BookingWizardSheet", "status": "pending", "blockedBy": [9], "description": "3-stegs wizard i sheet. Se plan Task 2B." },
+    { "id": 11, "subject": "Task 2C: BookingCalendar single button", "status": "pending", "blockedBy": [10], "description": "Byt ut två knappar mot en. Se plan Task 2C." },
+    { "id": 12, "subject": "Task 3A: messages.read_at migration", "status": "pending", "description": "DB-kolumn för read-receipts. Se plan Task 3A." },
+    { "id": 13, "subject": "Task 3B: markMessagesRead sätter read_at", "status": "pending", "blockedBy": [12], "description": "Backfill helpers. Se plan Task 3B." },
+    { "id": 14, "subject": "Task 3C: Receipts + grouping i MessagesTab", "status": "pending", "blockedBy": [13], "description": "Kund-chat UI. Se plan Task 3C." },
+    { "id": 15, "subject": "Task 3D: Receipts + grouping i MessagesAdminTab", "status": "pending", "blockedBy": [13], "description": "Admin-chat UI. Se plan Task 3D." }
+  ],
+  "lastUpdated": "2026-05-18T17:00:00Z"
+}
