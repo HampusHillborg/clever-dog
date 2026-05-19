@@ -87,73 +87,88 @@ workflows:
       - App-Simulator.zip
       - /tmp/xcodebuild_logs/*.log
 
-  ios-testflight:
-    name: iOS TestFlight
-    instance_type: mac_mini_m2
-    max_build_duration: 60
-    environment:
-      groups:
-        - app_store_connect
-        - cleverdog_supabase
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: se.cleverdog.kundportal
-      xcode: latest
-      cocoapods: default
-      node: 22
-    triggering:
-      events: [push]
-      branch_patterns:
-        - pattern: main
-          include: true
-    scripts:
-      - name: Install Node deps
-        script: npm ci
-      - name: Build customer-only web bundle
-        script: npm run app:build
-      - name: Add iOS platform if missing
-        script: |
-          if [ ! -d "ios" ]; then
-            npx cap add ios
-          else
-            npx cap sync ios
-          fi
-      - name: Patch Info.plist + entitlements
-        script: |
-          chmod +x scripts/patch-ios-config.sh
-          ./scripts/patch-ios-config.sh
-      - name: Generate iOS icon + splash assets
-        script: |
-          npx capacitor-assets generate --ios
-      - name: Drop in GoogleService-Info.plist if available
-        script: |
-          # Upload the file in Codemagic UI -> Teams -> Code signing identities
-          # OR Environment variables (as a file). When present, copy it into
-          # place so Firebase init succeeds at runtime. When absent, the
-          # build still works but push notifications will no-op.
-          if [ -n "${GOOGLE_SERVICE_INFO_PLIST:-}" ]; then
-            echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
-            echo "GoogleService-Info.plist installed."
-          else
-            echo "GOOGLE_SERVICE_INFO_PLIST not set — push notifications will no-op."
-          fi
-      - name: Install CocoaPods
-        script: |
-          cd ios/App
-          pod install
-      - name: Set up code signing
-        script: xcode-project use-profiles
-      - name: Build IPA
-        script: |
-          xcode-project build-ipa \
-            --workspace "$CM_BUILD_DIR/ios/App/App.xcworkspace" \
-            --scheme "App"
-    artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-        beta_groups:
-          - Internal Testers
+  # ─────────────────────────────────────────────────────────────────────
+  # ios-testflight är INAKTIV tills Apple Developer Program ($99/år) är på
+  # plats. När det är klart, gör så här för att aktivera:
+  #   1. Skaffa Apple Developer (developer.apple.com)
+  #   2. Skapa app-record i App Store Connect (bundle: se.cleverdog.kundportal)
+  #   3. Generera App Store Connect API-key (Users and Access → Keys)
+  #   4. I Codemagic UI → Teams → Integrations → App Store Connect:
+  #      Lägg in nyckel + key_id + issuer_id. Notera integrationens namn.
+  #   5. Avkommentera blocket nedan.
+  #   6. Lägg till en `integrations:` sektion under workflow med:
+  #          integrations:
+  #            app_store_connect: <ditt integration-namn>
+  #      (eller byt publishing.auth till "env-vars" och referera $APP_STORE_CONNECT_*-
+  #       vars från app_store_connect-env-gruppen)
+  #
+  # Tills dess: använd `android-internal` (klar) och `ios-simulator` (osignerad,
+  # manuellt-triggad) för att verifiera builds.
+  # ─────────────────────────────────────────────────────────────────────
+  #
+  # ios-testflight:
+  #   name: iOS TestFlight
+  #   instance_type: mac_mini_m2
+  #   max_build_duration: 60
+  #   environment:
+  #     groups:
+  #       - app_store_connect
+  #       - cleverdog_supabase
+  #     ios_signing:
+  #       distribution_type: app_store
+  #       bundle_identifier: se.cleverdog.kundportal
+  #     xcode: latest
+  #     cocoapods: default
+  #     node: 22
+  #   triggering:
+  #     events: [push]
+  #     branch_patterns:
+  #       - pattern: main
+  #         include: true
+  #   scripts:
+  #     - name: Install Node deps
+  #       script: npm ci
+  #     - name: Build customer-only web bundle
+  #       script: npm run app:build
+  #     - name: Add iOS platform if missing
+  #       script: |
+  #         if [ ! -d "ios" ]; then
+  #           npx cap add ios
+  #         else
+  #           npx cap sync ios
+  #         fi
+  #     - name: Patch Info.plist + entitlements
+  #       script: |
+  #         chmod +x scripts/patch-ios-config.sh
+  #         ./scripts/patch-ios-config.sh
+  #     - name: Generate iOS icon + splash assets
+  #       script: |
+  #         npx capacitor-assets generate --ios
+  #     - name: Drop in GoogleService-Info.plist if available
+  #       script: |
+  #         if [ -n "${GOOGLE_SERVICE_INFO_PLIST:-}" ]; then
+  #           echo "$GOOGLE_SERVICE_INFO_PLIST" > ios/App/App/GoogleService-Info.plist
+  #           echo "GoogleService-Info.plist installed."
+  #         else
+  #           echo "GOOGLE_SERVICE_INFO_PLIST not set — push notifications will no-op."
+  #         fi
+  #     - name: Install CocoaPods
+  #       script: |
+  #         cd ios/App
+  #         pod install
+  #     - name: Set up code signing
+  #       script: xcode-project use-profiles
+  #     - name: Build IPA
+  #       script: |
+  #         xcode-project build-ipa \
+  #           --workspace "$CM_BUILD_DIR/ios/App/App.xcworkspace" \
+  #           --scheme "App"
+  #   artifacts:
+  #     - build/ios/ipa/*.ipa
+  #     - /tmp/xcodebuild_logs/*.log
+  #   publishing:
+  #     app_store_connect:
+  #       auth: integration
+  #       submit_to_testflight: true
+  #       beta_groups:
+  #         - Internal Testers
