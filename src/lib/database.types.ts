@@ -69,6 +69,9 @@ export type Database = {
           owner_postal_code: string | null
           part_time_days: string | null
           problem_behaviors: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           service_type: string
           start_date: string | null
           status: string
@@ -104,6 +107,9 @@ export type Database = {
           owner_postal_code?: string | null
           part_time_days?: string | null
           problem_behaviors?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           service_type: string
           start_date?: string | null
           status?: string
@@ -139,6 +145,9 @@ export type Database = {
           owner_postal_code?: string | null
           part_time_days?: string | null
           problem_behaviors?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           service_type?: string
           start_date?: string | null
           status?: string
@@ -393,105 +402,32 @@ export type Database = {
         }
         Relationships: []
       }
-      dog_vaccinations: {
+      device_tokens: {
         Row: {
-          id: string
-          dog_id: string
-          vaccine_type: string
-          label: string | null
-          given_on: string | null
-          expires_on: string
-          notes: string | null
-          updated_by: string | null
           created_at: string | null
+          id: string
+          platform: string
+          token: string
           updated_at: string | null
+          user_id: string
         }
         Insert: {
-          id?: string
-          dog_id: string
-          vaccine_type: string
-          label?: string | null
-          given_on?: string | null
-          expires_on: string
-          notes?: string | null
-          updated_by?: string | null
           created_at?: string | null
+          id?: string
+          platform: string
+          token: string
           updated_at?: string | null
+          user_id: string
         }
         Update: {
-          id?: string
-          dog_id?: string
-          vaccine_type?: string
-          label?: string | null
-          given_on?: string | null
-          expires_on?: string
-          notes?: string | null
-          updated_by?: string | null
           created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dog_vaccinations_dog_id_fkey"
-            columns: ["dog_id"]
-            isOneToOne: false
-            referencedRelation: "dogs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      dog_daily_reports: {
-        Row: {
-          activity_level: string | null
-          created_at: string | null
-          date: string
-          dog_id: string
-          food_eaten: string | null
-          id: string
-          mood: string | null
-          note: string | null
-          pooped: boolean | null
-          posted_by: string | null
-          posted_by_name: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          activity_level?: string | null
-          created_at?: string | null
-          date: string
-          dog_id: string
-          food_eaten?: string | null
           id?: string
-          mood?: string | null
-          note?: string | null
-          pooped?: boolean | null
-          posted_by?: string | null
-          posted_by_name?: string | null
+          platform?: string
+          token?: string
           updated_at?: string | null
+          user_id?: string
         }
-        Update: {
-          activity_level?: string | null
-          created_at?: string | null
-          date?: string
-          dog_id?: string
-          food_eaten?: string | null
-          id?: string
-          mood?: string | null
-          note?: string | null
-          pooped?: boolean | null
-          posted_by?: string | null
-          posted_by_name?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dog_daily_reports_dog_id_fkey"
-            columns: ["dog_id"]
-            isOneToOne: false
-            referencedRelation: "dogs"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       dog_activities: {
         Row: {
@@ -584,32 +520,105 @@ export type Database = {
           },
         ]
       }
-      device_tokens: {
+      dog_daily_reports: {
+        Row: {
+          activity_level: string | null
+          created_at: string | null
+          date: string
+          dog_id: string
+          food_eaten: string | null
+          id: string
+          mood: string | null
+          note: string | null
+          pooped: boolean | null
+          posted_by: string | null
+          posted_by_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activity_level?: string | null
+          created_at?: string | null
+          date: string
+          dog_id: string
+          food_eaten?: string | null
+          id?: string
+          mood?: string | null
+          note?: string | null
+          pooped?: boolean | null
+          posted_by?: string | null
+          posted_by_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activity_level?: string | null
+          created_at?: string | null
+          date?: string
+          dog_id?: string
+          food_eaten?: string | null
+          id?: string
+          mood?: string | null
+          note?: string | null
+          pooped?: boolean | null
+          posted_by?: string | null
+          posted_by_name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dog_daily_reports_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dog_vaccinations: {
         Row: {
           created_at: string | null
+          dog_id: string
+          expires_on: string
+          given_on: string | null
           id: string
-          platform: string
-          token: string
+          label: string | null
+          notes: string | null
           updated_at: string | null
-          user_id: string
+          updated_by: string | null
+          vaccine_type: string
         }
         Insert: {
           created_at?: string | null
+          dog_id: string
+          expires_on: string
+          given_on?: string | null
           id?: string
-          platform: string
-          token: string
+          label?: string | null
+          notes?: string | null
           updated_at?: string | null
-          user_id: string
+          updated_by?: string | null
+          vaccine_type: string
         }
         Update: {
           created_at?: string | null
+          dog_id?: string
+          expires_on?: string
+          given_on?: string | null
           id?: string
-          platform?: string
-          token?: string
+          label?: string | null
+          notes?: string | null
           updated_at?: string | null
-          user_id?: string
+          updated_by?: string | null
+          vaccine_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "dog_vaccinations_dog_id_fkey"
+            columns: ["dog_id"]
+            isOneToOne: false
+            referencedRelation: "dogs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       dogs: {
         Row: {
@@ -804,6 +813,7 @@ export type Database = {
           dog_id: string | null
           id: string
           is_read: boolean | null
+          read_at: string | null
           sender_name: string | null
           sender_role: string
           sender_user_id: string | null
@@ -815,6 +825,7 @@ export type Database = {
           dog_id?: string | null
           id?: string
           is_read?: boolean | null
+          read_at?: string | null
           sender_name?: string | null
           sender_role: string
           sender_user_id?: string | null
@@ -826,6 +837,7 @@ export type Database = {
           dog_id?: string | null
           id?: string
           is_read?: boolean | null
+          read_at?: string | null
           sender_name?: string | null
           sender_role?: string
           sender_user_id?: string | null
@@ -1022,10 +1034,51 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      claim_customer_invite: { Args: never; Returns: unknown }
+      chat_thread_customers: {
+        Args: { p_customer_id: string }
+        Returns: string[]
+      }
+      claim_customer_invite: {
+        Args: never
+        Returns: {
+          accepted_at: string | null
+          address: string | null
+          auth_user_id: string | null
+          city: string | null
+          created_at: string | null
+          email: string
+          id: string
+          invite_status: string
+          invited_at: string | null
+          name: string
+          personal_number: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+      }
       current_customer_id: { Args: never; Returns: string }
+      customer_sees_dog: { Args: { p_dog_id: string }; Returns: boolean }
+      customer_sees_thread: {
+        Args: { p_thread_owner_id: string }
+        Returns: boolean
+      }
+      dog_co_owners: { Args: { p_dog_id: string }; Returns: string[] }
       get_user_role: { Args: { user_id: string }; Returns: string }
       is_admin_user: { Args: never; Returns: boolean }
+      staff_directory: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+          role: string
+        }[]
+      }
+      staff_working_today: {
+        Args: { loc?: string }
+        Returns: {
+          name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
