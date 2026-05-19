@@ -22,7 +22,7 @@ workflows:
           include: true
     scripts:
       - name: Install Node deps
-        script: npm ci
+        script: npm ci --legacy-peer-deps
       - name: Build customer-only web bundle
         script: npm run app:build
       - name: Sync to Android project
@@ -56,7 +56,7 @@ workflows:
     # via "Start new build" when you want to verify the iOS build compiles.
     scripts:
       - name: Install Node deps
-        script: npm ci
+        script: npm ci --legacy-peer-deps
       - name: Build customer-only web bundle
         script: npm run app:build
       - name: Sync Capacitor iOS project
