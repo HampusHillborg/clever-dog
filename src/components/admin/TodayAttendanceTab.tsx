@@ -11,6 +11,8 @@ import AddDogToTodayModal from './AddDogToTodayModal';
 import DailyReportModal from './DailyReportModal';
 import { tapMedium } from '../../lib/haptics';
 import { showToast } from '../customer/NotificationToast';
+import { getDayCapacityOverview, capacityLevel, type DayCapacity } from '../../lib/capacity';
+import { todayLocalIso } from '../../lib/localDate';
 
 const typeLabel = (t: string | undefined): string => {
   if (t === 'boarding') return 'Pensionat';
@@ -78,6 +80,7 @@ function sortEntries(arr: AttendanceEntry[], sort: SortType): AttendanceEntry[] 
 
 export default function TodayAttendanceTab() {
   const [entries, setEntries] = useState<AttendanceEntry[]>([]);
+  const [todayCap, setTodayCap] = useState<DayCapacity | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [justCheckedIn, setJustCheckedIn] = useState<string | null>(null);
@@ -94,7 +97,13 @@ export default function TodayAttendanceTab() {
   });
 
   const refresh = async () => setEntries(await getTodaysScheduledDogs());
-  useEffect(() => { refresh().finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    refresh().finally(() => setLoading(false));
+    const today = todayLocalIso();
+    getDayCapacityOverview(today, today).then(rows => {
+      setTodayCap(rows[0] ?? null);
+    });
+  }, []);
 
   // Load persisted filter/sort/collapsed
   useEffect(() => {
@@ -233,7 +242,20 @@ export default function TodayAttendanceTab() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">{todayStr}</p>
-          <h2 className="text-2xl font-bold tracking-tight">Idag · {entries.length} hundar</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Idag · {entries.length} hundar
+            {todayCap && todayCap.hard_limit != null && (
+              <span className={`ml-2 text-base font-semibold ${
+                capacityLevel(todayCap) === 'full'
+                  ? 'text-red-600'
+                  : capacityLevel(todayCap) === 'busy'
+                    ? 'text-yellow-600'
+                    : 'text-green-600'
+              }`}>
+                ({todayCap.booked}/{todayCap.hard_limit})
+              </span>
+            )}
+          </h2>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <Pill color="yellow" label={`${pending.length} att checka in`} />

@@ -13,6 +13,7 @@ import { getClosures } from '../../lib/closures';
 import { tapLight, notifySuccess } from '../../lib/haptics';
 import { todayLocalIso } from '../../lib/localDate';
 import { BTN } from '../../lib/uiTokens';
+import { getDayCapacityOverview, capacityLevel, type DayCapacity } from '../../lib/capacity';
 import BookingWizardSheet from './BookingWizardSheet';
 
 // Days/week the customer may self-book for part-time dogs. Null for
@@ -101,6 +102,7 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState<false | 'single' | 'boarding'>(false);
   const [closures, setClosures] = useState<Map<string, string>>(new Map());
+  const [capMap, setCapMap] = useState<Map<string, DayCapacity>>(new Map());
 
   const refresh = async () => {
     setLoading(true);
@@ -108,12 +110,16 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
     const pad = (n: number) => n.toString().padStart(2, '0');
     const startIso = `${year}-${pad(month + 1)}-01`;
     const endIso = `${year}-${pad(month + 1)}-${pad(lastDay)}`;
-    const [d, c] = await Promise.all([
+    const [d, c, capRows] = await Promise.all([
       getDaysForMonth(dog.id, year, month),
       getClosures(startIso, endIso),
+      getDayCapacityOverview(startIso, endIso),
     ]);
     setDays(d);
     setClosures(c);
+    const m = new Map<string, DayCapacity>();
+    for (const r of capRows) m.set(r.date, r);
+    setCapMap(m);
     setLoading(false);
   };
 
@@ -272,6 +278,12 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
             const labelClass = halfDay
               ? 'text-[9px] font-semibold leading-tight mt-0.5 truncate w-full text-amber-800'
               : 'text-[8px] leading-tight mt-0.5 truncate w-full';
+
+            // Capacity dot
+            const cap = capMap.get(d.date);
+            const capLvl = cap ? capacityLevel(cap) : null;
+            const capDotColor = capLvl === 'full' ? 'bg-red-500' : capLvl === 'busy' ? 'bg-yellow-500' : capLvl === 'free' ? 'bg-green-500' : null;
+
             return (
               <button
                 key={d.date}
@@ -284,6 +296,9 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
                   {dayNum}
                 </span>
                 {label && <span className={labelClass}>{label}</span>}
+                {capDotColor && !closed && (
+                  <span className={`w-1.5 h-1.5 rounded-full mt-0.5 shrink-0 ${capDotColor}`} />
+                )}
               </button>
             );
           })}
