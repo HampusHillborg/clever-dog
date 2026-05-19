@@ -193,18 +193,19 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
                       }`}
                     >
                       <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
-
-                      {showTimestamp && (
-                        <p className={`text-[10px] mt-1 opacity-60 ${isMine ? 'text-white text-right' : 'text-gray-500'}`}>
-                          {m.created_at ? formatTime(m.created_at) : ''}
-                        </p>
-                      )}
                     </div>
 
                     {/* "om {hund}"-label for cross-dog messages */}
                     {otherDogName && (
                       <p className="text-[10px] text-gray-400 italic mt-0.5 px-1">
                         om {otherDogName}
+                      </p>
+                    )}
+
+                    {/* Tidsstämpel utanför bubblan — bara för personalmeddelanden */}
+                    {showTimestamp && !isMine && m.created_at && (
+                      <p className="text-[10px] text-gray-400 mt-0.5 px-1">
+                        {formatTime(m.created_at)}
                       </p>
                     )}
 
