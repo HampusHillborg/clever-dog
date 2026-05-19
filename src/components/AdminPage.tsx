@@ -51,6 +51,7 @@ import StatsTab from './admin/StatsTab';
 import TodayAttendanceTab from './admin/TodayAttendanceTab';
 import EconomyTab from './admin/EconomyTab';
 import ClosuresAdminTab from './admin/ClosuresAdminTab';
+import CapacityTab from './admin/CapacityTab';
 import OwnerInput from './admin/OwnerInput';
 import { useAdminBadges } from './admin/useAdminBadges';
 import { sendNotification } from '../lib/notifications';
@@ -164,7 +165,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats' | 'today' | 'economy' | 'staffanstorp-hub' | 'closures';
+type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats' | 'today' | 'economy' | 'staffanstorp-hub' | 'closures' | 'capacity';
 type StaffanstorpSubTab = 'planning' | 'calendar' | 'boarding';
 
 type UserRole = 'admin' | 'employee' | 'platschef';
@@ -3584,6 +3585,19 @@ const AdminPage: React.FC = () => {
                   </div>
                   <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Stängda dagar</h4>
                   <p className="text-center text-gray-600 text-xs sm:text-sm">Semestrar &amp; egna stängningar</p>
+                </div>
+              )}
+
+              {(userRole === 'admin' || userRole === 'platschef') && (
+                <div
+                  onClick={() => setCurrentView('capacity')}
+                  className="relative bg-white rounded-xl shadow-lg p-4 sm:p-6 cursor-pointer hover:shadow-xl transition-all duration-200 border-2 border-transparent hover:border-orange-200 active:scale-95 sm:hover:scale-105"
+                >
+                  <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4 mx-auto">
+                    <FaChartBar className="text-orange-600 text-xl sm:text-2xl" />
+                  </div>
+                  <h4 className="text-base sm:text-lg font-bold text-center text-gray-900 mb-2">Kapacitet</h4>
+                  <p className="text-center text-gray-600 text-xs sm:text-sm">Soft/hard-limits per veckodag</p>
                 </div>
               )}
 
@@ -7777,6 +7791,8 @@ const AdminPage: React.FC = () => {
         return renderStaffanstorpHub();
       case 'closures':
         return (userRole === 'admin' || userRole === 'platschef') ? <ClosuresAdminTab /> : renderDashboard();
+      case 'capacity':
+        return (userRole === 'admin' || userRole === 'platschef') ? <CapacityTab /> : renderDashboard();
       default:
         return renderDashboard();
     }
@@ -8249,6 +8265,7 @@ const AdminPage: React.FC = () => {
                                                     currentView === 'economy' ? 'Ekonomi' :
                                                       currentView === 'staffanstorp-hub' ? 'Staffanstorp' :
                                                         currentView === 'closures' ? 'Stängda dagar' :
+                                                          currentView === 'capacity' ? 'Kapacitet' :
                                                           'Dashboard'}
               </h1>
               <div className="ml-auto sm:ml-4">
