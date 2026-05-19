@@ -11,6 +11,7 @@ import { todayLocalIso } from '../../lib/localDate';
 import { calcBookingPrice, type BookingTypeKind } from '../../lib/bookingPricing';
 import { PRICES } from '../../lib/prices';
 import type { Dog } from '../../lib/customerApi';
+import { getDayCapacityOverview, capacityLevel, type DayCapacity, type CapacityLevel } from '../../lib/capacity';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -109,13 +110,22 @@ type MiniCalendarProps = {
   end: string | null;
   onPickStart: (d: string) => void;
   onPickEnd: (d: string) => void;
+  /** Callback to warn about soft-limit before confirming a date. */
+  onSoftWarn?: (iso: string, confirm: () => void) => void;
 };
 
-function MiniCalendar({ kind, start, end, onPickStart, onPickEnd }: MiniCalendarProps) {
+const CAP_DOT: Record<CapacityLevel, string> = {
+  free: 'bg-green-500',
+  busy: 'bg-yellow-500',
+  full: 'bg-red-500',
+};
+
+function MiniCalendar({ kind, start, end, onPickStart, onPickEnd, onSoftWarn }: MiniCalendarProps) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-indexed
   const [closures, setClosures] = useState<Set<string>>(new Set());
+  const [capMap, setCapMap] = useState<Map<string, DayCapacity>>(new Map());
 
   const todayIso = todayLocalIso();
   const range = isRangeType(kind);
@@ -125,6 +135,11 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd }: MiniCalendar
     const startIso = isoDate(year, month + 1, 1);
     const endIso = isoDate(year, month + 1, lastDay);
     getClosures(startIso, endIso).then(map => setClosures(new Set(map.keys())));
+    getDayCapacityOverview(startIso, endIso).then(rows => {
+      const m = new Map<string, DayCapacity>();
+      for (const r of rows) m.set(r.date, r);
+      setCapMap(m);
+    });
   }, [year, month]);
 
   const prevMonth = () => {
@@ -140,23 +155,30 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd }: MiniCalendar
   const firstWeekday = toMonFirst(new Date(year, month, 1).getDay());
 
   const handleCellTap = (iso: string) => {
-    if (!range) {
-      onPickStart(iso);
-      return;
-    }
-    // Range mode: first tap = start, second tap = end (must be >= start).
-    if (!start || (start && end)) {
-      // Reset and set new start.
-      onPickStart(iso);
-      onPickEnd('');
-      return;
-    }
-    if (iso < start) {
-      // Tapped before start → reset, make this the new start.
-      onPickStart(iso);
-      onPickEnd('');
+    const cap = capMap.get(iso);
+    const level = cap ? capacityLevel(cap) : 'free';
+
+    const doPickSingle = () => {
+      if (!range) {
+        onPickStart(iso);
+      } else {
+        if (!start || (start && end)) {
+          onPickStart(iso);
+          onPickEnd('');
+        } else if (iso < start) {
+          onPickStart(iso);
+          onPickEnd('');
+        } else {
+          onPickEnd(iso);
+        }
+      }
+    };
+
+    if (level === 'busy' && onSoftWarn) {
+      // Show warning, let callback confirm
+      onSoftWarn(iso, doPickSingle);
     } else {
-      onPickEnd(iso);
+      doPickSingle();
     }
   };
 
@@ -212,11 +234,19 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd }: MiniCalendar
           const isEnd = iso === end;
           const inRange = isInRange(iso);
           const isToday = iso === todayIso;
-          const disabled = isPast || isClosed;
 
-          let cellClass = 'aspect-square min-h-[36px] min-w-[36px] rounded-lg flex items-center justify-center text-xs font-medium transition-all border ';
+          // Capacity
+          const cap = capMap.get(iso);
+          const level = cap ? capacityLevel(cap) : null;
+          const isFull = level === 'full';
 
-          if (disabled) {
+          const disabled = isPast || isClosed || isFull;
+
+          let cellClass = 'aspect-square min-h-[40px] min-w-[40px] rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-all border relative ';
+
+          if (isFull) {
+            cellClass += 'opacity-40 pointer-events-none border-red-100 text-red-300 ';
+          } else if (disabled) {
             cellClass += 'opacity-30 pointer-events-none border-gray-100 text-gray-400 ';
           } else if (isStart || isEnd) {
             cellClass += 'bg-primary text-white border-primary shadow-sm ';
@@ -228,16 +258,22 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd }: MiniCalendar
             cellClass += 'border-gray-200 text-gray-800 hover:bg-gray-50 hover:border-gray-300 ';
           }
 
+          const dotColor = level ? CAP_DOT[level] : null;
+          const fullTitle = isFull ? 'Dagiset är fullt detta datum' : (isClosed && !isPast ? 'Stängt' : undefined);
+
           return (
             <button
               key={iso}
               onClick={() => !disabled && handleCellTap(iso)}
               disabled={disabled}
               className={cellClass}
-              title={isClosed && !isPast ? 'Stängt' : undefined}
+              title={fullTitle}
               aria-label={iso}
             >
-              {d}
+              <span className="leading-none">{d}</span>
+              {dotColor && !isPast && (
+                <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${dotColor}`} />
+              )}
             </button>
           );
         })}
@@ -301,6 +337,9 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
   const [endDate, setEndDate] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [customerId, setCustomerId] = useState<string | null>(null);
+  // Soft-limit warning modal
+  const [softWarnDate, setSoftWarnDate] = useState<string | null>(null);
+  const [softWarnConfirm, setSoftWarnConfirm] = useState<(() => void) | null>(null);
 
   // Load customer ID once.
   useEffect(() => {
@@ -430,6 +469,21 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
     </div>
   );
 
+  const handleSoftWarn = (iso: string, confirm: () => void) => {
+    setSoftWarnDate(iso);
+    setSoftWarnConfirm(() => confirm);
+  };
+
+  const closeSoftWarn = () => {
+    setSoftWarnDate(null);
+    setSoftWarnConfirm(null);
+  };
+
+  const confirmSoftWarn = () => {
+    if (softWarnConfirm) softWarnConfirm();
+    closeSoftWarn();
+  };
+
   const renderStep2 = () => (
     <div className="px-5 pb-5">
       <MiniCalendar
@@ -438,6 +492,7 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
         end={endDate}
         onPickStart={setStartDate}
         onPickEnd={setEndDate}
+        onSoftWarn={handleSoftWarn}
       />
 
       <div className="flex gap-2 mt-5">
@@ -555,20 +610,59 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
       ? `Boka enstaka dag — ${stepTitle}`
       : `Boka ny dag eller pensionat — ${stepTitle}`;
 
+  const softWarnDateFmt = softWarnDate
+    ? new Date(softWarnDate + 'T00:00:00').toLocaleDateString('sv-SE', {
+        weekday: 'long', day: 'numeric', month: 'long',
+      })
+    : '';
+
   return (
-    <Sheet
-      open={open}
-      onClose={onClose}
-      title={sheetTitle}
-      blockBackdropClose={step === 3}
-    >
-      <div className="pt-3">
-        {!initialType && <StepDots step={step} />}
-        {step === 1 && renderStep1()}
-        {step === 2 && selectedKind && renderStep2()}
-        {step === 3 && selectedKind && startDate && renderStep3()}
-      </div>
-    </Sheet>
+    <>
+      <Sheet
+        open={open}
+        onClose={onClose}
+        title={sheetTitle}
+        blockBackdropClose={step === 3}
+      >
+        <div className="pt-3">
+          {!initialType && <StepDots step={step} />}
+          {step === 1 && renderStep1()}
+          {step === 2 && selectedKind && renderStep2()}
+          {step === 3 && selectedKind && startDate && renderStep3()}
+        </div>
+      </Sheet>
+
+      {/* Soft-limit warning modal */}
+      <Sheet
+        open={!!softWarnDate}
+        onClose={closeSoftWarn}
+        title="Många hundar denna dag"
+      >
+        <div className="px-5 py-5 space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-yellow-100 text-yellow-700 flex items-center justify-center mx-auto text-xl">
+            ⚠️
+          </div>
+          <p className="text-sm text-gray-700 text-center">
+            Vi har redan en del hundar inbokade <span className="font-semibold">{softWarnDateFmt}</span>.
+            Om du kan välja en lugnare dag uppskattar vi det!
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={closeSoftWarn}
+              className={`${BTN.secondary} flex-1`}
+            >
+              Välj annan dag
+            </button>
+            <button
+              onClick={confirmSoftWarn}
+              className={`${BTN.primary} flex-1`}
+            >
+              Boka ändå
+            </button>
+          </div>
+        </div>
+      </Sheet>
+    </>
   );
 }
 
