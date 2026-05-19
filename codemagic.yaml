@@ -1,7 +1,10 @@
 workflows:
   android-internal:
     name: Android Internal Testing
-    instance_type: linux_x2
+    # Free personal Codemagic plan only includes macOS minutes; Linux
+    # instances require a paid subscription. Android builds run fine on
+    # mac_mini_m2 (gradle/JVM is cross-platform), just slightly slower.
+    instance_type: mac_mini_m2
     max_build_duration: 60
     environment:
       groups:
