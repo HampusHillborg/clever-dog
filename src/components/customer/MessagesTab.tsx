@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaPaperPlane, FaCommentDots } from 'react-icons/fa';
 import type { Dog } from '../../lib/customerApi';
-import { getMyMessages, sendMessage, markMessagesRead, type Message } from '../../lib/customerApi';
+import {
+  getMyChatMessages,
+  getMyDogs,
+  sendMessage,
+  markMessagesRead,
+  getChatThreadMemberCount,
+  type Message,
+} from '../../lib/customerApi';
 import { sendNotification } from '../../lib/notifications';
 import { tapLight } from '../../lib/haptics';
 
@@ -13,21 +20,42 @@ const formatTime = (iso: string): string => {
   return d.toLocaleString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 };
 
+const firstNameOf = (fullName: string | null | undefined): string => {
+  if (!fullName) return 'Kund';
+  return fullName.split(' ')[0];
+};
+
 export default function MessagesTab({ dog }: { dog: Dog }) {
   const [items, setItems] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [coOwnerCount, setCoOwnerCount] = useState(1);
+  const [dogNameMap, setDogNameMap] = useState<Record<string, string>>({});
   const endRef = useRef<HTMLDivElement>(null);
 
   const refresh = async () => {
-    const msgs = await getMyMessages(dog.id);
+    const msgs = await getMyChatMessages();
     setItems(msgs);
     setLoading(false);
     const unreadStaffIds = msgs.filter(m => m.sender_role === 'staff' && !m.is_read).map(m => m.id);
     if (unreadStaffIds.length > 0) markMessagesRead(unreadStaffIds);
   };
 
+  useEffect(() => {
+    refresh();
+    getChatThreadMemberCount().then(setCoOwnerCount);
+    // Build dog name map for "om {hund}"-pill on messages with a dog_id
+    // that differs from the currently active dog.
+    getMyDogs().then(dogs => {
+      const map: Record<string, string> = {};
+      for (const d of dogs) map[d.id] = d.name;
+      setDogNameMap(map);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-fetch when active dog tab changes (dog_id context for outbound messages).
   useEffect(() => { refresh(); }, [dog.id]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [items.length]);
 
@@ -36,6 +64,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     tapLight();
     setSending(true);
     try {
+      // Attach current dog as context so staff sees which dog tab was active.
       const created = await sendMessage({ dog_id: dog.id, body: text });
       sendNotification({ kind: 'customer_message', message_id: created.id });
       setText('');
@@ -59,6 +88,11 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
             const prev = items[idx - 1];
             const sameAuthor = prev?.sender_role === m.sender_role;
             const isMine = m.sender_role === 'customer';
+            // Show "om {hund}"-pill when the message has a dog_id that differs
+            // from the currently active dog.
+            const otherDogName = m.dog_id && m.dog_id !== dog.id
+              ? (dogNameMap[m.dog_id] ?? null)
+              : null;
             return (
               <div
                 key={m.id}
@@ -76,10 +110,22 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
                       {m.sender_name ?? 'Personal'}
                     </p>
                   )}
+                  {/* Sender attribution for co-owner customer messages */}
+                  {isMine && coOwnerCount >= 2 && (!sameAuthor || !prev) && (
+                    <p className="text-[11px] font-semibold text-white/80 mb-0.5">
+                      {firstNameOf(m.sender_name)}
+                    </p>
+                  )}
                   <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
                   <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
                     {m.created_at ? formatTime(m.created_at) : ''}
                   </p>
+                  {/* "om {hund}"-pill when message context differs from active dog */}
+                  {otherDogName && (
+                    <p className={`text-[10px] mt-0.5 ${isMine ? 'text-white/60' : 'text-gray-400'}`}>
+                      om {otherDogName}
+                    </p>
+                  )}
                 </div>
               </div>
             );

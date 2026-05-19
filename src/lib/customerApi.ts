@@ -80,6 +80,8 @@ export const uploadDogPhoto = async (dogId: string, file: File): Promise<string>
   return url;
 };
 
+// Legacy: per-dog filter. Kept for backward-compat; new code should use
+// getMyChatMessages() instead.
 export const getMyMessages = async (dogId?: string): Promise<Message[]> => {
   if (!supabase) return [];
   // Show messages for this dog AND any general messages (dog_id IS NULL),
@@ -89,6 +91,45 @@ export const getMyMessages = async (dogId?: string): Promise<Message[]> => {
   const { data, error } = await query;
   if (error) { console.error('getMyMessages', error); return []; }
   return data ?? [];
+};
+
+// Returnera alla meddelanden jag kan se (min tråd + co-owners trådar
+// via shared-dog RLS). RLS gör filtreringen.
+export const getMyChatMessages = async (): Promise<Message[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: true });
+  if (error) { console.error('getMyChatMessages', error); return []; }
+  return (data ?? []) as Message[];
+};
+
+// Internal: läs min customer_id från customers-tabellen.
+const getMyCustomerId = async (): Promise<string | null> => {
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc('current_customer_id');
+  if (error) { console.error('getMyCustomerId', error); return null; }
+  return (data as string | null) ?? null;
+};
+
+// Räkna unika customers i min chat-tråd (dvs. mig + co-owners som delar hund).
+// Returnerar >= 1; om > 1 bör sender-attribution visas i chatten.
+export const getChatThreadMemberCount = async (): Promise<number> => {
+  if (!supabase) return 1;
+  const myId = await getMyCustomerId();
+  if (!myId) return 1;
+  // chat_thread_customers returnerar setof uuid som en array av objekt
+  // med nyckeln "chat_thread_customers".
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: unknown[] | null; error: unknown }>)(
+    'chat_thread_customers',
+    { p_customer_id: myId },
+  );
+  if (error) { console.error('getChatThreadMemberCount', error); return 1; }
+  return (data ?? []).length;
 };
 
 export const sendMessage = async (params: { dog_id?: string | null; body: string }): Promise<Message> => {
