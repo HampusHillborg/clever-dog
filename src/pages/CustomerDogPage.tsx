@@ -78,6 +78,14 @@ export default function CustomerDogPage() {
     navigate('/login', { replace: true });
   };
 
+  // After the delete-account edge function removes the auth.users row, the
+  // local session token is invalid. Clear it locally so any cached state goes
+  // away, then bounce to login.
+  const handleAccountDeleted = async () => {
+    await signOutCustomer();
+    navigate('/login', { replace: true, state: { accountDeleted: true } });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-light pb-24">
@@ -188,6 +196,7 @@ export default function CustomerDogPage() {
             dog={dog}
             onUpdateDog={setDog}
             onLogout={logout}
+            onAccountDeleted={handleAccountDeleted}
             onShowOnboarding={() => setShowOnboarding(true)}
           />
         )}

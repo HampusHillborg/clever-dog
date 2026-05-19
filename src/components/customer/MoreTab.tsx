@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   FaPaw, FaFileContract, FaClipboardList, FaUsers, FaQuestionCircle,
-  FaSignOutAlt, FaChevronRight, FaKey,
+  FaSignOutAlt, FaChevronRight, FaKey, FaUserSlash,
 } from 'react-icons/fa';
 import Sheet from '../shared/Sheet';
 import ContractView from './ContractView';
@@ -9,6 +9,7 @@ import DailyReportsHistory from './DailyReportsHistory';
 import StaffDirectoryCard from './StaffDirectoryCard';
 import DogProfileSheet from './DogProfileSheet';
 import AccountSettingsCard from './AccountSettingsCard';
+import DeleteAccountSheet from './DeleteAccountSheet';
 import type { Dog } from '../../lib/customerApi';
 
 const STORAGE_KEY = 'cleverdog-onboarding-v1';
@@ -25,10 +26,11 @@ type MoreTabProps = {
   dog: Dog;
   onUpdateDog: (d: Dog) => void;
   onLogout: () => void;
+  onAccountDeleted: () => void;
   onShowOnboarding: () => void;
 };
 
-type OpenSheet = 'dog' | 'contract' | 'reports' | 'staff' | 'password' | null;
+type OpenSheet = 'dog' | 'contract' | 'reports' | 'staff' | 'password' | 'delete-account' | null;
 
 function MoreRow({
   icon,
@@ -88,7 +90,7 @@ function DogHero({ dog }: { dog: Dog }) {
   );
 }
 
-export default function MoreTab({ dog, onUpdateDog, onLogout, onShowOnboarding }: MoreTabProps) {
+export default function MoreTab({ dog, onUpdateDog, onLogout, onAccountDeleted, onShowOnboarding }: MoreTabProps) {
   const [openSheet, setOpenSheet] = useState<OpenSheet>(null);
 
   const handleShowOnboarding = () => {
@@ -147,6 +149,16 @@ export default function MoreTab({ dog, onUpdateDog, onLogout, onShowOnboarding }
         />
       </div>
 
+      <div className="bg-white rounded-2xl shadow-card mt-3">
+        <MoreRow
+          icon={<FaUserSlash />}
+          label="Radera konto"
+          sublabel="Tar bort din profil och din data permanent"
+          onClick={() => setOpenSheet('delete-account')}
+          danger
+        />
+      </div>
+
       {/* Hundinfo & hälsa-sheet — iOS Settings-stil */}
       <Sheet open={openSheet === 'dog'} onClose={() => setOpenSheet(null)} title="Hundinfo & hälsa">
         <DogProfileSheet dog={dog} onUpdate={onUpdateDog} />
@@ -176,6 +188,11 @@ export default function MoreTab({ dog, onUpdateDog, onLogout, onShowOnboarding }
       {/* Byt lösenord-sheet */}
       <Sheet open={openSheet === 'password'} onClose={() => setOpenSheet(null)} title="Byt lösenord">
         <AccountSettingsCard />
+      </Sheet>
+
+      {/* Radera konto-sheet (Apple/Play-krav: in-app account deletion) */}
+      <Sheet open={openSheet === 'delete-account'} onClose={() => setOpenSheet(null)} title="Radera konto">
+        <DeleteAccountSheet onDeleted={onAccountDeleted} />
       </Sheet>
     </div>
   );

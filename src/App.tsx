@@ -9,6 +9,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'))
 const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'))
 const CustomerDashboardPage = lazy(() => import('./pages/CustomerDashboardPage'))
 const CustomerDogPage = lazy(() => import('./pages/CustomerDogPage'))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 import { BookingProvider } from './components/BookingContext'
 import './App.css'
 
@@ -44,6 +45,12 @@ function App() {
               <Suspense fallback={<Loading />}>
                 <ProtectedCustomerRoute><CustomerDogPage /></ProtectedCustomerRoute>
               </Suspense>
+            } />
+            <Route path="/privacy" element={
+              <Suspense fallback={<Loading />}><PrivacyPolicyPage /></Suspense>
+            } />
+            <Route path="/integritetspolicy" element={
+              <Suspense fallback={<Loading />}><PrivacyPolicyPage /></Suspense>
             } />
           </Routes>
         </BrowserRouter>
