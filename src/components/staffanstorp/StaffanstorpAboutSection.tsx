@@ -23,18 +23,45 @@ const StaffanstorpAboutSection: React.FC = () => {
             </p>
           </div>
 
-          {/* Biography Section */}
-          <div className="mb-12">
-            <div className="max-w-3xl mx-auto text-center">
-              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-                {t('about.bio')}
-              </p>
-              <p className="text-lg text-gray-700 mb-6 leading-relaxed">
-                {t('about.bio2')}
-              </p>
-              <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-                {t('about.bio3')}
-              </p>
+          {/* Team Profile Cards */}
+          <div className="mb-12 max-w-3xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { key: 'alicja', img: '/images/alicja.jpeg' },
+                { key: 'nicole', img: '/images/nicole.jpeg' },
+              ].map(({ key, img }, idx) => (
+                <motion.div
+                  key={key}
+                  className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100 flex flex-col text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1, duration: 0.5 }}
+                  whileHover={{ y: -4 }}
+                >
+                  <div className="pt-6 flex justify-center">
+                    <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-orange-100 bg-gray-100">
+                      <img
+                        src={img}
+                        alt={t(`about.${key}.name`)}
+                        loading="lazy"
+                        className="w-full h-full object-cover object-top"
+                      />
+                    </div>
+                  </div>
+                  <div className="p-6 flex flex-col flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                      {t(`about.${key}.name`)}
+                    </h3>
+                    <p className="text-orange-600 font-semibold text-sm mb-3">
+                      {t(`about.${key}.role`)}
+                    </p>
+                    <p className="text-gray-700 text-sm leading-relaxed">
+                      {t(`about.${key}.bio`)}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
 

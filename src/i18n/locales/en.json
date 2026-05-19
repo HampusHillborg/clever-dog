@@ -20,10 +20,20 @@
       "contact": "Contact"
     },
     "about": {
-      "title": "About Me",
+      "title": "About Us",
       "bio": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Staffanstorp at Malmövägen 7, where safety and joy are at the center for every dog.",
       "bio2": "Together with my 3-year-old Shiba Inu, I create a calm and loving environment for dogs to develop in. Later this year, I will also offer dog grooming as part of the business.",
       "bio3": "With our strategic location just 10 minutes from Lund and 15 minutes from Malmö, we offer dog owners throughout the region convenient and accessible high-quality dog care.",
+      "alicja": {
+        "name": "Alicja",
+        "role": "Dog Behaviorist",
+        "bio": "My name is Alicja and I am a certified dog behaviorist with a big heart for our four-legged friends. I run Clever Dog in Staffanstorp, where safety, joy and individual care are at the center for every dog. Together with my 3-year-old Shiba Inu, Reya, I create a calm and loving environment where every dog can develop at its own pace."
+      },
+      "nicole": {
+        "name": "Nicole",
+        "role": "Dog Trainer",
+        "bio": "My name is Nicole and I have several years of experience working in the dog industry. I care about every individual and strive to meet their daily needs so they can feel their very best. I am a trained dog handler and agility instructor, and I compete in agility myself with my Australian Shepherd Kriga."
+      },
       "bioMalmo": "We are a team of trained staff with big hearts for our four-legged friends. We run Clever Dog in Malmö Videdal, where safety and joy are at the center for every dog.",
       "bio2Malmo": "Together we create a calm and loving environment for dogs to develop in. Our new, larger location in Malmö focuses on daycare services and social training with multiple trained staff members.",
       "bio3Malmo": "With our central location in Malmö, we offer dog owners in the Malmö area convenient and accessible high-quality dog care in our modern, spacious facility.",

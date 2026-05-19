@@ -20,10 +20,20 @@
       "contact": "Kontakt"
     },
     "about": {
-      "title": "Om Mig",
+      "title": "Om Oss",
       "bio": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Staffanstorp på Malmövägen 7, där trygghet och glädje står i centrum för varje hund. Vi betjänar hundägare i Malmö, Lund och hela sydvästra Skåne.",
       "bio2": "Tillsammans med min 3-åriga shiba inu skapar jag en lugn och kärleksfull miljö för hundar att utvecklas i. Senare i år kommer jag även att erbjuda hundtrimning som en del av verksamheten.",
       "bio3": "Med vårt strategiska läge bara 10 minuter från Lund och 15 minuter från Malmö, erbjuder vi hundägare i Malmö, Lund och hela sydvästra Skåne en bekväm och tillgänglig hundomsorg av högsta kvalitet.",
+      "alicja": {
+        "name": "Alicja",
+        "role": "Hundbeteendevetare",
+        "bio": "Jag heter Alicja och är diplomerad hundbeteendevetare med ett stort hjärta för våra fyrbenta vänner. Jag driver Clever Dog i Staffanstorp, där trygghet, glädje och individuell omsorg står i centrum. Tillsammans med min 3-åriga Shiba Inu, Reya, skapar jag en lugn och kärleksfull miljö där varje hund får utvecklas i sin egen takt."
+      },
+      "nicole": {
+        "name": "Nicole",
+        "role": "Hundtränare",
+        "bio": "Jag heter Nicole och har flera års erfarenhet av att jobba inom hundbranschen. Jag bryr mig om varje individ och strävar efter att tillgodose deras dagliga behov så att de mår som bäst. Jag är utbildad hundskötare och agility-instruktör, och tävlar själv i agility med min Australian Shepherd Kriga."
+      },
       "bioMalmo": "Vi är ett team av tränade personal med stora hjärtan för våra fyrbenta vänner. Vi driver Clever Dog i Malmö Videdal, där trygghet och glädje står i centrum för varje hund.",
       "bio2Malmo": "Tillsammans skapar vi en lugn och kärleksfull miljö för hundar att utvecklas i. Vår nya, större plats i Malmö fokuserar på dagisverksamhet och social träning med flera tränade personal.",
       "bio3Malmo": "Med vår centrala placering i Malmö erbjuder vi hundägare i Malmöområdet en bekväm och tillgänglig hundomsorg av högsta kvalitet i vår moderna, rymliga lokal.",
