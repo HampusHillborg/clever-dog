@@ -5,15 +5,13 @@ workflows:
     max_build_duration: 60
     environment:
       groups:
-        # Define in Codemagic UI -> Teams -> Environment variables.
-        # Contains GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (JSON for Play Console).
-        - google_play
-        # Vite needs VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY at build time.
+        # Vite needs VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.
+        # Keystore signing reads CM_KEYSTORE (base64), CM_KEYSTORE_PASSWORD,
+        # CM_KEY_ALIAS, CM_KEY_PASSWORD from this group too.
         - cleverdog_supabase
-      android_signing:
-        # Upload the keystore in Codemagic UI -> Code signing identities.
-        # Reference it here by the name you gave it.
-        - cleverdog-keystore
+        # Re-enable once google_play group exists and contains
+        # GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (Play Console service account JSON):
+        # - google_play
       node: 22
     triggering:
       events: [push]
@@ -27,6 +25,10 @@ workflows:
         script: npm run app:build
       - name: Sync to Android project
         script: npx cap sync android
+      - name: Decode upload keystore
+        script: |
+          echo "$CM_KEYSTORE" | base64 -d > "$CM_BUILD_DIR/cleverdog-upload.jks"
+          echo "CM_KEYSTORE_PATH=$CM_BUILD_DIR/cleverdog-upload.jks" >> "$CM_ENV"
       - name: Build signed AAB
         script: |
           cd android
@@ -35,10 +37,12 @@ workflows:
     artifacts:
       - android/app/build/outputs/bundle/release/*.aab
       - android/app/build/outputs/apk/release/*.apk
-    publishing:
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal
+    # Re-enable once a Play Console service account JSON is available
+    # in the google_play env group as $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS:
+    # publishing:
+    #   google_play:
+    #     credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+    #     track: internal
 
   ios-simulator:
     name: iOS Simulator Build (unsigned)
