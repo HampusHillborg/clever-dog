@@ -155,6 +155,18 @@ export const markMessagesRead = async (ids: string[]) => {
   await supabase.from('messages').update({ is_read: true }).in('id', ids);
 };
 
+// Räkna olästa staff-meddelanden i vår tråd (RLS filtrerar automatiskt).
+export const getUnreadStaffMessageCount = async (): Promise<number> => {
+  if (!supabase) return 0;
+  const { count, error } = await supabase
+    .from('messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('sender_role', 'staff')
+    .eq('is_read', false);
+  if (error) { console.error('getUnreadStaffMessageCount', error); return 0; }
+  return count ?? 0;
+};
+
 // Activity / "album" feed — staff posts photos + captions, customers read.
 export const getDogActivities = async (dogId: string, limit = 60): Promise<DogActivity[]> => {
   if (!supabase) return [];

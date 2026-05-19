@@ -19,7 +19,7 @@ import StaffDirectoryCard from '../components/customer/StaffDirectoryCard';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import DogPills from '../components/customer/DogPills';
 import OnboardingSheet, { hasSeenOnboarding } from '../components/customer/OnboardingSheet';
-import { getMyDog, getMyDogs, type Dog } from '../lib/customerApi';
+import { getMyDog, getMyDogs, getUnreadStaffMessageCount, type Dog } from '../lib/customerApi';
 import { getCustomerForUser, signOutCustomer } from '../lib/customerAuth';
 
 type TabKey = 'home' | 'calendar' | 'album' | 'messages' | 'profile';
@@ -50,6 +50,7 @@ export default function CustomerDogPage() {
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(() => !hasSeenOnboarding());
   const [refreshTick, setRefreshTick] = useState(0);
+  const [unreadChat, setUnreadChat] = useState(0);
 
   const refresh = useCallback(async () => {
     if (!id) return;
@@ -60,6 +61,13 @@ export default function CustomerDogPage() {
   }, [id]);
 
   const { ref: scrollRef, pulledPx, refreshing } = usePullToRefresh<HTMLElement>(refresh);
+
+  // Fetch unread badge whenever tab changes or data refreshes.
+  // When user opens the Chat tab, MessagesTab marks messages as read,
+  // so next tab change re-fetches and clears the badge.
+  useEffect(() => {
+    getUnreadStaffMessageCount().then(setUnreadChat);
+  }, [tab, refreshTick]);
 
   useEffect(() => {
     if (!id) return;
@@ -155,6 +163,7 @@ export default function CustomerDogPage() {
               onClick={() => setTab(t.key)}
               icon={t.icon}
               label={t.label}
+              badge={t.key === 'messages' ? unreadChat : undefined}
             />
           ))}
         </div>
@@ -163,8 +172,8 @@ export default function CustomerDogPage() {
   );
 }
 
-function TabButton({ active, onClick, icon, label }: {
-  active: boolean; onClick: () => void; icon: React.ReactNode; label: string;
+function TabButton({ active, onClick, icon, label, badge }: {
+  active: boolean; onClick: () => void; icon: React.ReactNode; label: string; badge?: number;
 }) {
   return (
     <button
@@ -172,11 +181,16 @@ function TabButton({ active, onClick, icon, label }: {
       className="flex-1 flex flex-col items-center gap-0.5 py-1 px-1 rounded-xl transition-colors active:scale-95"
     >
       <span
-        className={`flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${
+        className={`relative flex items-center justify-center w-10 h-10 rounded-2xl transition-all ${
           active ? 'bg-orange-100 text-orange-700' : 'text-gray-400'
         }`}
       >
         <span className="text-base">{icon}</span>
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
       </span>
       <span className={`text-[10px] font-medium ${active ? 'text-orange-700' : 'text-gray-500'}`}>
         {label}
