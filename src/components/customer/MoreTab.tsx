@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import {
   FaPaw, FaFileContract, FaClipboardList, FaUsers, FaQuestionCircle,
-  FaSignOutAlt, FaChevronRight,
+  FaSignOutAlt, FaChevronRight, FaKey,
 } from 'react-icons/fa';
 import Sheet from '../shared/Sheet';
 import ContractView from './ContractView';
 import DailyReportsHistory from './DailyReportsHistory';
 import StaffDirectoryCard from './StaffDirectoryCard';
 import DogProfileSheet from './DogProfileSheet';
+import AccountSettingsCard from './AccountSettingsCard';
 import type { Dog } from '../../lib/customerApi';
 
 const STORAGE_KEY = 'cleverdog-onboarding-v1';
@@ -27,7 +28,7 @@ type MoreTabProps = {
   onShowOnboarding: () => void;
 };
 
-type OpenSheet = 'dog' | 'contract' | 'reports' | 'staff' | null;
+type OpenSheet = 'dog' | 'contract' | 'reports' | 'staff' | 'password' | null;
 
 function MoreRow({
   icon,
@@ -128,6 +129,12 @@ export default function MoreTab({ dog, onUpdateDog, onLogout, onShowOnboarding }
           sublabel="Kom igång-guiden för appen"
           onClick={handleShowOnboarding}
         />
+        <MoreRow
+          icon={<FaKey />}
+          label="Byt lösenord"
+          sublabel="Uppdatera kontots lösenord"
+          onClick={() => setOpenSheet('password')}
+        />
       </div>
 
       <div className="bg-white rounded-2xl shadow-card">
@@ -164,6 +171,11 @@ export default function MoreTab({ dog, onUpdateDog, onLogout, onShowOnboarding }
         <div className="p-4">
           <StaffDirectoryCard />
         </div>
+      </Sheet>
+
+      {/* Byt lösenord-sheet */}
+      <Sheet open={openSheet === 'password'} onClose={() => setOpenSheet(null)} title="Byt lösenord">
+        <AccountSettingsCard />
       </Sheet>
     </div>
   );
