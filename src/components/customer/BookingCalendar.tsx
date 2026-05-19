@@ -99,7 +99,7 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
   const [coOwnerCount, setCoOwnerCount] = useState(0);
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showWizard, setShowWizard] = useState(false);
+  const [showWizard, setShowWizard] = useState<false | 'single' | 'boarding'>(false);
   const [closures, setClosures] = useState<Map<string, string>>(new Map());
 
   const refresh = async () => {
@@ -205,12 +205,18 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
 
   return (
     <div className="bg-white rounded-2xl shadow-card p-4 sm:p-5">
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="grid grid-cols-2 gap-2 mb-4">
         <button
-          onClick={() => setShowWizard(true)}
-          className={BTN.primary + ' w-full sm:w-auto'}
+          onClick={() => setShowWizard('single')}
+          className={BTN.primary + ' text-sm'}
         >
-          + Boka ny dag eller pensionat
+          Boka enstaka dag
+        </button>
+        <button
+          onClick={() => setShowWizard('boarding')}
+          className={BTN.secondary + ' text-sm'}
+        >
+          Boka pensionat
         </button>
       </div>
 
@@ -312,11 +318,25 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
         />
       )}
 
+      {/* Enstaka-dag-wizard: extra-dag för abonnemangskunder, single_day för övriga */}
       <BookingWizardSheet
-        open={showWizard}
+        open={showWizard === 'single'}
         onClose={() => setShowWizard(false)}
         dog={dog}
         onSuccess={refresh}
+        initialType={
+          dog.type === 'fulltime' || dog.type === 'parttime-3' || dog.type === 'parttime-2'
+            ? 'extra'
+            : 'single_day'
+        }
+      />
+      {/* Pensionat-wizard */}
+      <BookingWizardSheet
+        open={showWizard === 'boarding'}
+        onClose={() => setShowWizard(false)}
+        dog={dog}
+        onSuccess={refresh}
+        initialType="boarding"
       />
     </div>
   );

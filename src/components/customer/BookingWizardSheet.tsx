@@ -290,11 +290,13 @@ type Props = {
   onClose: () => void;
   dog: Dog;
   onSuccess?: () => void;
+  /** Om satt hoppas steg 1 (typ-val) över och wizarden börjar på steg 2. */
+  initialType?: BookingTypeKind;
 };
 
-export default function BookingWizardSheet({ open, onClose, dog, onSuccess }: Props) {
-  const [step, setStep] = useState<WizardStep>(1);
-  const [selectedKind, setSelectedKind] = useState<BookingTypeKind | null>(null);
+export default function BookingWizardSheet({ open, onClose, dog, onSuccess, initialType }: Props) {
+  const [step, setStep] = useState<WizardStep>(initialType ? 2 : 1);
+  const [selectedKind, setSelectedKind] = useState<BookingTypeKind | null>(initialType ?? null);
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [note, setNote] = useState('');
@@ -310,15 +312,15 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess }: Pr
     if (!open) {
       // Delay reset so the closing animation isn't jarring.
       const t = setTimeout(() => {
-        setStep(1);
-        setSelectedKind(null);
+        setStep(initialType ? 2 : 1);
+        setSelectedKind(initialType ?? null);
         setStartDate(null);
         setEndDate(null);
         setNote('');
       }, 300);
       return () => clearTimeout(t);
     }
-  }, [open]);
+  }, [open, initialType]);
 
   const options = optionsForDogType(dog.type);
 
@@ -440,7 +442,7 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess }: Pr
 
       <div className="flex gap-2 mt-5">
         <button
-          onClick={() => setStep(1)}
+          onClick={() => initialType ? onClose() : setStep(1)}
           className={`${BTN.secondary} flex-1`}
         >
           ← Tillbaka
@@ -547,16 +549,21 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess }: Pr
   };
 
   const stepTitle = step === 1 ? 'Välj typ' : step === 2 ? 'Välj datum' : 'Bekräfta';
+  const sheetTitle = initialType === 'boarding'
+    ? `Boka pensionat — ${stepTitle}`
+    : initialType
+      ? `Boka enstaka dag — ${stepTitle}`
+      : `Boka ny dag eller pensionat — ${stepTitle}`;
 
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title={`Boka ny dag eller pensionat — ${stepTitle}`}
+      title={sheetTitle}
       blockBackdropClose={step === 3}
     >
       <div className="pt-3">
-        <StepDots step={step} />
+        {!initialType && <StepDots step={step} />}
         {step === 1 && renderStep1()}
         {step === 2 && selectedKind && renderStep2()}
         {step === 3 && selectedKind && startDate && renderStep3()}
