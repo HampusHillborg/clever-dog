@@ -50,7 +50,7 @@ const bookingTypeLabel = (t: string): string => {
 
 export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
   dog: Dog;
-  onJumpTo: (tab: 'calendar' | 'album' | 'messages' | 'profile') => void;
+  onJumpTo: (tab: 'calendar' | 'album' | 'messages' | 'more') => void;
   customerFirstName: string;
 }) {
   const [next, setNext] = useState<NextDay | null>(null);
@@ -127,7 +127,7 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
 
       {/* Vaccine warnings (only when expired or expiring within 30 dgr) */}
       {vaccineWarnings.length > 0 && (
-        <VaccineWarning warnings={vaccineWarnings} onOpen={() => onJumpTo('profile')} />
+        <VaccineWarning warnings={vaccineWarnings} onOpen={() => onJumpTo('more')} />
       )}
 
       {/* Today's report from staff (only when filled in) */}

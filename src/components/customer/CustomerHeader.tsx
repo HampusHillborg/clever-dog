@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { FaSignOutAlt, FaCog } from 'react-icons/fa';
+import { FaCog } from 'react-icons/fa';
 import dogLogo from '../../assets/images/logos/Logo.png';
 import { firstNameOf } from '../../lib/customerApi';
 import Sheet from '../shared/Sheet';
 import AccountSettingsCard from './AccountSettingsCard';
 
-export default function CustomerHeader({ customerName, onLogout }: {
+// Logga-ut-knappen flyttades till Mer-fliken eftersom kunder loggar ut sällan
+// och vi vill inte ha en "destruktiv" knapp synlig hela tiden i headern.
+export default function CustomerHeader({ customerName }: {
   customerName: string;
-  onLogout: () => void;
 }) {
   const first = customerName ? firstNameOf(customerName) : 'kund';
   const [showSettings, setShowSettings] = useState(false);
@@ -28,14 +29,6 @@ export default function CustomerHeader({ customerName, onLogout }: {
           aria-label="Kontoinställningar"
         >
           <FaCog className="text-sm" />
-        </button>
-
-        <button
-          onClick={onLogout}
-          className="w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center transition-colors shrink-0"
-          aria-label="Logga ut"
-        >
-          <FaSignOutAlt className="text-sm" />
         </button>
       </div>
 

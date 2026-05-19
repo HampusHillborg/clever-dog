@@ -1,23 +1,34 @@
 import { useState } from 'react';
 import {
-  FaFileContract, FaClipboardList, FaUsers, FaQuestionCircle,
+  FaPaw, FaFileContract, FaClipboardList, FaUsers, FaQuestionCircle,
   FaSignOutAlt, FaChevronRight,
 } from 'react-icons/fa';
 import Sheet from '../shared/Sheet';
 import ContractView from './ContractView';
 import DailyReportsHistory from './DailyReportsHistory';
 import StaffDirectoryCard from './StaffDirectoryCard';
+import DogInfoTab from './DogInfoTab';
+import VaccinationsCard from './VaccinationsCard';
 import type { Dog } from '../../lib/customerApi';
 
 const STORAGE_KEY = 'cleverdog-onboarding-v1';
 
+const TYPE_LABEL: Record<string, string> = {
+  fulltime: 'Heltid',
+  'parttime-3': 'Deltid 3 dgr/v',
+  'parttime-2': 'Deltid 2 dgr/v',
+  singleDay: 'Enstaka dag',
+  boarding: 'Pensionat',
+};
+
 type MoreTabProps = {
   dog: Dog;
+  onUpdateDog: (d: Dog) => void;
   onLogout: () => void;
   onShowOnboarding: () => void;
 };
 
-type OpenSheet = 'contract' | 'reports' | 'staff' | null;
+type OpenSheet = 'dog' | 'contract' | 'reports' | 'staff' | null;
 
 function MoreRow({
   icon,
@@ -55,7 +66,29 @@ function MoreRow({
   );
 }
 
-export default function MoreTab({ dog, onLogout, onShowOnboarding }: MoreTabProps) {
+function DogHero({ dog }: { dog: Dog }) {
+  return (
+    <div className="bg-white rounded-3xl shadow-card p-4 sm:p-5 flex items-center gap-4 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-50 to-transparent rounded-bl-full pointer-events-none" />
+      <div className="relative w-20 h-20 rounded-2xl bg-orange-100 overflow-hidden flex items-center justify-center text-3xl font-bold text-orange-700 shrink-0 ring-2 ring-white shadow-card">
+        {dog.photo_url
+          ? <img src={dog.photo_url} alt={dog.name} className="w-full h-full object-cover" />
+          : dog.name?.[0]?.toUpperCase()}
+      </div>
+      <div className="relative min-w-0 flex-1">
+        <h1 className="text-2xl font-bold tracking-tight truncate">{dog.name}</h1>
+        <p className="text-sm text-gray-500 truncate">{dog.breed}{dog.age ? ` · ${dog.age}` : ''}</p>
+        {dog.type && (
+          <span className="inline-flex items-center mt-2 text-[11px] font-semibold text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full">
+            {TYPE_LABEL[dog.type] ?? dog.type}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function MoreTab({ dog, onUpdateDog, onLogout, onShowOnboarding }: MoreTabProps) {
   const [openSheet, setOpenSheet] = useState<OpenSheet>(null);
 
   const handleShowOnboarding = () => {
@@ -66,6 +99,12 @@ export default function MoreTab({ dog, onLogout, onShowOnboarding }: MoreTabProp
   return (
     <div className="space-y-2">
       <div className="bg-white rounded-2xl shadow-card divide-y divide-gray-100">
+        <MoreRow
+          icon={<FaPaw />}
+          label="Hundinfo & hälsa"
+          sublabel="Grundinfo, ras, vaccinationer, veterinär"
+          onClick={() => setOpenSheet('dog')}
+        />
         <MoreRow
           icon={<FaFileContract />}
           label="Kontrakt"
@@ -101,6 +140,15 @@ export default function MoreTab({ dog, onLogout, onShowOnboarding }: MoreTabProp
           danger
         />
       </div>
+
+      {/* Hundinfo & hälsa-sheet — fångar gamla Profil-flikens innehåll */}
+      <Sheet open={openSheet === 'dog'} onClose={() => setOpenSheet(null)} title="Hundinfo & hälsa">
+        <div className="p-4 space-y-4">
+          <DogHero dog={dog} />
+          <DogInfoTab dog={dog} onUpdate={onUpdateDog} />
+          <VaccinationsCard dogId={dog.id} />
+        </div>
+      </Sheet>
 
       {/* Kontrakt-sheet */}
       <Sheet open={openSheet === 'contract'} onClose={() => setOpenSheet(null)} title="Kontrakt">

@@ -71,11 +71,9 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        // TEMP: stäng av drop_console för att fånga runtime-errors i appen.
-        // Återställ till true före release. Behåller drop_debugger.
-        drop_console: false,
+        drop_console: true,
         drop_debugger: true,
-        pure_funcs: isAppBuild ? [] : ['console.log', 'console.debug']
+        pure_funcs: ['console.log', 'console.debug']
       },
       format: {
         comments: false

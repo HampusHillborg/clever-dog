@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { FaCog, FaKey, FaSignOutAlt, FaInfoCircle } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import { signOutCustomer } from '../../lib/customerAuth';
+import { FaCog, FaKey, FaInfoCircle } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 
 // Embedded at Vite build time so we always know which bundle is on the device.
 const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? 'dev';
 
+// Logga-ut-flödet bor i MoreTab — kunden ska inte ha en destruktiv knapp
+// gömd i en inställnings-vy som confirm()-blockerar Capacitor WebView.
 export default function AccountSettingsCard() {
-  const navigate = useNavigate();
   const [changing, setChanging] = useState(false);
   const [pw1, setPw1] = useState('');
   const [pw2, setPw2] = useState('');
@@ -31,12 +30,6 @@ export default function AccountSettingsCard() {
       setPw2('');
       setTimeout(() => setChanging(false), 800);
     }
-  };
-
-  const logout = async () => {
-    if (!confirm('Vill du logga ut?')) return;
-    await signOutCustomer();
-    navigate('/login', { replace: true });
   };
 
   return (
@@ -101,19 +94,6 @@ export default function AccountSettingsCard() {
           </div>
         </div>
       )}
-
-      <button
-        onClick={logout}
-        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 text-left mt-1"
-      >
-        <div className="w-9 h-9 rounded-xl bg-red-50 text-red-700 flex items-center justify-center">
-          <FaSignOutAlt className="text-sm" />
-        </div>
-        <div className="flex-1">
-          <p className="font-medium text-sm text-red-700">Logga ut</p>
-          <p className="text-xs text-gray-500">Du behöver logga in igen nästa gång</p>
-        </div>
-      </button>
 
       <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-400">
         <FaInfoCircle />

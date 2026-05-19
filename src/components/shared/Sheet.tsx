@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FaTimes } from 'react-icons/fa';
 
 type SheetProps = {
@@ -25,7 +26,10 @@ export default function Sheet({ open, onClose, title, children, blockBackdropClo
 
   if (!open) return null;
 
-  return (
+  // Portala till body så `position: fixed` escapar parent stacking contexts
+  // (t.ex. sticky header med backdrop-blur som annars fångar fixed-barn och
+  // klipper dem till headerns box istället för viewporten).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={blockBackdropClose ? undefined : onClose}
@@ -54,6 +58,7 @@ export default function Sheet({ open, onClose, title, children, blockBackdropClo
 
         <div className="flex-1 overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
