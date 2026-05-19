@@ -16,6 +16,7 @@ workflows:
         # GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (Play Console service account JSON):
         # - google_play
       node: 22
+      java: 21
     triggering:
       events: [push]
       branch_patterns:
