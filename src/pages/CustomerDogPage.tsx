@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   FaHome, FaCalendarAlt, FaCommentDots, FaImages,
-  FaSyncAlt, FaEllipsisH,
+  FaSyncAlt, FaEllipsisH, FaArrowLeft,
 } from 'react-icons/fa';
+import dogLogo from '../assets/images/logos/Logo.png';
 import { usePullToRefresh } from '../lib/pullToRefresh';
 import HomeFeedTab from '../components/customer/HomeFeedTab';
 import BookingCalendar from '../components/customer/BookingCalendar';
@@ -94,6 +95,38 @@ export default function CustomerDogPage() {
     </div>
   );
 
+  // Chatten har en egen heltäckande "Messenger-skärm" — toppheader och bottennav
+  // göms helt, en slim chat-header med tillbaka-pil ersätter dem. Detta ger
+  // chatten hela viewporten och håller scrollen inuti meddelandelistan.
+  if (tab === 'messages') {
+    return (
+      <div className="bg-stone-50 flex flex-col fixed inset-0 z-40">
+        <NotificationToast />
+        <header
+          className="shrink-0 bg-white border-b border-gray-200/70 flex items-center gap-3 px-2 sm:px-3 py-2.5"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 10px)' }}
+        >
+          <button
+            onClick={() => setTab('home')}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 active:scale-95 transition-all"
+            aria-label="Tillbaka"
+          >
+            <FaArrowLeft className="text-base" />
+          </button>
+          <img src={dogLogo} alt="" className="h-9 w-9 object-contain rounded-full shrink-0" />
+          <div className="flex-1 min-w-0 leading-tight">
+            <p className="font-semibold text-sm truncate">Personalen</p>
+            <p className="text-[11px] text-gray-500 truncate">Clever Dog Staffanstorp</p>
+          </div>
+        </header>
+
+        <main className="flex-1 min-h-0 flex flex-col w-full max-w-3xl mx-auto overflow-hidden">
+          <MessagesTab key={refreshTick} dog={dog} />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-light flex flex-col">
       <NotificationToast />
@@ -101,24 +134,16 @@ export default function CustomerDogPage() {
 
       <header className="bg-white/85 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200/70">
         <CustomerHeader customerName={customerName} />
-        {/* Hund-väljaren göms på Chat-fliken eftersom chatten är per-kund
-            (inte per-hund) — en gemensam familjetråd med dagiset. */}
-        {tab !== 'messages' && (
-          <DogPills
-            dogs={allDogs}
-            activeId={dog.id}
-            onPick={(other) => navigate(`/kund/hund/${other.id}`)}
-          />
-        )}
+        <DogPills
+          dogs={allDogs}
+          activeId={dog.id}
+          onPick={(other) => navigate(`/kund/hund/${other.id}`)}
+        />
       </header>
 
       <main
         ref={scrollRef}
-        className={
-          tab === 'messages'
-            ? 'flex-1 flex flex-col w-full max-w-3xl mx-auto overflow-hidden'
-            : 'flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto relative'
-        }
+        className="flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto relative"
       >
         {/* Pull-to-refresh indicator */}
         {(pulledPx > 0 || refreshing) && (
@@ -137,7 +162,6 @@ export default function CustomerDogPage() {
         {tab === 'home' && <HomeFeedTab key={refreshTick} dog={dog} onJumpTo={(t) => setTab(t)} customerFirstName={firstNameOf(customerName)} />}
         {tab === 'calendar' && <BookingCalendar key={refreshTick} dog={dog} />}
         {tab === 'album' && <AlbumTab key={refreshTick} dog={dog} />}
-        {tab === 'messages' && <MessagesTab key={refreshTick} dog={dog} />}
         {tab === 'more' && (
           <MoreTab
             key={refreshTick}
