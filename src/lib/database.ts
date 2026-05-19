@@ -10,7 +10,7 @@ export type Dog = {
   phone: string;
   email?: string; // Optional email field for matching
   notes?: string;
-  locations: ('malmo' | 'staffanstorp')[];
+  locations: ('staffanstorp')[];
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean;
   // Contract fields
@@ -28,7 +28,7 @@ export type BoardingRecord = {
   id: string;
   dogId: string;
   dogName: string;
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
   startDate: string;
   endDate: string;
   notes?: string;
@@ -39,7 +39,7 @@ export type BoardingRecord = {
 export type PlanningData = {
   id: string;
   date: string;
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
   cages: Array<{
     id: string;
     name: string;
@@ -92,18 +92,20 @@ export const getDogs = async (): Promise<Dog[]> => {
 
   // Transform database format to app format
   return ((data as any) || []).map((dog: any) => {
-    // Ensure locations is always an array
-    let locations: ('malmo' | 'staffanstorp')[] = [];
+    // Ensure locations is always an array of 'staffanstorp' (filter out legacy 'malmo' rows)
+    let rawLocs: string[] = [];
     if (Array.isArray(dog.locations)) {
-      locations = dog.locations;
+      rawLocs = dog.locations;
     } else if (dog.locations && typeof dog.locations === 'string') {
-      // Handle case where locations might be a string (shouldn't happen but safety)
       try {
-        locations = JSON.parse(dog.locations);
+        rawLocs = JSON.parse(dog.locations);
       } catch {
-        locations = [dog.locations as 'malmo' | 'staffanstorp'];
+        rawLocs = [dog.locations];
       }
     }
+    const locations: ('staffanstorp')[] = rawLocs
+      .filter((l): l is 'staffanstorp' => l === 'staffanstorp')
+      .concat(rawLocs.length > 0 && !rawLocs.includes('staffanstorp') ? ['staffanstorp'] : []);
 
     // Ensure type is properly converted (null -> undefined, empty string -> undefined)
     let type: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
@@ -228,17 +230,20 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
 
   const dbDog = data as any;
 
-  // Ensure locations is always an array
-  let locations: ('malmo' | 'staffanstorp')[] = [];
+  // Ensure locations is always an array of 'staffanstorp' (filter out legacy 'malmo' rows)
+  let rawLocations: string[] = [];
   if (Array.isArray(dbDog.locations)) {
-    locations = dbDog.locations;
+    rawLocations = dbDog.locations;
   } else if (dbDog.locations) {
     try {
-      locations = JSON.parse(dbDog.locations);
+      rawLocations = JSON.parse(dbDog.locations);
     } catch {
-      locations = [];
+      rawLocations = [];
     }
   }
+  const locations: ('staffanstorp')[] = rawLocations
+    .filter((l): l is 'staffanstorp' => l === 'staffanstorp')
+    .concat(rawLocations.length > 0 && !rawLocations.includes('staffanstorp') ? ['staffanstorp'] : []);
 
   // Ensure type is properly converted
   let type: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
@@ -333,7 +338,7 @@ export const getBoardingRecords = async (): Promise<BoardingRecord[]> => {
     id: record.id,
     dogId: record.dog_id,
     dogName: record.dog_name,
-    location: record.location as 'malmo' | 'staffanstorp',
+    location: record.location as 'staffanstorp',
     startDate: record.start_date,
     endDate: record.end_date,
     notes: record.notes ? String(record.notes) : undefined,
@@ -391,7 +396,7 @@ export const saveBoardingRecord = async (record: BoardingRecord): Promise<Boardi
     id: dbRecord.id,
     dogId: dbRecord.dog_id,
     dogName: dbRecord.dog_name,
-    location: dbRecord.location as 'malmo' | 'staffanstorp',
+    location: dbRecord.location as 'staffanstorp',
     startDate: dbRecord.start_date,
     endDate: dbRecord.end_date,
     notes: dbRecord.notes ? String(dbRecord.notes) : undefined,
@@ -446,7 +451,7 @@ export const getPlanningHistory = async (): Promise<PlanningData[]> => {
   return ((data as any) || []).map((planning: any) => ({
     id: planning.id,
     date: planning.date,
-    location: planning.location as 'malmo' | 'staffanstorp',
+    location: planning.location as 'staffanstorp',
     cages: (Array.isArray(planning.cages) ? planning.cages : []) as PlanningData['cages'],
     createdAt: planning.created_at || new Date().toISOString(),
   }));
@@ -511,7 +516,7 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
   return {
     id: dbPlanning.id,
     date: dbPlanning.date,
-    location: dbPlanning.location as 'malmo' | 'staffanstorp',
+    location: dbPlanning.location as 'staffanstorp',
     cages: (Array.isArray(dbPlanning.cages) ? dbPlanning.cages : []) as PlanningData['cages'],
     createdAt: dbPlanning.created_at || new Date().toISOString(),
   };
@@ -520,7 +525,7 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
 // Helper to get planning for a specific date and location
 export const getPlanningForDate = async (
   date: string,
-  location: 'malmo' | 'staffanstorp'
+  location: 'staffanstorp'
 ): Promise<PlanningData | null> => {
   if (!isSupabaseAvailable()) {
     // Fallback to localStorage
@@ -560,7 +565,7 @@ export const getPlanningForDate = async (
   return {
     id: dbPlanning.id,
     date: dbPlanning.date,
-    location: dbPlanning.location as 'malmo' | 'staffanstorp',
+    location: dbPlanning.location as 'staffanstorp',
     cages: (Array.isArray(dbPlanning.cages) ? dbPlanning.cages : []) as PlanningData['cages'],
     createdAt: dbPlanning.created_at || new Date().toISOString(),
   };
@@ -571,17 +576,12 @@ export const getPlanningForDate = async (
 // ============================================================================
 
 export type BoxSettings = {
-  malmo: { cages: Array<{ name: string }>; freeAreas: Array<{ name: string }> };
   staffanstorp: { cages: Array<{ name: string }>; freeAreas: Array<{ name: string }> };
 };
 
 export const getBoxSettings = async (): Promise<BoxSettings> => {
   // Default settings
   const defaultSettings: BoxSettings = {
-    malmo: {
-      cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
-      freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
-    },
     staffanstorp: {
       cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
       freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
@@ -625,8 +625,8 @@ export const getBoxSettings = async (): Promise<BoxSettings> => {
 
     if (data && Array.isArray(data)) {
       data.forEach((row: any) => {
-        const location = row.location as 'malmo' | 'staffanstorp';
-        if (location === 'malmo' || location === 'staffanstorp') {
+        const location = row.location as 'staffanstorp';
+        if (location === 'staffanstorp') {
           const rowSettings = row.settings;
           if (rowSettings && typeof rowSettings === 'object') {
             settings[location] = {
@@ -663,8 +663,8 @@ export const saveBoxSettings = async (settings: BoxSettings): Promise<BoxSetting
   }
 
   try {
-    // Save settings for both locations
-    const locations: Array<'malmo' | 'staffanstorp'> = ['malmo', 'staffanstorp'];
+    // Save settings for staffanstorp
+    const locations: Array<'staffanstorp'> = ['staffanstorp'];
 
     for (const location of locations) {
       const locationSettings = settings[location];
@@ -701,7 +701,7 @@ export const saveBoxSettings = async (settings: BoxSettings): Promise<BoxSetting
 
 export type Application = {
   id: string;
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
 
   // Owner information
   owner_name: string;
@@ -1004,7 +1004,7 @@ export type Meeting = {
   email?: string; // Email (optional)
   date: string; // YYYY-MM-DD (required)
   time: string; // HH:mm format (required)
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
   createdAt: string;
   updatedAt: string;
 };
@@ -1349,7 +1349,7 @@ export type Employee = {
   id: string;
   name: string;
   phone?: string;
-  location?: 'malmo' | 'staffanstorp' | 'both';
+  location?: 'staffanstorp' | 'both';
   position?: string;
   hire_date?: string;
   notes?: string;
@@ -1543,7 +1543,7 @@ export type StaffSchedule = {
   date: string;
   start_time?: string;
   end_time?: string;
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
   notes?: string;
   created_at: string;
   updated_at: string;

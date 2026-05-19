@@ -51,7 +51,7 @@ export type Dog = {
   phone: string;
   notes?: string | null;
   color: string;
-  locations: ('malmo' | 'staffanstorp')[];
+  locations: ('staffanstorp')[];
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | null;
   is_active?: boolean;
   created_at?: string;
@@ -62,7 +62,7 @@ export type BoardingRecord = {
   id: string;
   dog_id: string;
   dog_name: string;
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
   start_date: string;
   end_date: string;
   notes?: string | null;
@@ -74,7 +74,7 @@ export type BoardingRecord = {
 export type PlanningData = {
   id: string;
   date: string;
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
   cages: Array<{
     id: string;
     name: string;

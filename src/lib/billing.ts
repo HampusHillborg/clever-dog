@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { PRICES, VAT_RATE } from './prices';
 
 type DogType = 'fulltime' | 'parttime-3' | 'parttime-2' | null;
-type Location = 'malmo' | 'staffanstorp';
+type Location = 'staffanstorp';
 
 export type DogCostLine = {
   dog_id: string;
@@ -54,11 +54,7 @@ const dateRangeForMonth = (year: number, month: number): { start: string; end: s
   };
 };
 
-const pickPrimaryLocation = (locations: unknown): Location => {
-  if (Array.isArray(locations)) {
-    if (locations.includes('malmo')) return 'malmo';
-    if (locations.includes('staffanstorp')) return 'staffanstorp';
-  }
+const pickPrimaryLocation = (_locations: unknown): Location => {
   return 'staffanstorp';
 };
 
