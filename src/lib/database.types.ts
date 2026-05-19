@@ -402,6 +402,57 @@ export type Database = {
         }
         Relationships: []
       }
+      day_capacity_defaults: {
+        Row: {
+          hard_limit: number | null
+          location: string
+          soft_limit: number | null
+          updated_at: string | null
+          weekday: number
+        }
+        Insert: {
+          hard_limit?: number | null
+          location?: string
+          soft_limit?: number | null
+          updated_at?: string | null
+          weekday: number
+        }
+        Update: {
+          hard_limit?: number | null
+          location?: string
+          soft_limit?: number | null
+          updated_at?: string | null
+          weekday?: number
+        }
+        Relationships: []
+      }
+      day_capacity_overrides: {
+        Row: {
+          date: string
+          hard_limit: number | null
+          location: string
+          note: string | null
+          soft_limit: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          date: string
+          hard_limit?: number | null
+          location?: string
+          note?: string | null
+          soft_limit?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          date?: string
+          hard_limit?: number | null
+          location?: string
+          note?: string | null
+          soft_limit?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       device_tokens: {
         Row: {
           created_at: string | null
@@ -766,6 +817,24 @@ export type Database = {
           },
         ]
       }
+      location_settings: {
+        Row: {
+          count_boarding_in_dagis: boolean
+          location: string
+          updated_at: string | null
+        }
+        Insert: {
+          count_boarding_in_dagis?: boolean
+          location: string
+          updated_at?: string | null
+        }
+        Update: {
+          count_boarding_in_dagis?: boolean
+          location?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       meetings: {
         Row: {
           created_at: string | null
@@ -1034,6 +1103,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      booked_dogs_on_date: {
+        Args: { p_date: string; p_location?: string }
+        Returns: number
+      }
       chat_thread_customers: {
         Args: { p_customer_id: string }
         Returns: string[]
@@ -1055,12 +1128,34 @@ export type Database = {
           phone: string | null
           updated_at: string | null
         }
+        SetofOptions: {
+          from: "*"
+          to: "customers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       current_customer_id: { Args: never; Returns: string }
       customer_sees_dog: { Args: { p_dog_id: string }; Returns: boolean }
       customer_sees_thread: {
         Args: { p_thread_owner_id: string }
         Returns: boolean
+      }
+      day_capacity_for_date: {
+        Args: { p_date: string; p_location?: string }
+        Returns: {
+          hard_limit: number
+          soft_limit: number
+        }[]
+      }
+      day_capacity_overview: {
+        Args: { p_end: string; p_location?: string; p_start: string }
+        Returns: {
+          booked: number
+          date: string
+          hard_limit: number
+          soft_limit: number
+        }[]
       }
       dog_co_owners: { Args: { p_dog_id: string }; Returns: string[] }
       get_user_role: { Args: { user_id: string }; Returns: string }
