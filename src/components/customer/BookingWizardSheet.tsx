@@ -553,17 +553,14 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
           </div>
         )}
 
-        {/* Response time */}
-        <div className={`rounded-xl px-3 py-2.5 text-sm flex items-center gap-2 ${
-          isInstantConfirm
-            ? 'bg-green-50 border border-green-200 text-green-800'
-            : 'bg-blue-50 border border-blue-200 text-blue-800'
-        }`}>
-          <span className={`w-2 h-2 rounded-full shrink-0 ${isInstantConfirm ? 'bg-green-500' : 'bg-blue-400'}`} />
-          {isInstantConfirm
-            ? 'Direkt bekräftat — extra dagar på abonnemang godkänns automatiskt.'
-            : 'Personalen svarar inom 24 h — du ser svaret i appen.'}
-        </div>
+        {/* Response time — visas bara när det inte är auto-bekräftat extra-dag.
+            Auto-bekräftade extra-dagar behöver ingen "väntar på svar"-info. */}
+        {!isInstantConfirm && (
+          <div className="rounded-xl px-3 py-2.5 text-sm flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800">
+            <span className="w-2 h-2 rounded-full shrink-0 bg-blue-400" />
+            Personalen svarar inom 24 h — du ser svaret i appen.
+          </div>
+        )}
 
         {/* Note */}
         <div>
