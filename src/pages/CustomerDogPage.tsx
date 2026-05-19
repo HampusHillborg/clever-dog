@@ -101,11 +101,15 @@ export default function CustomerDogPage() {
 
       <header className="bg-white/85 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200/70">
         <CustomerHeader customerName={customerName} onLogout={logout} />
-        <DogPills
-          dogs={allDogs}
-          activeId={dog.id}
-          onPick={(other) => navigate(`/kund/hund/${other.id}`)}
-        />
+        {/* Hund-väljaren göms på Chat-fliken eftersom chatten är per-kund
+            (inte per-hund) — en gemensam familjetråd med dagiset. */}
+        {tab !== 'messages' && (
+          <DogPills
+            dogs={allDogs}
+            activeId={dog.id}
+            onPick={(other) => navigate(`/kund/hund/${other.id}`)}
+          />
+        )}
       </header>
 
       <main ref={scrollRef} className="flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto relative">

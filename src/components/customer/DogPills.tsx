@@ -1,5 +1,9 @@
 import type { Dog } from '../../lib/customerApi';
 
+// Diskret tab-bar-stil istället för fyllda pills. Aktiv hund får
+// orange text + underline; inaktiv är muted grå. Inget avatar-i-pill
+// (för mycket visuellt brus), inga ringar/skuggor. Renderar inget
+// alls om kunden bara har en hund.
 export default function DogPills({ dogs, activeId, onPick }: {
   dogs: Dog[];
   activeId: string;
@@ -8,30 +12,21 @@ export default function DogPills({ dogs, activeId, onPick }: {
   if (dogs.length <= 1) return null;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 pb-2">
-      <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none">
+    <div className="max-w-3xl mx-auto px-4">
+      <div className="flex gap-5 overflow-x-auto -mx-1 px-1 scrollbar-none">
         {dogs.map(d => {
           const active = d.id === activeId;
           return (
             <button
               key={d.id}
               onClick={() => onPick(d)}
-              className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full shrink-0 transition-all active:scale-95 ${
+              className={`shrink-0 py-2 text-sm font-semibold transition-colors border-b-2 -mb-px ${
                 active
-                  ? 'bg-orange-100 text-orange-800 ring-1 ring-orange-300 shadow-sm'
-                  : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50'
+                  ? 'text-primary border-primary'
+                  : 'text-gray-400 border-transparent hover:text-gray-700'
               }`}
             >
-              <span
-                className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold shrink-0 ${
-                  active ? 'bg-orange-200 text-orange-800' : 'bg-gray-100 text-gray-600'
-                }`}
-              >
-                {d.photo_url
-                  ? <img src={d.photo_url} alt="" className="w-full h-full object-cover" />
-                  : d.name?.[0]?.toUpperCase()}
-              </span>
-              <span className="text-sm font-semibold truncate max-w-[120px]">{d.name}</span>
+              {d.name}
             </button>
           );
         })}
