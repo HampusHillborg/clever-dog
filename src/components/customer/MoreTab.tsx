@@ -7,8 +7,7 @@ import Sheet from '../shared/Sheet';
 import ContractView from './ContractView';
 import DailyReportsHistory from './DailyReportsHistory';
 import StaffDirectoryCard from './StaffDirectoryCard';
-import DogInfoTab from './DogInfoTab';
-import VaccinationsCard from './VaccinationsCard';
+import DogProfileSheet from './DogProfileSheet';
 import type { Dog } from '../../lib/customerApi';
 
 const STORAGE_KEY = 'cleverdog-onboarding-v1';
@@ -141,13 +140,9 @@ export default function MoreTab({ dog, onUpdateDog, onLogout, onShowOnboarding }
         />
       </div>
 
-      {/* Hundinfo & hälsa-sheet — fångar gamla Profil-flikens innehåll */}
+      {/* Hundinfo & hälsa-sheet — iOS Settings-stil */}
       <Sheet open={openSheet === 'dog'} onClose={() => setOpenSheet(null)} title="Hundinfo & hälsa">
-        <div className="p-4 space-y-4">
-          <DogHero dog={dog} />
-          <DogInfoTab dog={dog} onUpdate={onUpdateDog} />
-          <VaccinationsCard dogId={dog.id} />
-        </div>
+        <DogProfileSheet dog={dog} onUpdate={onUpdateDog} />
       </Sheet>
 
       {/* Kontrakt-sheet */}
