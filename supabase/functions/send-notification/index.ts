@@ -30,6 +30,32 @@ async function pushToUser(
   ]);
 }
 
+// Returns auth_user_ids for all customers in a chat thread:
+// the thread owner + anyone sharing a dog with them.
+// Used for staff_message push fan-out.
+async function threadRecipientAuthUserIds(
+  admin: ReturnType<typeof createClient>,
+  customerId: string | null,
+): Promise<string[]> {
+  if (!customerId) return [];
+  // chat_thread_customers(uuid) returns setof uuid as rows with key "chat_thread_customers".
+  const { data: rpcData } = await (admin.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: Array<{ chat_thread_customers: string }> | null; error: unknown }>)(
+    'chat_thread_customers',
+    { p_customer_id: customerId },
+  );
+  const customerIds = (rpcData ?? []).map(r => r.chat_thread_customers).filter(Boolean);
+  if (customerIds.length === 0) return [];
+  const { data: custs } = await admin
+    .from('customers')
+    .select('auth_user_id')
+    .in('id', customerIds);
+  const rows = (custs ?? []) as Array<{ auth_user_id: string | null }>;
+  return rows.map(r => r.auth_user_id).filter((u): u is string => !!u);
+}
+
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
@@ -265,22 +291,20 @@ Deno.serve(async (req) => {
         ADMIN_EMAIL || undefined,
       );
 
-      // Push notification — fan out to all of this customer's devices.
+      // Push notification — fan out to all thread members (thread owner + co-owners).
       if (msg.customer_id) {
-        const { data: cust } = await admin
-          .from('customers')
-          .select('auth_user_id')
-          .eq('id', msg.customer_id)
-          .maybeSingle();
-        if (cust?.auth_user_id) {
-          await pushToUser(
-            admin,
-            cust.auth_user_id,
-            'Nytt meddelande från CleverDog',
-            String(msg.body).slice(0, 120),
-            { kind: 'staff_message', message_id: msg.id },
-          );
-        }
+        const recipientUserIds = await threadRecipientAuthUserIds(admin, msg.customer_id);
+        await Promise.all(
+          recipientUserIds.map(uid =>
+            pushToUser(
+              admin,
+              uid,
+              'Nytt meddelande från CleverDog',
+              String(msg.body).slice(0, 120),
+              { kind: 'staff_message', message_id: msg.id },
+            )
+          ),
+        );
       }
     }
     else if (body.kind === 'application_decision') {
