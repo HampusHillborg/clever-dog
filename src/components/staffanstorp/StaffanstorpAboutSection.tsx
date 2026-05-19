@@ -27,9 +27,9 @@ const StaffanstorpAboutSection: React.FC = () => {
           <div className="mb-12 max-w-3xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
-                { key: 'alicja', img: '/images/alicja.jpeg' },
-                { key: 'nicole', img: '/images/nicole.jpeg' },
-              ].map(({ key, img }, idx) => (
+                { key: 'alicja', img: '/images/alicja.jpeg', objectPosition: 'center top' },
+                { key: 'nicole', img: '/images/nicole.jpeg', objectPosition: 'center 30%' },
+              ].map(({ key, img, objectPosition }, idx) => (
                 <motion.div
                   key={key}
                   className="bg-white rounded-2xl shadow-md overflow-hidden border border-orange-100 flex flex-col text-center"
@@ -45,7 +45,8 @@ const StaffanstorpAboutSection: React.FC = () => {
                         src={img}
                         alt={t(`about.${key}.name`)}
                         loading="lazy"
-                        className="w-full h-full object-cover object-top"
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition }}
                       />
                     </div>
                   </div>
