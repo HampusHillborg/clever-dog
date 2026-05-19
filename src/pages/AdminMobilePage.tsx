@@ -204,8 +204,6 @@ function formatDate(iso: string): string {
   return `${weekday} ${d.getDate()}/${d.getMonth() + 1}`;
 }
 
-function locationLabel(loc: string): string {
-  if (loc === 'malmo') return 'Malmö';
-  if (loc === 'staffanstorp') return 'Staffanstorp';
-  return loc;
+function locationLabel(_loc: string): string {
+  return 'Staffanstorp';
 }

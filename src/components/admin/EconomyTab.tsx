@@ -161,7 +161,7 @@ function DetailModal({ cost, year, month, onClose }: {
                 <div>
                   <p className="font-semibold">{dog.dog_name}</p>
                   <p className="text-xs text-gray-500">
-                    {dogTypeLabel(dog.dog_type)} · {dog.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                    {dogTypeLabel(dog.dog_type)} · Staffanstorp
                   </p>
                 </div>
                 <p className="font-semibold">{formatKr(dog.subtotal)}</p>

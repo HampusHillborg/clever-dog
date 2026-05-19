@@ -89,7 +89,7 @@ interface Dog {
   phone: string;
   email?: string; // Optional email field for matching
   notes?: string;
-  locations: ('malmo' | 'staffanstorp')[]; // Which daycares the dog belongs to (can be both)
+  locations: ('staffanstorp')[]; // Which daycares the dog belongs to
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean; // Whether the dog is active (default: true)
   // Contract fields
@@ -107,7 +107,7 @@ interface BoardingRecord {
   id: string;
   dogId: string;
   dogName: string;
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   notes?: string;
@@ -125,13 +125,13 @@ interface Cage {
 interface PlanningData {
   id: string;
   date: string; // YYYY-MM-DD
-  location: 'malmo' | 'staffanstorp';
+  location: 'staffanstorp';
   cages: Cage[];
   createdAt: string;
 }
 
 interface StatisticsFilter {
-  location: 'all' | 'malmo' | 'staffanstorp';
+  location: 'all' | 'staffanstorp';
   period: 'all' | 'month' | 'year';
   year?: number;
   month?: number;
@@ -143,13 +143,10 @@ interface StatisticsFilter {
 
 interface DogStatistics {
   totalDogs: number;
-  malmoDogs: number;
   staffanstorpDogs: number;
-  bothLocationDogs: number;
   totalIncome: number;
   totalIncomeWithVAT: number;
   totalIncomeWithoutVAT: number;
-  malmoIncome: number;
   staffanstorpIncome: number;
   incomeByType: {
     fulltime: number;
@@ -165,7 +162,7 @@ interface DogStatistics {
   };
 }
 
-type AdminView = 'dashboard' | 'contracts' | 'planning-malmo' | 'planning-staffanstorp' | 'dogs' | 'boarding-malmo' | 'boarding-staffanstorp' | 'calendar-malmo' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats' | 'today' | 'economy' | 'staffanstorp-hub' | 'closures' | 'capacity';
+type AdminView = 'dashboard' | 'contracts' | 'planning-staffanstorp' | 'dogs' | 'boarding-staffanstorp' | 'calendar-staffanstorp' | 'statistics' | 'settings' | 'applications' | 'meetings' | 'staff-schedules' | 'staff-absences' | 'staff-hours' | 'my-schedule' | 'my-absences' | 'customers' | 'booking-requests' | 'admin-messages' | 'customer-stats' | 'today' | 'economy' | 'staffanstorp-hub' | 'closures' | 'capacity';
 type StaffanstorpSubTab = 'planning' | 'calendar' | 'boarding';
 
 type UserRole = 'admin' | 'employee' | 'platschef';
@@ -230,7 +227,7 @@ const AdminPage: React.FC = () => {
     phone: '',
     email: '',
     notes: '',
-    locations: ['staffanstorp'] as ('malmo' | 'staffanstorp')[],
+    locations: ['staffanstorp'] as ('staffanstorp')[],
     type: '' as 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | '',
     isActive: true,
     // Contract fields
@@ -245,7 +242,6 @@ const AdminPage: React.FC = () => {
     ownerCustomerId: null as string | null,
   });
   const [planningStaffanstorp, setPlanningStaffanstorp] = useState<Cage[]>([]);
-  const [planningMalmo, setPlanningMalmo] = useState<Cage[]>([]);
   const [planningHistory, setPlanningHistory] = useState<PlanningData[]>([]);
   const [currentPlanningDate, setCurrentPlanningDate] = useState<string>(new Date().toISOString().split('T')[0]);
   // Search state for dog categories in planning view (location_category)
@@ -261,7 +257,7 @@ const AdminPage: React.FC = () => {
   const [isBoardingDogDropdownOpen, setIsBoardingDogDropdownOpen] = useState<boolean>(false);
   // Search state for dogs tab
   const [dogsTabSearch, setDogsTabSearch] = useState<string>('');
-  const [dogsLocationFilter, setDogsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp' | 'both'>('all');
+  const [dogsLocationFilter, setDogsLocationFilter] = useState<'all' | 'staffanstorp' | 'both'>('all');
   const [dogsTypeFilter, setDogsTypeFilter] = useState<'all' | 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding'>('all');
   const [dogsActiveFilter, setDogsActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [statisticsFilter, setStatisticsFilter] = useState<StatisticsFilter>({
@@ -277,10 +273,6 @@ const AdminPage: React.FC = () => {
 
   // Box settings state (per location)
   const [boxSettings, setBoxSettings] = useState<BoxSettings>({
-    malmo: {
-      cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
-      freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
-    },
     staffanstorp: {
       cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
       freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
@@ -290,7 +282,7 @@ const AdminPage: React.FC = () => {
   // Applications state
   const [applications, setApplications] = useState<Application[]>([]);
   const [applicationsFilter, setApplicationsFilter] = useState<'all' | 'new' | 'reviewed' | 'approved' | 'rejected' | 'matched' | 'added'>('all');
-  const [applicationsLocationFilter, setApplicationsLocationFilter] = useState<'all' | 'malmo' | 'staffanstorp'>('all');
+  const [applicationsLocationFilter, setApplicationsLocationFilter] = useState<'all' | 'staffanstorp'>('all');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [applicationMatchingDogs, setApplicationMatchingDogs] = useState<Dog[]>([]);
   const [rejectModalApp, setRejectModalApp] = useState<Application | null>(null);
@@ -309,7 +301,7 @@ const AdminPage: React.FC = () => {
     email: '',
     date: '',
     time: '',
-    location: 'staffanstorp' as 'malmo' | 'staffanstorp'
+    location: 'staffanstorp' as 'staffanstorp'
   });
 
   // Load box settings from database on mount
@@ -377,7 +369,7 @@ const AdminPage: React.FC = () => {
   };
 
   // Settings view state
-  const [settingsLocation, setSettingsLocation] = useState<'malmo' | 'staffanstorp'>('staffanstorp');
+  const settingsLocation = 'staffanstorp' as const;
   const [editingBoxIndex, setEditingBoxIndex] = useState<{ type: 'cage' | 'free-area'; index: number } | null>(null);
   const [editingBoxName, setEditingBoxName] = useState('');
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
@@ -392,7 +384,7 @@ const AdminPage: React.FC = () => {
     name: '',
     email: '',
     phone: '',
-    location: '' as '' | 'malmo' | 'staffanstorp' | 'both',
+    location: '' as '' | 'staffanstorp' | 'both',
     role: 'employee' as 'admin' | 'employee' | 'platschef',
     position: '',
     hire_date: '',
@@ -413,7 +405,7 @@ const AdminPage: React.FC = () => {
     date: '',
     start_time: '',
     end_time: '',
-    location: '' as '' | 'malmo' | 'staffanstorp',
+    location: '' as '' | 'staffanstorp',
     notes: '',
   });
   const [absenceForm, setAbsenceForm] = useState({
@@ -431,7 +423,7 @@ const AdminPage: React.FC = () => {
 
   // Initialize currentPlanningDate to today when entering planning view (but not if coming from calendar)
   useEffect(() => {
-    if ((currentView === 'planning-malmo' || currentView === 'planning-staffanstorp') && !currentPlanningDate) {
+    if (currentView === 'planning-staffanstorp' && !currentPlanningDate) {
       const today = new Date().toISOString().split('T')[0];
       setCurrentPlanningDate(today);
     }
@@ -440,19 +432,18 @@ const AdminPage: React.FC = () => {
   const [linkedCustomers, setLinkedCustomers] = useState<Customer[]>([]);
 
   // Function to create initial cages based on box settings
-  const createInitialCages = (location: 'staffanstorp' | 'malmo') => {
-    const prefix = location === 'staffanstorp' ? 'staffanstorp' : 'malmo';
-    const settings = boxSettings[location];
+  const createInitialCages = (_location: 'staffanstorp') => {
+    const settings = boxSettings['staffanstorp'];
 
     return [
       ...settings.cages.map((cage, i) => ({
-        id: `${prefix}-cage-${i + 1}`,
+        id: `staffanstorp-cage-${i + 1}`,
         name: cage.name,
         type: 'cage' as const,
         dogs: []
       })),
       ...settings.freeAreas.map((area, i) => ({
-        id: `${prefix}-free-${i + 1}`,
+        id: `staffanstorp-free-${i + 1}`,
         name: area.name,
         type: 'free-area' as const,
         dogs: []
@@ -463,7 +454,7 @@ const AdminPage: React.FC = () => {
   // Load planning when date changes (from database)
   useEffect(() => {
     // Only load if we have a date and boxSettings are loaded
-    if (!currentPlanningDate || !boxSettings.malmo.cages.length || !boxSettings.staffanstorp.cages.length) {
+    if (!currentPlanningDate || !boxSettings.staffanstorp.cages.length) {
       return;
     }
 
@@ -471,7 +462,6 @@ const AdminPage: React.FC = () => {
       // First, clear the current planning state to avoid showing old data
       // while loading new data for the new date
       setPlanningStaffanstorp([]);
-      setPlanningMalmo([]);
 
       // Try to load from database first
       try {
@@ -483,20 +473,10 @@ const AdminPage: React.FC = () => {
           // Fallback to localStorage or create initial
           setPlanningStaffanstorp(createInitialCages('staffanstorp'));
         }
-
-        // Load Malmö
-        const malmoData = await getPlanningForDate(currentPlanningDate, 'malmo');
-        if (malmoData && malmoData.cages) {
-          setPlanningMalmo(malmoData.cages);
-        } else {
-          // Fallback to localStorage or create initial
-          setPlanningMalmo(createInitialCages('malmo'));
-        }
       } catch (error) {
         console.error('Error loading planning from database:', error);
         // Fallback: create initial cages
         setPlanningStaffanstorp(createInitialCages('staffanstorp'));
-        setPlanningMalmo(createInitialCages('malmo'));
       }
     };
 
@@ -785,7 +765,7 @@ const AdminPage: React.FC = () => {
         date: date || scheduleViewDate,
         start_time: '',
         end_time: '',
-        location: '' as '' | 'malmo' | 'staffanstorp',
+        location: '' as '' | 'staffanstorp',
         notes: '',
       });
     }
@@ -830,7 +810,7 @@ const AdminPage: React.FC = () => {
         date: '',
         start_time: '',
         end_time: '',
-        location: '' as '' | 'malmo' | 'staffanstorp',
+        location: '' as '' | 'staffanstorp',
         notes: '',
       });
       setIsSavingSchedule(false);
@@ -1367,7 +1347,7 @@ const AdminPage: React.FC = () => {
     loadBoardingRecords();
   }, []);
 
-  const savePlanningData = (location: 'malmo' | 'staffanstorp', cages: Cage[]) => {
+  const savePlanningData = (location: 'staffanstorp', cages: Cage[]) => {
     const planningData: PlanningData = {
       id: `${location}-${currentPlanningDate}`,
       date: currentPlanningDate,
@@ -1412,7 +1392,7 @@ const AdminPage: React.FC = () => {
 
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getInitialCages = (_location: 'malmo' | 'staffanstorp'): Cage[] => {
+  const getInitialCages = (_location: 'staffanstorp'): Cage[] => {
     const cages: Cage[] = [];
 
     // Add 8 cages
@@ -1615,7 +1595,7 @@ const AdminPage: React.FC = () => {
     openDogModal(dog);
   };
 
-  const saveBoardingRecord = (location: 'malmo' | 'staffanstorp') => {
+  const saveBoardingRecord = (location: 'staffanstorp') => {
     if (!selectedDogForBoarding || !boardingForm.startDate || !boardingForm.endDate) {
       alert('Välj hund och datum krävs');
       return;
@@ -1694,7 +1674,7 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const openBoardingModal = (location: 'malmo' | 'staffanstorp', record?: BoardingRecord) => {
+  const openBoardingModal = (location: 'staffanstorp', record?: BoardingRecord) => {
     if (record) {
       setEditingBoardingRecord(record);
       setBoardingForm({
@@ -1794,7 +1774,7 @@ const AdminPage: React.FC = () => {
   };
 
   // Calculate expected boarding cost with red days
-  const calculateBoardingCost = (startDate: string, endDate: string, location: 'malmo' | 'staffanstorp'): { total: number; regularDays: number; redDays: number; regularCost: number; redDaysCost: number } => {
+  const calculateBoardingCost = (startDate: string, endDate: string, location: 'staffanstorp'): { total: number; regularDays: number; redDays: number; regularCost: number; redDaysCost: number } => {
     if (!startDate || !endDate) {
       return { total: 0, regularDays: 0, redDays: 0, regularCost: 0, redDaysCost: 0 };
     }
@@ -1983,7 +1963,7 @@ const AdminPage: React.FC = () => {
   };
 
   // Helper function to find the last location a dog was planned at
-  const getLastPlannedLocation = (dogId: string): 'malmo' | 'staffanstorp' | null => {
+  const getLastPlannedLocation = (dogId: string): 'staffanstorp' | null => {
     // Find all planning entries where this dog appears
     const dogPlanningEntries = planningHistory.filter(plan =>
       plan.cages && plan.cages.some(cage =>
@@ -2005,24 +1985,13 @@ const AdminPage: React.FC = () => {
   };
 
   // Statistics calculation functions
-  const calculateDogIncome = (dog: Dog, location: 'malmo' | 'staffanstorp', assignLocationForBoth: boolean = false): number => {
+  const calculateDogIncome = (dog: Dog, location: 'staffanstorp', _assignLocationForBoth: boolean = false): number => {
     // Safety checks
     if (!dog || !dog.locations) return 0;
 
     // Ensure locations is an array
     const locations = Array.isArray(dog.locations) ? dog.locations : [];
     if (!locations.includes(location)) return 0;
-
-    // Handle dogs with both locations - only count to the last planned location
-    if (assignLocationForBoth && locations.includes('malmo') && locations.includes('staffanstorp')) {
-      const lastLocation = getLastPlannedLocation(dog.id);
-      if (lastLocation === null) {
-        // If never planned, use first location in array as fallback
-        return location === locations[0] ? calculateDogIncomeForType(dog.type, location) : 0;
-      }
-      // Only count if this is the last planned location
-      if (lastLocation !== location) return 0;
-    }
 
     // Only calculate income if dog has a type (excluding singleDay and boarding)
     if (!dog.type || dog.type === 'singleDay' || dog.type === 'boarding') return 0;
@@ -2031,7 +2000,7 @@ const AdminPage: React.FC = () => {
   };
 
   // Helper function to calculate income for a specific dog type and location
-  const calculateDogIncomeForType = (type: string | undefined, location: 'malmo' | 'staffanstorp'): number => {
+  const calculateDogIncomeForType = (type: string | undefined, location: 'staffanstorp'): number => {
     if (!type) return 0;
     const prices = PRICES[location];
     switch (type) {
@@ -2046,7 +2015,7 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const calculateBoardingIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
+  const calculateBoardingIncome = (location: 'staffanstorp', filter: StatisticsFilter): number => {
     const prices = PRICES[location];
     let filteredRecords = boardingRecords.filter(record => record.location === location);
 
@@ -2069,11 +2038,10 @@ const AdminPage: React.FC = () => {
   // Calculate single day income from planning history - counts ONLY actual planned days per singleDay dog
   // This ensures that singleDay dogs are only counted when they were actually planned, not just because they exist
   // IMPORTANT: Only counts dogs that were planned at the SPECIFIC location, not at other locations
-  const calculateSingleDayIncome = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter, validDogsList: Dog[]): number => {
+  const calculateSingleDayIncome = (location: 'staffanstorp', filter: StatisticsFilter, validDogsList: Dog[]): number => {
     if (!statisticsFilter.includeSingleDays) return 0;
 
     // CRITICAL: Filter planning history to ONLY include plans for this specific location
-    // A dog planned at Staffanstorp should NOT count for Malmö income, even if registered at both locations
     let filteredPlanning = planningHistory.filter(p => {
       // Double-check that the location matches exactly
       return p.location === location && p.cages && Array.isArray(p.cages);
@@ -2099,7 +2067,7 @@ const AdminPage: React.FC = () => {
     // Count how many times each singleDay dog was actually planned (in cages) at THIS location during the period
     // IMPORTANT: We ONLY count dogs that appear in planning history for THIS location (were actually planned here)
     // A singleDay dog that exists but was never planned at this location will NOT be counted
-    // A dog planned at Staffanstorp will NOT count for Malmö, even if registered at both locations
+    // Only dogs actually planned at this specific location are counted
     let totalSingleDayDays = 0;
     const processedDogs = new Set<string>(); // Track which dogs we've counted per date to avoid duplicates
 
@@ -2132,7 +2100,7 @@ const AdminPage: React.FC = () => {
 
   // Calculate boarding income with proper day count
   // IMPORTANT: Only counts boarding records for the specified location that overlap with the filter period
-  const calculateBoardingIncomeDetailed = (location: 'malmo' | 'staffanstorp', filter: StatisticsFilter): number => {
+  const calculateBoardingIncomeDetailed = (location: 'staffanstorp', filter: StatisticsFilter): number => {
     if (!statisticsFilter.includeBoarding) return 0;
 
     const prices = PRICES[location];
@@ -2140,7 +2108,7 @@ const AdminPage: React.FC = () => {
     // CRITICAL: First filter by location only (don't exclude archived records for statistics)
     // Archived records should still be counted in statistics for past periods
     let filteredRecords = boardingRecords.filter(record => {
-      // Ensure location matches exactly - a boarding at Staffanstorp should NOT count for Malmö
+      // Ensure location matches exactly
       return record.location === location;
     });
 
@@ -2225,144 +2193,48 @@ const AdminPage: React.FC = () => {
 
     let filteredDogs = validDogs;
 
-    // Filter dogs by location
-    if (statisticsFilter.location === 'malmo') {
-      filteredDogs = validDogs.filter(dog => dog.locations && Array.isArray(dog.locations) && dog.locations.includes('malmo'));
-    } else if (statisticsFilter.location === 'staffanstorp') {
+    // Filter dogs by location (only staffanstorp)
+    if (statisticsFilter.location === 'staffanstorp') {
       filteredDogs = validDogs.filter(dog => dog.locations && Array.isArray(dog.locations) && dog.locations.includes('staffanstorp'));
     }
 
-    const malmoDogs = validDogs.filter(dog => dog && dog.locations && Array.isArray(dog.locations) && dog.locations.includes('malmo'));
     const staffanstorpDogs = validDogs.filter(dog => dog && dog.locations && Array.isArray(dog.locations) && dog.locations.includes('staffanstorp'));
-    const bothLocationDogs = validDogs.filter(dog => {
-      if (!dog || !dog.locations || !Array.isArray(dog.locations)) return false;
-      return dog.locations.includes('malmo') && dog.locations.includes('staffanstorp');
-    });
 
-    // Calculate daycare income (monthly subscriptions) - ONLY for selected location if filter is set
-    // For dogs with both locations, only count to the last planned location
-    let malmoDaycareIncome = 0;
-    let staffanstorpDaycareIncome = 0;
+    // Calculate daycare income (monthly subscriptions)
+    const staffanstorpDaycareIncome = staffanstorpDogs.reduce((sum, dog) => {
+      const income = calculateDogIncome(dog, 'staffanstorp');
+      return sum + income;
+    }, 0);
 
-    if (statisticsFilter.location === 'all') {
-      // Count both locations
-      malmoDaycareIncome = malmoDogs.reduce((sum, dog) => {
-        const income = calculateDogIncome(dog, 'malmo', true);
-        return sum + income;
-      }, 0);
-      staffanstorpDaycareIncome = staffanstorpDogs.reduce((sum, dog) => {
-        const income = calculateDogIncome(dog, 'staffanstorp', true);
-        return sum + income;
-      }, 0);
-    } else if (statisticsFilter.location === 'malmo') {
-      // Only count Malmö
-      malmoDaycareIncome = malmoDogs.reduce((sum, dog) => {
-        const income = calculateDogIncome(dog, 'malmo', true);
-        return sum + income;
-      }, 0);
-      staffanstorpDaycareIncome = 0;
-    } else if (statisticsFilter.location === 'staffanstorp') {
-      // Only count Staffanstorp
-      malmoDaycareIncome = 0;
-      staffanstorpDaycareIncome = staffanstorpDogs.reduce((sum, dog) => {
-        const income = calculateDogIncome(dog, 'staffanstorp', true);
-        return sum + income;
-      }, 0);
-    }
+    // Calculate boarding income
+    const boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
 
-    // Calculate boarding income - ONLY for selected location if filter is set
-    let boardingMalmoIncome = 0;
-    let boardingStaffanstorpIncome = 0;
-    if (statisticsFilter.location === 'all') {
-      // Count both locations
-      boardingMalmoIncome = calculateBoardingIncomeDetailed('malmo', statisticsFilter);
-      boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
-    } else if (statisticsFilter.location === 'malmo') {
-      // Only count Malmö
-      boardingMalmoIncome = calculateBoardingIncomeDetailed('malmo', statisticsFilter);
-      boardingStaffanstorpIncome = 0;
-    } else if (statisticsFilter.location === 'staffanstorp') {
-      // Only count Staffanstorp
-      boardingMalmoIncome = 0;
-      boardingStaffanstorpIncome = calculateBoardingIncomeDetailed('staffanstorp', statisticsFilter);
-    }
-
-    // Calculate single day income from planning history - ONLY for selected location if filter is set
-    let singleDayMalmoIncome = 0;
-    let singleDayStaffanstorpIncome = 0;
-    if (statisticsFilter.location === 'all') {
-      // Count both locations
-      singleDayMalmoIncome = calculateSingleDayIncome('malmo', statisticsFilter, validDogs);
-      singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter, validDogs);
-    } else if (statisticsFilter.location === 'malmo') {
-      // Only count Malmö
-      singleDayMalmoIncome = calculateSingleDayIncome('malmo', statisticsFilter, validDogs);
-      singleDayStaffanstorpIncome = 0;
-    } else if (statisticsFilter.location === 'staffanstorp') {
-      // Only count Staffanstorp
-      singleDayMalmoIncome = 0;
-      singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter, validDogs);
-    }
+    // Calculate single day income from planning history
+    const singleDayStaffanstorpIncome = calculateSingleDayIncome('staffanstorp', statisticsFilter, validDogs);
 
     // Total income calculations
     // IMPORTANT: PRICES are INCLUSIVE of VAT (as shown on the website)
     // So we need to calculate backwards: prices are with VAT, we need to extract VAT
-    const totalDaycareIncome = malmoDaycareIncome + staffanstorpDaycareIncome;
-    const totalBoardingIncome = boardingMalmoIncome + boardingStaffanstorpIncome;
-    const totalSingleDayIncome = singleDayMalmoIncome + singleDayStaffanstorpIncome;
+    const totalDaycareIncome = staffanstorpDaycareIncome;
+    const totalBoardingIncome = boardingStaffanstorpIncome;
+    const totalSingleDayIncome = singleDayStaffanstorpIncome;
 
     // Prices from PRICES are inclusive of VAT, so this is the total with VAT
     const totalIncomeWithVAT = totalDaycareIncome + totalBoardingIncome + totalSingleDayIncome;
     // Calculate income without VAT by dividing by (1 + VAT_RATE)
     const totalIncomeWithoutVAT = totalIncomeWithVAT / (1 + VAT_RATE);
 
-    // Income by type (monthly subscriptions) - respect location filter
+    // Income by type (monthly subscriptions)
     const incomeByType = {
       fulltime: filteredDogs
         .filter(dog => dog && dog.type === 'fulltime' && dog.locations && Array.isArray(dog.locations))
-        .reduce((sum, dog) => {
-          // Respect location filter
-          if (statisticsFilter.location === 'all') {
-            const malmoIncome = calculateDogIncome(dog, 'malmo', true);
-            const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
-            return sum + malmoIncome + staffanstorpIncome;
-          } else if (statisticsFilter.location === 'malmo') {
-            return sum + calculateDogIncome(dog, 'malmo', true);
-          } else if (statisticsFilter.location === 'staffanstorp') {
-            return sum + calculateDogIncome(dog, 'staffanstorp', true);
-          }
-          return sum;
-        }, 0),
+        .reduce((sum, dog) => sum + calculateDogIncome(dog, 'staffanstorp'), 0),
       parttime3: filteredDogs
         .filter(dog => dog && dog.type === 'parttime-3' && dog.locations && Array.isArray(dog.locations))
-        .reduce((sum, dog) => {
-          // Respect location filter
-          if (statisticsFilter.location === 'all') {
-            const malmoIncome = calculateDogIncome(dog, 'malmo', true);
-            const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
-            return sum + malmoIncome + staffanstorpIncome;
-          } else if (statisticsFilter.location === 'malmo') {
-            return sum + calculateDogIncome(dog, 'malmo', true);
-          } else if (statisticsFilter.location === 'staffanstorp') {
-            return sum + calculateDogIncome(dog, 'staffanstorp', true);
-          }
-          return sum;
-        }, 0),
+        .reduce((sum, dog) => sum + calculateDogIncome(dog, 'staffanstorp'), 0),
       parttime2: filteredDogs
         .filter(dog => dog && dog.type === 'parttime-2' && dog.locations && Array.isArray(dog.locations))
-        .reduce((sum, dog) => {
-          // Respect location filter
-          if (statisticsFilter.location === 'all') {
-            const malmoIncome = calculateDogIncome(dog, 'malmo', true);
-            const staffanstorpIncome = calculateDogIncome(dog, 'staffanstorp', true);
-            return sum + malmoIncome + staffanstorpIncome;
-          } else if (statisticsFilter.location === 'malmo') {
-            return sum + calculateDogIncome(dog, 'malmo', true);
-          } else if (statisticsFilter.location === 'staffanstorp') {
-            return sum + calculateDogIncome(dog, 'staffanstorp', true);
-          }
-          return sum;
-        }, 0),
+        .reduce((sum, dog) => sum + calculateDogIncome(dog, 'staffanstorp'), 0),
       singleDay: totalSingleDayIncome,
       boarding: totalBoardingIncome
     };
@@ -2376,24 +2248,21 @@ const AdminPage: React.FC = () => {
 
     return {
       totalDogs: filteredDogs.length,
-      malmoDogs: malmoDogs.length,
       staffanstorpDogs: staffanstorpDogs.length,
-      bothLocationDogs: bothLocationDogs.length,
       totalIncome: totalIncomeWithoutVAT,
       totalIncomeWithVAT: totalIncomeWithVAT,
       totalIncomeWithoutVAT: totalIncomeWithoutVAT,
-      malmoIncome: malmoDaycareIncome + boardingMalmoIncome + singleDayMalmoIncome,
       staffanstorpIncome: staffanstorpDaycareIncome + boardingStaffanstorpIncome + singleDayStaffanstorpIncome,
       incomeByType,
       incomeByCategory
     };
   };
 
-  const handleDrop = (cageId: string, location: 'staffanstorp' | 'malmo') => {
+  const handleDrop = (cageId: string, location: 'staffanstorp') => {
     if (!draggedDog) return;
 
-    const planning = location === 'staffanstorp' ? planningStaffanstorp : planningMalmo;
-    const updatePlanning = location === 'staffanstorp' ? setPlanningStaffanstorp : setPlanningMalmo;
+    const planning = planningStaffanstorp;
+    const updatePlanning = setPlanningStaffanstorp;
 
     const updatedCages = planning.map(cage => {
       // Remove dog from its old cage if it exists
@@ -2417,9 +2286,9 @@ const AdminPage: React.FC = () => {
     setDraggedDog(null);
   };
 
-  const removeDogFromCage = (cageId: string, dogId: string, location: 'staffanstorp' | 'malmo') => {
-    const planning = location === 'staffanstorp' ? planningStaffanstorp : planningMalmo;
-    const updatePlanning = location === 'staffanstorp' ? setPlanningStaffanstorp : setPlanningMalmo;
+  const removeDogFromCage = (cageId: string, dogId: string, location: 'staffanstorp') => {
+    const planning = planningStaffanstorp;
+    const updatePlanning = setPlanningStaffanstorp;
 
     const updatedCages = planning.map(cage => {
       if (cage.id === cageId && cage.dogs) {
@@ -2436,15 +2305,10 @@ const AdminPage: React.FC = () => {
     }, 100);
   };
 
-  const resetCages = (location: 'staffanstorp' | 'malmo') => {
+  const resetCages = (location: 'staffanstorp') => {
     if (confirm('Är du säker på att du vill återställa alla burar för denna dag?')) {
       const newCages = createInitialCages(location);
-
-      if (location === 'staffanstorp') {
-        setPlanningStaffanstorp(newCages);
-      } else {
-        setPlanningMalmo(newCages);
-      }
+      setPlanningStaffanstorp(newCages);
 
       // Save to database
       setTimeout(() => {
@@ -2456,7 +2320,7 @@ const AdminPage: React.FC = () => {
   // Copy planning from another date
   const copyPlanningFromDate = async (
     sourceDate: string,
-    location: 'staffanstorp' | 'malmo',
+    location: 'staffanstorp',
     includeBoarding: boolean
   ) => {
     try {
@@ -2492,11 +2356,7 @@ const AdminPage: React.FC = () => {
       });
 
       // Update planning state
-      if (location === 'staffanstorp') {
-        setPlanningStaffanstorp(copiedCages);
-      } else {
-        setPlanningMalmo(copiedCages);
-      }
+      setPlanningStaffanstorp(copiedCages);
 
       // Save to database
       setTimeout(() => {
@@ -3934,7 +3794,7 @@ const AdminPage: React.FC = () => {
             </div>
             <div className="text-center">
               <div className="text-xl sm:text-2xl font-bold text-purple-600">
-                {planningHistory.filter(p => p.location === 'malmo').length + planningHistory.filter(p => p.location === 'staffanstorp').length}
+                {planningHistory.filter(p => p.location === 'staffanstorp').length}
               </div>
               <div className="text-xs sm:text-sm text-gray-600">Planerade dagar</div>
             </div>
@@ -3944,9 +3804,9 @@ const AdminPage: React.FC = () => {
             </div>
             <div className="text-center">
               <div className="text-xl sm:text-2xl font-bold text-green-600">
-                {dogs.filter(d => d.locations.includes('malmo') && d.locations.includes('staffanstorp')).length}
+                {dogs.filter(d => d.locations.includes('staffanstorp')).length}
               </div>
-              <div className="text-xs sm:text-sm text-gray-600">Hundar på båda dagisen</div>
+              <div className="text-xs sm:text-sm text-gray-600">Hundar i Staffanstorp</div>
             </div>
           </div>
         </div>
@@ -4152,7 +4012,7 @@ const AdminPage: React.FC = () => {
     );
   };
 
-  const renderPlanning = (planning: Cage[], location: 'staffanstorp' | 'malmo') => {
+  const renderPlanning = (planning: Cage[], location: 'staffanstorp') => {
     // Get dogs on active boarding for this date and location
     const getBoardingDogs = () => {
       const activeBoardingRecords = boardingRecords.filter(record => {
@@ -4587,15 +4447,6 @@ const AdminPage: React.FC = () => {
     );
   };
 
-  const renderPlanningMalmo = () => (
-    <div className="space-y-3 sm:space-y-6">
-      <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Planering Malmö</h2>
-        {renderPlanning(planningMalmo, 'malmo')}
-      </div>
-    </div>
-  );
-
   const renderPlanningStaffanstorp = () => (
     <div className="space-y-3 sm:space-y-6">
       <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
@@ -4605,7 +4456,7 @@ const AdminPage: React.FC = () => {
     </div>
   );
 
-  const renderBoarding = (location: 'malmo' | 'staffanstorp') => {
+  const renderBoarding = (location: 'staffanstorp') => {
     const locationRecords = boardingRecords.filter(record => record.location === location);
 
     // Filter records based on current filter
@@ -4627,7 +4478,7 @@ const AdminPage: React.FC = () => {
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-            Hundpensionat {location === 'malmo' ? 'Malmö' : 'Staffanstorp'} ({filteredRecords.length})
+            Hundpensionat Staffanstorp ({filteredRecords.length})
           </h2>
           <button
             onClick={() => openBoardingModal(location)}
@@ -4748,7 +4599,7 @@ const AdminPage: React.FC = () => {
     );
   };
 
-  const renderRecordsByMonth = (records: BoardingRecord[], location: 'malmo' | 'staffanstorp') => {
+  const renderRecordsByMonth = (records: BoardingRecord[], location: 'staffanstorp') => {
     const recordsByMonth = getBoardingRecordsByMonth(records, boardingYearFilter);
     const sortedMonths = Object.keys(recordsByMonth).sort((a, b) => b.localeCompare(a));
 
@@ -4847,7 +4698,7 @@ const AdminPage: React.FC = () => {
     );
   };
 
-  const renderCalendar = (location: 'malmo' | 'staffanstorp') => {
+  const renderCalendar = (location: 'staffanstorp') => {
     const locationHistory = planningHistory.filter(p => p.location === location);
 
     // Get current week dates
@@ -4920,7 +4771,7 @@ const AdminPage: React.FC = () => {
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900">
-            Kalender {location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+            Kalender Staffanstorp
           </h2>
           <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <button
@@ -5038,7 +4889,7 @@ const AdminPage: React.FC = () => {
                     <button
                       onClick={() => {
                         setCurrentPlanningDate(date);
-                        setCurrentView(location === 'malmo' ? 'planning-malmo' : 'planning-staffanstorp');
+                        setCurrentView('planning-staffanstorp');
                       }}
                       className="text-xs text-blue-600 hover:text-blue-800 underline"
                     >
@@ -5075,7 +4926,7 @@ const AdminPage: React.FC = () => {
                       <button
                         onClick={() => {
                           setCurrentPlanningDate(planning.date);
-                          setCurrentView(location === 'malmo' ? 'planning-malmo' : 'planning-staffanstorp');
+                          setCurrentView('planning-staffanstorp');
                         }}
                         className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
                       >
@@ -5091,10 +4942,8 @@ const AdminPage: React.FC = () => {
     );
   };
 
-  const renderBoardingMalmo = () => renderBoarding('malmo');
   const renderBoardingStaffanstorp = () => renderBoarding('staffanstorp');
 
-  const renderCalendarMalmo = () => renderCalendar('malmo');
   const renderCalendarStaffanstorp = () => renderCalendar('staffanstorp');
 
   // Single Staffanstorp hub that surfaces planning, calendar and pensionat
@@ -5256,17 +5105,6 @@ const AdminPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Malmö Dogs */}
-          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border-l-4 border-green-500">
-            <div className="flex items-center">
-              <FaDog className="text-green-500 text-xl sm:text-2xl mr-2 sm:mr-3" />
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Malmö hundar</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.malmoDogs}</p>
-              </div>
-            </div>
-          </div>
-
           {/* Staffanstorp Dogs */}
           <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border-l-4 border-orange-500">
             <div className="flex items-center">
@@ -5274,17 +5112,6 @@ const AdminPage: React.FC = () => {
               <div>
                 <p className="text-xs sm:text-sm font-medium text-gray-600">Staffanstorp hundar</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.staffanstorpDogs}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Both Locations */}
-          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 border-l-4 border-purple-500">
-            <div className="flex items-center">
-              <FaDog className="text-purple-500 text-xl sm:text-2xl mr-2 sm:mr-3" />
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Båda platser</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.bothLocationDogs}</p>
               </div>
             </div>
           </div>
@@ -5328,31 +5155,13 @@ const AdminPage: React.FC = () => {
           </div>
 
           {/* Income by Location */}
-          {(statisticsFilter.location === 'all' || statisticsFilter.location === 'malmo') && (
-            <div className={statisticsFilter.location === 'all' ? "grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6" : "mb-4 sm:mb-6"}>
-              <div className="text-center p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-xs sm:text-sm text-gray-600 mb-1">Malmö</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-700">{Math.round(stats.malmoIncome).toLocaleString()} SEK</p>
-                <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
-              </div>
-              {statisticsFilter.location === 'all' && (
-                <div className="text-center p-3 sm:p-4 bg-orange-50 rounded-lg border border-orange-200">
-                  <p className="text-xs sm:text-sm text-gray-600 mb-1">Staffanstorp</p>
-                  <p className="text-xl sm:text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
-                  <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
-                </div>
-              )}
+          <div className="mb-4 sm:mb-6">
+            <div className="text-center p-3 sm:p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <p className="text-xs sm:text-sm text-gray-600 mb-1">Staffanstorp</p>
+              <p className="text-xl sm:text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
+              <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
             </div>
-          )}
-          {statisticsFilter.location === 'staffanstorp' && (
-            <div className="mb-6">
-              <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-sm text-gray-600 mb-1">Staffanstorp</p>
-                <p className="text-2xl font-bold text-orange-700">{Math.round(stats.staffanstorpIncome).toLocaleString()} SEK</p>
-                <p className="text-xs text-gray-500 mt-1">Exkl. moms</p>
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* Warning if dogs are missing type */}
           {dogs.some(dog => !dog.type && dog.isActive !== false) && (
@@ -5436,55 +5245,28 @@ const AdminPage: React.FC = () => {
         {/* Pricing Information */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Prisinformation</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Malmö priser</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Heltid:</span>
-                  <span className="font-semibold">{PRICES.malmo.fulltime} SEK/månad</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Deltid (3 dagar):</span>
-                  <span className="font-semibold">{PRICES.malmo.parttime3} SEK/månad</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Deltid (2 dagar):</span>
-                  <span className="font-semibold">{PRICES.malmo.parttime2} SEK/månad</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Enstaka dag:</span>
-                  <span className="font-semibold">{PRICES.malmo.singleDay} SEK</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Hundpensionat:</span>
-                  <span className="font-semibold">{PRICES.malmo.boarding} SEK/dygn</span>
-                </div>
+          <div>
+            <h4 className="font-semibold text-gray-800 mb-3">Staffanstorp priser</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Heltid:</span>
+                <span className="font-semibold">{PRICES.staffanstorp.fulltime} SEK/månad</span>
               </div>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-3">Staffanstorp priser</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Heltid:</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.fulltime} SEK/månad</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Deltid (3 dagar):</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.parttime3} SEK/månad</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Deltid (2 dagar):</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.parttime2} SEK/månad</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Enstaka dag:</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.singleDay} SEK</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Hundpensionat:</span>
-                  <span className="font-semibold">{PRICES.staffanstorp.boarding} SEK/dygn</span>
-                </div>
+              <div className="flex justify-between">
+                <span>Deltid (3 dagar):</span>
+                <span className="font-semibold">{PRICES.staffanstorp.parttime3} SEK/månad</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Deltid (2 dagar):</span>
+                <span className="font-semibold">{PRICES.staffanstorp.parttime2} SEK/månad</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Enstaka dag:</span>
+                <span className="font-semibold">{PRICES.staffanstorp.singleDay} SEK</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Hundpensionat:</span>
+                <span className="font-semibold">{PRICES.staffanstorp.boarding} SEK/dygn</span>
               </div>
             </div>
           </div>
@@ -5508,14 +5290,8 @@ const AdminPage: React.FC = () => {
 
       // Location filter
       if (dogsLocationFilter !== 'all') {
-        if (dogsLocationFilter === 'both') {
-          if (!(dog.locations.includes('malmo') && dog.locations.includes('staffanstorp'))) {
-            return false;
-          }
-        } else {
-          if (!dog.locations.includes(dogsLocationFilter)) {
-            return false;
-          }
+        if (!dog.locations.includes('staffanstorp')) {
+          return false;
         }
       }
 
@@ -5656,8 +5432,8 @@ const AdminPage: React.FC = () => {
                     </div>
                     <div className="flex gap-1 mt-1">
                       {dog.locations.map(location => (
-                        <span key={location} className={`text-xs px-2 py-1 rounded ${location === 'malmo' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                          {location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                        <span key={location} className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                          Staffanstorp
                         </span>
                       ))}
                     </div>
@@ -5838,9 +5614,8 @@ const AdminPage: React.FC = () => {
                       <td className="py-2 px-3 text-sm">{employee.email}</td>
                       <td className="py-2 px-3 text-sm">{employee.phone || '-'}</td>
                       <td className="py-2 px-3 text-sm">
-                        {employee.location === 'malmo' ? 'Malmö' :
-                          employee.location === 'staffanstorp' ? 'Staffanstorp' :
-                            employee.location === 'both' ? 'Båda' : '-'}
+                        {employee.location === 'staffanstorp' ? 'Staffanstorp' :
+                          employee.location === 'both' ? 'Båda' : '-'}
                       </td>
                       <td className="py-2 px-3 text-sm">
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${employee.role === 'platschef'
@@ -5894,30 +5669,7 @@ const AdminPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Box-inställningar</h2>
 
-          {/* Location Selector */}
-          <div className="mb-4 sm:mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Välj plats</label>
-            <div className="flex gap-2 sm:gap-4">
-              <button
-                onClick={() => setSettingsLocation('staffanstorp')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${settingsLocation === 'staffanstorp'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-              >
-                Staffanstorp
-              </button>
-              <button
-                onClick={() => setSettingsLocation('malmo')}
-                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md font-medium transition-colors text-sm sm:text-base ${settingsLocation === 'malmo'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-              >
-                Malmö
-              </button>
-            </div>
-          </div>
+          {/* Location: always Staffanstorp */}
 
           {/* Cages Section */}
           <div className="mb-6 sm:mb-8">
@@ -6348,7 +6100,7 @@ const AdminPage: React.FC = () => {
               </h3>
               {getStatusBadge(application.status)}
               <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-                {application.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                Staffanstorp
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm text-gray-600">
@@ -6586,7 +6338,7 @@ const AdminPage: React.FC = () => {
                       <span className="font-medium">Tjänsttyp:</span> {selectedApplication.service_type}
                     </div>
                     <div>
-                      <span className="font-medium">Plats:</span> {selectedApplication.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                      <span className="font-medium">Plats:</span> Staffanstorp
                     </div>
                     {selectedApplication.days_per_week && (
                       <div>
@@ -6819,7 +6571,7 @@ const AdminPage: React.FC = () => {
                           <div className="flex-1">
                             <div className="font-medium">{employee?.name || 'Okänd anställd'}</div>
                             <div className="text-sm text-gray-600">
-                              {schedule.start_time} - {schedule.end_time} | {schedule.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                              {schedule.start_time} - {schedule.end_time} | Staffanstorp
                               {schedule.notes && ` | ${schedule.notes}`}
                             </div>
                           </div>
@@ -7050,9 +6802,8 @@ const AdminPage: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {employee.location === 'malmo' ? 'Malmö' :
-                          employee.location === 'staffanstorp' ? 'Staffanstorp' :
-                            employee.location === 'both' ? 'Båda' : '-'}
+                        {employee.location === 'staffanstorp' ? 'Staffanstorp' :
+                          employee.location === 'both' ? 'Båda' : '-'}
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right">
@@ -7226,7 +6977,7 @@ const AdminPage: React.FC = () => {
                           {schedule.start_time} - {schedule.end_time}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {schedule.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                          Staffanstorp
                           {schedule.notes && ` | ${schedule.notes}`}
                         </div>
                       </div>
@@ -7517,7 +7268,7 @@ const AdminPage: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
                         <h4 className="font-semibold text-sm sm:text-base text-gray-900 truncate">{meeting.name}</h4>
                         <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-                          {meeting.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                          Staffanstorp
                         </span>
                       </div>
                       <div className="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
@@ -7578,7 +7329,7 @@ const AdminPage: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
                         <h4 className="font-semibold text-sm sm:text-base text-gray-700 truncate">{meeting.name}</h4>
                         <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-                          {meeting.location === 'malmo' ? 'Malmö' : 'Staffanstorp'}
+                          Staffanstorp
                         </span>
                       </div>
                       <div className="text-xs sm:text-sm text-gray-600 space-y-0.5 sm:space-y-1">
@@ -7745,16 +7496,10 @@ const AdminPage: React.FC = () => {
         return renderDogs();
       case 'contracts':
         return userRole === 'admin' ? renderContracts() : renderDashboard();
-      case 'planning-malmo':
-        return renderPlanningMalmo();
       case 'planning-staffanstorp':
         return renderPlanningStaffanstorp();
-      case 'boarding-malmo':
-        return renderBoardingMalmo();
       case 'boarding-staffanstorp':
         return renderBoardingStaffanstorp();
-      case 'calendar-malmo':
-        return renderCalendarMalmo();
       case 'calendar-staffanstorp':
         return renderCalendarStaffanstorp();
       case 'statistics':
@@ -7912,7 +7657,7 @@ const AdminPage: React.FC = () => {
               value={contractData.customerCity}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary text-sm sm:text-base"
-              placeholder="e.g., Malmö"
+              placeholder="e.g., Staffanstorp"
             />
           </div>
 
@@ -8206,7 +7951,7 @@ const AdminPage: React.FC = () => {
                       <span key={meeting.id}>
                         {formatTime(meeting.time)} - {meeting.name}
                         {meeting.dogName && ` (${meeting.dogName})`}
-                        {meeting.location === 'malmo' ? ' - Malmö' : ' - Staffanstorp'}
+                        {' - Staffanstorp'}
                         {idx < todaysMeetings.length - 1 ? ' • ' : ''}
                       </span>
                     ))}
@@ -8247,12 +7992,9 @@ const AdminPage: React.FC = () => {
                 {currentView === 'dashboard' ? 'CleverDog Admin' :
                   currentView === 'dogs' ? 'Hundar' :
                     currentView === 'contracts' ? 'Kontrakt' :
-                      currentView === 'planning-malmo' ? 'Planering Malmö' :
-                        currentView === 'planning-staffanstorp' ? 'Planering Staffanstorp' :
-                          currentView === 'boarding-malmo' ? 'Hundpensionat Malmö' :
-                            currentView === 'boarding-staffanstorp' ? 'Hundpensionat Staffanstorp' :
-                              currentView === 'calendar-malmo' ? 'Kalender Malmö' :
-                                currentView === 'calendar-staffanstorp' ? 'Kalender Staffanstorp' :
+                      currentView === 'planning-staffanstorp' ? 'Planering Staffanstorp' :
+                        currentView === 'boarding-staffanstorp' ? 'Hundpensionat Staffanstorp' :
+                          currentView === 'calendar-staffanstorp' ? 'Kalender Staffanstorp' :
                                   currentView === 'statistics' ? 'Statistik & Inkomst' :
                                     currentView === 'settings' ? 'Inställningar' :
                                       currentView === 'applications' ? 'Ansökningar' :
@@ -8543,7 +8285,7 @@ const AdminPage: React.FC = () => {
               <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-md">
                 <h4 className="text-xs sm:text-sm font-semibold text-gray-800 mb-2">Förväntad kostnad</h4>
                 {(() => {
-                  const location = (window as any).currentBoardingLocation as 'malmo' | 'staffanstorp';
+                  const location = 'staffanstorp' as const;
                   const cost = calculateBoardingCost(
                     boardingForm.startDate,
                     boardingForm.endDate,
@@ -8786,24 +8528,6 @@ const AdminPage: React.FC = () => {
                       />
                       Staffanstorp
                     </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={dogForm.locations.includes('malmo')}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            if (!dogForm.locations.includes('malmo')) {
-                              setDogForm({ ...dogForm, locations: [...dogForm.locations, 'malmo'] });
-                            }
-                          } else {
-                            setDogForm({ ...dogForm, locations: dogForm.locations.filter(l => l !== 'malmo') });
-                          }
-                        }}
-                        className="mr-2"
-                        disabled={userRole === 'employee'}
-                      />
-                      Malmö
-                    </label>
                   </div>
                 </div>
                 <div>
@@ -8874,7 +8598,7 @@ const AdminPage: React.FC = () => {
                       value={dogForm.ownerCity}
                       onChange={(e) => setDogForm({ ...dogForm, ownerCity: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="e.g., Malmö"
+                      placeholder="e.g., Staffanstorp"
                       disabled={userRole === 'employee'}
                     />
                   </div>
@@ -8939,7 +8663,7 @@ const AdminPage: React.FC = () => {
                       const prevDate = new Date(currentPlanningDate);
                       prevDate.setDate(prevDate.getDate() - 1);
                       const sourceDate = prevDate.toISOString().split('T')[0];
-                      const currentLocation = currentView === 'planning-malmo' ? 'malmo' : 'staffanstorp';
+                      const currentLocation = 'staffanstorp' as const;
                       copyPlanningFromDate(sourceDate, currentLocation, copyIncludeBoarding);
                     }}
                     className="w-full px-4 py-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-left"
@@ -8959,7 +8683,7 @@ const AdminPage: React.FC = () => {
                       const prevWeekDate = new Date(currentPlanningDate);
                       prevWeekDate.setDate(prevWeekDate.getDate() - 7);
                       const sourceDate = prevWeekDate.toISOString().split('T')[0];
-                      const currentLocation = currentView === 'planning-malmo' ? 'malmo' : 'staffanstorp';
+                      const currentLocation = 'staffanstorp' as const;
                       copyPlanningFromDate(sourceDate, currentLocation, copyIncludeBoarding);
                     }}
                     className="w-full px-4 py-3 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-left"
@@ -8989,7 +8713,7 @@ const AdminPage: React.FC = () => {
                           alert('Välj ett datum att kopiera från');
                           return;
                         }
-                        const currentLocation = currentView === 'planning-malmo' ? 'malmo' : 'staffanstorp';
+                        const currentLocation = 'staffanstorp' as const;
                         copyPlanningFromDate(customCopyDate, currentLocation, copyIncludeBoarding);
                       }}
                       disabled={!customCopyDate}
