@@ -65,7 +65,10 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [n, acts, msgs, report, vacs, staff] = await Promise.all([
+      // allSettled så Hem-fliken laddar färdigt även om en av sub-fetcharna
+      // failar (nätverksbortfall, RPC-fel, etc). Failed branches faller
+      // tillbaka till default-värden istället för att tanka hela sidan.
+      const results = await Promise.allSettled([
         getNextScheduledDay(dog.id),
         getDogActivities(dog.id, 1),
         getMyMessages(dog.id),
@@ -73,6 +76,14 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
         getVaccinations(dog.id),
         getStaffWorkingToday(),
       ]);
+      const [nRes, actsRes, msgsRes, reportRes, vacsRes, staffRes] = results;
+      const n = nRes.status === 'fulfilled' ? nRes.value : null;
+      const acts = actsRes.status === 'fulfilled' ? actsRes.value : [];
+      const msgs = msgsRes.status === 'fulfilled' ? msgsRes.value : [];
+      const report = reportRes.status === 'fulfilled' ? reportRes.value : null;
+      const vacs = vacsRes.status === 'fulfilled' ? vacsRes.value : [];
+      const staff = staffRes.status === 'fulfilled' ? staffRes.value : [];
+
       setNext(n);
       setLatestActivity(acts[0] ?? null);
       const sortedMsgs = [...msgs].reverse();

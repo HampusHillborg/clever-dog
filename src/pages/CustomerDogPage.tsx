@@ -62,12 +62,15 @@ export default function CustomerDogPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    Promise.all([getMyDog(id), getMyDogs(), getCustomerForUser()]).then(([d, all, c]) => {
-      setDog(d);
-      setAllDogs(all);
-      setCustomerName(c?.name ?? '');
-      setLoading(false);
-    });
+    // allSettled så loading släpper även om en av fetcharna failar (t.ex.
+    // nätverksbortfall). Annars hänger appen för evigt på skeleton.
+    Promise.allSettled([getMyDog(id), getMyDogs(), getCustomerForUser()])
+      .then(([dRes, allRes, cRes]) => {
+        if (dRes.status === 'fulfilled') setDog(dRes.value);
+        if (allRes.status === 'fulfilled') setAllDogs(allRes.value);
+        if (cRes.status === 'fulfilled') setCustomerName(cRes.value?.name ?? '');
+        setLoading(false);
+      });
   }, [id]);
 
   const logout = async () => {
