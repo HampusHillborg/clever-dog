@@ -30,15 +30,53 @@ async function pushToUser(
   ]);
 }
 
-// Returns auth_user_ids for all customers in a chat thread:
-// the thread owner + anyone sharing a dog with them.
-// Used for staff_message push fan-out.
+// Returnera alla auth_user_ids för admins/personalen (admin_users-tabellen).
+// Används för customer_message push så all personal får notis.
+async function adminAuthUserIds(
+  admin: ReturnType<typeof createClient>,
+): Promise<string[]> {
+  const { data } = await admin.from('admin_users').select('id');
+  const rows = (data ?? []) as Array<{ id: string }>;
+  return rows.map(r => r.id).filter((u): u is string => !!u);
+}
+
+// Returnera alla auth_user_ids för kunder kopplade till en hund.
+// Används för booking_decision så att alla co-owners (mamma+pappa)
+// får notis när en bokning godkänns/avslås.
+async function coOwnerAuthUserIds(
+  admin: ReturnType<typeof createClient>,
+  dogId: string | null,
+  fallbackCustomerId: string | null,
+): Promise<string[]> {
+  if (!dogId) {
+    if (!fallbackCustomerId) return [];
+    const { data } = await admin
+      .from('customers')
+      .select('auth_user_id')
+      .eq('id', fallbackCustomerId)
+      .maybeSingle();
+    const uid = (data as { auth_user_id: string | null } | null)?.auth_user_id ?? null;
+    return uid ? [uid] : [];
+  }
+  const { data } = await admin
+    .from('customer_dogs')
+    .select('customers(auth_user_id)')
+    .eq('dog_id', dogId);
+  const rows = (data ?? []) as Array<{ customers: { auth_user_id: string | null } | null }>;
+  return rows
+    .map(r => r.customers?.auth_user_id)
+    .filter((u): u is string => !!u);
+}
+
+// Returnera alla auth_user_ids i en chat-tråd: trådägaren + alla som
+// delar minst en hund med hen. Används för staff_message push så hela
+// "familjen" får notis när dagiset svarar (oavsett vilken kund de
+// adresserade meddelandet till).
 async function threadRecipientAuthUserIds(
   admin: ReturnType<typeof createClient>,
   customerId: string | null,
 ): Promise<string[]> {
   if (!customerId) return [];
-  // chat_thread_customers(uuid) returns setof uuid as rows with key "chat_thread_customers".
   const { data: rpcData } = await (admin.rpc as unknown as (
     fn: string,
     args: Record<string, unknown>,
@@ -215,50 +253,59 @@ Deno.serve(async (req) => {
       // Reply-To = admin email so customer can write back to staff
       await sendEmail(booking.customers.email, subject, html, ADMIN_EMAIL || undefined);
 
-      // Push notification (non-fatal) — fan-out FCM + APNs in parallel.
-      if (booking.customer_id) {
-        const { data: cust } = await admin
-          .from('customers')
-          .select('auth_user_id')
-          .eq('id', booking.customer_id)
-          .maybeSingle();
-        if (cust?.auth_user_id) {
-          const pushBody = approved
-            ? `${escape(booking.dogs?.name)}: ${dates} är godkänd`
-            : `Din förfrågan blev avslagen. Se kalendern för detaljer.`;
-          await pushToUser(admin, cust.auth_user_id, subject, pushBody, {
+      // Push notification (non-fatal) — fan-out till alla co-owners.
+      const recipients = await coOwnerAuthUserIds(
+        admin,
+        booking.dog_id ?? null,
+        booking.customer_id ?? null,
+      );
+      const pushBody = approved
+        ? `${escape(booking.dogs?.name)}: ${dates} är godkänd`
+        : `Din förfrågan blev avslagen. Se kalendern för detaljer.`;
+      await Promise.all(
+        recipients.map(uid =>
+          pushToUser(admin, uid, subject, pushBody, {
             kind: 'booking_decision',
             booking_id: booking.id,
-          });
-        }
-      }
+          }),
+        ),
+      );
     }
     else if (body.kind === 'customer_message') {
       if (!body.message_id) throw new Error('message_id required');
-      if (!ADMIN_EMAIL) return new Response(JSON.stringify({ ok: false, skipped: 'no admin email' }), { headers });
 
       const { data: msg } = await admin
         .from('messages')
-        .select('*, customers(name, email), dogs(name)')
+        .select('*')
         .eq('id', body.message_id).single();
       if (!msg || msg.sender_role !== 'customer') {
         return new Response(JSON.stringify({ ok: false, skipped: 'not customer message' }), { headers });
       }
 
-      const html = wrap('Nytt meddelande från kund', `
-        <p><strong>${escape(msg.customers?.name)}</strong> (${escape(msg.customers?.email)})
-        ${msg.dogs?.name ? `om <strong>${escape(msg.dogs.name)}</strong>` : ''} skrev:</p>
-        <blockquote style="border-left: 3px solid #c97b3a; padding-left: 12px; color: #444;">
-          ${escape(msg.body)}
-        </blockquote>
-        <p>Svara via <a href="${SITE_URL}/admin">admin-portalen</a>.</p>
-      `);
-      // Reply-To = customer email so admin can reply via inbox
-      await sendEmail(
-        ADMIN_EMAIL,
-        `Nytt meddelande från ${msg.customers?.name}`,
-        html,
-        msg.customers?.email ?? undefined,
+      // Hämta kundens namn så push-titeln blir "Nytt meddelande från X".
+      let senderName = 'En kund';
+      if (msg.customer_id) {
+        const { data: c } = await admin
+          .from('customers')
+          .select('name')
+          .eq('id', msg.customer_id)
+          .maybeSingle();
+        senderName = (c as { name?: string } | null)?.name ?? senderName;
+      }
+
+      // Push till alla admins/personalen. Email-notiser för chat är avstängda
+      // — push räcker eftersom personalen sitter i admin-appen.
+      const adminUids = await adminAuthUserIds(admin);
+      await Promise.all(
+        adminUids.map(uid =>
+          pushToUser(
+            admin,
+            uid,
+            `Nytt meddelande från ${senderName}`,
+            String(msg.body).slice(0, 120),
+            { kind: 'customer_message', message_id: msg.id },
+          ),
+        ),
       );
     }
     else if (body.kind === 'staff_message') {
@@ -266,32 +313,15 @@ Deno.serve(async (req) => {
 
       const { data: msg } = await admin
         .from('messages')
-        .select('*, customers(name, email), dogs(name)')
+        .select('*')
         .eq('id', body.message_id).single();
       if (!msg || msg.sender_role !== 'staff') {
         return new Response(JSON.stringify({ ok: false, skipped: 'not staff message' }), { headers });
       }
-      if (!msg.customers?.email) {
-        return new Response(JSON.stringify({ ok: false, skipped: 'no customer email' }), { headers });
-      }
 
-      const html = wrap('Nytt meddelande från CleverDog', `
-        <p>Hej ${escape(msg.customers.name)},</p>
-        <p>Personalen har skrivit till dig${msg.dogs?.name ? ` om <strong>${escape(msg.dogs.name)}</strong>` : ''}:</p>
-        <blockquote style="border-left: 3px solid #c97b3a; padding-left: 12px; color: #444;">
-          ${escape(msg.body)}
-        </blockquote>
-        <p>Svara via <a href="${SITE_URL}/kund">kundportalen</a>.</p>
-      `);
-      // Reply-To = admin so customer can reply via inbox
-      await sendEmail(
-        msg.customers.email,
-        'Nytt meddelande från CleverDog',
-        html,
-        ADMIN_EMAIL || undefined,
-      );
-
-      // Push notification — fan out to all thread members (thread owner + co-owners).
+      // Email-notiser för chat avstängda — bara push fan-outas. Chat
+      // är per-kund-tråd (inte per-hund), så vi pushar till alla i
+      // tråden (trådägaren + co-owners via shared-dog).
       if (msg.customer_id) {
         const recipientUserIds = await threadRecipientAuthUserIds(admin, msg.customer_id);
         await Promise.all(
@@ -302,7 +332,7 @@ Deno.serve(async (req) => {
               'Nytt meddelande från CleverDog',
               String(msg.body).slice(0, 120),
               { kind: 'staff_message', message_id: msg.id },
-            )
+            ),
           ),
         );
       }

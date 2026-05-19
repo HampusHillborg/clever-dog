@@ -7,7 +7,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import {
   getDogActivities, getMyMessages, getDailyReport, reportHasContent,
-  getVaccinations, vaccinationStatus, VACCINE_LABELS,
+  getVaccinations, vaccinationStatus, VACCINE_LABELS, getStaffWorkingToday,
   type Dog, type DogActivity, type Message, type DailyReport, type Vaccination,
 } from '../../lib/customerApi';
 import GoogleReviewCTA from './GoogleReviewCTA';
@@ -48,9 +48,10 @@ const bookingTypeLabel = (t: string): string => {
   return 'Dagis';
 };
 
-export default function HomeFeedTab({ dog, onJumpTo }: {
+export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
   dog: Dog;
-  onJumpTo: (tab: 'calendar' | 'album' | 'messages' | 'profile') => void;
+  onJumpTo: (tab: 'calendar' | 'album' | 'messages' | 'more') => void;
+  customerFirstName: string;
 }) {
   const [next, setNext] = useState<NextDay | null>(null);
   const [latestActivity, setLatestActivity] = useState<DogActivity | null>(null);
@@ -58,18 +59,31 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
   const [unreadCount, setUnreadCount] = useState(0);
   const [todayReport, setTodayReport] = useState<DailyReport | null>(null);
   const [vaccineWarnings, setVaccineWarnings] = useState<Vaccination[]>([]);
+  const [todayStaff, setTodayStaff] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [n, acts, msgs, report, vacs] = await Promise.all([
+      // allSettled så Hem-fliken laddar färdigt även om en av sub-fetcharna
+      // failar (nätverksbortfall, RPC-fel, etc). Failed branches faller
+      // tillbaka till default-värden istället för att tanka hela sidan.
+      const results = await Promise.allSettled([
         getNextScheduledDay(dog.id),
         getDogActivities(dog.id, 1),
         getMyMessages(dog.id),
         getDailyReport(dog.id),
         getVaccinations(dog.id),
+        getStaffWorkingToday(),
       ]);
+      const [nRes, actsRes, msgsRes, reportRes, vacsRes, staffRes] = results;
+      const n = nRes.status === 'fulfilled' ? nRes.value : null;
+      const acts = actsRes.status === 'fulfilled' ? actsRes.value : [];
+      const msgs = msgsRes.status === 'fulfilled' ? msgsRes.value : [];
+      const report = reportRes.status === 'fulfilled' ? reportRes.value : null;
+      const vacs = vacsRes.status === 'fulfilled' ? vacsRes.value : [];
+      const staff = staffRes.status === 'fulfilled' ? staffRes.value : [];
+
       setNext(n);
       setLatestActivity(acts[0] ?? null);
       const sortedMsgs = [...msgs].reverse();
@@ -82,6 +96,7 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
         const s = vaccinationStatus(v.expires_on);
         return s === 'expired' || s === 'expiring';
       }));
+      setTodayStaff(staff);
       setLoading(false);
     })();
   }, [dog.id]);
@@ -96,16 +111,23 @@ export default function HomeFeedTab({ dog, onJumpTo }: {
           {new Date().toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
         <h1 className="text-2xl font-bold tracking-tight mt-1">
-          Hej {dog.name}!
+          {customerFirstName ? `Hej ${customerFirstName}!` : 'Hej!'}
         </h1>
       </div>
+
+      {/* Idag jobbar-rad — diskret rad, ingen padding-kort */}
+      {todayStaff.length > 0 && (
+        <p className="text-xs text-gray-600">
+          <span aria-hidden="true">👋</span> Idag jobbar: <span className="font-medium">{todayStaff.join(', ')}</span>
+        </p>
+      )}
 
       {/* Next/today card — the headliner */}
       <NextDayCard next={next} onOpen={() => onJumpTo('calendar')} />
 
       {/* Vaccine warnings (only when expired or expiring within 30 dgr) */}
       {vaccineWarnings.length > 0 && (
-        <VaccineWarning warnings={vaccineWarnings} onOpen={() => onJumpTo('profile')} />
+        <VaccineWarning warnings={vaccineWarnings} onOpen={() => onJumpTo('more')} />
       )}
 
       {/* Today's report from staff (only when filled in) */}

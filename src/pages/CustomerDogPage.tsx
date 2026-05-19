@@ -1,44 +1,33 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  FaHome, FaCalendarAlt, FaCommentDots, FaImages, FaUser,
-  FaSyncAlt,
+  FaHome, FaCalendarAlt, FaCommentDots, FaImages,
+  FaSyncAlt, FaEllipsisH,
 } from 'react-icons/fa';
 import { usePullToRefresh } from '../lib/pullToRefresh';
 import HomeFeedTab from '../components/customer/HomeFeedTab';
-import DogInfoTab from '../components/customer/DogInfoTab';
 import BookingCalendar from '../components/customer/BookingCalendar';
 import MessagesTab from '../components/customer/MessagesTab';
-import ContractView from '../components/customer/ContractView';
 import AlbumTab from '../components/customer/AlbumTab';
 import NotificationToast from '../components/customer/NotificationToast';
-import DailyReportsHistory from '../components/customer/DailyReportsHistory';
-import VaccinationsCard from '../components/customer/VaccinationsCard';
-import AccountSettingsCard from '../components/customer/AccountSettingsCard';
-import StaffDirectoryCard from '../components/customer/StaffDirectoryCard';
 import CustomerHeader from '../components/customer/CustomerHeader';
 import DogPills from '../components/customer/DogPills';
 import OnboardingSheet, { hasSeenOnboarding } from '../components/customer/OnboardingSheet';
-import { getMyDog, getMyDogs, getUnreadStaffMessageCount, type Dog } from '../lib/customerApi';
+import MoreTab from '../components/customer/MoreTab';
+import { getMyDog, getMyDogs, firstNameOf, getUnreadStaffMessageCount, type Dog } from '../lib/customerApi';
 import { getCustomerForUser, signOutCustomer } from '../lib/customerAuth';
 
-type TabKey = 'home' | 'calendar' | 'album' | 'messages' | 'profile';
+// Profil-fliken har tagits bort från bottom-nav. Hund-info + vaccinationer
+// finns istället under Mer → "Hundinfo & hälsa" så vi håller navet till 5.
+type TabKey = 'home' | 'calendar' | 'album' | 'messages' | 'more';
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'home',     label: 'Hem',      icon: <FaHome /> },
   { key: 'calendar', label: 'Kalender', icon: <FaCalendarAlt /> },
   { key: 'album',    label: 'Album',    icon: <FaImages /> },
   { key: 'messages', label: 'Chat',     icon: <FaCommentDots /> },
-  { key: 'profile',  label: 'Profil',   icon: <FaUser /> },
+  { key: 'more',     label: 'Mer',      icon: <FaEllipsisH /> },
 ];
-
-const TYPE_LABEL: Record<string, string> = {
-  fulltime: 'Heltid',
-  'parttime-3': 'Deltid 3 dgr/v',
-  'parttime-2': 'Deltid 2 dgr/v',
-  singleDay: 'Enstaka dag',
-  boarding: 'Pensionat',
-};
 
 export default function CustomerDogPage() {
   const { id } = useParams<{ id: string }>();
@@ -72,12 +61,15 @@ export default function CustomerDogPage() {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    Promise.all([getMyDog(id), getMyDogs(), getCustomerForUser()]).then(([d, all, c]) => {
-      setDog(d);
-      setAllDogs(all);
-      setCustomerName(c?.name ?? '');
-      setLoading(false);
-    });
+    // allSettled så loading släpper även om en av fetcharna failar (t.ex.
+    // nätverksbortfall). Annars hänger appen för evigt på skeleton.
+    Promise.allSettled([getMyDog(id), getMyDogs(), getCustomerForUser()])
+      .then(([dRes, allRes, cRes]) => {
+        if (dRes.status === 'fulfilled') setDog(dRes.value);
+        if (allRes.status === 'fulfilled') setAllDogs(allRes.value);
+        if (cRes.status === 'fulfilled') setCustomerName(cRes.value?.name ?? '');
+        setLoading(false);
+      });
   }, [id]);
 
   const logout = async () => {
@@ -108,7 +100,7 @@ export default function CustomerDogPage() {
       {showOnboarding && <OnboardingSheet onDone={() => setShowOnboarding(false)} />}
 
       <header className="bg-white/85 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200/70">
-        <CustomerHeader customerName={customerName} onLogout={logout} />
+        <CustomerHeader customerName={customerName} />
         {/* Hund-väljaren göms på Chat-fliken eftersom chatten är per-kund
             (inte per-hund) — en gemensam familjetråd med dagiset. */}
         {tab !== 'messages' && (
@@ -135,20 +127,18 @@ export default function CustomerDogPage() {
             </div>
           </div>
         )}
-        {tab === 'home' && <HomeFeedTab key={refreshTick} dog={dog} onJumpTo={(t) => setTab(t)} />}
+        {tab === 'home' && <HomeFeedTab key={refreshTick} dog={dog} onJumpTo={(t) => setTab(t)} customerFirstName={firstNameOf(customerName)} />}
         {tab === 'calendar' && <BookingCalendar key={refreshTick} dog={dog} />}
         {tab === 'album' && <AlbumTab key={refreshTick} dog={dog} />}
         {tab === 'messages' && <MessagesTab key={refreshTick} dog={dog} />}
-        {tab === 'profile' && (
-          <div key={refreshTick} className="space-y-4">
-            <DogHero dog={dog} />
-            <DogInfoTab dog={dog} onUpdate={setDog} />
-            <VaccinationsCard dogId={dog.id} />
-            <DailyReportsHistory dogId={dog.id} dogName={dog.name} />
-            <ContractView dog={dog} />
-            <StaffDirectoryCard />
-            <AccountSettingsCard />
-          </div>
+        {tab === 'more' && (
+          <MoreTab
+            key={refreshTick}
+            dog={dog}
+            onUpdateDog={setDog}
+            onLogout={logout}
+            onShowOnboarding={() => setShowOnboarding(true)}
+          />
         )}
       </main>
 
@@ -196,28 +186,6 @@ function TabButton({ active, onClick, icon, label, badge }: {
         {label}
       </span>
     </button>
-  );
-}
-
-function DogHero({ dog }: { dog: Dog }) {
-  return (
-    <div className="bg-white rounded-3xl shadow-card p-4 sm:p-5 flex items-center gap-4 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-50 to-transparent rounded-bl-full pointer-events-none" />
-      <div className="relative w-20 h-20 rounded-2xl bg-orange-100 overflow-hidden flex items-center justify-center text-3xl font-bold text-orange-700 shrink-0 ring-2 ring-white shadow-card">
-        {dog.photo_url
-          ? <img src={dog.photo_url} alt={dog.name} className="w-full h-full object-cover" />
-          : dog.name?.[0]?.toUpperCase()}
-      </div>
-      <div className="relative min-w-0 flex-1">
-        <h1 className="text-2xl font-bold tracking-tight truncate">{dog.name}</h1>
-        <p className="text-sm text-gray-500 truncate">{dog.breed}{dog.age ? ` · ${dog.age}` : ''}</p>
-        {dog.type && (
-          <span className="inline-flex items-center mt-2 text-[11px] font-semibold text-orange-800 bg-orange-100 px-2 py-0.5 rounded-full">
-            {TYPE_LABEL[dog.type] ?? dog.type}
-          </span>
-        )}
-      </div>
-    </div>
   );
 }
 

@@ -14,6 +14,8 @@ export type DayInfo = {
   bookingType?: string; // 'scheduled' (recurring) | 'extra' | 'cancelled' | 'boarding' | 'single_day'
   notes?: string;
   adminResponse?: string;
+  bookingCustomerId?: string; // customer_id on the booking row, for co-owner attribution
+  bookingCustomerName?: string; // customers.name join, for co-owner attribution
 };
 
 const pad = (n: number) => n.toString().padStart(2, '0');
@@ -34,7 +36,7 @@ export const getDaysForMonth = async (
   const [schedRes, bookingsRes] = await Promise.all([
     supabase.from('recurring_schedule').select('weekday')
       .eq('dog_id', dogId).eq('active', true),
-    supabase.from('bookings').select('*')
+    supabase.from('bookings').select('*, customers(name)')
       .eq('dog_id', dogId).lte('start_date', end).gte('end_date', start),
   ]);
 
@@ -70,6 +72,8 @@ export const getDaysForMonth = async (
       bookingType,
       notes: booking?.notes ?? undefined,
       adminResponse: booking?.admin_response ?? undefined,
+      bookingCustomerId: booking?.customer_id ?? undefined,
+      bookingCustomerName: (booking as (typeof booking & { customers?: { name: string } | null }) | undefined)?.customers?.name ?? undefined,
     });
   }
   return days;

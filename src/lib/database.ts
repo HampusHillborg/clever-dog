@@ -1901,6 +1901,21 @@ export const getCustomerDogIds = async (customerId: string): Promise<string[]> =
   return (data ?? []).map(r => r.dog_id);
 };
 
+export const getDogCustomers = async (dogId: string): Promise<Customer[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('customer_dogs')
+    .select('customer:customers(*)')
+    .eq('dog_id', dogId);
+  if (error) {
+    console.error('getDogCustomers', error);
+    return [];
+  }
+  // Supabase returnerar nested objekt: { customer: { ... } }
+  const rows = (data ?? []) as Array<{ customer: Customer | null }>;
+  return rows.map(r => r.customer).filter((c): c is Customer => !!c);
+};
+
 export const setCustomerDogs = async (customerId: string, dogIds: string[]) => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   await supabase.from('customer_dogs').delete().eq('customer_id', customerId);

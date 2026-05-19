@@ -12,13 +12,9 @@ import {
 import { sendNotification } from '../../lib/notifications';
 import { tapLight } from '../../lib/haptics';
 
-const formatTime = (iso: string): string => {
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  if (sameDay) return d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-  return d.toLocaleString('sv-SE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-};
+// Visa bara HH:MM inuti bubblan — datumet kommer från datum-stickern ovanför.
+const formatTime = (iso: string): string =>
+  new Date(iso).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
 
 const formatDayLabel = (iso: string): string => {
   const d = new Date(iso);
@@ -81,6 +77,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     setSending(true);
     try {
       const created = await sendMessage({ dog_id: dog.id, body: text });
+      // Triggrar push till admins (email-utskicket borttaget i edge-funktionen v10).
       sendNotification({ kind: 'customer_message', message_id: created.id });
       setText('');
       refresh();

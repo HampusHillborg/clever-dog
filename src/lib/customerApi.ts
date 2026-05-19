@@ -17,6 +17,12 @@ export const VACCINE_LABELS: Record<string, string> = {
 
 export type VaccinationStatus = 'valid' | 'expiring' | 'expired' | 'missing';
 
+// Hämta förnamnet ur en hel namnsträng. Tom input → tom sträng.
+export const firstNameOf = (name: string | null | undefined): string => {
+  const first = (name ?? '').trim().split(/\s+/)[0];
+  return first ?? '';
+};
+
 export const vaccinationStatus = (expires: string | null | undefined): VaccinationStatus => {
   if (!expires) return 'missing';
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -137,7 +143,7 @@ export const sendMessage = async (params: { dog_id?: string | null; body: string
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Ej inloggad');
   const { data: cust } = await supabase
-    .from('customers').select('id').eq('auth_user_id', session.user.id).maybeSingle();
+    .from('customers').select('id, name').eq('auth_user_id', session.user.id).maybeSingle();
   if (!cust) throw new Error('Ingen kund-koppling');
   const { data, error } = await supabase.from('messages').insert({
     customer_id: cust.id,
@@ -145,14 +151,39 @@ export const sendMessage = async (params: { dog_id?: string | null; body: string
     sender_role: 'customer',
     sender_user_id: session.user.id,
     body: params.body,
+    sender_name: cust.name ?? null,
   }).select().single();
   if (error) throw error;
   return data;
 };
 
-export const markMessagesRead = async (ids: string[]) => {
+// Antal kunder kopplade till denna hund. Använder dog_co_owners()-RPC
+// (security definer) för att gå runt customer_dogs RLS som annars bara
+// visar mina egna rader — inte co-owners.
+export const getDogCoOwnerCount = async (dogId: string): Promise<number> => {
+  if (!supabase) return 0;
+  // RPC returnerar setof uuid; Supabase JS ger oss en array av objekt med
+  // nyckeln "dog_co_owners" (funktionens namn).
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: Array<{ dog_co_owners: string }> | null; error: unknown }>)(
+    'dog_co_owners',
+    { p_dog_id: dogId },
+  );
+  if (error) {
+    console.error('getDogCoOwnerCount', error);
+    return 0;
+  }
+  return (data ?? []).length;
+};
+
+export const markMessagesRead = async (ids: string[]): Promise<void> => {
   if (!supabase || ids.length === 0) return;
-  await supabase.from('messages').update({ is_read: true }).in('id', ids);
+  await supabase
+    .from('messages')
+    .update({ is_read: true, read_at: new Date().toISOString() })
+    .in('id', ids);
 };
 
 // Räkna olästa staff-meddelanden i vår tråd (RLS filtrerar automatiskt).
@@ -324,6 +355,49 @@ export const upsertVaccination = async (dogId: string, patch: VaccinationPatch):
 export const deleteVaccination = async (id: string): Promise<void> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { error } = await supabase.from('dog_vaccinations').delete().eq('id', id);
+  if (error) throw error;
+};
+
+export const getStaffWorkingToday = async (location = 'staffanstorp'): Promise<string[]> => {
+  if (!supabase) return [];
+  const { data, error } = await (supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: Array<{ name: string }> | null; error: unknown }>)(
+    'staff_working_today',
+    { loc: location },
+  );
+  if (error) {
+    console.error('getStaffWorkingToday', error);
+    return [];
+  }
+  return (data ?? []).map(r => r.name);
+};
+
+// Batch-upsert the same report fields to multiple dogs for today.
+export const upsertDailyReportBulk = async (dogIds: string[], patch: DailyReportPatch): Promise<void> => {
+  if (!supabase || dogIds.length === 0) return;
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user.id;
+  let posted_by_name: string | null = null;
+  if (userId) {
+    const { data: emp } = await supabase
+      .from('employees').select('name').eq('id', userId).maybeSingle();
+    posted_by_name = emp?.name ?? null;
+  }
+  const date = todayIso();
+  const now = new Date().toISOString();
+  const rows = dogIds.map(dog_id => ({
+    dog_id,
+    date,
+    ...patch,
+    posted_by: userId ?? null,
+    posted_by_name,
+    updated_at: now,
+  }));
+  const { error } = await supabase
+    .from('dog_daily_reports')
+    .upsert(rows, { onConflict: 'dog_id,date' });
   if (error) throw error;
 };
 

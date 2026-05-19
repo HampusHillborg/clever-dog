@@ -4,65 +4,65 @@
     {
       "id": 0,
       "subject": "Task 0: Greeting-fix + commit WIP",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** Fix Hej {dog.name} → kundens förnamn + commita befintlig WIP\n\n```json:metadata\n{\"files\":[\"src/lib/customerApi.ts\",\"src/components/customer/CustomerHeader.tsx\",\"src/pages/CustomerDogPage.tsx\",\"src/components/customer/HomeFeedTab.tsx\",\"src/components/customer/DogPills.tsx\",\"src/pages/CustomerDashboardPage.tsx\",\"src/pages/AdminMobilePage.tsx\",\"src/components/admin/TodayAttendanceTab.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"HomeFeedTab visar kundens förnamn\",\"firstNameOf finns på exakt ett ställe\",\"npm run build passerar\",\"WIP committat\"]}\n```"
     },
     {
       "id": 1,
       "subject": "Task 1: Foundation — uiTokens.ts",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [0],
       "description": "**Goal:** BTN + STATUS tokens i src/lib/uiTokens.ts\n\n```json:metadata\n{\"files\":[\"src/lib/uiTokens.ts\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"BTN och STATUS exporterade\",\"as const-typade\",\"build passerar\"]}\n```"
     },
     {
       "id": 2,
       "subject": "Task 2: Foundation — Sheet-komponent",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [0],
       "description": "**Goal:** Gemensam Sheet/Modal i src/components/shared/Sheet.tsx\n\n```json:metadata\n{\"files\":[\"src/components/shared/Sheet.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"bottom-sheet mobil + modal desktop\",\"ESC stänger\",\"backdrop-close stänger\",\"body-scroll-lock\",\"build passerar\"]}\n```"
     },
     {
       "id": 3,
       "subject": "Task 3: Foundation — SaveButton",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [1],
       "description": "**Goal:** 3-state spara-knapp i src/components/shared/SaveButton.tsx\n\n```json:metadata\n{\"files\":[\"src/components/shared/SaveButton.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"3-state lifecycle\",\"disabled under saving\",\"använder BTN.primary\",\"build passerar\"]}\n```"
     },
     {
       "id": 4,
       "subject": "Task 4: Foundation — EmptyState",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [1],
       "description": "**Goal:** Tom-vy-mall i src/components/shared/EmptyState.tsx\n\n```json:metadata\n{\"files\":[\"src/components/shared/EmptyState.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"tar icon/title/body/cta props\",\"CTA renderas via BTN.ghost\",\"build passerar\"]}\n```"
     },
     {
       "id": 5,
       "subject": "Task 5: Multi-Owner — RLS-migration",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [0],
       "description": "**Goal:** Nya helpers + RLS via dog_id för bookings + messages\n\n```json:metadata\n{\"files\":[\"supabase/migrations/20260518_001_co_owners_rls.sql\"],\"verifyCommand\":\"mcp__supabase__execute_sql för policy-verifiering\",\"acceptanceCriteria\":[\"dog_co_owners + customer_sees_dog finns\",\"6 nya policies\",\"co-owner ser varandras bokningar\",\"co-owner ser varandras meddelanden\",\"single-owner funkar\",\"admin full access\"]}\n```"
     },
     {
       "id": 6,
       "subject": "Task 6: Multi-Owner — Push fan-out",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [5],
       "description": "**Goal:** send-notification fan-outar till alla co-owners\n\n```json:metadata\n{\"files\":[\"supabase/functions/send-notification/index.ts\"],\"verifyCommand\":\"deploy + manuell smoke\",\"acceptanceCriteria\":[\"booking_decision fan-outar\",\"staff_message fan-outar\",\"legacy fallback\",\"email oförändrat\"]}\n```"
     },
     {
       "id": 7,
       "subject": "Task 7: Multi-Owner — Admin visar alla ägare",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [5],
       "description": "**Goal:** getDogCustomers + lista i AdminPage hund-redigerare\n\n```json:metadata\n{\"files\":[\"src/lib/database.ts\",\"src/components/AdminPage.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"getDogCustomers exporterad\",\"AdminPage visar alla co-owners\",\"single-owner oförändrat\",\"build passerar\"]}\n```"
     },
     {
       "id": 8,
       "subject": "Task 8: Multi-Owner — Kund-UI attribution",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [5, 0],
       "description": "**Goal:** Chat och kalender visar co-owner-attribution\n\n```json:metadata\n{\"files\":[\"src/components/customer/MessagesTab.tsx\",\"src/components/customer/BookingCalendar.tsx\"],\"verifyCommand\":\"npm run build\",\"acceptanceCriteria\":[\"från X-label vid annan co-owners chat\",\"Bokad av X i popover\",\"eget innehåll inget label\",\"single-owner visar inget\",\"build passerar\"]}\n```"
     }
   ],
-  "lastUpdated": "2026-05-18T14:00:00Z"
+  "lastUpdated": "2026-05-18T16:30:00Z"
 }

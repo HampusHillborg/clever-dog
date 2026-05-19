@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FaTimes, FaSmile, FaMeh, FaFrown, FaCheck } from 'react-icons/fa';
 import {
-  getDailyReport, upsertDailyReport,
+  getDailyReport, upsertDailyReport, upsertDailyReportBulk,
   type DailyReportPatch, type DailyReport,
 } from '../../lib/customerApi';
 
@@ -9,9 +9,12 @@ type Mood = NonNullable<DailyReportPatch['mood']>;
 type Food = NonNullable<DailyReportPatch['food_eaten']>;
 type Activity = NonNullable<DailyReportPatch['activity_level']>;
 
-export default function DailyReportModal({ dogId, dogName, onClose, onSaved }: {
+export type OtherDogItem = { id: string; name: string };
+
+export default function DailyReportModal({ dogId, dogName, otherDogsToday = [], onClose, onSaved }: {
   dogId: string;
   dogName: string;
+  otherDogsToday?: OtherDogItem[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -24,6 +27,10 @@ export default function DailyReportModal({ dogId, dogName, onClose, onSaved }: {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [pooped, setPooped] = useState<boolean | null>(null);
   const [note, setNote] = useState('');
+
+  // Multi-report state
+  const [applyToOthers, setApplyToOthers] = useState(false);
+  const [otherDogIds, setOtherDogIds] = useState<string[]>([]);
 
   useEffect(() => {
     getDailyReport(dogId).then(r => {
@@ -39,16 +46,34 @@ export default function DailyReportModal({ dogId, dogName, onClose, onSaved }: {
     });
   }, [dogId]);
 
+  const toggleOtherDog = (id: string) => {
+    setOtherDogIds(cur =>
+      cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]
+    );
+  };
+
+  const toggleAllOthers = () => {
+    if (otherDogIds.length === otherDogsToday.length) {
+      setOtherDogIds([]);
+    } else {
+      setOtherDogIds(otherDogsToday.map(d => d.id));
+    }
+  };
+
   const save = async () => {
     setSaving(true);
+    const patch: DailyReportPatch = {
+      mood,
+      food_eaten: food,
+      activity_level: activity,
+      pooped,
+      note: note.trim() || null,
+    };
     try {
-      await upsertDailyReport(dogId, {
-        mood,
-        food_eaten: food,
-        activity_level: activity,
-        pooped,
-        note: note.trim() || null,
-      });
+      await upsertDailyReport(dogId, patch);
+      if (applyToOthers && otherDogIds.length > 0) {
+        await upsertDailyReportBulk(otherDogIds, patch);
+      }
       onSaved();
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Kunde inte spara');
@@ -149,6 +174,49 @@ export default function DailyReportModal({ dogId, dogName, onClose, onSaved }: {
               Alla fält är frivilliga. Kunden ser bara det du fyllt i — tomma fält
               visas inte. Du kan komma tillbaka och fylla i mer under dagen.
             </p>
+
+            {/* Multi-report section */}
+            {otherDogsToday.length > 0 && (
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <label className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={applyToOthers}
+                    onChange={e => {
+                      setApplyToOthers(e.target.checked);
+                      if (!e.target.checked) setOtherDogIds([]);
+                    }}
+                    className="w-4 h-4 rounded accent-orange-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Använd samma rapport för andra hundar idag
+                  </span>
+                </label>
+
+                {applyToOthers && (
+                  <div className="border-t border-gray-100 p-3 space-y-1">
+                    <button
+                      type="button"
+                      onClick={toggleAllOthers}
+                      className="text-xs text-primary font-semibold mb-2 hover:underline"
+                    >
+                      {otherDogIds.length === otherDogsToday.length ? 'Avmarkera alla' : 'Markera alla'}
+                    </button>
+                    {otherDogsToday.map(dog => (
+                      <label key={dog.id} className="flex items-center gap-3 py-1 cursor-pointer hover:bg-gray-50 rounded-lg px-1">
+                        <input
+                          type="checkbox"
+                          checked={otherDogIds.includes(dog.id)}
+                          onChange={() => toggleOtherDog(dog.id)}
+                          className="w-4 h-4 rounded accent-orange-500"
+                        />
+                        <span className="text-sm text-gray-700">{dog.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -166,7 +234,7 @@ export default function DailyReportModal({ dogId, dogName, onClose, onSaved }: {
             className="flex-1 py-2.5 rounded-xl bg-primary text-white font-semibold hover:bg-orange-600 disabled:opacity-50 active:scale-[0.98] transition-all shadow-card flex items-center justify-center gap-1.5"
           >
             <FaCheck className="text-xs" />
-            {saving ? 'Sparar…' : 'Spara rapport'}
+            {saving ? 'Sparar…' : applyToOthers && otherDogIds.length > 0 ? `Spara (${1 + otherDogIds.length} hundar)` : 'Spara rapport'}
           </button>
         </div>
       </div>

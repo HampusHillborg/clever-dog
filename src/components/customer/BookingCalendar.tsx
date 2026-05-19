@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import type { Dog } from '../../lib/customerApi';
+import { getDogCoOwnerCount, firstNameOf } from '../../lib/customerApi';
 import { getCustomerForUser } from '../../lib/customerAuth';
 import {
   getDaysForMonth, upsertBooking, deleteBooking,
@@ -11,7 +12,8 @@ import { getHolidayInfo, holidayName } from '../../lib/swedishHolidays';
 import { getClosures } from '../../lib/closures';
 import { tapLight, notifySuccess } from '../../lib/haptics';
 import { todayLocalIso } from '../../lib/localDate';
-import BookingRequestModal from './BookingRequestModal';
+import { BTN } from '../../lib/uiTokens';
+import BookingWizardSheet from './BookingWizardSheet';
 
 // Days/week the customer may self-book for part-time dogs. Null for
 // fulltime or unknown types (no quota enforcement).
@@ -94,9 +96,10 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
   const [month, setMonth] = useState(today.getMonth());
   const [days, setDays] = useState<DayInfo[]>([]);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [coOwnerCount, setCoOwnerCount] = useState(0);
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [requestType, setRequestType] = useState<'boarding' | 'single_day' | null>(null);
+  const [showWizard, setShowWizard] = useState(false);
   const [closures, setClosures] = useState<Map<string, string>>(new Map());
 
   const refresh = async () => {
@@ -116,7 +119,8 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
 
   useEffect(() => {
     getCustomerForUser().then(c => setCustomerId(c?.id ?? null));
-  }, []);
+    getDogCoOwnerCount(dog.id).then(setCoOwnerCount);
+  }, [dog.id]);
 
   useEffect(() => { refresh(); }, [dog.id, year, month]);
 
@@ -202,13 +206,11 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
   return (
     <div className="bg-white rounded-2xl shadow-card p-4 sm:p-5">
       <div className="flex gap-2 mb-4 flex-wrap">
-        <button onClick={() => setRequestType('boarding')}
-                className="bg-purple-50 text-purple-900 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-purple-100 transition-colors border border-purple-200">
-          + Begär pensionat
-        </button>
-        <button onClick={() => setRequestType('single_day')}
-                className="bg-amber-50 text-amber-900 px-3 py-1.5 rounded-full text-sm font-medium hover:bg-amber-100 transition-colors border border-amber-200">
-          + Begär enstaka dag
+        <button
+          onClick={() => setShowWizard(true)}
+          className={BTN.primary + ' w-full sm:w-auto'}
+        >
+          + Boka ny dag eller pensionat
         </button>
       </div>
 
@@ -304,18 +306,18 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
           picksThisWeek={picksInWeek(selectedDay.date)}
           onClose={() => setSelectedDay(null)}
           onAction={handleAction}
+          coOwnerCount={coOwnerCount}
+          myCustomerId={customerId}
+          firstNameOf={firstNameOf}
         />
       )}
 
-      {requestType && customerId && (
-        <BookingRequestModal
-          dogId={dog.id}
-          customerId={customerId}
-          type={requestType}
-          onClose={() => setRequestType(null)}
-          onSaved={refresh}
-        />
-      )}
+      <BookingWizardSheet
+        open={showWizard}
+        onClose={() => setShowWizard(false)}
+        dog={dog}
+        onSuccess={refresh}
+      />
     </div>
   );
 }
@@ -354,13 +356,16 @@ function Legend() {
   );
 }
 
-function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction }: {
+function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction, coOwnerCount, myCustomerId, firstNameOf: getFirstName }: {
   day: DayInfo;
   partTime: boolean;
   quota: number | null;
   picksThisWeek: number;
   onClose: () => void;
   onAction: (a: 'add_extra' | 'cancel' | 'undo' | 'cancel_request' | 'pick_day' | 'cancel_boarding') => void;
+  coOwnerCount: number;
+  myCustomerId: string | null;
+  firstNameOf: (name: string | null | undefined) => string;
 }) {
   const niceDate = day.date.split('-').reverse().join('/');
   const locked = isLockedDate(day.date);
@@ -368,6 +373,17 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction }: 
   const quotaFull = quota !== null && picksThisWeek >= quota;
   const canPick = partTime && day.status === 'none' && isWeekday && !locked && !quotaFull;
   const canUnpick = partTime && day.status === 'scheduled' && !locked;
+
+  // Co-owner attribution: only shown when the dog has multiple owners and the
+  // booking was created by a different owner than the currently logged-in one.
+  const showBookedBy =
+    coOwnerCount >= 2 &&
+    day.bookingCustomerId != null &&
+    myCustomerId != null &&
+    day.bookingCustomerId !== myCustomerId;
+  const bookedByName = showBookedBy
+    ? (day.bookingCustomerName ? getFirstName(day.bookingCustomerName) : null)
+    : null;
 
   return (
     <div className="fixed inset-0 bg-dark/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-fade-in" onClick={onClose}>
@@ -378,6 +394,12 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction }: 
         <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
         <h3 className="font-bold text-lg mb-1 tracking-tight">{niceDate}</h3>
         <p className="text-sm text-gray-500 mb-3">Status: <span className="font-medium text-gray-700">{STATUS_LABEL[day.status]}</span></p>
+
+        {showBookedBy && (
+          <p className="text-xs text-gray-500 italic mb-2">
+            {bookedByName ? `Bokad av ${bookedByName}` : 'Bokad av annan ägare'}
+          </p>
+        )}
 
         {partTime && quota !== null && (
           <p className="text-xs text-gray-600 mb-2">

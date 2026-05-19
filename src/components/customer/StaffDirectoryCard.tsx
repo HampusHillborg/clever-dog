@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react';
 import { FaUserFriends } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
+import { firstNameOf } from '../../lib/customerApi';
 
 type StaffMember = { id: string; name: string; role: string | null };
-
-const roleLabel = (r: string | null): string => {
-  if (r === 'admin') return 'Ägare';
-  if (r === 'platschef') return 'Platschef';
-  return 'Personal';
-};
 
 const initials = (name: string): string =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]!.toUpperCase()).join('');
@@ -50,8 +45,7 @@ export default function StaffDirectoryCard() {
               {initials(s.name)}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium truncate">{s.name}</p>
-              <p className="text-[11px] text-gray-500">{roleLabel(s.role)}</p>
+              <p className="text-sm font-medium truncate">{firstNameOf(s.name)}</p>
             </div>
           </div>
         ))}
