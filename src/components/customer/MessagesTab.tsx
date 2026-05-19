@@ -238,10 +238,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
         <div ref={endRef} />
       </div>
 
-      <div
-        className="shrink-0 border-t border-gray-100 bg-white px-3 pt-3 flex gap-2.5 items-end"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
-      >
+      <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-3 flex gap-2.5 items-end">
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}

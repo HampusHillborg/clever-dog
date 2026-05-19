@@ -95,9 +95,12 @@ export default function CustomerDogPage() {
     </div>
   );
 
-  // Chatten har en egen heltäckande "Messenger-skärm" — toppheader och bottennav
-  // göms helt, en slim chat-header med tillbaka-pil ersätter dem. Detta ger
-  // chatten hela viewporten och håller scrollen inuti meddelandelistan.
+  // Chatten har en egen heltäckande "Messenger-skärm". Toppheadern ersätts med
+  // en slim chat-header (tillbaka-pil + "Personalen"), och bottennav-en
+  // renderas inuti som flex-child (shrink-0) istället för att vara fixed —
+  // så ligger meddelande-inputen naturligt ovanpå nav-en utan att gömmas
+  // bakom systemets gestbar. fixed inset-0 låser viewporten så listan
+  // scrollar inuti chatten även vid långa konversationer.
   if (tab === 'messages') {
     return (
       <div className="bg-stone-50 flex flex-col fixed inset-0 z-40">
@@ -123,6 +126,23 @@ export default function CustomerDogPage() {
         <main className="flex-1 min-h-0 flex flex-col w-full max-w-3xl mx-auto overflow-hidden">
           <MessagesTab key={refreshTick} dog={dog} />
         </main>
+
+        <nav
+          className="shrink-0 bg-white/95 backdrop-blur-md border-t border-gray-200/70"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="flex max-w-3xl mx-auto px-2 py-1.5">
+            {TABS.map(t => (
+              <TabButton key={t.key}
+                active={tab === t.key}
+                onClick={() => setTab(t.key)}
+                icon={t.icon}
+                label={t.label}
+                badge={t.key === 'messages' ? unreadChat : undefined}
+              />
+            ))}
+          </div>
+        </nav>
       </div>
     );
   }
