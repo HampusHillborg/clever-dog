@@ -40,6 +40,53 @@ workflows:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
 
+  ios-simulator:
+    name: iOS Simulator Build (unsigned)
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      groups:
+        - cleverdog_supabase
+      xcode: latest
+      node: 22
+      vars:
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+    # No `triggering` block on purpose — run this from the Codemagic UI
+    # via "Start new build" when you want to verify the iOS build compiles.
+    scripts:
+      - name: Install Node deps
+        script: npm ci
+      - name: Build customer-only web bundle
+        script: npm run app:build
+      - name: Sync Capacitor iOS project
+        script: npx cap sync ios
+      - name: Resolve Swift Package dependencies
+        script: |
+          xcodebuild \
+            -resolvePackageDependencies \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME"
+      - name: Build for iOS Simulator (no signing)
+        script: |
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+      - name: Package .app bundle
+        script: |
+          cd build/Build/Products/Debug-iphonesimulator
+          zip -r "$CM_BUILD_DIR/App-Simulator.zip" App.app
+    artifacts:
+      - App-Simulator.zip
+      - /tmp/xcodebuild_logs/*.log
+
   ios-testflight:
     name: iOS TestFlight
     instance_type: mac_mini_m2
