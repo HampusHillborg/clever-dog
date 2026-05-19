@@ -112,7 +112,14 @@ export default function CustomerDogPage() {
         )}
       </header>
 
-      <main ref={scrollRef} className="flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto relative">
+      <main
+        ref={scrollRef}
+        className={
+          tab === 'messages'
+            ? 'flex-1 flex flex-col w-full max-w-3xl mx-auto overflow-hidden'
+            : 'flex-1 max-w-3xl w-full mx-auto px-4 pt-5 pb-28 overflow-y-auto relative'
+        }
+      >
         {/* Pull-to-refresh indicator */}
         {(pulledPx > 0 || refreshing) && (
           <div

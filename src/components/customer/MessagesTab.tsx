@@ -121,7 +121,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-card flex flex-col h-[65vh] overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-5 bg-stone-50">
         {loading ? (
           <ChatSkeleton />
@@ -237,7 +237,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
         <div ref={endRef} />
       </div>
 
-      <div className="border-t border-gray-100 bg-white p-3 flex gap-2.5 items-end">
+      <div className="shrink-0 border-t border-gray-100 bg-white px-3 pt-3 pb-[calc(68px+env(safe-area-inset-bottom))] flex gap-2.5 items-end">
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
