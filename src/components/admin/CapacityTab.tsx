@@ -51,7 +51,7 @@ function WeekdayRow({ row, onSaved }: WeekdayRowProps) {
   const save = async () => {
     setSaving(true);
     try {
-      await setCapacityDefault(row.location, row.weekday, parseVal(soft), parseVal(hard));
+      await setCapacityDefault(row.weekday, parseVal(soft), parseVal(hard));
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
       onSaved();
@@ -118,10 +118,9 @@ type AddOverrideSheetProps = {
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
-  location: string;
 };
 
-function AddOverrideSheet({ open, onClose, onSaved, location }: AddOverrideSheetProps) {
+function AddOverrideSheet({ open, onClose, onSaved }: AddOverrideSheetProps) {
   const [date, setDate] = useState('');
   const [soft, setSoft] = useState('');
   const [hard, setHard] = useState('');
@@ -153,7 +152,7 @@ function AddOverrideSheet({ open, onClose, onSaved, location }: AddOverrideSheet
     setSaving(true);
     try {
       await setCapacityOverride(
-        location, date,
+        date,
         parseVal(soft), parseVal(hard),
         note.trim() || null,
       );
@@ -245,13 +244,11 @@ export default function CapacityTab() {
   const [addingOverride, setAddingOverride] = useState(false);
   const [togglingBoarding, setTogglingBoarding] = useState(false);
 
-  const location = 'staffanstorp';
-
   const refresh = async () => {
     const [d, o, s] = await Promise.all([
-      getCapacityDefaults(location),
-      getCapacityOverrides(location),
-      getLocationSettings(location),
+      getCapacityDefaults(),
+      getCapacityOverrides(),
+      getLocationSettings(),
     ]);
     setDefaults(d);
     setOverrides(o);
@@ -265,7 +262,7 @@ export default function CapacityTab() {
     if (!settings) return;
     setTogglingBoarding(true);
     try {
-      await setLocationSettings(location, {
+      await setLocationSettings({
         count_boarding_in_dagis: !settings.count_boarding_in_dagis,
       });
       await refresh();
@@ -278,7 +275,7 @@ export default function CapacityTab() {
   const handleDeleteOverride = async (date: string) => {
     if (!confirm(`Ta bort specialdag ${fmtDate(date)}?`)) return;
     try {
-      await deleteCapacityOverride(location, date);
+      await deleteCapacityOverride(date);
       await refresh();
     } catch (e) {
       console.error(e);
@@ -349,7 +346,7 @@ export default function CapacityTab() {
         <div>
           {defaults.map(row => (
             <WeekdayRow
-              key={`${row.location}-${row.weekday}`}
+              key={row.weekday}
               row={row}
               onSaved={refresh}
             />
@@ -410,7 +407,6 @@ export default function CapacityTab() {
         open={addingOverride}
         onClose={() => setAddingOverride(false)}
         onSaved={refresh}
-        location={location}
       />
     </div>
   );

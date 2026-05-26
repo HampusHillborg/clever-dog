@@ -168,7 +168,7 @@ function MyScheduleView() {
                 <div>
                   <p className="font-semibold">{formatDate(s.date)}</p>
                   <p className="text-sm text-gray-600">
-                    {s.start_time?.slice(0, 5)}–{s.end_time?.slice(0, 5)} · {locationLabel(s.location)}
+                    {s.start_time?.slice(0, 5)}–{s.end_time?.slice(0, 5)} · Staffanstorp
                   </p>
                   {s.notes && <p className="text-xs text-gray-500 mt-1">{s.notes}</p>}
                 </div>
@@ -204,6 +204,3 @@ function formatDate(iso: string): string {
   return `${weekday} ${d.getDate()}/${d.getMonth() + 1}`;
 }
 
-function locationLabel(_loc: string): string {
-  return 'Staffanstorp';
-}

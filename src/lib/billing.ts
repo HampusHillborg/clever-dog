@@ -2,13 +2,11 @@ import { supabase } from './supabase';
 import { PRICES, VAT_RATE } from './prices';
 
 type DogType = 'fulltime' | 'parttime-3' | 'parttime-2' | null;
-type Location = 'staffanstorp';
 
 export type DogCostLine = {
   dog_id: string;
   dog_name: string;
   dog_type: DogType;
-  location: Location;
   monthly_base: number;
   extra_days_count: number;
   extra_days_cost: number;
@@ -27,8 +25,8 @@ export type CustomerCost = {
   vat: number;
 };
 
-const monthlyBaseFor = (type: DogType, location: Location): number => {
-  const prices = PRICES[location];
+const monthlyBaseFor = (type: DogType): number => {
+  const prices = PRICES.staffanstorp;
   if (type === 'fulltime') return prices.fulltime;
   if (type === 'parttime-3') return prices.parttime3;
   if (type === 'parttime-2') return prices.parttime2;
@@ -54,10 +52,6 @@ const dateRangeForMonth = (year: number, month: number): { start: string; end: s
   };
 };
 
-const pickPrimaryLocation = (_locations: unknown): Location => {
-  return 'staffanstorp';
-};
-
 // Compute every customer's billing breakdown for the given calendar month.
 // month is 0-indexed (0 = January).
 export const computeBillingForMonth = async (year: number, month: number): Promise<CustomerCost[]> => {
@@ -69,7 +63,7 @@ export const computeBillingForMonth = async (year: number, month: number): Promi
   const [customersRes, dogsRes, bookingsRes] = await Promise.all([
     supabase.from('customers').select('id, name, email'),
     supabase.from('customer_dogs')
-      .select('customer_id, dog_id, dogs(id, name, type, locations, is_active)'),
+      .select('customer_id, dog_id, dogs(id, name, type, is_active)'),
     supabase.from('bookings')
       .select('dog_id, booking_type, status, start_date, end_date')
       .in('booking_type', ['extra', 'boarding', 'single_day'])
@@ -79,7 +73,7 @@ export const computeBillingForMonth = async (year: number, month: number): Promi
   ]);
 
   type CustRow = { id: string; name: string; email: string };
-  type DogJoin = { id: string; name: string; type: DogType; locations: unknown; is_active: boolean };
+  type DogJoin = { id: string; name: string; type: DogType; is_active: boolean };
   type CustDogRow = { customer_id: string; dog_id: string; dogs: DogJoin | null };
   type BookingRow = { dog_id: string; booking_type: string; status: string; start_date: string; end_date: string };
 
@@ -103,33 +97,30 @@ export const computeBillingForMonth = async (year: number, month: number): Promi
   }
 
   const result: CustomerCost[] = [];
+  const prices = PRICES.staffanstorp;
 
   for (const cust of customers) {
     const dogs = dogsByCustomer.get(cust.id) ?? [];
     if (dogs.length === 0) continue;
     const lines: DogCostLine[] = [];
     for (const dog of dogs) {
-      const location = pickPrimaryLocation(dog.locations);
-      const monthly_base = monthlyBaseFor(dog.type, location);
+      const monthly_base = monthlyBaseFor(dog.type);
       let extra_days_count = 0;
       let boarding_nights = 0;
       const dogBookings = bookingsByDog.get(dog.id) ?? [];
       for (const b of dogBookings) {
         if (b.booking_type === 'extra' || b.booking_type === 'single_day') {
-          // Each row spans one date — count distinct days in month.
           extra_days_count += nightsBetween(b.start_date, b.end_date, start, end);
         } else if (b.booking_type === 'boarding') {
           boarding_nights += nightsBetween(b.start_date, b.end_date, start, end);
         }
       }
-      const prices = PRICES[location];
       const extra_days_cost = extra_days_count * prices.singleDay;
       const boarding_cost = boarding_nights * prices.boarding;
       lines.push({
         dog_id: dog.id,
         dog_name: dog.name,
         dog_type: dog.type,
-        location,
         monthly_base,
         extra_days_count,
         extra_days_cost,

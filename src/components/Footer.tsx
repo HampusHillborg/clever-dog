@@ -5,13 +5,9 @@ import { motion } from 'framer-motion';
 import LanguageSwitcher from './LanguageSwitcher';
 import dogLogo from '../assets/images/logos/Logo.png';
 
-interface FooterProps {
-  location?: string;
-}
-
 const iconHoverSpring = { type: 'spring' as const, stiffness: 400, damping: 17 };
 
-const Footer: React.FC<FooterProps> = ({ location }) => {
+const Footer: React.FC = () => {
   const { t, i18n } = useTranslation();
   const currentYear = new Date().getFullYear();
   const isSwedish = i18n.language === 'sv';
@@ -75,32 +71,32 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
             <h3 className="text-base md:text-lg font-bold mb-3 md:mb-4">{t('footer.quickLinks')}</h3>
             <ul className="space-y-2 text-center md:text-left">
               <li>
-                <a href={`/${location || ''}#about`} className="text-gray-400 hover:text-primary text-sm md:text-base">
+                <a href="/#about" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('about.title')}
                 </a>
               </li>
               <li>
-                <a href={`/${location || ''}#pricing`} className="text-gray-400 hover:text-primary text-sm md:text-base">
+                <a href="/#pricing" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('pricing.title')}
                 </a>
               </li>
               <li>
-                <a href={`/${location || ''}#important-info`} className="text-gray-400 hover:text-primary text-sm md:text-base">
+                <a href="/#important-info" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('importantInfo.title')}
                 </a>
               </li>
               <li>
-                <a href={`/${location || ''}#daycare-schedule`} className="text-gray-400 hover:text-primary text-sm md:text-base">
+                <a href="/#daycare-schedule" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('schedule.title')}
                 </a>
               </li>
               <li>
-                <a href={`/${location || ''}#sustainability`} className="text-gray-400 hover:text-primary text-sm md:text-base">
+                <a href="/#sustainability" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('sustainability.title')}
                 </a>
               </li>
               <li>
-                <a href={`/${location || ''}#contact`} className="text-gray-400 hover:text-primary text-sm md:text-base">
+                <a href="/#contact" className="text-gray-400 hover:text-primary text-sm md:text-base">
                   {t('contact.title')}
                 </a>
               </li>
