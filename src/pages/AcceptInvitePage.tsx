@@ -8,6 +8,7 @@ export default function AcceptInvitePage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
+  const [warning, setWarning] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasToken, setHasToken] = useState(false);
   const [accountType, setAccountType] = useState<AccountType>('customer');
@@ -22,14 +23,58 @@ export default function AcceptInvitePage() {
         return;
       }
 
-      // Trust the metadata set at invite time. invite-customer sets
-      // account_type='customer', create-staff-user sets 'staff'. Anything else
-      // (older invites, manual creation) defaults to customer.
+      // 1. Trust the metadata set at invite time when present.
       const meta = session.user.user_metadata as { account_type?: string } | null;
-      setAccountType(meta?.account_type === 'staff' ? 'staff' : 'customer');
+      if (meta?.account_type === 'staff') {
+        setAccountType('staff');
+        setHasToken(true);
+        return;
+      }
+      if (meta?.account_type === 'customer') {
+        setAccountType('customer');
+        setHasToken(true);
+        return;
+      }
+
+      // 2. No metadata — figure it out from the actual DB rows.
+      //    A customers row matching the session email proves this is a
+      //    customer invite, regardless of whether the on-signup trigger
+      //    happened to create an admin_users row.
+      const email = session.user.email ?? '';
+      const { data: customerRow } = await supabase
+        .from('customers').select('id').eq('email', email).maybeSingle();
+
+      if (customerRow) {
+        setAccountType('customer');
+        setHasToken(true);
+        return;
+      }
+
+      // 3. No customer row but the session belongs to an admin — likely the
+      //    admin clicked the invite link while still signed in. Tell them
+      //    instead of silently overwriting their admin password.
+      const { data: adminRow } = await supabase
+        .from('admin_users').select('id').eq('id', session.user.id).maybeSingle();
+      if (adminRow) {
+        setHasToken(false);
+        setWarning(
+          'Du är inloggad som admin. Logga ut och öppna inbjudningslänken igen '
+          + 'i ett privat fönster, så att inte din admin-session krockar med kundens.'
+        );
+        return;
+      }
+
+      // 4. Fallback — treat as customer.
+      setAccountType('customer');
       setHasToken(true);
     })();
   }, []);
+
+  const signOutAndReload = async () => {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    window.location.assign('/login');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,13 +92,10 @@ export default function AcceptInvitePage() {
     }
 
     if (accountType === 'staff') {
-      // Staff sync is handled by the on_auth_user_created trigger.
-      // Force a hard navigation so the AdminPage boots with a fresh session.
       window.location.assign('/admin');
       return;
     }
 
-    // Customer: link the auth user to the existing customers row.
     const { error: claimErr } = await supabase.rpc('claim_customer_invite');
     if (claimErr) {
       console.error('claim_customer_invite failed', claimErr);
@@ -77,50 +119,67 @@ export default function AcceptInvitePage() {
           Välj ett lösenord för ditt konto. Minst 8 tecken.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label htmlFor="pw" className="block text-sm font-semibold text-gray-700 mb-1.5">
-              Lösenord
-            </label>
-            <input
-              id="pw"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-              required
-              minLength={8}
-              autoFocus
-            />
+        {warning && (
+          <div className="mb-6 p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
+            <p className="font-semibold mb-2">Inloggad som admin</p>
+            <p className="mb-3">{warning}</p>
+            <button
+              onClick={signOutAndReload}
+              className="w-full rounded-lg bg-amber-600 text-white py-2.5 font-semibold hover:bg-amber-700 transition"
+            >
+              Logga ut admin
+            </button>
           </div>
+        )}
 
-          <div>
-            <label htmlFor="pw2" className="block text-sm font-semibold text-gray-700 mb-1.5">
-              Bekräfta lösenord
-            </label>
-            <input
-              id="pw2"
-              type="password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-              required
-              minLength={8}
-            />
-          </div>
+        {!warning && (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="pw" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Lösenord
+              </label>
+              <input
+                id="pw"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                required
+                minLength={8}
+                autoFocus
+                disabled={!hasToken}
+              />
+            </div>
 
-          {error && (
-            <p className="text-sm text-red-700 bg-red-50 border border-red-200 p-3 rounded-lg">{error}</p>
-          )}
+            <div>
+              <label htmlFor="pw2" className="block text-sm font-semibold text-gray-700 mb-1.5">
+                Bekräfta lösenord
+              </label>
+              <input
+                id="pw2"
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                required
+                minLength={8}
+                disabled={!hasToken}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading || !hasToken}
-            className="w-full rounded-lg bg-primary text-white py-3 font-semibold text-base hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
-          >
-            {loading ? 'Sparar…' : 'Skapa konto'}
-          </button>
-        </form>
+            {error && (
+              <p className="text-sm text-red-700 bg-red-50 border border-red-200 p-3 rounded-lg">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !hasToken}
+              className="w-full rounded-lg bg-primary text-white py-3 font-semibold text-base hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+            >
+              {loading ? 'Sparar…' : 'Skapa konto'}
+            </button>
+          </form>
+        )}
 
         <p className="text-center text-xs text-gray-400 mt-6">
           Du loggar in automatiskt när du har sparat ditt lösenord.
