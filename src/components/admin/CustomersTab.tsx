@@ -217,10 +217,12 @@ function CustomerEditorModal(props: {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
            onClick={e => e.stopPropagation()}>
-        <h3 className="text-lg font-bold mb-4">{editing.id ? 'Redigera kund' : 'Ny kund'}</h3>
-        <div className="space-y-3">
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4">
+          <h3 className="text-xl font-bold text-gray-900">{editing.id ? 'Redigera kund' : 'Ny kund'}</h3>
+        </div>
+        <div className="px-6 py-5 space-y-4">
           <Field label="Namn *" value={editing.name ?? ''}
                  onChange={v => onChange({ ...editing, name: v })} />
           <Field label="E-post *" type="email" value={editing.email ?? ''}
@@ -273,9 +275,15 @@ function CustomerEditorModal(props: {
             </div>
           )}
         </div>
-        <div className="flex justify-end gap-2 mt-6">
-          <button onClick={onClose} className="px-4 py-2 text-gray-600">Avbryt</button>
-          <button onClick={onSave} className="px-4 py-2 bg-primary text-white rounded-lg">Spara</button>
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 flex justify-end gap-2">
+          <button onClick={onClose}
+                  className="px-4 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg font-medium transition">
+            Avbryt
+          </button>
+          <button onClick={onSave}
+                  className="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition shadow-sm">
+            Spara
+          </button>
         </div>
       </div>
     </div>
@@ -285,12 +293,12 @@ function CustomerEditorModal(props: {
 function Field(props: { label: string; type?: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium">{props.label}</span>
+      <span className="text-sm font-semibold text-gray-700">{props.label}</span>
       <input
         type={props.type ?? 'text'}
         value={props.value}
         onChange={e => props.onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border-gray-300"
+        className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
       />
     </label>
   );

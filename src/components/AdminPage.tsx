@@ -5507,11 +5507,12 @@ const AdminPage: React.FC = () => {
                       <td className="py-2 px-3 text-sm">{employee.email}</td>
                       <td className="py-2 px-3 text-sm">{employee.phone || '-'}</td>
                       <td className="py-2 px-3 text-sm">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${employee.role === 'platschef'
-                          ? 'bg-purple-100 text-purple-800'
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          employee.role === 'admin' ? 'bg-orange-100 text-orange-800'
+                          : employee.role === 'platschef' ? 'bg-purple-100 text-purple-800'
                           : 'bg-green-100 text-green-800'
-                          }`}>
-                          {employee.role === 'platschef' ? 'Platschef' : 'Anställd'}
+                        }`}>
+                          {employee.role === 'admin' ? 'Admin' : employee.role === 'platschef' ? 'Platschef' : 'Anställd'}
                         </span>
                       </td>
                       <td className="py-2 px-3 text-sm">
