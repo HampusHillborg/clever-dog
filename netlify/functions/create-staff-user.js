@@ -77,10 +77,11 @@ exports.handler = async function(event, context) {
     const sessionToken = authHeader.split(' ')[1];
 
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-    
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+
     // Verify the user's session and get their role
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(sessionToken);
-    
+
     if (userError || !user) {
       return {
         statusCode: 401,
@@ -92,8 +93,8 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Check if user is admin
-    const { data: adminUser, error: adminError } = await supabaseClient
+    // Check if user is admin — use service role to bypass RLS on admin_users
+    const { data: adminUser, error: adminError } = await supabaseAdmin
       .from('admin_users')
       .select('role')
       .eq('id', user.id)
