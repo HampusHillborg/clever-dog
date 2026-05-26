@@ -1422,18 +1422,24 @@ export const deleteEmployee = async (id: string): Promise<void> => {
     localStorage.setItem('cleverEmployees', JSON.stringify(filtered));
   }
 
-  // Try to delete from Supabase if available
-  if (isSupabaseAvailable()) {
-    try {
-      const { error } = await supabase!
-        .from('employees' as any)
-        .delete()
-        .eq('id', id);
+  if (!isSupabaseAvailable()) return;
 
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error deleting employee from Supabase:', error);
-    }
+  // Call the Netlify function so the auth.users row gets removed too —
+  // otherwise the email stays "registered" and re-invite hits a duplicate.
+  const { data: { session } } = await supabase!.auth.getSession();
+  if (!session) throw new Error('Du måste vara inloggad för att ta bort användare');
+
+  const res = await fetch('/.netlify/functions/delete-staff-user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ user_id: id }),
+  });
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({}));
+    throw new Error(payload.error || `Kunde inte ta bort användare (${res.status})`);
   }
 };
 
@@ -1789,8 +1795,29 @@ export const saveCustomer = async (c: CustomerInsert & { id?: string }): Promise
 
 export const deleteCustomer = async (id: string) => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
+
+  // Look up the linked auth user so we can fully remove them and free the email
+  // for future invites. customers.auth_user_id is nullable for not-yet-invited
+  // customers — in that case there's no auth row to delete.
+  const { data: row } = await supabase
+    .from('customers').select('auth_user_id').eq('id', id).maybeSingle();
+  const authUserId = (row as { auth_user_id: string | null } | null)?.auth_user_id ?? null;
+
   const { error } = await supabase.from('customers').delete().eq('id', id);
   if (error) throw error;
+
+  if (authUserId) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    await fetch('/.netlify/functions/delete-staff-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ user_id: authUserId }),
+    });
+  }
 };
 
 export const getCustomerDogIds = async (customerId: string): Promise<string[]> => {
