@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import dogLogo from '../assets/images/logos/Logo.png';
 
+type AccountType = 'staff' | 'customer';
+
 export default function AcceptInvitePage() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+  const [accountType, setAccountType] = useState<AccountType>('customer');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,18 +23,24 @@ export default function AcceptInvitePage() {
         setError('Ogiltig eller utgången inbjudningslänk. Kontakta oss för en ny.');
         return;
       }
-      // Catch the common case where the user opened the invite link while
-      // still logged in as admin — Supabase kept the admin session and the
-      // invite token never produced a customer session. Sign them out and
-      // ask them to click the link again in a clean state.
+
+      // Two ways to know this is a staff invite:
+      //   1. user_metadata.account_type === 'staff' (set by create-staff-user)
+      //   2. an admin_users row already exists for this user
+      const meta = session.user.user_metadata as { account_type?: string } | null;
+      const metaIsStaff = meta?.account_type === 'staff';
+
       const { data: adminRow } = await supabase
         .from('admin_users').select('id').eq('id', session.user.id).maybeSingle();
-      if (adminRow) {
-        await supabase.auth.signOut();
-        setHasToken(false);
-        setError('Du var inloggad som admin när du klickade länken. Du är nu utloggad — öppna inbjudningslänken i mejlet igen (gärna i ett privat fönster).');
+
+      if (metaIsStaff || adminRow) {
+        setAccountType('staff');
+        setHasToken(true);
         return;
       }
+
+      // Otherwise treat as customer invite.
+      setAccountType('customer');
       setHasToken(true);
     })();
   }, []);
@@ -51,6 +60,13 @@ export default function AcceptInvitePage() {
       return;
     }
 
+    if (accountType === 'staff') {
+      // Staff already exist in admin_users (auto-created by trigger when the
+      // invite was sent). Nothing extra to claim. Land them in the admin panel.
+      navigate('/admin', { replace: true });
+      return;
+    }
+
     const { error: claimErr } = await supabase.rpc('claim_customer_invite');
     if (claimErr) {
       console.error('claim_customer_invite failed', claimErr);
@@ -66,7 +82,9 @@ export default function AcceptInvitePage() {
     <div className="min-h-screen flex items-center justify-center bg-light px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
         <img src={dogLogo} alt="CleverDog" className="h-16 mx-auto mb-6" />
-        <h1 className="text-2xl font-bold text-center mb-1">Välkommen!</h1>
+        <h1 className="text-2xl font-bold text-center mb-1">
+          {accountType === 'staff' ? 'Välkommen till personalen!' : 'Välkommen!'}
+        </h1>
         <p className="text-center text-gray-500 mb-6 text-sm">Sätt ditt lösenord</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">

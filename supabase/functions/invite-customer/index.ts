@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
 
   const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(customer.email, {
     redirectTo: `${SITE_URL}/login/accept-invite`,
+    data: { account_type: 'customer' },
   });
   if (inviteErr) {
     return new Response(JSON.stringify({ error: inviteErr.message }), { status: 500, headers: responseHeaders });

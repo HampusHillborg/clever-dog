@@ -143,13 +143,13 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const { email, password, name, phone, location, role } = body;
+    const { email, password, name, phone, role } = body;
 
     // Validate required fields
-    if (!email || !password || !name) {
+    if (!email || !name) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Email, password, and name are required' }),
+        body: JSON.stringify({ error: 'Email and name are required' }),
         headers: {
           'Access-Control-Allow-Origin': '*',
           'Content-Type': 'application/json',
@@ -157,8 +157,9 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Validate password length
-    if (password.length < 6) {
+    // If a password is supplied it must meet the minimum length.
+    // An empty password switches to invite-by-email flow.
+    if (password && password.length < 6) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Password must be at least 6 characters long' }),
@@ -182,18 +183,6 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Validate location if provided
-    if (location && !['malmo', 'staffanstorp', 'both'].includes(location)) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Location must be either "malmo", "staffanstorp", or "both"' }),
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json',
-        },
-      };
-    }
-
     // Validate role if provided
     const employeeRole = role || 'employee';
     if (!['admin', 'employee', 'platschef'].includes(employeeRole)) {
@@ -207,37 +196,58 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Create user in Supabase Auth using Admin API
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Auto-confirm email
-    });
+    // Create user — either with password (immediate access) or via invite (user sets own password)
+    const siteUrl = process.env.SITE_URL
+      || process.env.URL
+      || event.headers?.origin
+      || 'https://cleverdog.se';
+    const useInvite = !password;
 
-    if (authError) {
-      console.error('Error creating user in Auth:', authError);
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: authError.message || 'Failed to create user account' }),
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json',
+    let userId;
+    let authEmail;
+
+    if (useInvite) {
+      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+        email,
+        {
+          redirectTo: `${siteUrl}/login/accept-invite`,
+          data: { role: employeeRole, name, account_type: 'staff' },
         },
-      };
+      );
+      if (inviteError || !inviteData?.user) {
+        console.error('Error inviting staff user:', inviteError);
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: inviteError?.message || 'Failed to send invite' }),
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+          },
+        };
+      }
+      userId = inviteData.user.id;
+      authEmail = inviteData.user.email;
+    } else {
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { role: employeeRole, name, account_type: 'staff' },
+      });
+      if (authError || !authData?.user) {
+        console.error('Error creating user in Auth:', authError);
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: authError?.message || 'Failed to create user account' }),
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+          },
+        };
+      }
+      userId = authData.user.id;
+      authEmail = authData.user.email;
     }
-
-    if (!authData.user) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to create user account' }),
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json',
-        },
-      };
-    }
-
-    const userId = authData.user.id;
 
     // Wait a moment for the trigger to create admin_users entry
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -262,7 +272,6 @@ exports.handler = async function(event, context) {
       id: userId,
       name,
       phone: phone || null,
-      location: location || null,
       position: null, // Can be set later
       hire_date: null, // Can be set later
       notes: null,
@@ -297,13 +306,15 @@ exports.handler = async function(event, context) {
         success: true,
         user: {
           id: userId,
-          email: authData.user.email,
+          email: authEmail,
           name,
           phone,
-          location,
           role: employeeRole,
         },
-        message: 'Staff user created successfully',
+        invited: useInvite,
+        message: useInvite
+          ? 'Invitation email sent — user will set their own password'
+          : 'Staff user created successfully',
       }),
       headers: {
         'Access-Control-Allow-Origin': '*',

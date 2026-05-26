@@ -973,8 +973,9 @@ const AdminPage: React.FC = () => {
         return;
       }
 
-      // If password is provided, create new account via Netlify Function (admin only)
-      if (employeeForm.password && userRole === 'admin' && !editingEmployee && supabase) {
+      // Creating a new employee account — Netlify function handles both
+      // direct-password creation and invite-by-email when password is empty.
+      if (userRole === 'admin' && !editingEmployee && supabase) {
         // Get current session token
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
@@ -993,7 +994,7 @@ const AdminPage: React.FC = () => {
             },
             body: JSON.stringify({
               email: employeeForm.email,
-              password: employeeForm.password,
+              password: employeeForm.password || null,
               name: employeeForm.name,
               phone: employeeForm.phone || null,
               role: employeeForm.role,
@@ -1060,6 +1061,9 @@ const AdminPage: React.FC = () => {
             password: '',
           });
           setIsSavingEmployee(false);
+          if (result.invited) {
+            alert(`Inbjudningsmail skickat till ${employeeForm.email}. Användaren sätter sitt eget lösenord via länken.`);
+          }
           return;
         } catch (fetchError: any) {
           console.error('Error calling create-staff-user function:', fetchError);
@@ -8926,17 +8930,18 @@ const AdminPage: React.FC = () => {
                 {userRole === 'admin' && !editingEmployee && (
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Lösenord {!editingEmployee && '(för att skapa nytt konto)'}
+                      Lösenord (valfritt)
                     </label>
                     <input
                       type="password"
                       value={employeeForm.password}
                       onChange={(e) => setEmployeeForm({ ...employeeForm, password: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      placeholder="Lämna tomt för att länka till befintligt konto"
+                      placeholder="Lämna tomt för att skicka inbjudningsmail"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Ange ett lösenord för att skapa ett nytt inloggningskonto. Lämna tomt för att länka till ett befintligt konto.
+                      Lämna tomt → användaren får ett mail och sätter sitt eget lösenord.
+                      Fyll i → kontot är klart direkt med detta lösenord (för testkonton).
                     </p>
                   </div>
                 )}
