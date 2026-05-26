@@ -55,7 +55,6 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
       // Save to Supabase first (don't wait for it to complete, but don't block email)
       // Start the save in the background but don't await it
       const savePromise = saveApplication({
-        location: 'staffanstorp',
         owner_name: formData.name,
         owner_email: formData.email,
         owner_phone: formData.phone || undefined,
