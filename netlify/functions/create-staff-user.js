@@ -77,7 +77,12 @@ exports.handler = async function(event, context) {
     const sessionToken = authHeader.split(' ')[1];
 
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // Verify the user's session and get their role
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(sessionToken);
@@ -201,14 +206,6 @@ exports.handler = async function(event, context) {
         },
       };
     }
-
-    // Create Supabase Admin client (with service role key)
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
 
     // Create user in Supabase Auth using Admin API
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
