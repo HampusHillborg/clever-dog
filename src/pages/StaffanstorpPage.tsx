@@ -134,12 +134,12 @@ const StaffanstorpPage: React.FC = () => {
           <WaveDivider topColor="#F9FAFB" bottomColor="#ffffff" variant="wave1" />
           <SustainabilitySection />
           <WaveDivider topColor="#ffffff" bottomColor="#F9FAFB" variant="wave2" />
-          <ContactSection location="staffanstorp" />
+          <ContactSection />
         </Suspense>
       </main>
       <Suspense fallback={<div className="h-16">Loading...</div>}>
         <WaveDivider topColor="#F9FAFB" bottomColor="#111827" variant="wave3" />
-        <Footer location="staffanstorp" />
+        <Footer />
       </Suspense>
     </>
   );

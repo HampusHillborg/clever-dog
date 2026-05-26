@@ -3,11 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { FaMapMarkerAlt, FaEnvelope, FaInstagram, FaFacebookF } from 'react-icons/fa';
 
-interface ContactSectionProps {
-  location?: string;
-}
-
-const ContactSection: React.FC<ContactSectionProps> = ({ location: _location }) => {
+const ContactSection: React.FC = () => {
   const { t } = useTranslation();
 
   const email = 'info@cleverdog.se';

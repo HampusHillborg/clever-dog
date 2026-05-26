@@ -55,7 +55,6 @@ export type Database = {
           end_date: string | null
           id: string
           is_neutered: string | null
-          location: string
           matched_at: string | null
           matched_by: string | null
           matched_dog_id: string | null
@@ -93,7 +92,6 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_neutered?: string | null
-          location: string
           matched_at?: string | null
           matched_by?: string | null
           matched_dog_id?: string | null
@@ -131,7 +129,6 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_neutered?: string | null
-          location?: string
           matched_at?: string | null
           matched_by?: string | null
           matched_dog_id?: string | null
@@ -171,7 +168,6 @@ export type Database = {
           end_date: string
           id: string
           is_archived: boolean | null
-          location: string
           notes: string | null
           start_date: string
           updated_at: string | null
@@ -183,7 +179,6 @@ export type Database = {
           end_date: string
           id?: string
           is_archived?: boolean | null
-          location: string
           notes?: string | null
           start_date: string
           updated_at?: string | null
@@ -195,7 +190,6 @@ export type Database = {
           end_date?: string
           id?: string
           is_archived?: boolean | null
-          location?: string
           notes?: string | null
           start_date?: string
           updated_at?: string | null
@@ -271,21 +265,18 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          location: string
           settings: Json
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
-          location: string
           settings?: Json
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
-          location?: string
           settings?: Json
           updated_at?: string | null
         }
@@ -405,21 +396,18 @@ export type Database = {
       day_capacity_defaults: {
         Row: {
           hard_limit: number | null
-          location: string
           soft_limit: number | null
           updated_at: string | null
           weekday: number
         }
         Insert: {
           hard_limit?: number | null
-          location?: string
           soft_limit?: number | null
           updated_at?: string | null
           weekday: number
         }
         Update: {
           hard_limit?: number | null
-          location?: string
           soft_limit?: number | null
           updated_at?: string | null
           weekday?: number
@@ -430,7 +418,6 @@ export type Database = {
         Row: {
           date: string
           hard_limit: number | null
-          location: string
           note: string | null
           soft_limit: number | null
           updated_at: string | null
@@ -438,7 +425,6 @@ export type Database = {
         Insert: {
           date: string
           hard_limit?: number | null
-          location?: string
           note?: string | null
           soft_limit?: number | null
           updated_at?: string | null
@@ -446,7 +432,6 @@ export type Database = {
         Update: {
           date?: string
           hard_limit?: number | null
-          location?: string
           note?: string | null
           soft_limit?: number | null
           updated_at?: string | null
@@ -687,7 +672,6 @@ export type Database = {
           insurance_company: string | null
           insurance_number: string | null
           is_active: boolean
-          locations: Json
           medical_notes: string | null
           name: string
           notes: string | null
@@ -717,7 +701,6 @@ export type Database = {
           insurance_company?: string | null
           insurance_number?: string | null
           is_active?: boolean
-          locations?: Json
           medical_notes?: string | null
           name: string
           notes?: string | null
@@ -747,7 +730,6 @@ export type Database = {
           insurance_company?: string | null
           insurance_number?: string | null
           is_active?: boolean
-          locations?: Json
           medical_notes?: string | null
           name?: string
           notes?: string | null
@@ -771,7 +753,6 @@ export type Database = {
           hire_date: string | null
           id: string
           is_active: boolean | null
-          location: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -785,7 +766,6 @@ export type Database = {
           hire_date?: string | null
           id: string
           is_active?: boolean | null
-          location?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -799,7 +779,6 @@ export type Database = {
           hire_date?: string | null
           id?: string
           is_active?: boolean | null
-          location?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -820,17 +799,14 @@ export type Database = {
       location_settings: {
         Row: {
           count_boarding_in_dagis: boolean
-          location: string
           updated_at: string | null
         }
         Insert: {
           count_boarding_in_dagis?: boolean
-          location: string
           updated_at?: string | null
         }
         Update: {
           count_boarding_in_dagis?: boolean
-          location?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -842,7 +818,6 @@ export type Database = {
           dog_name: string | null
           email: string | null
           id: string
-          location: string
           name: string
           phone: string | null
           time: string
@@ -854,7 +829,6 @@ export type Database = {
           dog_name?: string | null
           email?: string | null
           id?: string
-          location: string
           name: string
           phone?: string | null
           time: string
@@ -866,7 +840,6 @@ export type Database = {
           dog_name?: string | null
           email?: string | null
           id?: string
-          location?: string
           name?: string
           phone?: string | null
           time?: string
@@ -934,7 +907,6 @@ export type Database = {
           created_at: string | null
           date: string
           id: string
-          location: string
           updated_at: string | null
         }
         Insert: {
@@ -942,7 +914,6 @@ export type Database = {
           created_at?: string | null
           date: string
           id?: string
-          location: string
           updated_at?: string | null
         }
         Update: {
@@ -950,7 +921,6 @@ export type Database = {
           created_at?: string | null
           date?: string
           id?: string
-          location?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -1052,7 +1022,6 @@ export type Database = {
           employee_id: string
           end_time: string
           id: string
-          location: string
           notes: string | null
           start_time: string
           updated_at: string | null
@@ -1064,7 +1033,6 @@ export type Database = {
           employee_id: string
           end_time: string
           id?: string
-          location: string
           notes?: string | null
           start_time: string
           updated_at?: string | null
@@ -1076,7 +1044,6 @@ export type Database = {
           employee_id?: string
           end_time?: string
           id?: string
-          location?: string
           notes?: string | null
           start_time?: string
           updated_at?: string | null
@@ -1104,7 +1071,7 @@ export type Database = {
     }
     Functions: {
       booked_dogs_on_date: {
-        Args: { p_date: string; p_location?: string }
+        Args: { p_date: string }
         Returns: number
       }
       chat_thread_customers: {
@@ -1142,14 +1109,14 @@ export type Database = {
         Returns: boolean
       }
       day_capacity_for_date: {
-        Args: { p_date: string; p_location?: string }
+        Args: { p_date: string }
         Returns: {
           hard_limit: number
           soft_limit: number
         }[]
       }
       day_capacity_overview: {
-        Args: { p_end: string; p_location?: string; p_start: string }
+        Args: { p_end: string; p_start: string }
         Returns: {
           booked: number
           date: string
@@ -1169,7 +1136,7 @@ export type Database = {
         }[]
       }
       staff_working_today: {
-        Args: { loc?: string }
+        Args: never
         Returns: {
           name: string
         }[]
