@@ -2474,7 +2474,7 @@ const AdminPage: React.FC = () => {
             <span class="fl"><strong>Företag:</strong> CleverDog</span>
             <span class="fl"><strong>Org.nr:</strong> 20020922-5325</span>
             <span class="fl"><strong>Adress:</strong> Malmövägen 7 / Johan Anders väg 61, Staffanstorp</span>
-            <span class="fl"><strong>E-post:</strong> cleverdog.aw@gmail.com</span>
+            <span class="fl"><strong>E-post:</strong> info@cleverdog.se</span>
           </div>
           <div class="party">
             <span class="party-label">Hundägare</span>
@@ -2714,7 +2714,7 @@ const AdminPage: React.FC = () => {
             <span class="fl"><strong>Företag:</strong> CleverDog</span>
             <span class="fl"><strong>Org.nr:</strong> 20020922-5325</span>
             <span class="fl"><strong>Adress:</strong> Malmövägen 7 / Johan Anders väg 61, Staffanstorp</span>
-            <span class="fl"><strong>E-post:</strong> cleverdog.aw@gmail.com</span>
+            <span class="fl"><strong>E-post:</strong> info@cleverdog.se</span>
           </div>
           <div class="party">
             <span class="party-label">Hundägare</span>
@@ -2955,7 +2955,7 @@ const AdminPage: React.FC = () => {
           <span class="fl"><strong>Företag:</strong> CleverDog, företrätt av Alicja Wekwert</span>
           <span class="fl"><strong>Org.nr:</strong> 20020922-5325</span>
           <span class="fl"><strong>Adress:</strong> Malmövägen 7 / Johan Anders väg 61, Staffanstorp</span>
-          <span class="fl"><strong>E-post:</strong> cleverdog.aw@gmail.com</span>
+          <span class="fl"><strong>E-post:</strong> info@cleverdog.se</span>
         </div>
 
         <div class="party">

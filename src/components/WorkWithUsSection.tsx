@@ -61,11 +61,11 @@ const WorkWithUsSection: React.FC = () => {
               <div className="text-center">
                 <p className="text-lg font-semibold mb-4 text-gray-700">{t('workWithUs.cta.sendTo')}</p>
                 <a
-                  href="mailto:cleverdog.aw@gmail.com?subject=Ansökan om anställning - Clever Dog&body=Hej!%0A%0AJag är intresserad av att jobba hos er på Clever Dog.%0A%0ABerätta gärna mer om er och era öppna positioner.%0A%0AMvh"
+                  href="mailto:info@cleverdog.se?subject=Ansökan om anställning - Clever Dog&body=Hej!%0A%0AJag är intresserad av att jobba hos er på Clever Dog.%0A%0ABerätta gärna mer om er och era öppna positioner.%0A%0AMvh"
                   className="inline-flex items-center space-x-3 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
                 >
                   <FaEnvelope className="text-xl" />
-                  <span className="text-lg">cleverdog.aw@gmail.com</span>
+                  <span className="text-lg">info@cleverdog.se</span>
                 </a>
               </div>
             </div>

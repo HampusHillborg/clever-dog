@@ -146,7 +146,7 @@ const StaffanstorpAboutSection: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 text-lg">Email</p>
-                    <p className="text-gray-600">cleverdog.aw@gmail.com</p>
+                    <p className="text-gray-600">info@cleverdog.se</p>
                   </div>
                 </div>
 

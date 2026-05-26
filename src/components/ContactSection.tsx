@@ -10,7 +10,7 @@ interface ContactSectionProps {
 const ContactSection: React.FC<ContactSectionProps> = ({ location: _location }) => {
   const { t } = useTranslation();
 
-  const email = 'cleverdog.aw@gmail.com';
+  const email = 'info@cleverdog.se';
   const emailLink = `mailto:${email}`;
 
   return (

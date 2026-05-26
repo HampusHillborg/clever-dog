@@ -245,7 +245,7 @@ Hunddagis & Hundpensionat i Malmö & Staffanstorp
 
 📍 Staffanstorp: Malmövägen 7, 245 00
 📍 Malmö: Videdal
-📧 cleverdog.aw@gmail.com
+📧 info@cleverdog.se
 🌐 www.cleverdog.se
 
 Godkänt av Länsstyrelsen | Professionell Hundomsorg

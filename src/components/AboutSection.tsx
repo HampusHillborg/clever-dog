@@ -103,8 +103,8 @@ const AboutSection: React.FC<AboutSectionProps> = ({ location }) => {
               </div>
               <div>
                 <h3 className="font-medium text-gray-700">{t('about.email')}</h3>
-                 <a href="mailto:cleverdog.aw@gmail.com" className="hover:text-primary">
-                   cleverdog.aw@gmail.com
+                 <a href="mailto:info@cleverdog.se" className="hover:text-primary">
+                   info@cleverdog.se
                  </a>
               </div>
             </div>

@@ -112,8 +112,8 @@ const Footer: React.FC<FooterProps> = ({ location }) => {
             <address className="text-gray-400 mb-4 md:mb-6 text-center md:text-right not-italic text-sm md:text-base">
               Malmövägen 7<br />
               Staffanstorp<br />
-              <a href="mailto:cleverdog.aw@gmail.com" className="hover:text-primary">
-                cleverdog.aw@gmail.com
+              <a href="mailto:info@cleverdog.se" className="hover:text-primary">
+                info@cleverdog.se
               </a>
             </address>
             <LanguageSwitcher />

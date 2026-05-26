@@ -135,7 +135,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
         dog_name: formData.dogName,
         inquiry_type: formData.inquiryType ? t(`booking.form.inquiryOptions.${formData.inquiryType}`) : '',
         request_date: new Date().toLocaleDateString(),
-        reply_to: 'cleverdog.aw@gmail.com', // Your email for replies
+        reply_to: 'info@cleverdog.se', // Your email for replies
       };
 
       await emailjs.send(

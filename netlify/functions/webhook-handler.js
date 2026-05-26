@@ -235,8 +235,8 @@ exports.handler = async (event, context) => {
 
     // Skicka e-post via Netlify's inbyggda e-postfunktion
     const emailParams = {
-      to: 'cleverdog.aw@gmail.com',
-      from: 'noreply@cleverdog.se',
+      to: 'info@cleverdog.se',
+      from: 'info@cleverdog.se',
       subject: `🐕 Intresseanmälan Malmö Videdal - ${formData.name || 'Okänd person'}`,
       html: htmlEmail,
     };
@@ -249,7 +249,7 @@ exports.handler = async (event, context) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: 'cleverdog.aw@gmail.com',
+        email: 'info@cleverdog.se',
         subject: emailParams.subject,
         html: emailParams.html,
       }),

@@ -93,7 +93,7 @@
    
     <p>{{#if location}}Tack så mycket för att du har anmält intresse för vårt nya hunddagis i {{location}}!{{else}}Thank you for your request with Clever Dog. We have received your inquiry and will review it shortly.{{/if}}</p>
    
-    <p>{{#if location}}Vi kommer att kontakta dig inom 2-3 arbetsdagar för att diskutera dina behov och svara på eventuella frågor du kan ha.{{else}}We typically respond within 24-48 hours. If you have any urgent matters, please feel free to contact us directly at <a href="mailto:cleverdog.aw@gmail.com">cleverdog.aw@gmail.com</a>.{{/if}}</p>
+    <p>{{#if location}}Vi kommer att kontakta dig inom 2-3 arbetsdagar för att diskutera dina behov och svara på eventuella frågor du kan ha.{{else}}We typically respond within 24-48 hours. If you have any urgent matters, please feel free to contact us directly at <a href="mailto:info@cleverdog.se">info@cleverdog.se</a>.{{/if}}</p>
    
     <div class="info-box">
       <h2>{{#if location}}Din intresseanmälan{{else}}Your Request Details{{/if}}</h2>
