@@ -10,7 +10,6 @@ export type Dog = {
   phone: string;
   email?: string; // Optional email field for matching
   notes?: string;
-  locations: ('staffanstorp')[];
   type?: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding';
   isActive?: boolean;
   // Contract fields
@@ -28,7 +27,6 @@ export type BoardingRecord = {
   id: string;
   dogId: string;
   dogName: string;
-  location: 'staffanstorp';
   startDate: string;
   endDate: string;
   notes?: string;
@@ -39,7 +37,6 @@ export type BoardingRecord = {
 export type PlanningData = {
   id: string;
   date: string;
-  location: 'staffanstorp';
   cages: Array<{
     id: string;
     name: string;
@@ -92,21 +89,6 @@ export const getDogs = async (): Promise<Dog[]> => {
 
   // Transform database format to app format
   return ((data as any) || []).map((dog: any) => {
-    // Ensure locations is always an array of 'staffanstorp' (filter out legacy 'malmo' rows)
-    let rawLocs: string[] = [];
-    if (Array.isArray(dog.locations)) {
-      rawLocs = dog.locations;
-    } else if (dog.locations && typeof dog.locations === 'string') {
-      try {
-        rawLocs = JSON.parse(dog.locations);
-      } catch {
-        rawLocs = [dog.locations];
-      }
-    }
-    const locations: ('staffanstorp')[] = rawLocs
-      .filter((l): l is 'staffanstorp' => l === 'staffanstorp')
-      .concat(rawLocs.length > 0 && !rawLocs.includes('staffanstorp') ? ['staffanstorp'] : []);
-
     // Ensure type is properly converted (null -> undefined, empty string -> undefined)
     let type: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
     if (dog.type && typeof dog.type === 'string' && dog.type.trim() !== '') {
@@ -125,7 +107,6 @@ export const getDogs = async (): Promise<Dog[]> => {
       phone: dog.phone || '',
       email: dog.email || undefined,
       notes: dog.notes ? String(dog.notes) : undefined,
-      locations: locations,
       type: type,
       isActive: dog.is_active !== undefined ? dog.is_active : true,
       // Contract fields
@@ -184,7 +165,6 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     phone: dog.phone,
     email: dog.email || null,
     notes: dog.notes || null,
-    locations: dog.locations,
     type: dog.type || null,
     is_active: dog.isActive !== undefined ? dog.isActive : true,
     // Contract fields
@@ -230,21 +210,6 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
 
   const dbDog = data as any;
 
-  // Ensure locations is always an array of 'staffanstorp' (filter out legacy 'malmo' rows)
-  let rawLocations: string[] = [];
-  if (Array.isArray(dbDog.locations)) {
-    rawLocations = dbDog.locations;
-  } else if (dbDog.locations) {
-    try {
-      rawLocations = JSON.parse(dbDog.locations);
-    } catch {
-      rawLocations = [];
-    }
-  }
-  const locations: ('staffanstorp')[] = rawLocations
-    .filter((l): l is 'staffanstorp' => l === 'staffanstorp')
-    .concat(rawLocations.length > 0 && !rawLocations.includes('staffanstorp') ? ['staffanstorp'] : []);
-
   // Ensure type is properly converted
   let type: 'fulltime' | 'parttime-3' | 'parttime-2' | 'singleDay' | 'boarding' | undefined = undefined;
   if (dbDog.type && typeof dbDog.type === 'string' && dbDog.type.trim() !== '') {
@@ -263,7 +228,6 @@ export const saveDog = async (dog: Dog): Promise<Dog> => {
     phone: dbDog.phone || '',
     email: dbDog.email || undefined,
     notes: dbDog.notes ? String(dbDog.notes) : undefined,
-    locations: locations,
     type: type,
     isActive: dbDog.is_active !== undefined ? dbDog.is_active : true,
     // Contract fields
@@ -338,7 +302,6 @@ export const getBoardingRecords = async (): Promise<BoardingRecord[]> => {
     id: record.id,
     dogId: record.dog_id,
     dogName: record.dog_name,
-    location: record.location as 'staffanstorp',
     startDate: record.start_date,
     endDate: record.end_date,
     notes: record.notes ? String(record.notes) : undefined,
@@ -375,7 +338,6 @@ export const saveBoardingRecord = async (record: BoardingRecord): Promise<Boardi
       id: recordId,
       dog_id: record.dogId,
       dog_name: record.dogName,
-      location: record.location,
       start_date: record.startDate,
       end_date: record.endDate,
       notes: record.notes || null,
@@ -396,7 +358,6 @@ export const saveBoardingRecord = async (record: BoardingRecord): Promise<Boardi
     id: dbRecord.id,
     dogId: dbRecord.dog_id,
     dogName: dbRecord.dog_name,
-    location: dbRecord.location as 'staffanstorp',
     startDate: dbRecord.start_date,
     endDate: dbRecord.end_date,
     notes: dbRecord.notes ? String(dbRecord.notes) : undefined,
@@ -451,7 +412,6 @@ export const getPlanningHistory = async (): Promise<PlanningData[]> => {
   return ((data as any) || []).map((planning: any) => ({
     id: planning.id,
     date: planning.date,
-    location: planning.location as 'staffanstorp',
     cages: (Array.isArray(planning.cages) ? planning.cages : []) as PlanningData['cages'],
     createdAt: planning.created_at || new Date().toISOString(),
   }));
@@ -462,9 +422,7 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
     // Fallback to localStorage
     const saved = localStorage.getItem('cleverPlanningHistory');
     const history: PlanningData[] = saved ? JSON.parse(saved) : [];
-    const existingIndex = history.findIndex(
-      p => p.date === planning.date && p.location === planning.location
-    );
+    const existingIndex = history.findIndex(p => p.date === planning.date);
 
     if (existingIndex >= 0) {
       history[existingIndex] = planning;
@@ -482,7 +440,7 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
   // If ID is not a UUID, try to find existing planning to get its ID
   if (!planning.id || !planning.id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
     try {
-      const existing = await getPlanningForDate(planning.date, planning.location);
+      const existing = await getPlanningForDate(planning.date);
       if (existing && existing.id) {
         planningId = existing.id;
       } else {
@@ -499,10 +457,9 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
     .upsert({
       id: planningId,
       date: planning.date,
-      location: planning.location,
       cages: planning.cages,
     } as any, {
-      onConflict: 'date,location'
+      onConflict: 'date'
     })
     .select()
     .single();
@@ -516,22 +473,18 @@ export const savePlanningData = async (planning: PlanningData): Promise<Planning
   return {
     id: dbPlanning.id,
     date: dbPlanning.date,
-    location: dbPlanning.location as 'staffanstorp',
     cages: (Array.isArray(dbPlanning.cages) ? dbPlanning.cages : []) as PlanningData['cages'],
     createdAt: dbPlanning.created_at || new Date().toISOString(),
   };
 };
 
-// Helper to get planning for a specific date and location
-export const getPlanningForDate = async (
-  date: string,
-  location: 'staffanstorp'
-): Promise<PlanningData | null> => {
+// Helper to get planning for a specific date
+export const getPlanningForDate = async (date: string): Promise<PlanningData | null> => {
   if (!isSupabaseAvailable()) {
     // Fallback to localStorage
     const saved = localStorage.getItem('cleverPlanningHistory');
     const history: PlanningData[] = saved ? JSON.parse(saved) : [];
-    return history.find(p => p.date === date && p.location === location) || null;
+    return history.find(p => p.date === date) || null;
   }
 
   // Use .maybeSingle() instead of .single() to handle missing rows gracefully
@@ -539,7 +492,6 @@ export const getPlanningForDate = async (
     .from('planning_history')
     .select('*')
     .eq('date', date)
-    .eq('location', location)
     .maybeSingle();
 
   if (error) {
@@ -565,7 +517,6 @@ export const getPlanningForDate = async (
   return {
     id: dbPlanning.id,
     date: dbPlanning.date,
-    location: dbPlanning.location as 'staffanstorp',
     cages: (Array.isArray(dbPlanning.cages) ? dbPlanning.cages : []) as PlanningData['cages'],
     createdAt: dbPlanning.created_at || new Date().toISOString(),
   };
@@ -576,16 +527,15 @@ export const getPlanningForDate = async (
 // ============================================================================
 
 export type BoxSettings = {
-  staffanstorp: { cages: Array<{ name: string }>; freeAreas: Array<{ name: string }> };
+  cages: Array<{ name: string }>;
+  freeAreas: Array<{ name: string }>;
 };
 
 export const getBoxSettings = async (): Promise<BoxSettings> => {
   // Default settings
   const defaultSettings: BoxSettings = {
-    staffanstorp: {
-      cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
-      freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` }))
-    }
+    cages: Array.from({ length: 8 }, (_, i) => ({ name: `Bur ${i + 1}` })),
+    freeAreas: Array.from({ length: 2 }, (_, i) => ({ name: `Fri yta ${i + 1}` })),
   };
 
   if (!isSupabaseAvailable()) {
@@ -621,21 +571,16 @@ export const getBoxSettings = async (): Promise<BoxSettings> => {
     }
 
     // Transform database format to app format
-    const settings: BoxSettings = { ...defaultSettings };
+    let settings: BoxSettings = { ...defaultSettings };
 
-    if (data && Array.isArray(data)) {
-      data.forEach((row: any) => {
-        const location = row.location as 'staffanstorp';
-        if (location === 'staffanstorp') {
-          const rowSettings = row.settings;
-          if (rowSettings && typeof rowSettings === 'object') {
-            settings[location] = {
-              cages: Array.isArray(rowSettings.cages) ? rowSettings.cages : [],
-              freeAreas: Array.isArray(rowSettings.freeAreas) ? rowSettings.freeAreas : []
-            };
-          }
-        }
-      });
+    if (data && Array.isArray(data) && data.length > 0) {
+      const rowSettings = (data[0] as any).settings;
+      if (rowSettings && typeof rowSettings === 'object') {
+        settings = {
+          cages: Array.isArray(rowSettings.cages) ? rowSettings.cages : [],
+          freeAreas: Array.isArray(rowSettings.freeAreas) ? rowSettings.freeAreas : [],
+        };
+      }
     }
 
     return settings;
@@ -663,28 +608,17 @@ export const saveBoxSettings = async (settings: BoxSettings): Promise<BoxSetting
   }
 
   try {
-    // Save settings for staffanstorp
-    const locations: Array<'staffanstorp'> = ['staffanstorp'];
+    const { error } = await supabase!
+      .from('box_settings')
+      .upsert({
+        settings: {
+          cages: settings.cages,
+          freeAreas: settings.freeAreas,
+        },
+      } as any);
 
-    for (const location of locations) {
-      const locationSettings = settings[location];
-
-      const { error } = await supabase!
-        .from('box_settings')
-        .upsert({
-          location: location,
-          settings: {
-            cages: locationSettings.cages,
-            freeAreas: locationSettings.freeAreas
-          }
-        } as any, {
-          onConflict: 'location'
-        });
-
-      if (error) {
-        console.error(`Error saving box settings for ${location}:`, error);
-        // Continue with other location even if one fails
-      }
+    if (error) {
+      console.error('Error saving box settings:', error);
     }
 
     return settings;
@@ -701,7 +635,6 @@ export const saveBoxSettings = async (settings: BoxSettings): Promise<BoxSetting
 
 export type Application = {
   id: string;
-  location: 'staffanstorp';
 
   // Owner information
   owner_name: string;
@@ -778,7 +711,6 @@ export const saveApplication = async (input: ApplicationInput): Promise<Applicat
   if (isSupabaseAvailable()) {
     try {
       const insertData: any = {
-        location: input.location,
         owner_name: input.owner_name,
         owner_email: input.owner_email,
         owner_phone: input.owner_phone || null,
@@ -832,7 +764,7 @@ export const saveApplication = async (input: ApplicationInput): Promise<Applicat
 };
 
 // Get all applications with optional filters
-export const getApplications = async (filters?: { status?: string; location?: string }): Promise<Application[]> => {
+export const getApplications = async (filters?: { status?: string }): Promise<Application[]> => {
   let applications: Application[] = [];
 
   // Try Supabase first
@@ -845,9 +777,6 @@ export const getApplications = async (filters?: { status?: string; location?: st
 
       if (filters?.status) {
         query = query.eq('status', filters.status);
-      }
-      if (filters?.location) {
-        query = query.eq('location', filters.location);
       }
 
       const { data, error } = await query;
@@ -871,9 +800,6 @@ export const getApplications = async (filters?: { status?: string; location?: st
   // Apply filters
   if (filters?.status) {
     applications = applications.filter(a => a.status === filters.status);
-  }
-  if (filters?.location) {
-    applications = applications.filter(a => a.location === filters.location);
   }
 
   return applications.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -1004,7 +930,6 @@ export type Meeting = {
   email?: string; // Email (optional)
   date: string; // YYYY-MM-DD (required)
   time: string; // HH:mm format (required)
-  location: 'staffanstorp';
   createdAt: string;
   updatedAt: string;
 };
@@ -1037,7 +962,6 @@ export const saveMeeting = async (meeting: Omit<Meeting, 'id' | 'createdAt' | 'u
         email: meeting.email || null,
         date: meeting.date,
         time: meeting.time,
-        location: meeting.location
       } as any)
       .select()
       .single();
@@ -1071,7 +995,6 @@ export const saveMeeting = async (meeting: Omit<Meeting, 'id' | 'createdAt' | 'u
       email: (data as any).email || undefined,
       date: (data as any).date,
       time: (data as any).time,
-      location: (data as any).location,
       createdAt: (data as any).created_at,
       updatedAt: (data as any).updated_at
     };
@@ -1098,15 +1021,12 @@ export const saveMeeting = async (meeting: Omit<Meeting, 'id' | 'createdAt' | 'u
   }
 };
 
-export const getMeetings = async (filters?: { location?: string; date?: string }): Promise<Meeting[]> => {
+export const getMeetings = async (filters?: { date?: string }): Promise<Meeting[]> => {
   if (!isSupabaseAvailable()) {
     // Fallback to localStorage
     const saved = localStorage.getItem('cleverMeetings');
     let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
 
-    if (filters?.location) {
-      meetings = meetings.filter(m => m.location === filters.location);
-    }
     if (filters?.date) {
       meetings = meetings.filter(m => m.date === filters.date);
     }
@@ -1125,9 +1045,6 @@ export const getMeetings = async (filters?: { location?: string; date?: string }
       .order('date', { ascending: true })
       .order('time', { ascending: true });
 
-    if (filters?.location) {
-      query = query.eq('location', filters.location);
-    }
     if (filters?.date) {
       query = query.eq('date', filters.date);
     }
@@ -1140,9 +1057,6 @@ export const getMeetings = async (filters?: { location?: string; date?: string }
       const saved = localStorage.getItem('cleverMeetings');
       let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
 
-      if (filters?.location) {
-        meetings = meetings.filter(m => m.location === filters.location);
-      }
       if (filters?.date) {
         meetings = meetings.filter(m => m.date === filters.date);
       }
@@ -1163,7 +1077,6 @@ export const getMeetings = async (filters?: { location?: string; date?: string }
       email: meeting.email || undefined,
       date: meeting.date,
       time: meeting.time,
-      location: meeting.location,
       createdAt: meeting.created_at,
       updatedAt: meeting.updated_at
     }));
@@ -1173,9 +1086,6 @@ export const getMeetings = async (filters?: { location?: string; date?: string }
     const saved = localStorage.getItem('cleverMeetings');
     let meetings: Meeting[] = saved ? JSON.parse(saved) : [];
 
-    if (filters?.location) {
-      meetings = meetings.filter(m => m.location === filters.location);
-    }
     if (filters?.date) {
       meetings = meetings.filter(m => m.date === filters.date);
     }
@@ -1216,7 +1126,6 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
     if (updates.email !== undefined) updateData.email = updates.email;
     if (updates.date !== undefined) updateData.date = updates.date;
     if (updates.time !== undefined) updateData.time = updates.time;
-    if (updates.location !== undefined) updateData.location = updates.location;
     updateData.updated_at = new Date().toISOString();
 
     const { data, error } = await (supabase!.from('meetings' as any) as any)
@@ -1259,7 +1168,6 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
           email: data.email || undefined,
           date: data.date,
           time: data.time,
-          location: data.location,
           createdAt: data.created_at,
           updatedAt: data.updated_at
         };
@@ -1276,7 +1184,6 @@ export const updateMeeting = async (id: string, updates: Partial<Omit<Meeting, '
       email: data.email || undefined,
       date: data.date,
       time: data.time,
-      location: data.location,
       createdAt: data.created_at,
       updatedAt: data.updated_at
     };
@@ -1349,7 +1256,6 @@ export type Employee = {
   id: string;
   name: string;
   phone?: string;
-  location?: 'staffanstorp' | 'both';
   position?: string;
   hire_date?: string;
   notes?: string;
@@ -1417,7 +1323,6 @@ export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'upda
     id: employeeData.id,
     name: employeeData.name,
     phone: employeeData.phone || undefined,
-    location: employeeData.location || undefined,
     position: employeeData.position || undefined,
     hire_date: employeeData.hire_date || undefined,
     notes: employeeData.notes || undefined,
@@ -1451,7 +1356,6 @@ export const saveEmployee = async (employee: Omit<Employee, 'created_at' | 'upda
         id: employeeRecord.id,
         name: employeeRecord.name,
         phone: employeeRecord.phone || null,
-        location: employeeRecord.location || null,
         position: employeeRecord.position || null,
         hire_date: employeeRecord.hire_date || null,
         notes: employeeRecord.notes || null,
@@ -1543,7 +1447,6 @@ export type StaffSchedule = {
   date: string;
   start_time?: string;
   end_time?: string;
-  location: 'staffanstorp';
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -1633,7 +1536,6 @@ export const saveStaffSchedule = async (schedule: Omit<StaffSchedule, 'created_a
         date: schedule.date,
         start_time: schedule.start_time || null,
         end_time: schedule.end_time || null,
-        location: schedule.location,
         notes: schedule.notes || null,
       };
 
