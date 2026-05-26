@@ -11,15 +11,38 @@ export default function AcceptInvitePage() {
   const [hasToken, setHasToken] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      if (!supabase) return;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        setError('Ogiltig eller utgången inbjudningslänk. Kontakta oss för en ny.');
-        return;
-      }
-      setHasToken(true);
-    })();
+    if (!supabase) return;
+    let cancelled = false;
+
+    // Initial check — Supabase may not have parsed the hash yet on first paint.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return;
+      if (session) setHasToken(true);
+    });
+
+    // The hash → session conversion fires SIGNED_IN async, so listen for it.
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
+      if (session) setHasToken(true);
+    });
+
+    // After 2s of nothing, assume the link is bad and show an error so the
+    // user isn't stuck with greyed-out fields forever.
+    const timeout = setTimeout(() => {
+      if (cancelled) return;
+      setHasToken((current) => {
+        if (!current) {
+          setError('Ogiltig eller utgången inbjudningslänk. Kontakta oss för en ny.');
+        }
+        return current;
+      });
+    }, 2000);
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +116,6 @@ export default function AcceptInvitePage() {
               required
               minLength={8}
               autoFocus
-              disabled={!hasToken}
             />
           </div>
 
@@ -109,7 +131,6 @@ export default function AcceptInvitePage() {
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
               required
               minLength={8}
-              disabled={!hasToken}
             />
           </div>
 
