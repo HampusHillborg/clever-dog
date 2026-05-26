@@ -271,7 +271,7 @@ exports.handler = async function(event, context) {
 
     const { data: employeeDataResult, error: employeeError } = await supabaseAdmin
       .from('employees')
-      .insert(employeeData)
+      .upsert(employeeData, { onConflict: 'id' })
       .select()
       .single();
 
