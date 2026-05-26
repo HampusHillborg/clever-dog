@@ -175,25 +175,24 @@ const AdminPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Password setting state
-  const [isSettingPassword, setIsSettingPassword] = useState(() => {
-    // Check for invite/recovery token immediately on mount to avoid race conditions with Supabase client
-    // We check both current location.hash AND the captured __initialHash (from main.tsx) 
-    // because Supabase client often strips the hash before this component mounts
-    let hash = '';
-    if (typeof window !== 'undefined') {
-      hash = window.location.hash || window.__initialHash || '';
-    }
-
+  // If the user landed on /admin with an invite/recovery hash (because the
+  // Supabase Site URL still points here), bounce them to the dedicated
+  // AcceptInvitePage which knows how to claim customer + staff invites.
+  // Doing this in module body (before the rest of the hooks run) means the
+  // admin password-setting UI is never even rendered for invite flows.
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash || window.__initialHash || '';
     if (hash) {
       const hashParams = new URLSearchParams(hash.substring(1));
       const type = hashParams.get('type');
       const accessToken = hashParams.get('access_token');
-      // Verify it is an invite/recovery flow
-      return (type === 'invite' || type === 'recovery') && !!accessToken;
+      if ((type === 'invite' || type === 'recovery') && accessToken) {
+        window.location.replace(`/login/accept-invite${hash}`);
+      }
     }
-    return false;
-  });
+  }
+  const [isSettingPassword, _setIsSettingPassword] = useState(false);
+  void _setIsSettingPassword;
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -588,22 +587,8 @@ const AdminPage: React.FC = () => {
     };
   }, []);
 
-  // Check for invite token in URL
-  useEffect(() => {
-    // Check if there is a hash in the URL
-    if (window.location.hash) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const type = hashParams.get('type');
-      const accessToken = hashParams.get('access_token');
-
-      // If it's an invite or recovery flow and we have an access token
-      if ((type === 'invite' || type === 'recovery') && accessToken) {
-        setIsSettingPassword(true);
-        // Clear any previous errors
-        setError('');
-      }
-    }
-  }, []);
+  // Invite/recovery hash handling moved to the redirect at the top of the
+  // component so /admin never renders the password-setting UI on invite links.
 
   // Set meta robots tag to prevent indexing of admin pages
   useEffect(() => {
