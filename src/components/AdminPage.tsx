@@ -39,7 +39,10 @@ import {
   type StaffSchedule,
   type StaffAbsence,
   getDogCustomers,
-  type Customer
+  saveCustomer,
+  setCustomerDogs,
+  inviteCustomer,
+  type Customer,
 } from '../lib/database';
 import { PRICES, VAT_RATE } from '../lib/prices';
 import { signIn, signOut, getCurrentUser, onAuthStateChange, setPassword as setUserPassword, type AuthUser } from '../lib/auth';
@@ -279,6 +282,31 @@ const AdminPage: React.FC = () => {
   const [rejectionDraft, setRejectionDraft] = useState('');
   const [rejectingNow, setRejectingNow] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(10);
+
+  // Convert-application-to-customer modal state
+  const [convertingApp, setConvertingApp] = useState<Application | null>(null);
+  const [convertForm, setConvertForm] = useState({
+    // Customer fields
+    customer_name: '',
+    customer_email: '',
+    customer_phone: '',
+    customer_address: '',
+    customer_city: '',
+    customer_personal_number: '',
+    // Dog fields
+    dog_name: '',
+    dog_breed: '',
+    dog_age: '',
+    dog_gender: '',
+    dog_height: '',
+    dog_chip_number: '',
+    is_neutered: '',
+    dog_socialization: '',
+    problem_behaviors: '',
+    allergies: '',
+  });
+  const [converting, setConverting] = useState(false);
+  const [sendInvite, setSendInvite] = useState(true);
 
   // Meetings state
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -5860,6 +5888,106 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  const openConvertModal = (app: Application) => {
+    setConvertingApp(app);
+    setConvertForm({
+      customer_name: app.owner_name || '',
+      customer_email: app.owner_email || '',
+      customer_phone: app.owner_phone || '',
+      customer_address: app.owner_address || '',
+      customer_city: app.owner_city || '',
+      customer_personal_number: app.owner_personnummer || '',
+      dog_name: app.dog_name || '',
+      dog_breed: app.dog_breed || '',
+      dog_age: app.dog_age || '',
+      dog_gender: app.dog_gender || '',
+      dog_height: app.dog_height || '',
+      dog_chip_number: app.dog_chip_number || '',
+      is_neutered: app.is_neutered || '',
+      dog_socialization: app.dog_socialization || '',
+      problem_behaviors: app.problem_behaviors || '',
+      allergies: app.allergies || '',
+    });
+    setSendInvite(true);
+  };
+
+  const handleConvertApplication = async () => {
+    if (!convertingApp) return;
+    if (!convertForm.customer_name.trim() || !convertForm.customer_email.trim() || !convertForm.dog_name.trim()) {
+      alert('Namn, e-post och hundens namn krävs.');
+      return;
+    }
+    setConverting(true);
+    let createdCustomerId: string | null = null;
+    let createdDogId: string | null = null;
+    try {
+      const customer = await saveCustomer({
+        email: convertForm.customer_email.trim(),
+        name: convertForm.customer_name.trim(),
+        phone: convertForm.customer_phone.trim() || null,
+        address: convertForm.customer_address.trim() || null,
+        city: convertForm.customer_city.trim() || null,
+        personal_number: convertForm.customer_personal_number.trim() || null,
+        invite_status: 'pending',
+      });
+      createdCustomerId = customer.id;
+
+      const newDog: Dog = {
+        id: crypto.randomUUID(),
+        name: convertForm.dog_name.trim(),
+        breed: convertForm.dog_breed.trim(),
+        age: convertForm.dog_age.trim(),
+        owner: convertForm.customer_name.trim(),
+        phone: convertForm.customer_phone.trim(),
+        email: convertForm.customer_email.trim() || undefined,
+        notes: [
+          convertForm.dog_socialization && `Socialisering: ${convertForm.dog_socialization}`,
+          convertForm.problem_behaviors && `Problembeteenden: ${convertForm.problem_behaviors}`,
+          convertForm.allergies && `Allergier: ${convertForm.allergies}`,
+          convertForm.is_neutered && `Kastrerad/steriliserad: ${convertForm.is_neutered}`,
+          convertForm.dog_height && `Höjd: ${convertForm.dog_height}`,
+        ].filter(Boolean).join('\n') || undefined,
+        isActive: true,
+        ownerAddress: convertForm.customer_address.trim() || undefined,
+        ownerCity: convertForm.customer_city.trim() || undefined,
+        ownerPersonalNumber: convertForm.customer_personal_number.trim() || undefined,
+        chipNumber: convertForm.dog_chip_number.trim() || undefined,
+        gender: convertForm.dog_gender.trim() || undefined,
+      };
+      const savedDog = await saveDogToDb(newDog);
+      createdDogId = savedDog.id;
+
+      await setCustomerDogs(customer.id, [savedDog.id]);
+
+      if (sendInvite) {
+        const result = await inviteCustomer(customer.id);
+        if (!result.ok) {
+          console.error('Invite failed:', result.error);
+          alert(`Konto skapat men inbjudningsmail kunde inte skickas: ${result.error}`);
+        }
+      }
+
+      await updateApplication(convertingApp.id, { status: 'added' });
+      await refreshApplications();
+      if (selectedApplication?.id === convertingApp.id) {
+        setSelectedApplication({ ...convertingApp, status: 'added' });
+      }
+      setConvertingApp(null);
+      alert(sendInvite
+        ? `Kundkonto skapat och inbjudningsmail skickat till ${convertForm.customer_email}`
+        : 'Kundkonto skapat (inget mail skickat).');
+    } catch (error: any) {
+      console.error('Convert failed:', error);
+      alert(`Kunde inte skapa kundkonto: ${error?.message || error}`);
+      // Best-effort cleanup if we got partway through.
+      if (createdDogId && createdCustomerId) {
+        try { await setCustomerDogs(createdCustomerId, []); } catch {}
+      }
+    } finally {
+      setConverting(false);
+    }
+  };
+
   const handleConfirmRejection = async () => {
     if (!rejectModalApp) return;
     const reason = rejectionDraft.trim();
@@ -6079,9 +6207,17 @@ const AdminPage: React.FC = () => {
 
               <div className="p-6 space-y-6">
                 {/* Status and Actions */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   {getStatusBadge(selectedApplication.status)}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedApplication.status !== 'added' && (
+                      <button
+                        onClick={() => openConvertModal(selectedApplication)}
+                        className="px-3 py-2 bg-primary text-white rounded-md text-sm font-semibold hover:bg-primary/90"
+                      >
+                        Skapa kundkonto & bjud in
+                      </button>
+                    )}
                     <select
                       value={selectedApplication.status}
                       onChange={(e) => handleUpdateApplicationStatus(selectedApplication, e.target.value as Application['status'])}
@@ -6350,6 +6486,165 @@ const AdminPage: React.FC = () => {
                   className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                 >
                   {rejectingNow ? 'Sparar…' : 'Avslå & skicka mejl'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {convertingApp && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Skapa kundkonto från ansökan
+                </h3>
+                <button
+                  onClick={() => setConvertingApp(null)}
+                  disabled={converting}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                >
+                  <FaTimes className="text-gray-500" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <p className="text-sm text-gray-600">
+                  Justera fälten innan du skapar kontot. Hundens ägaruppgifter
+                  kopplas automatiskt till kunden.
+                </p>
+
+                {/* Owner */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Ägare (kund)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Namn *</span>
+                      <input type="text" value={convertForm.customer_name}
+                        onChange={e => setConvertForm({...convertForm, customer_name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">E-post *</span>
+                      <input type="email" value={convertForm.customer_email}
+                        onChange={e => setConvertForm({...convertForm, customer_email: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Telefon</span>
+                      <input type="tel" value={convertForm.customer_phone}
+                        onChange={e => setConvertForm({...convertForm, customer_phone: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Personnummer</span>
+                      <input type="text" value={convertForm.customer_personal_number}
+                        onChange={e => setConvertForm({...convertForm, customer_personal_number: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm md:col-span-2">
+                      <span className="block text-gray-700 mb-1">Adress</span>
+                      <input type="text" value={convertForm.customer_address}
+                        onChange={e => setConvertForm({...convertForm, customer_address: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Stad</span>
+                      <input type="text" value={convertForm.customer_city}
+                        onChange={e => setConvertForm({...convertForm, customer_city: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Dog */}
+                <div>
+                  <h4 className="font-semibold text-gray-900 mb-3">Hund</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Namn *</span>
+                      <input type="text" value={convertForm.dog_name}
+                        onChange={e => setConvertForm({...convertForm, dog_name: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Ras</span>
+                      <input type="text" value={convertForm.dog_breed}
+                        onChange={e => setConvertForm({...convertForm, dog_breed: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Ålder</span>
+                      <input type="text" value={convertForm.dog_age}
+                        onChange={e => setConvertForm({...convertForm, dog_age: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Kön</span>
+                      <input type="text" value={convertForm.dog_gender}
+                        onChange={e => setConvertForm({...convertForm, dog_gender: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Höjd</span>
+                      <input type="text" value={convertForm.dog_height}
+                        onChange={e => setConvertForm({...convertForm, dog_height: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm">
+                      <span className="block text-gray-700 mb-1">Chip-nummer</span>
+                      <input type="text" value={convertForm.dog_chip_number}
+                        onChange={e => setConvertForm({...convertForm, dog_chip_number: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm md:col-span-2">
+                      <span className="block text-gray-700 mb-1">Kastrerad/steriliserad</span>
+                      <input type="text" value={convertForm.is_neutered}
+                        onChange={e => setConvertForm({...convertForm, is_neutered: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm md:col-span-2">
+                      <span className="block text-gray-700 mb-1">Socialisering</span>
+                      <textarea value={convertForm.dog_socialization} rows={2}
+                        onChange={e => setConvertForm({...convertForm, dog_socialization: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm md:col-span-2">
+                      <span className="block text-gray-700 mb-1">Problembeteenden</span>
+                      <textarea value={convertForm.problem_behaviors} rows={2}
+                        onChange={e => setConvertForm({...convertForm, problem_behaviors: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                    <label className="text-sm md:col-span-2">
+                      <span className="block text-gray-700 mb-1">Allergier</span>
+                      <textarea value={convertForm.allergies} rows={2}
+                        onChange={e => setConvertForm({...convertForm, allergies: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+                    </label>
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={sendInvite}
+                    onChange={e => setSendInvite(e.target.checked)} />
+                  Skicka inbjudningsmail till kunden direkt (annars kan du bjuda in senare)
+                </label>
+              </div>
+
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex justify-end gap-2">
+                <button
+                  onClick={() => setConvertingApp(null)}
+                  disabled={converting}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleConvertApplication}
+                  disabled={converting}
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 font-semibold"
+                >
+                  {converting ? 'Skapar…' : (sendInvite ? 'Skapa & bjud in' : 'Skapa kundkonto')}
                 </button>
               </div>
             </div>
