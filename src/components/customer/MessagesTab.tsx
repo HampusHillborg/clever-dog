@@ -48,6 +48,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
   const [coOwnerCount, setCoOwnerCount] = useState(1);
   const [dogNameMap, setDogNameMap] = useState<Record<string, string>>({});
   const endRef = useRef<HTMLDivElement>(null);
+  const isFirstPaintRef = useRef(true);
 
   const refresh = async () => {
     const msgs = await getMyChatMessages();
@@ -68,8 +69,23 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { refresh(); }, [dog.id]);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [items.length]);
+  useEffect(() => {
+    isFirstPaintRef.current = true;
+    refresh();
+  }, [dog.id]);
+
+  useEffect(() => {
+    if (loading || items.length === 0) return;
+    // Defer one frame so message bubbles are fully laid out before we scroll.
+    const id = requestAnimationFrame(() => {
+      endRef.current?.scrollIntoView({
+        behavior: isFirstPaintRef.current ? 'auto' : 'smooth',
+        block: 'end',
+      });
+      isFirstPaintRef.current = false;
+    });
+    return () => cancelAnimationFrame(id);
+  }, [items.length, loading]);
 
   const send = async () => {
     if (!text.trim()) return;

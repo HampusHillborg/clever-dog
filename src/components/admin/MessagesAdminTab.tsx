@@ -154,6 +154,7 @@ export default function MessagesAdminTab() {
                             <div className={`rounded-2xl px-4 py-2 ${isStaff ? 'bg-primary text-white' : 'bg-gray-100'}`}>
                               <p className="text-sm whitespace-pre-wrap">{m.body}</p>
                               <p className="text-xs opacity-60 mt-1">
+                                {isStaff && m.sender_name ? `${firstNameOf(m.sender_name)} · ` : ''}
                                 {m.created_at ? fmtHm(m.created_at) : ''}
                               </p>
                             </div>
