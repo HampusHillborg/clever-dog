@@ -26,6 +26,7 @@ import {
   deleteEmployee,
   getStaffSchedules,
   saveStaffSchedule,
+  saveStaffSchedulesBulk,
   deleteStaffSchedule,
   getStaffAbsences,
   saveStaffAbsence,
@@ -55,6 +56,7 @@ import TodayAttendanceTab from './admin/TodayAttendanceTab';
 import EconomyTab from './admin/EconomyTab';
 import ClosuresAdminTab from './admin/ClosuresAdminTab';
 import CapacityTab from './admin/CapacityTab';
+import StaffSchedulingTab from './admin/scheduling/StaffSchedulingTab';
 import OwnerInput from './admin/OwnerInput';
 import { useAdminBadges } from './admin/useAdminBadges';
 import { sendNotification } from '../lib/notifications';
@@ -411,27 +413,15 @@ const AdminPage: React.FC = () => {
   // Staff scheduling state
   const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([]);
   const [staffAbsences, setStaffAbsences] = useState<StaffAbsence[]>([]);
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState<StaffSchedule | null>(null);
-  const [scheduleForm, setScheduleForm] = useState({
-    employee_id: '',
-    date: '',
-    start_time: '',
-    end_time: '',
-    notes: '',
-  });
   const [absenceForm, setAbsenceForm] = useState({
     start_date: '',
     end_date: '',
     type: 'sick' as 'sick' | 'vacation' | 'personal' | 'other',
     reason: '',
   });
-  const [scheduleError, setScheduleError] = useState('');
   const [absenceError, setAbsenceError] = useState('');
-  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
   const [isSavingAbsence, setIsSavingAbsence] = useState(false);
-  const [scheduleViewDate, setScheduleViewDate] = useState(new Date().toISOString().split('T')[0]);
   const [hoursViewMonth, setHoursViewMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM format
 
   // Initialize currentPlanningDate to today when entering planning view (but not if coming from calendar)
@@ -746,85 +736,35 @@ const AdminPage: React.FC = () => {
   };
 
   // Staff scheduling functions
-  const openScheduleModal = (schedule?: StaffSchedule, employeeId?: string, date?: string) => {
-    if (schedule) {
-      setEditingSchedule(schedule);
-      setScheduleForm({
-        employee_id: schedule.employee_id,
-        date: schedule.date,
-        start_time: schedule.start_time || '',
-        end_time: schedule.end_time || '',
-        notes: schedule.notes || '',
-      });
-    } else {
-      setEditingSchedule(null);
-      setScheduleForm({
-        employee_id: employeeId || '',
-        date: date || scheduleViewDate,
-        start_time: '',
-        end_time: '',
-        notes: '',
-      });
-    }
-    setScheduleError('');
-    setIsScheduleModalOpen(true);
+  const handleSaveSchedule = async (payload: Omit<StaffSchedule, 'created_at' | 'updated_at'>): Promise<void> => {
+    const saved = await saveStaffSchedule(payload);
+    setStaffSchedules(prev => {
+      const existing = prev.find(s => s.id === saved.id);
+      return existing
+        ? prev.map(s => (s.id === saved.id ? saved : s))
+        : [...prev, saved];
+    });
   };
 
-  const handleSaveSchedule = async () => {
-    setScheduleError('');
-    setIsSavingSchedule(true);
-
-    if (!scheduleForm.employee_id || !scheduleForm.date || !scheduleForm.start_time || !scheduleForm.end_time) {
-      setScheduleError('Alla fält måste fyllas i');
-      setIsSavingSchedule(false);
-      return;
-    }
-
-    try {
-      const scheduleData: Omit<StaffSchedule, 'created_at' | 'updated_at'> = {
-        id: editingSchedule?.id || '',
-        employee_id: scheduleForm.employee_id,
-        date: scheduleForm.date,
-        start_time: scheduleForm.start_time,
-        end_time: scheduleForm.end_time,
-        notes: scheduleForm.notes || undefined,
-      };
-
-      const savedSchedule = await saveStaffSchedule(scheduleData);
-
-      setStaffSchedules(prev => {
-        const existing = prev.find(s => s.id === savedSchedule.id);
-        if (existing) {
-          return prev.map(s => s.id === savedSchedule.id ? savedSchedule : s);
-        }
-        return [...prev, savedSchedule];
-      });
-
-      setIsScheduleModalOpen(false);
-      setScheduleForm({
-        employee_id: '',
-        date: '',
-        start_time: '',
-        end_time: '',
-        notes: '',
-      });
-      setIsSavingSchedule(false);
-    } catch (error: any) {
-      setScheduleError(error.message || 'Kunde inte spara schema');
-      setIsSavingSchedule(false);
-    }
+  const handleDeleteSchedule = async (id: string): Promise<void> => {
+    await deleteStaffSchedule(id);
+    setStaffSchedules(prev => prev.filter(s => s.id !== id));
   };
 
-  const handleDeleteSchedule = async (id: string) => {
-    if (!confirm('Är du säker på att du vill ta bort detta schema?')) return;
-
-    try {
+  const handleBulkSaveSchedules = async (
+    rows: Omit<StaffSchedule, 'id' | 'created_at' | 'updated_at'>[],
+    deleteIds: string[],
+  ): Promise<void> => {
+    for (const id of deleteIds) {
       await deleteStaffSchedule(id);
-      setStaffSchedules(prev => prev.filter(s => s.id !== id));
-    } catch (error) {
-      console.error('Error deleting schedule:', error);
-      alert('Kunde inte ta bort schema');
     }
+    const inserted = await saveStaffSchedulesBulk(rows);
+    setStaffSchedules(prev => {
+      const without = deleteIds.length > 0
+        ? prev.filter(s => !deleteIds.includes(s.id))
+        : prev;
+      return [...without, ...inserted];
+    });
   };
 
   const openAbsenceModal = () => {
@@ -6644,206 +6584,19 @@ const AdminPage: React.FC = () => {
     );
   };
 
-  // Render staff schedules view (for admin/platschef)
-  const renderStaffSchedules = () => {
-    // Filter schedules by date range (current week)
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-    const startDateStr = startOfWeek.toISOString().split('T')[0];
-    const endDateStr = endOfWeek.toISOString().split('T')[0];
-
-    const weekSchedules = staffSchedules.filter(s => s.date >= startDateStr && s.date <= endDateStr);
-
-    // Group by date
-    const schedulesByDate: { [date: string]: StaffSchedule[] } = {};
-    weekSchedules.forEach(schedule => {
-      if (!schedulesByDate[schedule.date]) {
-        schedulesByDate[schedule.date] = [];
-      }
-      schedulesByDate[schedule.date].push(schedule);
-    });
-
-    return (
-      <div className="space-y-3 sm:space-y-6">
-        <div className="bg-white rounded-lg shadow-lg p-3 sm:p-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Personal Scheman</h2>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <input
-                type="date"
-                value={scheduleViewDate}
-                onChange={(e) => setScheduleViewDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              />
-              <button
-                onClick={() => openScheduleModal(undefined, undefined, scheduleViewDate)}
-                className="flex items-center justify-center bg-primary text-white px-3 sm:px-4 py-2 rounded-md hover:bg-primary-dark transition-colors text-sm sm:text-base w-full sm:w-auto"
-              >
-                <FaPlus className="mr-2" /> Lägg till schema
-              </button>
-            </div>
-          </div>
-
-          {/* Week view */}
-          <div className="space-y-4">
-            {Object.keys(schedulesByDate).sort().map(date => {
-              const daySchedules = schedulesByDate[date];
-              const dateObj = new Date(date);
-              const dayName = dateObj.toLocaleDateString('sv-SE', { weekday: 'long' });
-
-              return (
-                <div key={date} className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-800 mb-3">
-                    {dayName} {dateObj.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })}
-                  </h3>
-                  <div className="space-y-2">
-                    {daySchedules.map(schedule => {
-                      const employee = employees.find(e => e.id === schedule.employee_id);
-                      return (
-                        <div key={schedule.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                          <div className="flex-1">
-                            <div className="font-medium">{employee?.name || 'Okänd anställd'}</div>
-                            <div className="text-sm text-gray-600">
-                              {schedule.start_time} - {schedule.end_time} | Staffanstorp
-                              {schedule.notes && ` | ${schedule.notes}`}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => openScheduleModal(schedule)}
-                              className="text-blue-600 hover:text-blue-800"
-                              title="Redigera"
-                            >
-                              <FaEdit />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteSchedule(schedule.id)}
-                              className="text-red-600 hover:text-red-800"
-                              title="Ta bort"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-            {Object.keys(schedulesByDate).length === 0 && (
-              <p className="text-center text-gray-400 py-8">Inga scheman för denna vecka</p>
-            )}
-          </div>
-        </div>
-
-        {/* Schedule Modal */}
-        {isScheduleModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
-                <h3 className="text-lg sm:text-xl font-bold">
-                  {editingSchedule ? 'Redigera schema' : 'Lägg till schema'}
-                </h3>
-                <button
-                  onClick={() => setIsScheduleModalOpen(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <FaTimes className="text-lg sm:text-xl" />
-                </button>
-              </div>
-
-              <div className="p-4 sm:p-6 space-y-4">
-                {scheduleError && (
-                  <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-md text-sm">
-                    {scheduleError}
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Anställd *</label>
-                  <select
-                    value={scheduleForm.employee_id}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, employee_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    disabled={!!editingSchedule}
-                  >
-                    <option value="">Välj anställd</option>
-                    {employees.filter(e => e.is_active).map(emp => (
-                      <option key={emp.id} value={emp.id}>{emp.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Datum *</label>
-                  <input
-                    type="date"
-                    value={scheduleForm.date}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Starttid *</label>
-                    <input
-                      type="time"
-                      value={scheduleForm.start_time}
-                      onChange={(e) => setScheduleForm({ ...scheduleForm, start_time: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sluttid *</label>
-                    <input
-                      type="time"
-                      value={scheduleForm.end_time}
-                      onChange={(e) => setScheduleForm({ ...scheduleForm, end_time: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                </div>
-
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Anteckningar</label>
-                  <textarea
-                    value={scheduleForm.notes}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 p-4 sm:p-6 border-t border-gray-200">
-                <button
-                  onClick={() => setIsScheduleModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                  disabled={isSavingSchedule}
-                >
-                  Avbryt
-                </button>
-                <button
-                  onClick={handleSaveSchedule}
-                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
-                  disabled={isSavingSchedule}
-                >
-                  {isSavingSchedule ? 'Sparar...' : editingSchedule ? 'Uppdatera' : 'Spara'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
+  // Render staff schedules view (for admin/platschef) — week grid + bulk creation.
+  const renderStaffSchedules = () => (
+    <StaffSchedulingTab
+      employees={employees}
+      schedules={staffSchedules}
+      absences={staffAbsences}
+      onSaveSchedule={handleSaveSchedule}
+      onDeleteSchedule={handleDeleteSchedule}
+      onBulkSaveSchedules={handleBulkSaveSchedules}
+      onApproveAbsence={handleApproveAbsence}
+      onRejectAbsence={handleRejectAbsence}
+    />
+  );
 
   // Calculate hours worked for an employee in a given month
   const calculateHoursForMonth = (employeeId: string, yearMonth: string): number => {

@@ -1568,6 +1568,53 @@ export const saveStaffSchedule = async (schedule: Omit<StaffSchedule, 'created_a
   return scheduleData;
 };
 
+// Save many staff schedules in one batch. Returns inserted rows.
+// Skips localStorage-only path when Supabase is unavailable by writing locally.
+export const saveStaffSchedulesBulk = async (
+  rows: Omit<StaffSchedule, 'id' | 'created_at' | 'updated_at'>[]
+): Promise<StaffSchedule[]> => {
+  if (rows.length === 0) return [];
+
+  const now = new Date().toISOString();
+  const saved = localStorage.getItem('cleverStaffSchedules');
+  const schedules: StaffSchedule[] = saved ? JSON.parse(saved) : [];
+
+  if (isSupabaseAvailable()) {
+    try {
+      const insertPayload = rows.map(r => ({
+        employee_id: r.employee_id,
+        date: r.date,
+        start_time: r.start_time || null,
+        end_time: r.end_time || null,
+        notes: r.notes || null,
+      }));
+
+      const { data, error } = await (supabase!.from('staff_schedules' as any) as any)
+        .insert(insertPayload)
+        .select();
+
+      if (error) throw error;
+
+      const inserted = (data || []) as StaffSchedule[];
+      const merged = [...schedules, ...inserted];
+      localStorage.setItem('cleverStaffSchedules', JSON.stringify(merged));
+      return inserted;
+    } catch (error) {
+      console.error('Error bulk-inserting staff schedules:', error);
+    }
+  }
+
+  // Fallback: write to localStorage only with generated ids
+  const created: StaffSchedule[] = rows.map(r => ({
+    ...r,
+    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    created_at: now,
+    updated_at: now,
+  }));
+  localStorage.setItem('cleverStaffSchedules', JSON.stringify([...schedules, ...created]));
+  return created;
+};
+
 // Delete staff schedule
 export const deleteStaffSchedule = async (id: string): Promise<void> => {
   const saved = localStorage.getItem('cleverStaffSchedules');
