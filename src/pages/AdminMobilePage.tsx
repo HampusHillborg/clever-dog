@@ -1,25 +1,23 @@
 import { useEffect, useState } from 'react';
-import { FaEnvelope, FaCalendarAlt, FaSignOutAlt, FaDog, FaInbox, FaChartBar } from 'react-icons/fa';
+import { FaEnvelope, FaCalendarAlt, FaSignOutAlt, FaDog, FaInbox } from 'react-icons/fa';
 import { supabase } from '../lib/supabase';
 import { signOutCustomer } from '../lib/customerAuth';
 import { getCurrentUser, type UserRole } from '../lib/auth';
 import MessagesAdminTab from '../components/admin/MessagesAdminTab';
 import TodayAttendanceTab from '../components/admin/TodayAttendanceTab';
 import BookingRequestsTab from '../components/admin/BookingRequestsTab';
-import CapacityTab from '../components/admin/CapacityTab';
 import { useAdminBadges } from '../components/admin/useAdminBadges';
 import { getStaffSchedules, type StaffSchedule } from '../lib/database';
 import { todayLocalIso, toLocalIsoDate } from '../lib/localDate';
 import dogLogo from '../assets/images/logos/Logo.png';
 
-type Tab = 'today' | 'bookings' | 'messages' | 'schedule' | 'capacity';
+type Tab = 'today' | 'bookings' | 'messages' | 'schedule';
 
 const TAB_LABEL: Record<Tab, string> = {
   today: 'Idag',
   bookings: 'Förfrågningar',
   messages: 'Meddelanden',
   schedule: 'Mitt schema',
-  capacity: 'Kapacitet',
 };
 
 export default function AdminMobilePage() {
@@ -66,7 +64,6 @@ export default function AdminMobilePage() {
           {tab === 'bookings' && canManageBookings && <BookingRequestsTab />}
           {tab === 'messages' && <MessagesAdminTab />}
           {tab === 'schedule' && <MyScheduleView />}
-          {tab === 'capacity' && canManageBookings && <CapacityTab />}
         </div>
       </main>
 
@@ -85,10 +82,6 @@ export default function AdminMobilePage() {
                      icon={<FaEnvelope />} label="Meddelanden" />
           <TabButton active={tab === 'schedule'} onClick={() => setTab('schedule')}
                      icon={<FaCalendarAlt />} label="Schema" />
-          {canManageBookings && (
-            <TabButton active={tab === 'capacity'} onClick={() => setTab('capacity')}
-                       icon={<FaChartBar />} label="Kapacitet" />
-          )}
         </div>
       </nav>
     </div>

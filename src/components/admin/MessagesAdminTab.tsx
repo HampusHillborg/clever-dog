@@ -9,12 +9,18 @@ type Msg = {
   customer_id: string;
   dog_id: string | null;
   sender_role: string;
+  sender_name: string | null;
   body: string;
   is_read: boolean | null;
   read_at: string | null;
   created_at: string | null;
   customers: { name: string; email: string } | null;
   dogs: { name: string } | null;
+};
+
+const firstNameOf = (fullName: string | null | undefined): string => {
+  if (!fullName) return 'Personal';
+  return fullName.split(' ')[0];
 };
 
 type Thread = {
@@ -116,6 +122,10 @@ export default function MessagesAdminTab() {
                   return sorted.map((m, idx) => {
                     const isStaff = m.sender_role === 'staff';
                     const isLastOwn = isLastOwnInSequence(sorted, idx, 'staff');
+                    const prev = sorted[idx - 1];
+                    const isFirstInGroup = isStaff && (
+                      prev?.sender_role !== 'staff' || prev?.sender_name !== m.sender_name
+                    );
 
                     // Datum-sticker
                     const currentDayLbl = m.created_at ? dayLabel(m.created_at) : '';
@@ -133,7 +143,14 @@ export default function MessagesAdminTab() {
 
                         {/* Meddelandebubbla */}
                         <div className={`flex ${isStaff ? 'justify-end' : 'justify-start'}`}>
-                          <div className="flex flex-col items-end max-w-[80%]">
+                          <div className={`flex flex-col ${isStaff ? 'items-end' : 'items-start'} max-w-[80%]`}>
+                            {/* Avsändarens namn — visas över första bubblan i en svit från samma personal */}
+                            {isStaff && isFirstInGroup && (
+                              <p className="text-[11px] font-semibold text-primary mb-0.5 mr-1">
+                                {firstNameOf(m.sender_name)}
+                              </p>
+                            )}
+
                             <div className={`rounded-2xl px-4 py-2 ${isStaff ? 'bg-primary text-white' : 'bg-gray-100'}`}>
                               <p className="text-sm whitespace-pre-wrap">{m.body}</p>
                               <p className="text-xs opacity-60 mt-1">
