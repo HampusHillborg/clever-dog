@@ -10,6 +10,7 @@ const AcceptInvitePage = lazy(() => import('./pages/AcceptInvitePage'))
 const CustomerDashboardPage = lazy(() => import('./pages/CustomerDashboardPage'))
 const CustomerDogPage = lazy(() => import('./pages/CustomerDogPage'))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
+const AccountDeletionPage = lazy(() => import('./pages/AccountDeletionPage'))
 import { BookingProvider } from './components/BookingContext'
 import './App.css'
 
@@ -51,6 +52,12 @@ function App() {
             } />
             <Route path="/integritetspolicy" element={
               <Suspense fallback={<Loading />}><PrivacyPolicyPage /></Suspense>
+            } />
+            <Route path="/radera-konto" element={
+              <Suspense fallback={<Loading />}><AccountDeletionPage /></Suspense>
+            } />
+            <Route path="/delete-account" element={
+              <Suspense fallback={<Loading />}><AccountDeletionPage /></Suspense>
             } />
           </Routes>
         </BrowserRouter>
