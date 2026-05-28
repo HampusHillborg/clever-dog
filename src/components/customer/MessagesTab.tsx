@@ -3,6 +3,7 @@ import { FaPaperPlane, FaCommentDots, FaCheck } from 'react-icons/fa';
 import type { Dog } from '../../lib/customerApi';
 import {
   getMyChatMessages,
+  getMyCustomerId,
   getMyDogs,
   sendMessage,
   markMessagesRead,
@@ -46,8 +47,9 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [coOwnerCount, setCoOwnerCount] = useState(1);
+  const [myCustomerId, setMyCustomerId] = useState<string | null>(null);
   const [dogNameMap, setDogNameMap] = useState<Record<string, string>>({});
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isFirstPaintRef = useRef(true);
 
   const refresh = async () => {
@@ -60,6 +62,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
 
   useEffect(() => {
     refresh();
+    getMyCustomerId().then(setMyCustomerId);
     getChatThreadMemberCount().then(setCoOwnerCount);
     getMyDogs().then(dogs => {
       const map: Record<string, string> = {};
@@ -76,15 +79,23 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
 
   useEffect(() => {
     if (loading || items.length === 0) return;
-    // Defer one frame so message bubbles are fully laid out before we scroll.
-    const id = requestAnimationFrame(() => {
-      endRef.current?.scrollIntoView({
-        behavior: isFirstPaintRef.current ? 'auto' : 'smooth',
-        block: 'end',
-      });
-      isFirstPaintRef.current = false;
-    });
-    return () => cancelAnimationFrame(id);
+    const useSmooth = !isFirstPaintRef.current;
+    isFirstPaintRef.current = false;
+
+    // Direct scrollTop manipulation is more reliable than scrollIntoView in
+    // Capacitor WebView. Fire on multiple ticks because long text bubbles
+    // wrap to extra lines a frame after their initial paint, which shifts
+    // scrollHeight upward — a single scroll often lands above the actual
+    // bottom on the very first open.
+    const scrollToEnd = () => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      el.scrollTo({ top: el.scrollHeight, behavior: useSmooth ? 'smooth' : 'auto' });
+    };
+    scrollToEnd();
+    const raf = requestAnimationFrame(scrollToEnd);
+    const t = setTimeout(scrollToEnd, 120);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
   }, [items.length, loading]);
 
   const send = async () => {
@@ -110,6 +121,13 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     | { kind: 'day'; label: string; key: string }
     | { kind: 'msg'; msg: Message; isFirst: boolean; isLast: boolean; showAvatar: boolean; showTimestamp: boolean };
 
+  // Group bubbles by the specific sender (not just role), so a co-owner's
+  // messages don't get visually merged into the logged-in user's own chain.
+  const senderKey = (m: Message): string =>
+    m.sender_role === 'staff'
+      ? `staff:${m.sender_user_id ?? m.sender_name ?? ''}`
+      : `customer:${m.customer_id}`;
+
   const renderItems: RenderItem[] = [];
   let lastDateKey = '';
 
@@ -124,8 +142,9 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
       lastDateKey = dk;
     }
 
-    const sameAsPrev = prev?.sender_role === m.sender_role;
-    const sameAsNext = next?.sender_role === m.sender_role;
+    const key = senderKey(m);
+    const sameAsPrev = prev && senderKey(prev) === key;
+    const sameAsNext = next && senderKey(next) === key;
     const isFirst = !sameAsPrev;
     const isLast = !sameAsNext;
     // Only show timestamp on the last bubble of each same-author chain.
@@ -138,7 +157,7 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-5 bg-stone-50">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 sm:px-4 py-5 bg-stone-50">
         {loading ? (
           <ChatSkeleton />
         ) : items.length === 0 ? (
@@ -159,7 +178,8 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
               }
 
               const { msg: m, isFirst, isLast, showAvatar, showTimestamp } = item;
-              const isMine = m.sender_role === 'customer';
+              const isMine = m.sender_role === 'customer' && m.customer_id === myCustomerId;
+              const isCoOwner = m.sender_role === 'customer' && !isMine;
               const otherDogName = m.dog_id && m.dog_id !== dog.id
                 ? (dogNameMap[m.dog_id] ?? null)
                 : null;
@@ -177,11 +197,18 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
                   key={m.id}
                   className={`flex ${isMine ? 'justify-end' : 'justify-start'} items-end gap-1.5 ${spacingTop}`}
                 >
-                  {/* Staff avatar placeholder (always 28px wide to keep alignment) */}
+                  {/* Avatar placeholder (always 28px wide to keep alignment).
+                      Staff = orange, co-owner = gray, so they're visually distinct. */}
                   {!isMine && (
                     <div className="w-7 shrink-0 self-end mb-0.5">
-                      {showAvatar ? (
-                        <div className="w-7 h-7 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-[10px] font-bold">
+                      {showAvatar || (isCoOwner && isFirst) ? (
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                            isCoOwner
+                              ? 'bg-gray-200 text-gray-600'
+                              : 'bg-orange-100 text-orange-700'
+                          }`}
+                        >
                           {getInitials(m.sender_name)}
                         </div>
                       ) : null}
@@ -189,9 +216,15 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
                   )}
 
                   <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} max-w-[78%]`}>
-                    {/* Sender name: staff first-bubble label, or co-owner attribution */}
+                    {/* Sender name: shown on first bubble in any non-mine chain,
+                        plus on own chains when co-owners exist (so the co-owner
+                        can tell which of us wrote it). */}
                     {!isMine && isFirst && (
-                      <p className="text-[11px] font-semibold text-orange-700 mb-0.5 ml-1">
+                      <p
+                        className={`text-[11px] font-semibold mb-0.5 ml-1 ${
+                          isCoOwner ? 'text-gray-500' : 'text-orange-700'
+                        }`}
+                      >
                         {firstNameOf(m.sender_name)}
                       </p>
                     )}
@@ -251,7 +284,6 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
             })}
           </div>
         )}
-        <div ref={endRef} />
       </div>
 
       <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-3 flex gap-2.5 items-end">

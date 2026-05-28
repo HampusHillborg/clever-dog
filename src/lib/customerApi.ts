@@ -111,8 +111,8 @@ export const getMyChatMessages = async (): Promise<Message[]> => {
   return (data ?? []) as Message[];
 };
 
-// Internal: läs min customer_id från customers-tabellen.
-const getMyCustomerId = async (): Promise<string | null> => {
+// Läs min customer_id från customers-tabellen.
+export const getMyCustomerId = async (): Promise<string | null> => {
   if (!supabase) return null;
   const { data, error } = await supabase.rpc('current_customer_id');
   if (error) { console.error('getMyCustomerId', error); return null; }
