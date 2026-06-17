@@ -37,6 +37,7 @@ export default function MessagesAdminTab() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState('');
   const [allMessages, setAllMessages] = useState<Msg[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
     const all = (await getAllMessageThreads()) as unknown as Msg[];
@@ -103,6 +104,19 @@ export default function MessagesAdminTab() {
     }
   }, [selectedId, allMessages]);
 
+  // Always land on the latest message when opening a thread or when new
+  // messages arrive. Fire on a couple of ticks because wrapped long bubbles
+  // shift scrollHeight a frame after their initial paint.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || messages.length === 0) return;
+    const scrollToEnd = () => { el.scrollTop = el.scrollHeight; };
+    scrollToEnd();
+    const raf = requestAnimationFrame(scrollToEnd);
+    const t = setTimeout(scrollToEnd, 120);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
+  }, [selectedId, messages.length]);
+
   const send = async () => {
     if (!selectedId || !text.trim()) return;
     const created = await sendStaffMessage({ customer_id: selectedId, body: text });
@@ -136,7 +150,7 @@ export default function MessagesAdminTab() {
         <div className="md:col-span-2 bg-white rounded-2xl shadow flex flex-col min-h-0 overflow-hidden">
           {selectedId ? (
             <>
-              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2">
+              <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2">
                 {(() => {
                   // Messages arrive newest-first from the query; reverse for chronological display.
                   const sorted = [...messages].reverse();
