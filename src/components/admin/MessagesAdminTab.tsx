@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getAllMessageThreads, sendStaffMessage } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { sendNotification } from '../../lib/notifications';
@@ -64,7 +64,28 @@ export default function MessagesAdminTab() {
     }
   };
 
+  // Ref to the latest load() so the realtime subscription (mounted once) always
+  // calls the current closure — load() refreshes allMessages, and the
+  // [selectedId, allMessages] effect below re-derives the open conversation.
+  const loadRef = useRef(load);
+  loadRef.current = load;
+
   useEffect(() => { load(); }, []);
+
+  // Live updates: re-load when any message row changes. Staff RLS lets admins
+  // see all messages, so this keeps both the thread list and the open
+  // conversation in sync without a manual refresh.
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase
+      .channel('messages-admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        loadRef.current();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   useEffect(() => {
     if (!selectedId) return;
     const conversation = allMessages.filter(m => m.customer_id === selectedId);
@@ -111,10 +132,10 @@ export default function MessagesAdminTab() {
             </button>
           ))}
         </div>
-        <div className="md:col-span-2 bg-white rounded-2xl shadow flex flex-col">
+        <div className="md:col-span-2 bg-white rounded-2xl shadow flex flex-col min-h-0 overflow-hidden">
           {selectedId ? (
             <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2">
                 {(() => {
                   // Messages arrive newest-first from the query; reverse for chronological display.
                   const sorted = [...messages].reverse();
@@ -174,7 +195,7 @@ export default function MessagesAdminTab() {
                   });
                 })()}
               </div>
-              <div className="border-t p-3 flex gap-2">
+              <div className="border-t p-3 flex gap-2 shrink-0">
                 <input value={text} onChange={e => setText(e.target.value)}
                        onKeyDown={e => {
                          if (e.key === 'Enter' && !e.shiftKey) {

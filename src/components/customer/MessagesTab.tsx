@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaPaperPlane, FaCommentDots, FaCheck } from 'react-icons/fa';
+import { supabase } from '../../lib/supabase';
 import type { Dog } from '../../lib/customerApi';
 import {
   getMyChatMessages,
@@ -60,6 +61,11 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     if (unreadStaffIds.length > 0) markMessagesRead(unreadStaffIds);
   };
 
+  // Keep a ref to the latest refresh so the realtime subscription (mounted
+  // once) always calls the current closure.
+  const refreshRef = useRef(refresh);
+  refreshRef.current = refresh;
+
   useEffect(() => {
     refresh();
     getMyCustomerId().then(setMyCustomerId);
@@ -70,6 +76,20 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
       setDogNameMap(map);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Live updates: re-fetch whenever any row in our thread changes. RLS limits
+  // the events we receive to messages we're allowed to read, so a blanket
+  // table subscription is safe and keeps the chat in sync without refresh.
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase
+      .channel('messages-customer')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        refreshRef.current();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   useEffect(() => {
