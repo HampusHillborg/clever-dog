@@ -82,14 +82,15 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
   // the events we receive to messages we're allowed to read, so a blanket
   // table subscription is safe and keeps the chat in sync without refresh.
   useEffect(() => {
-    if (!supabase) return;
-    const channel = supabase
+    const client = supabase;
+    if (!client) return;
+    const channel = client
       .channel('messages-customer')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
         refreshRef.current();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { client.removeChannel(channel); };
   }, []);
 
   useEffect(() => {

@@ -76,14 +76,15 @@ export default function MessagesAdminTab() {
   // see all messages, so this keeps both the thread list and the open
   // conversation in sync without a manual refresh.
   useEffect(() => {
-    if (!supabase) return;
-    const channel = supabase
+    const client = supabase;
+    if (!client) return;
+    const channel = client
       .channel('messages-admin')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
         loadRef.current();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => { client.removeChannel(channel); };
   }, []);
 
   useEffect(() => {
