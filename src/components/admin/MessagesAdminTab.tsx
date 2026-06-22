@@ -31,6 +31,8 @@ type Thread = {
   customer_name: string;
   customer_email: string;
   last_at: string;
+  last_message: string;
+  last_from_staff: boolean;
   unread_count: number;
 };
 
@@ -55,12 +57,15 @@ export default function MessagesAdminTab() {
     }
     const t: Thread[] = [];
     for (const [cid, msgs] of byCustomer) {
+      // Meddelandena kommer nyast först från queryn → msgs[0] är det senaste.
       const first = msgs[0];
       t.push({
         customer_id: cid,
         customer_name: first.customers?.name ?? '?',
         customer_email: first.customers?.email ?? '',
         last_at: first.created_at ?? '',
+        last_message: first.body?.trim() || (first.image_url ? '📷 Bild' : ''),
+        last_from_staff: first.sender_role === 'staff',
         unread_count: msgs.filter(m => m.sender_role === 'customer' && !m.is_read).length,
       });
     }
@@ -183,7 +188,11 @@ export default function MessagesAdminTab() {
                   <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{t.unread_count}</span>
                 )}
               </p>
-              <p className="text-xs text-gray-500">{t.customer_email}</p>
+              <p className="text-xs text-gray-500 truncate">
+                {t.last_message
+                  ? `${t.last_from_staff ? 'Du: ' : ''}${t.last_message}`
+                  : t.customer_email}
+              </p>
             </button>
           ))}
         </div>

@@ -17,6 +17,7 @@ import OnboardingSheet, { hasSeenOnboarding } from '../components/customer/Onboa
 import MoreTab from '../components/customer/MoreTab';
 import { getMyDog, getMyDogs, firstNameOf, getUnreadStaffMessageCount, type Dog } from '../lib/customerApi';
 import { getCustomerForUser, signOutCustomer } from '../lib/customerAuth';
+import { supabase } from '../lib/supabase';
 
 // Profil-fliken har tagits bort från bottom-nav. Hund-info + vaccinationer
 // finns istället under Mer → "Hundinfo & hälsa" så vi håller navet till 5.
@@ -58,6 +59,30 @@ export default function CustomerDogPage() {
   useEffect(() => {
     getUnreadStaffMessageCount().then(setUnreadChat);
   }, [tab, refreshTick]);
+
+  // Live-uppdatera chatt-badgen ("ploppen") även när man står kvar på en flik.
+  // Utan detta syntes ett nytt meddelande först när man bytte vy. Realtime +
+  // polling + förgrundsfokus, precis som notisklockan.
+  useEffect(() => {
+    const refetch = () => getUnreadStaffMessageCount().then(setUnreadChat);
+    const interval = setInterval(refetch, 8000);
+    const onVisible = () => { if (document.visibilityState === 'visible') refetch(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    let channel: ReturnType<NonNullable<typeof supabase>['channel']> | null = null;
+    if (supabase) {
+      channel = supabase
+        .channel('messages-badge')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, refetch)
+        .subscribe();
+    }
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+      if (channel && supabase) supabase.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
