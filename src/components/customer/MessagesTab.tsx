@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FaPaperPlane, FaCommentDots, FaCheck } from 'react-icons/fa';
+import { FaPaperPlane, FaCommentDots, FaCheck, FaImage, FaTimes } from 'react-icons/fa';
 import { supabase } from '../../lib/supabase';
 import type { Dog } from '../../lib/customerApi';
 import {
@@ -12,6 +12,7 @@ import {
   type Message,
 } from '../../lib/customerApi';
 import { sendNotification } from '../../lib/notifications';
+import { pickPhoto } from '../../lib/photoPicker';
 import { tapLight } from '../../lib/haptics';
 
 // Visa bara HH:MM inuti bubblan — datumet kommer från datum-stickern ovanför.
@@ -45,6 +46,8 @@ const getInitials = (fullName: string | null | undefined): string => {
 export default function MessagesTab({ dog }: { dog: Dog }) {
   const [items, setItems] = useState<Message[]>([]);
   const [text, setText] = useState('');
+  const [pendingImage, setPendingImage] = useState<File | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [coOwnerCount, setCoOwnerCount] = useState(1);
@@ -93,6 +96,21 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     return () => { client.removeChannel(channel); };
   }, []);
 
+  // Fallback för live-uppdatering: Supabase Realtime kan tappa anslutningen
+  // (mobilnät, bakgrundsläge, RLS-strul). Polla därför var 5:e sekund och
+  // hämta om direkt när appen/fliken kommer i förgrunden igen.
+  useEffect(() => {
+    const interval = setInterval(() => { refreshRef.current(); }, 5000);
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshRef.current(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, []);
+
   useEffect(() => {
     isFirstPaintRef.current = true;
     refresh();
@@ -119,15 +137,29 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
     return () => { cancelAnimationFrame(raf); clearTimeout(t); };
   }, [items.length, loading]);
 
+  const pickImage = async () => {
+    const picked = await pickPhoto();
+    if (!picked) return;
+    setPendingImage(picked.file);
+    setPendingPreview(URL.createObjectURL(picked.file));
+  };
+
+  const clearPendingImage = () => {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingImage(null);
+    setPendingPreview(null);
+  };
+
   const send = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() && !pendingImage) return;
     tapLight();
     setSending(true);
     try {
-      const created = await sendMessage({ dog_id: dog.id, body: text });
+      const created = await sendMessage({ dog_id: dog.id, body: text, file: pendingImage });
       // Triggrar push till admins (email-utskicket borttaget i edge-funktionen v10).
       sendNotification({ kind: 'customer_message', message_id: created.id });
       setText('');
+      clearPendingImage();
       refresh();
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Kunde inte skicka';
@@ -256,13 +288,25 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
                     )}
 
                     <div
-                      className={`px-4 py-2.5 ${bubbleShape} ${
+                      className={`${m.image_url ? 'p-1.5' : 'px-4 py-2.5'} ${bubbleShape} ${
                         isMine
                           ? 'bg-primary text-white'
                           : 'bg-white text-dark shadow-sm'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
+                      {m.image_url && (
+                        <a href={m.image_url} target="_blank" rel="noreferrer">
+                          <img
+                            src={m.image_url}
+                            alt="Bifogad bild"
+                            className="rounded-xl max-h-64 w-full object-cover"
+                            loading="lazy"
+                          />
+                        </a>
+                      )}
+                      {m.body && (
+                        <p className={`text-sm whitespace-pre-wrap leading-relaxed ${m.image_url ? 'px-2.5 py-1.5' : ''}`}>{m.body}</p>
+                      )}
                     </div>
 
                     {/* "om {hund}"-label for cross-dog messages */}
@@ -307,29 +351,54 @@ export default function MessagesTab({ dog }: { dog: Dog }) {
         )}
       </div>
 
-      <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-3 flex gap-2.5 items-end">
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          rows={1}
-          placeholder="Skriv ett meddelande…"
-          className="flex-1 rounded-2xl bg-stone-100 px-4 py-2.5 text-sm placeholder-gray-400 resize-none max-h-32 outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all"
-          style={{ minHeight: '42px' }}
-        />
-        <button
-          onClick={send}
-          disabled={sending || !text.trim()}
-          className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center disabled:bg-gray-200 disabled:text-gray-400 hover:bg-orange-600 active:scale-95 transition-all shadow-md shrink-0"
-          aria-label="Skicka"
-        >
-          <FaPaperPlane className="text-sm" />
-        </button>
+      <div className="shrink-0 border-t border-gray-100 bg-white px-3 py-3">
+        {pendingPreview && (
+          <div className="mb-2 flex items-center gap-2">
+            <div className="relative">
+              <img src={pendingPreview} alt="Förhandsvisning" className="h-16 w-16 rounded-xl object-cover" />
+              <button
+                onClick={clearPendingImage}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center shadow"
+                aria-label="Ta bort bild"
+              >
+                <FaTimes className="text-[10px]" />
+              </button>
+            </div>
+            <span className="text-xs text-gray-500">Bild bifogad</span>
+          </div>
+        )}
+        <div className="flex gap-2.5 items-end">
+          <button
+            onClick={pickImage}
+            disabled={sending}
+            className="w-11 h-11 rounded-full bg-stone-100 text-gray-500 flex items-center justify-center hover:bg-stone-200 active:scale-95 transition-all shrink-0 disabled:opacity-50"
+            aria-label="Bifoga bild"
+          >
+            <FaImage className="text-base" />
+          </button>
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            rows={1}
+            placeholder="Skriv ett meddelande…"
+            className="flex-1 rounded-2xl bg-stone-100 px-4 py-2.5 text-sm placeholder-gray-400 resize-none max-h-32 outline-none focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all"
+            style={{ minHeight: '42px' }}
+          />
+          <button
+            onClick={send}
+            disabled={sending || (!text.trim() && !pendingImage)}
+            className="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center disabled:bg-gray-200 disabled:text-gray-400 hover:bg-orange-600 active:scale-95 transition-all shadow-md shrink-0"
+            aria-label="Skicka"
+          >
+            <FaPaperPlane className="text-sm" />
+          </button>
+        </div>
       </div>
     </div>
   );

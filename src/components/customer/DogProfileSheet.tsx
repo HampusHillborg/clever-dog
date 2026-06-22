@@ -10,8 +10,9 @@ import { FaChevronRight, FaCamera } from 'react-icons/fa';
 import Sheet from '../shared/Sheet';
 import SaveButton from '../shared/SaveButton';
 import VaccinationsCard from './VaccinationsCard';
-import { updateMyDog, uploadDogPhoto, type Dog } from '../../lib/customerApi';
+import { updateMyDog, uploadDogPhoto, removeDogPhoto, type Dog } from '../../lib/customerApi';
 import { pickPhoto } from '../../lib/photoPicker';
+import { sanitizePhoneInput, phoneError, emailError } from '../../lib/validation';
 
 const TYPE_LABEL: Record<string, string> = {
   fulltime: 'Heltid',
@@ -71,12 +72,15 @@ function Row({
 
 // ----- FieldEditSheet -------------------------------------------------------
 
+type FieldKind = 'text' | 'phone' | 'email';
+
 type EditState = {
   field: keyof Dog;
   label: string;
   value: string;
   multiline: boolean;
   placeholder?: string;
+  kind: FieldKind;
 };
 
 function FieldEditSheet({
@@ -86,6 +90,7 @@ function FieldEditSheet({
   value: initialValue,
   multiline,
   placeholder,
+  kind,
   onSave,
 }: {
   open: boolean;
@@ -94,18 +99,32 @@ function FieldEditSheet({
   value: string;
   multiline: boolean;
   placeholder?: string;
+  kind: FieldKind;
   onSave: (newValue: string) => Promise<void>;
 }) {
   const [draft, setDraft] = useState(initialValue);
+  const [error, setError] = useState<string | null>(null);
 
   // Sync when the sheet reopens for a different field
   const [lastInitial, setLastInitial] = useState(initialValue);
   if (initialValue !== lastInitial) {
     setDraft(initialValue);
     setLastInitial(initialValue);
+    setError(null);
   }
 
+  const validate = (v: string): string | null =>
+    kind === 'phone' ? phoneError(v) : kind === 'email' ? emailError(v) : null;
+
+  const handleChange = (raw: string) => {
+    const v = kind === 'phone' ? sanitizePhoneInput(raw) : raw;
+    setDraft(v);
+    if (error) setError(validate(v));
+  };
+
   const handleSave = async () => {
+    const err = validate(draft);
+    if (err) { setError(err); throw new Error(err); }
     await onSave(draft);
     onClose();
   };
@@ -116,7 +135,7 @@ function FieldEditSheet({
         {multiline ? (
           <textarea
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             rows={5}
             placeholder={placeholder}
             className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:bg-white focus:border-orange-400 transition-colors resize-none"
@@ -125,11 +144,17 @@ function FieldEditSheet({
         ) : (
           <input
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             placeholder={placeholder}
+            type={kind === 'email' ? 'email' : kind === 'phone' ? 'tel' : 'text'}
+            inputMode={kind === 'phone' ? 'tel' : kind === 'email' ? 'email' : undefined}
+            autoComplete={kind === 'phone' ? 'tel' : kind === 'email' ? 'email' : undefined}
             className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:bg-white focus:border-orange-400 transition-colors"
             autoFocus
           />
+        )}
+        {error && (
+          <p className="text-sm text-red-700 -mt-2">{error}</p>
         )}
         <div className="flex gap-2">
           <button
@@ -147,6 +172,14 @@ function FieldEditSheet({
   );
 }
 
+// Härled fälttyp för validering utifrån kolumnnamnet.
+const fieldKindFor = (field: keyof Dog): FieldKind => {
+  const name = String(field);
+  if (name === 'email') return 'email';
+  if (name.includes('phone')) return 'phone';
+  return 'text';
+};
+
 // ----- Main component -------------------------------------------------------
 
 type Props = { dog: Dog; onUpdate: (d: Dog) => void };
@@ -154,6 +187,7 @@ type Props = { dog: Dog; onUpdate: (d: Dog) => void };
 export default function DogProfileSheet({ dog, onUpdate }: Props) {
   const [editState, setEditState] = useState<EditState | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
 
   const openEdit = (
     field: keyof Dog,
@@ -167,6 +201,7 @@ export default function DogProfileSheet({ dog, onUpdate }: Props) {
       value: (dog[field] as string | null | undefined) ?? '',
       multiline,
       placeholder,
+      kind: fieldKindFor(field),
     });
   };
 
@@ -191,13 +226,27 @@ export default function DogProfileSheet({ dog, onUpdate }: Props) {
     setUploadingPhoto(false);
   };
 
+  const handleRemovePhoto = async () => {
+    if (!dog.photo_url) return;
+    if (!confirm('Ta bort profilbilden?')) return;
+    setUploadingPhoto(true);
+    try {
+      await removeDogPhoto(dog.id, dog.photo_url);
+      onUpdate({ ...dog, photo_url: null });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Kunde inte ta bort foto';
+      alert(msg);
+    }
+    setUploadingPhoto(false);
+  };
+
   return (
     <div className="pb-6">
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <div className="flex flex-col items-center pt-4 pb-2 px-4">
         {/* Photo */}
         <button
-          onClick={handlePhotoTap}
+          onClick={() => (dog.photo_url ? setPhotoMenuOpen(true) : handlePhotoTap())}
           disabled={uploadingPhoto}
           className="relative w-24 h-24 rounded-[22px] bg-orange-100 overflow-hidden flex items-center justify-center text-4xl font-bold text-orange-700 shrink-0 ring-2 ring-white shadow-md active:scale-95 transition-transform"
           aria-label="Byt foto"
@@ -292,6 +341,30 @@ export default function DogProfileSheet({ dog, onUpdate }: Props) {
         <VaccinationsCard dogId={dog.id} />
       </div>
 
+      {/* ── Foto-meny (byt/ta bort) ───────────────────────────────────── */}
+      <Sheet open={photoMenuOpen} onClose={() => setPhotoMenuOpen(false)} title="Profilbild">
+        <div className="p-4 flex flex-col gap-2">
+          <button
+            onClick={() => { setPhotoMenuOpen(false); handlePhotoTap(); }}
+            className="w-full py-3 rounded-xl bg-gray-100 font-medium text-gray-800 hover:bg-gray-200 active:scale-[0.98] transition-all"
+          >
+            Byt foto
+          </button>
+          <button
+            onClick={() => { setPhotoMenuOpen(false); handleRemovePhoto(); }}
+            className="w-full py-3 rounded-xl bg-red-50 font-medium text-red-600 hover:bg-red-100 active:scale-[0.98] transition-all"
+          >
+            Ta bort foto
+          </button>
+          <button
+            onClick={() => setPhotoMenuOpen(false)}
+            className="w-full py-3 rounded-xl text-gray-500 font-medium hover:bg-gray-50"
+          >
+            Avbryt
+          </button>
+        </div>
+      </Sheet>
+
       {/* ── Field edit sub-sheet ──────────────────────────────────────── */}
       {editState && (
         <FieldEditSheet
@@ -301,6 +374,7 @@ export default function DogProfileSheet({ dog, onUpdate }: Props) {
           value={editState.value}
           multiline={editState.multiline}
           placeholder={editState.placeholder}
+          kind={editState.kind}
           onSave={handleSave}
         />
       )}

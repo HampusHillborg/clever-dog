@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "390421335708",
+    "project_id": "clever-dog-b6967",
+    "storage_bucket": "clever-dog-b6967.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:390421335708:android:0e1ec029a8debb0af4e759",
+        "android_client_info": {
+          "package_name": "se.cleverdog.kundportal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYquBf_snNMxH8YEPViqHmmiUs4pUQpR0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

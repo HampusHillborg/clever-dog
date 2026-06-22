@@ -4,7 +4,7 @@ import type { Dog } from '../../lib/customerApi';
 import { getDogCoOwnerCount, firstNameOf } from '../../lib/customerApi';
 import { getCustomerForUser } from '../../lib/customerAuth';
 import {
-  getDaysForMonth, upsertBooking, deleteBooking,
+  getDaysForMonth, upsertBooking, deleteBooking, getScheduledCountInWeek,
   type DayInfo, type DayStatus,
 } from '../../lib/bookingHelpers';
 import { sendNotification } from '../../lib/notifications';
@@ -99,6 +99,10 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [coOwnerCount, setCoOwnerCount] = useState(0);
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null);
+  // Antal inbokade dagar i den valda dagens ISO-vecka (DB-räknad, korrekt även
+  // över månadsskifte). null = inte hämtad än → faller tillbaka på månadsvyns
+  // räkning.
+  const [weekCount, setWeekCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState<false | 'single' | 'boarding'>(false);
   const [closures, setClosures] = useState<Map<string, string>>(new Map());
@@ -130,6 +134,15 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
 
   useEffect(() => { refresh(); }, [dog.id, year, month]);
 
+  // Hämta korrekt vecko-antal för vald dag (täcker hela ISO-veckan, även när
+  // den korsar ett månadsskifte).
+  useEffect(() => {
+    if (!selectedDay) { setWeekCount(null); return; }
+    let cancelled = false;
+    getScheduledCountInWeek(dog.id, selectedDay.date).then(c => { if (!cancelled) setWeekCount(c); });
+    return () => { cancelled = true; };
+  }, [selectedDay, dog.id]);
+
   const prevMonth = () => {
     if (month === 0) { setMonth(11); setYear(year - 1); }
     else setMonth(month - 1);
@@ -156,9 +169,14 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
     if (!selectedDay || !customerId) return;
     try {
       if (action === 'pick_day') {
-        if (quota !== null && picksInWeek(selectedDay.date) >= quota) {
-          alert(`Du har redan valt ${quota} dagar denna vecka.`);
-          return;
+        // Räkna hela ISO-veckan i DB (korrekt även över månadsskifte) innan vi
+        // tillåter ytterligare en dag.
+        if (quota !== null) {
+          const wc = await getScheduledCountInWeek(dog.id, selectedDay.date);
+          if (wc >= quota) {
+            alert(`Du har redan valt ${quota} dagar denna vecka.`);
+            return;
+          }
         }
         tapLight();
         await upsertBooking({
@@ -256,13 +274,17 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
             const dayNum = parseInt(d.date.slice(8), 10);
             const customClosure = closures.get(d.date);
             const holiday = getHolidayInfo(d.date);
-            const closed = !!customClosure || holiday.kind === 'closed';
-            const halfDay = !customClosure && holiday.kind === 'half_day';
+            // En dag med en bokning (t.ex. pensionat på en helg) ska visa
+            // bokningens status — inte det röda "stängt"-mönstret. Stängt/half-
+            // day gäller bara tomma dagar utan bokning.
+            const hasBooking = d.status !== 'none';
+            const closed = (!!customClosure || holiday.kind === 'closed') && !hasBooking;
+            const halfDay = !customClosure && holiday.kind === 'half_day' && !hasBooking;
             const closureReason = customClosure ?? (holiday.kind === 'closed' ? (holidayName(d.date) ?? 'Helg') : null);
             const label = closed
               ? null
               : halfDay
-                ? '→ 14'
+                ? 'Till 14'
                 : cellLabel(d.status, d.bookingType);
             const isToday = d.date === todayIso;
             const cellClass = closed
@@ -324,7 +346,7 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
           day={selectedDay}
           partTime={partTime}
           quota={quota}
-          picksThisWeek={picksInWeek(selectedDay.date)}
+          picksThisWeek={weekCount ?? picksInWeek(selectedDay.date)}
           onClose={() => setSelectedDay(null)}
           onAction={handleAction}
           coOwnerCount={coOwnerCount}
@@ -339,6 +361,8 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
         onClose={() => setShowWizard(false)}
         dog={dog}
         onSuccess={refresh}
+        initialYear={year}
+        initialMonth={month}
         initialType={
           dog.type === 'fulltime' || dog.type === 'parttime-3' || dog.type === 'parttime-2'
             ? 'extra'
@@ -351,6 +375,8 @@ export default function BookingCalendar({ dog }: { dog: Dog }) {
         onClose={() => setShowWizard(false)}
         dog={dog}
         onSuccess={refresh}
+        initialYear={year}
+        initialMonth={month}
         initialType="boarding"
       />
     </div>
@@ -377,7 +403,7 @@ function Legend() {
     { color: 'bg-yellow-100 border-yellow-300', label: 'Väntar' },
     { color: 'bg-purple-100 border-purple-300', label: 'Pensionat' },
     { color: 'pattern-stripes-closed border-rose-200', label: 'Stängt' },
-    { color: 'pattern-stripes-half border-amber-300', label: 'Öppet → 14' },
+    { color: 'pattern-stripes-half border-amber-300', label: 'Öppet till 14:00' },
   ];
   return (
     <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-600">
@@ -406,7 +432,10 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction, co
   const locked = isLockedDate(day.date);
   const isWeekday = day.weekday < 5; // 0=Mon ... 4=Fri
   const quotaFull = quota !== null && picksThisWeek >= quota;
-  const canPick = partTime && day.status === 'none' && isWeekday && !locked && !quotaFull;
+  // En avslagen dag (utan annan aktiv bokning) ska gå att boka som en ledig
+  // dag — avslaget visas separat men låser inte längre cellen.
+  const bookable = day.status === 'none' || day.status === 'rejected';
+  const canPick = partTime && bookable && isWeekday && !locked && !quotaFull;
   const canUnpick = partTime && day.status === 'scheduled' && !locked;
 
   // Co-owner attribution: only shown when the dog has multiple owners and the
@@ -423,7 +452,7 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction, co
   return (
     <div className="fixed inset-0 bg-dark/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-fade-in" onClick={onClose}>
       <div
-        className="bg-white rounded-t-3xl sm:rounded-3xl p-6 max-w-sm w-full shadow-lift animate-slide-in-top"
+        className="bg-white rounded-t-3xl sm:rounded-3xl p-6 max-w-sm w-full shadow-lift animate-slide-in-top max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-4 sm:hidden" />
@@ -469,7 +498,7 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction, co
             <button onClick={() => onAction('cancel')}
                     className="w-full bg-gray-500 text-white rounded-lg py-2">Avboka denna dag</button>
           )}
-          {!partTime && day.status === 'none' && !locked && (
+          {!partTime && bookable && !locked && (
             <button onClick={() => onAction('add_extra')}
                     className="w-full bg-emerald-500 text-white rounded-lg py-2">Begär extra dag</button>
           )}
@@ -477,7 +506,7 @@ function DayActions({ day, partTime, quota, picksThisWeek, onClose, onAction, co
             <button onClick={() => onAction('cancel')}
                     className="w-full bg-gray-500 text-white rounded-lg py-2">Avboka denna dag</button>
           )}
-          {partTime && day.status === 'none' && !locked && !quotaFull && day.weekday >= 5 && (
+          {partTime && bookable && !locked && !quotaFull && day.weekday >= 5 && (
             <button onClick={() => onAction('add_extra')}
                     className="w-full bg-emerald-500 text-white rounded-lg py-2">Begär extra dag</button>
           )}

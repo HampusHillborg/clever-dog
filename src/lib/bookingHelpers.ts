@@ -47,7 +47,12 @@ export const getDaysForMonth = async (
   for (let d = 1; d <= lastDay.getDate(); d++) {
     const dateStr = isoDate(year, month, d);
     const weekday = toMonFirst(new Date(year, month, d).getDay());
-    const booking = bookings.find(b => b.start_date <= dateStr && b.end_date >= dateStr);
+    // En avslagen ("rejected") bokning får aldrig dölja en aktiv bokning på
+    // samma dag (t.ex. avslaget pensionat ovanpå inbokat dagis). Välj därför
+    // en icke-avslagen bokning i första hand; faller bara tillbaka på den
+    // avslagna om det är det enda som finns den dagen.
+    const covering = bookings.filter(b => b.start_date <= dateStr && b.end_date >= dateStr);
+    const booking = covering.find(b => b.status !== 'rejected') ?? covering[0];
 
     let status: DayStatus = 'none';
     let bookingType: string | undefined = undefined;
@@ -77,6 +82,52 @@ export const getDaysForMonth = async (
     });
   }
   return days;
+};
+
+// Räkna antal "schemalagda" (inbokade) dagar i ISO-veckan som innehåller
+// `dateIso` — oberoende av vilken månad kalendern visar. Detta behövs för
+// deltidskvoten: en vecka som spänner över ett månadsskifte fick annars sina
+// dagar uppdelade på två månadsvyer, så kvoten kunde överskridas.
+export const getScheduledCountInWeek = async (
+  dogId: string,
+  dateIso: string,
+): Promise<number> => {
+  if (!supabase) return 0;
+  const base = new Date(dateIso + 'T00:00:00');
+  const mondayOffset = (base.getDay() + 6) % 7; // 0 = måndag
+  const monday = new Date(base);
+  monday.setDate(base.getDate() - mondayOffset);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const toIso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const mondayIso = toIso(monday);
+  const sundayIso = toIso(sunday);
+
+  const [schedRes, bookingsRes] = await Promise.all([
+    supabase.from('recurring_schedule').select('weekday').eq('dog_id', dogId).eq('active', true),
+    supabase.from('bookings').select('*').eq('dog_id', dogId).lte('start_date', sundayIso).gte('end_date', mondayIso),
+  ]);
+  const recurring = new Set((schedRes.data ?? []).map(r => r.weekday as number));
+  const bookings = (bookingsRes.data ?? []).filter(b => b.status !== 'rejected');
+
+  let count = 0;
+  for (let i = 0; i < 7; i++) {
+    const cur = new Date(monday);
+    cur.setDate(monday.getDate() + i);
+    const dateStr = toIso(cur);
+    const weekday = toMonFirst(cur.getDay());
+    const booking = bookings.find(b => b.start_date <= dateStr && b.end_date >= dateStr);
+    let isScheduled = false;
+    if (booking) {
+      if (booking.status === 'pending' || booking.status === 'cancelled') isScheduled = false;
+      else if (booking.booking_type === 'boarding' || booking.booking_type === 'cancelled' || booking.booking_type === 'extra') isScheduled = false;
+      else isScheduled = true;
+    } else if (recurring.has(weekday)) {
+      isScheduled = true;
+    }
+    if (isScheduled) count++;
+  }
+  return count;
 };
 
 export const upsertBooking = async (params: {

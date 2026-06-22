@@ -7,7 +7,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import {
   getDogActivities, getMyMessages, getDailyReport, reportHasContent,
-  getVaccinations, vaccinationStatus, VACCINE_LABELS, getStaffWorkingToday,
+  getVaccinations, vaccinationStatus, VACCINE_LABELS,
   type Dog, type DogActivity, type Message, type DailyReport, type Vaccination,
 } from '../../lib/customerApi';
 import GoogleReviewCTA from './GoogleReviewCTA';
@@ -59,7 +59,6 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
   const [unreadCount, setUnreadCount] = useState(0);
   const [todayReport, setTodayReport] = useState<DailyReport | null>(null);
   const [vaccineWarnings, setVaccineWarnings] = useState<Vaccination[]>([]);
-  const [todayStaff, setTodayStaff] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,15 +73,13 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
         getMyMessages(dog.id),
         getDailyReport(dog.id),
         getVaccinations(dog.id),
-        getStaffWorkingToday(),
       ]);
-      const [nRes, actsRes, msgsRes, reportRes, vacsRes, staffRes] = results;
+      const [nRes, actsRes, msgsRes, reportRes, vacsRes] = results;
       const n = nRes.status === 'fulfilled' ? nRes.value : null;
       const acts = actsRes.status === 'fulfilled' ? actsRes.value : [];
       const msgs = msgsRes.status === 'fulfilled' ? msgsRes.value : [];
       const report = reportRes.status === 'fulfilled' ? reportRes.value : null;
       const vacs = vacsRes.status === 'fulfilled' ? vacsRes.value : [];
-      const staff = staffRes.status === 'fulfilled' ? staffRes.value : [];
 
       setNext(n);
       setLatestActivity(acts[0] ?? null);
@@ -96,7 +93,6 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
         const s = vaccinationStatus(v.expires_on);
         return s === 'expired' || s === 'expiring';
       }));
-      setTodayStaff(staff);
       setLoading(false);
     })();
   }, [dog.id]);
@@ -115,12 +111,6 @@ export default function HomeFeedTab({ dog, onJumpTo, customerFirstName }: {
         </h1>
       </div>
 
-      {/* Idag jobbar-rad — diskret rad, ingen padding-kort */}
-      {todayStaff.length > 0 && (
-        <p className="text-xs text-gray-600">
-          <span aria-hidden="true">👋</span> Idag jobbar: <span className="font-medium">{todayStaff.join(', ')}</span>
-        </p>
-      )}
 
       {/* Next/today card — the headliner */}
       <NextDayCard next={next} onOpen={() => onJumpTo('calendar')} />

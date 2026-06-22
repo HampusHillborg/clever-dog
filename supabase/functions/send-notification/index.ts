@@ -15,6 +15,29 @@ import { sendPushToTokens, lookupTokensForUser } from './push.ts';
 import { sendApnsToTokens } from './apns.ts';
 // (lookupTokensForUser is consumed by pushToUser below.)
 
+// Logga notiser i notifications-tabellen så användaren har en historik i
+// appens notiscenter även om push inte levereras (Firebase/APNs ej satt,
+// nekad behörighet, offline). Best-effort — får aldrig fälla utskicket.
+async function logNotifications(
+  admin: ReturnType<typeof createClient>,
+  userIds: string[],
+  kind: string,
+  title: string,
+  body: string,
+  data: Record<string, string>,
+): Promise<void> {
+  if (userIds.length === 0) return;
+  const rows = userIds.map(uid => ({
+    recipient_user_id: uid,
+    kind,
+    title,
+    body,
+    data,
+  }));
+  const { error } = await admin.from('notifications').insert(rows);
+  if (error) console.error('logNotifications failed:', error.message);
+}
+
 // Fan-out to both push gateways for a single user.
 async function pushToUser(
   admin: ReturnType<typeof createClient>,
@@ -218,6 +241,12 @@ Deno.serve(async (req) => {
           ADMIN_EMAIL || undefined,
         );
       }
+
+      const adminUids = await adminAuthUserIds(admin);
+      await logNotifications(admin, adminUids, 'booking_request',
+        `Ny ${type.toLowerCase()}-förfrågan`,
+        `${escape(booking.dogs?.name)}: ${dates}`,
+        { kind: 'booking_request', booking_id: booking.id });
     }
     else if (body.kind === 'booking_decision') {
       if (!body.booking_id) throw new Error('booking_id required');
@@ -261,7 +290,7 @@ Deno.serve(async (req) => {
       );
       const pushBody = approved
         ? `${escape(booking.dogs?.name)}: ${dates} är godkänd`
-        : `Din förfrågan blev avslagen. Se kalendern för detaljer.`;
+        : `Din förfrågan blev avslagen. Se appen för detaljer.`;
       await Promise.all(
         recipients.map(uid =>
           pushToUser(admin, uid, subject, pushBody, {
@@ -270,6 +299,10 @@ Deno.serve(async (req) => {
           }),
         ),
       );
+      await logNotifications(admin, recipients, 'booking_decision', subject, pushBody, {
+        kind: 'booking_decision',
+        booking_id: booking.id,
+      });
     }
     else if (body.kind === 'customer_message') {
       if (!body.message_id) throw new Error('message_id required');
@@ -296,17 +329,21 @@ Deno.serve(async (req) => {
       // Push till alla admins/personalen. Email-notiser för chat är avstängda
       // — push räcker eftersom personalen sitter i admin-appen.
       const adminUids = await adminAuthUserIds(admin);
+      const customerMsgBody = String(msg.body || (msg.image_url ? '📷 Bild' : '')).slice(0, 120);
       await Promise.all(
         adminUids.map(uid =>
           pushToUser(
             admin,
             uid,
             `Nytt meddelande från ${senderName}`,
-            String(msg.body).slice(0, 120),
+            customerMsgBody,
             { kind: 'customer_message', message_id: msg.id },
           ),
         ),
       );
+      await logNotifications(admin, adminUids, 'customer_message',
+        `Nytt meddelande från ${senderName}`, customerMsgBody,
+        { kind: 'customer_message', message_id: msg.id });
     }
     else if (body.kind === 'staff_message') {
       if (!body.message_id) throw new Error('message_id required');
@@ -324,17 +361,21 @@ Deno.serve(async (req) => {
       // tråden (trådägaren + co-owners via shared-dog).
       if (msg.customer_id) {
         const recipientUserIds = await threadRecipientAuthUserIds(admin, msg.customer_id);
+        const staffMsgBody = String(msg.body || (msg.image_url ? '📷 Bild' : '')).slice(0, 120);
         await Promise.all(
           recipientUserIds.map(uid =>
             pushToUser(
               admin,
               uid,
               'Nytt meddelande från CleverDog',
-              String(msg.body).slice(0, 120),
+              staffMsgBody,
               { kind: 'staff_message', message_id: msg.id },
             ),
           ),
         );
+        await logNotifications(admin, recipientUserIds, 'staff_message',
+          'Nytt meddelande från CleverDog', staffMsgBody,
+          { kind: 'staff_message', message_id: msg.id });
       }
     }
     else if (body.kind === 'application_decision') {

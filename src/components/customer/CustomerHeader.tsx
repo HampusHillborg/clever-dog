@@ -1,8 +1,9 @@
 import dogLogo from '../../assets/images/logos/Logo.png';
 import { firstNameOf } from '../../lib/customerApi';
+import NotificationCenter from './NotificationCenter';
 
-// Minimal header — bara logo + "Inloggad som [namn]". Inställningar och
-// logga-ut bor under Mer-fliken eftersom kunder rör dem sällan.
+// Minimal header — logo + "Inloggad som [namn]" + notisklocka. Inställningar
+// och logga-ut bor under Mer-fliken eftersom kunder rör dem sällan.
 export default function CustomerHeader({ customerName }: {
   customerName: string;
 }) {
@@ -16,6 +17,8 @@ export default function CustomerHeader({ customerName }: {
         <p className="text-[10px] uppercase tracking-wide text-gray-500 font-semibold leading-none">Inloggad som</p>
         <p className="font-semibold text-sm truncate leading-tight mt-0.5">{first}</p>
       </div>
+
+      <NotificationCenter />
     </div>
   );
 }

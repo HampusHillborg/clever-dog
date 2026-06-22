@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import {
-  FaPaw, FaFileContract, FaClipboardList, FaUsers, FaQuestionCircle,
+  FaPaw, FaFileContract, FaClipboardList, FaQuestionCircle,
   FaSignOutAlt, FaChevronRight, FaKey, FaUserSlash,
 } from 'react-icons/fa';
 import Sheet from '../shared/Sheet';
 import ContractView from './ContractView';
 import DailyReportsHistory from './DailyReportsHistory';
-import StaffDirectoryCard from './StaffDirectoryCard';
 import DogProfileSheet from './DogProfileSheet';
 import AccountSettingsCard from './AccountSettingsCard';
 import DeleteAccountSheet from './DeleteAccountSheet';
@@ -30,7 +29,7 @@ type MoreTabProps = {
   onShowOnboarding: () => void;
 };
 
-type OpenSheet = 'dog' | 'contract' | 'reports' | 'staff' | 'password' | 'delete-account' | null;
+type OpenSheet = 'dog' | 'contract' | 'reports' | 'password' | 'delete-account' | null;
 
 function MoreRow({
   icon,
@@ -110,7 +109,7 @@ export default function MoreTab({ dog, onUpdateDog, onLogout, onAccountDeleted, 
         <MoreRow
           icon={<FaFileContract />}
           label="Kontrakt"
-          sublabel="Se och ladda ner ditt avtal"
+          sublabel="Se ditt avtal"
           onClick={() => setOpenSheet('contract')}
         />
         <MoreRow
@@ -118,12 +117,6 @@ export default function MoreTab({ dog, onUpdateDog, onLogout, onAccountDeleted, 
           label="Rapport-historik"
           sublabel="Senaste 14 dagarnas dagsrapporter"
           onClick={() => setOpenSheet('reports')}
-        />
-        <MoreRow
-          icon={<FaUsers />}
-          label="Personal"
-          sublabel="Vilka tar hand om din hund"
-          onClick={() => setOpenSheet('staff')}
         />
         <MoreRow
           icon={<FaQuestionCircle />}
@@ -175,13 +168,6 @@ export default function MoreTab({ dog, onUpdateDog, onLogout, onAccountDeleted, 
       <Sheet open={openSheet === 'reports'} onClose={() => setOpenSheet(null)} title="Rapport-historik">
         <div className="p-4">
           <DailyReportsHistory dogId={dog.id} dogName={dog.name} />
-        </div>
-      </Sheet>
-
-      {/* Personal-sheet */}
-      <Sheet open={openSheet === 'staff'} onClose={() => setOpenSheet(null)} title="Personal">
-        <div className="p-4">
-          <StaffDirectoryCard />
         </div>
       </Sheet>
 

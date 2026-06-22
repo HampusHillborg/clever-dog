@@ -854,6 +854,7 @@ export type Database = {
           customer_id: string
           dog_id: string | null
           id: string
+          image_url: string | null
           is_read: boolean | null
           read_at: string | null
           sender_name: string | null
@@ -866,6 +867,7 @@ export type Database = {
           customer_id: string
           dog_id?: string | null
           id?: string
+          image_url?: string | null
           is_read?: boolean | null
           read_at?: string | null
           sender_name?: string | null
@@ -878,6 +880,7 @@ export type Database = {
           customer_id?: string
           dog_id?: string | null
           id?: string
+          image_url?: string | null
           is_read?: boolean | null
           read_at?: string | null
           sender_name?: string | null
@@ -900,6 +903,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          data: Json
+          id: string
+          kind: string
+          read_at: string | null
+          recipient_user_id: string
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          kind: string
+          read_at?: string | null
+          recipient_user_id: string
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          kind?: string
+          read_at?: string | null
+          recipient_user_id?: string
+          title?: string
+        }
+        Relationships: []
       }
       planning_history: {
         Row: {

@@ -7,6 +7,7 @@ export type Message = Database['public']['Tables']['messages']['Row'];
 export type DogActivity = Database['public']['Tables']['dog_activities']['Row'];
 export type DailyReport = Database['public']['Tables']['dog_daily_reports']['Row'];
 export type Vaccination = Database['public']['Tables']['dog_vaccinations']['Row'];
+export type AppNotification = Database['public']['Tables']['notifications']['Row'];
 
 export const VACCINE_LABELS: Record<string, string> = {
   rabies: 'Rabies',
@@ -86,6 +87,21 @@ export const uploadDogPhoto = async (dogId: string, file: File): Promise<string>
   return url;
 };
 
+// Ta bort profilbilden: nollställ photo_url och försök städa storage-filen.
+// Storage-borttagningen är "best effort" — misslyckas den (t.ex. äldre URL)
+// är det viktiga att kolumnen nollställs så fallback-initialen visas igen.
+export const removeDogPhoto = async (dogId: string, currentUrl?: string | null): Promise<void> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  await supabase.from('dogs').update({ photo_url: null }).eq('id', dogId);
+  const url = currentUrl ?? '';
+  const marker = '/dog-photos/';
+  const idx = url.indexOf(marker);
+  if (idx !== -1) {
+    const path = url.slice(idx + marker.length);
+    if (path) await supabase.storage.from('dog-photos').remove([path]);
+  }
+};
+
 // Legacy: per-dog filter. Kept for backward-compat; new code should use
 // getMyChatMessages() instead.
 export const getMyMessages = async (dogId?: string): Promise<Message[]> => {
@@ -138,19 +154,42 @@ export const getChatThreadMemberCount = async (): Promise<number> => {
   return (data ?? []).length;
 };
 
-export const sendMessage = async (params: { dog_id?: string | null; body: string }): Promise<Message> => {
+// Ladda upp en chattbild till chat-images-bucketen och returnera publik URL.
+export const uploadChatImage = async (ownerKey: string, file: File): Promise<string> => {
+  if (!supabase) throw new Error('Supabase ej konfigurerad');
+  if (file.size > MAX_PHOTO_SIZE) throw new Error('Max filstorlek 5 MB');
+  if (!ALLOWED_PHOTO_TYPES.includes(file.type)) throw new Error('Endast JPG, PNG eller WEBP');
+  const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase();
+  const path = `${ownerKey}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error: upErr } = await supabase.storage.from('chat-images').upload(path, file, { upsert: false });
+  if (upErr) throw upErr;
+  const { data: pub } = supabase.storage.from('chat-images').getPublicUrl(path);
+  return pub.publicUrl;
+};
+
+export const sendMessage = async (
+  params: { dog_id?: string | null; body: string; file?: File | null },
+): Promise<Message> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Ej inloggad');
   const { data: cust } = await supabase
     .from('customers').select('id, name').eq('auth_user_id', session.user.id).maybeSingle();
   if (!cust) throw new Error('Ingen kund-koppling');
+
+  let image_url: string | null = null;
+  if (params.file) image_url = await uploadChatImage(cust.id, params.file);
+
+  const body = params.body.trim();
+  if (!body && !image_url) throw new Error('Skriv något eller bifoga en bild');
+
   const { data, error } = await supabase.from('messages').insert({
     customer_id: cust.id,
     dog_id: params.dog_id ?? null,
     sender_role: 'customer',
     sender_user_id: session.user.id,
-    body: params.body,
+    body,
+    image_url,
     sender_name: cust.name ?? null,
   }).select().single();
   if (error) throw error;
@@ -325,6 +364,9 @@ export const getVaccinations = async (dogId: string): Promise<Vaccination[]> => 
 };
 
 export type VaccinationPatch = {
+  // När id finns uppdateras den raden. Annars skapas en ny rad. Detta gör att
+  // flera "annat"-vaccin kan finnas och redigeras/tas bort var för sig.
+  id?: string;
   vaccine_type: 'rabies' | 'dhppi' | 'kennel_cough' | 'other';
   label?: string | null;
   given_on?: string | null;
@@ -335,17 +377,28 @@ export type VaccinationPatch = {
 export const upsertVaccination = async (dogId: string, patch: VaccinationPatch): Promise<Vaccination> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { data: { session } } = await supabase.auth.getSession();
+  const { id, ...fields } = patch;
+  const row = {
+    dog_id: dogId,
+    ...fields,
+    updated_by: session?.user.id ?? null,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (id) {
+    const { data, error } = await supabase
+      .from('dog_vaccinations')
+      .update(row)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
   const { data, error } = await supabase
     .from('dog_vaccinations')
-    .upsert(
-      {
-        dog_id: dogId,
-        ...patch,
-        updated_by: session?.user.id ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'dog_id,vaccine_type' },
-    )
+    .insert(row)
     .select()
     .single();
   if (error) throw error;
@@ -356,6 +409,40 @@ export const deleteVaccination = async (id: string): Promise<void> => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { error } = await supabase.from('dog_vaccinations').delete().eq('id', id);
   if (error) throw error;
+};
+
+// ─── Notiscenter (in-app) ──────────────────────────────────────────────────
+// RLS begränsar raderna till mottagaren (recipient_user_id = auth.uid()).
+
+export const getNotifications = async (limit = 50): Promise<AppNotification[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) { console.error('getNotifications', error); return []; }
+  return data ?? [];
+};
+
+export const getUnreadNotificationCount = async (): Promise<number> => {
+  if (!supabase) return 0;
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .is('read_at', null);
+  if (error) { console.error('getUnreadNotificationCount', error); return 0; }
+  return count ?? 0;
+};
+
+// Markera notiser som lästa. Utan ids markeras alla olästa.
+export const markNotificationsRead = async (ids?: string[]): Promise<void> => {
+  if (!supabase) return;
+  const now = new Date().toISOString();
+  let q = supabase.from('notifications').update({ read_at: now }).is('read_at', null);
+  if (ids && ids.length > 0) q = supabase.from('notifications').update({ read_at: now }).in('id', ids);
+  const { error } = await q;
+  if (error) console.error('markNotificationsRead', error);
 };
 
 export const getStaffWorkingToday = async (location = 'staffanstorp'): Promise<string[]> => {

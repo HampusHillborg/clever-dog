@@ -1976,7 +1976,7 @@ export const getAllMessageThreads = async () => {
   return data ?? [];
 };
 
-export const sendStaffMessage = async (params: { customer_id: string; dog_id?: string | null; body: string }) => {
+export const sendStaffMessage = async (params: { customer_id: string; dog_id?: string | null; body: string; file?: File | null }) => {
   if (!supabase) throw new Error('Supabase ej konfigurerad');
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Ej inloggad');
@@ -1985,13 +1985,29 @@ export const sendStaffMessage = async (params: { customer_id: string; dog_id?: s
   const { data: emp } = await supabase
     .from('employees').select('name').eq('id', session.user.id).maybeSingle();
   const sender_name = emp?.name ?? null;
-  const insertRow: { customer_id: string; dog_id: string | null; sender_role: string; sender_user_id: string; body: string; sender_name?: string | null } = {
+
+  let image_url: string | null = null;
+  if (params.file) {
+    const f = params.file;
+    const ext = (f.name.split('.').pop() ?? 'jpg').toLowerCase();
+    const path = `${params.customer_id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: upErr } = await supabase.storage.from('chat-images').upload(path, f, { upsert: false });
+    if (upErr) throw upErr;
+    const { data: pub } = supabase.storage.from('chat-images').getPublicUrl(path);
+    image_url = pub.publicUrl;
+  }
+
+  const body = params.body.trim();
+  if (!body && !image_url) throw new Error('Skriv något eller bifoga en bild');
+
+  const insertRow: { customer_id: string; dog_id: string | null; sender_role: string; sender_user_id: string; body: string; sender_name?: string | null; image_url?: string | null } = {
     customer_id: params.customer_id,
     dog_id: params.dog_id ?? null,
     sender_role: 'staff',
     sender_user_id: session.user.id,
-    body: params.body,
+    body,
     sender_name,
+    image_url,
   };
   const { data, error } = await supabase.from('messages').insert(insertRow as never).select().single();
   if (error) throw error;

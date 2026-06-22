@@ -20,11 +20,12 @@ const daysUntil = (iso: string): number => {
 type VaccineKey = 'rabies' | 'dhppi' | 'kennel_cough' | 'other';
 const DEFAULT_ROWS: VaccineKey[] = ['rabies', 'dhppi', 'kennel_cough'];
 
+type EditTarget = { vaccineType: VaccineKey; existing: Vaccination | null; isNew: boolean };
+
 export default function VaccinationsCard({ dogId }: { dogId: string }) {
   const [items, setItems] = useState<Vaccination[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<VaccineKey | null>(null);
-  const [showAddOther, setShowAddOther] = useState(false);
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
 
   const refresh = async () => {
     setItems(await getVaccinations(dogId));
@@ -43,7 +44,7 @@ export default function VaccinationsCard({ dogId }: { dogId: string }) {
           <h3 className="font-semibold text-base">Vaccinationer</h3>
         </div>
         <button
-          onClick={() => setShowAddOther(true)}
+          onClick={() => setEditTarget({ vaccineType: 'other', existing: null, isNew: true })}
           className="text-sm text-primary hover:underline flex items-center gap-1"
         >
           <FaPlus className="text-xs" /> Annat
@@ -54,21 +55,24 @@ export default function VaccinationsCard({ dogId }: { dogId: string }) {
         <p className="text-gray-400 text-sm">Laddar…</p>
       ) : (
         <div className="space-y-2">
-          {DEFAULT_ROWS.map(key => (
-            <VaccinationRow
-              key={key}
-              vaccineType={key}
-              vaccination={byType(key)}
-              onEdit={() => setEditing(key)}
-            />
-          ))}
+          {DEFAULT_ROWS.map(key => {
+            const existing = byType(key);
+            return (
+              <VaccinationRow
+                key={key}
+                vaccineType={key}
+                vaccination={existing}
+                onEdit={() => setEditTarget({ vaccineType: key, existing, isNew: !existing })}
+              />
+            );
+          })}
           {otherEntries.map(v => (
             <VaccinationRow
               key={v.id}
               vaccineType="other"
               vaccination={v}
               customLabel={v.label}
-              onEdit={() => setEditing('other')}
+              onEdit={() => setEditTarget({ vaccineType: 'other', existing: v, isNew: false })}
             />
           ))}
         </div>
@@ -79,26 +83,14 @@ export default function VaccinationsCard({ dogId }: { dogId: string }) {
         själv lägga in datum från ditt vaccinationsintyg.
       </p>
 
-      {editing && (
+      {editTarget && (
         <EditVaccinationModal
           dogId={dogId}
-          vaccineType={editing}
-          existing={editing === 'other'
-            ? null
-            : byType(editing) ?? null}
-          onClose={() => setEditing(null)}
-          onSaved={() => { setEditing(null); refresh(); }}
-        />
-      )}
-
-      {showAddOther && (
-        <EditVaccinationModal
-          dogId={dogId}
-          vaccineType="other"
-          existing={null}
-          isNew
-          onClose={() => setShowAddOther(false)}
-          onSaved={() => { setShowAddOther(false); refresh(); }}
+          vaccineType={editTarget.vaccineType}
+          existing={editTarget.existing}
+          isNew={editTarget.isNew}
+          onClose={() => setEditTarget(null)}
+          onSaved={() => { setEditTarget(null); refresh(); }}
         />
       )}
     </div>
@@ -168,7 +160,13 @@ function EditVaccinationModal({ dogId, vaccineType, existing, isNew, onClose, on
     if (!expiresOn) { setError('Datum när vaccinet går ut krävs.'); return; }
     setSaving(true);
     try {
+      if (vaccineType === 'other' && !label.trim()) {
+        setError('Ange ett namn på vaccinet.');
+        setSaving(false);
+        return;
+      }
       const patch: VaccinationPatch = {
+        id: existing?.id,
         vaccine_type: vaccineType,
         label: vaccineType === 'other' ? (label.trim() || null) : null,
         given_on: givenOn || null,
@@ -210,7 +208,9 @@ function EditVaccinationModal({ dogId, vaccineType, existing, isNew, onClose, on
             <p className="text-[11px] uppercase tracking-wide text-gray-500 font-semibold">
               {isNew ? 'Ny vaccination' : 'Redigera vaccination'}
             </p>
-            <p className="font-semibold text-base">{VACCINE_LABELS[vaccineType]}</p>
+            <p className="font-semibold text-base">
+              {vaccineType === 'other' ? (existing?.label || 'Annat vaccin') : VACCINE_LABELS[vaccineType]}
+            </p>
           </div>
           <button
             onClick={onClose}

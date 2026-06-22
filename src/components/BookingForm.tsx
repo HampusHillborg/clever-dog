@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FaTimes, FaUser, FaDog, FaEnvelope, FaPhone, FaQuestionCircle } from 'react-icons/fa';
 import emailjs from '@emailjs/browser';
 import { saveApplication } from '../lib/database';
+import { sanitizePhoneInput, isValidPhone, isValidEmail } from '../lib/validation';
 
 interface BookingFormProps {
   isOpen: boolean;
@@ -43,14 +44,27 @@ const BookingForm: React.FC<BookingFormProps> = ({ isOpen, onClose }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Telefonfältet får bara innehålla siffror/+/-/() — rensa bokstäver direkt.
+    const next = name === 'phone' ? sanitizePhoneInput(value) : value;
+    setFormData(prev => ({ ...prev, [name]: next }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validera e-post och telefon innan vi skickar.
+    if (!isValidEmail(formData.email)) {
+      setFormError('Ange en giltig e-postadress.');
+      return;
+    }
+    if (formData.phone && !isValidPhone(formData.phone)) {
+      setFormError('Ange ett giltigt telefonnummer (endast siffror).');
+      return;
+    }
+
     setIsSubmitting(true);
     setFormError('');
-    
+
     try {
       // Save to Supabase first (don't wait for it to complete, but don't block email)
       // Start the save in the background but don't await it

@@ -42,8 +42,11 @@ const MONTHS_SV = [
 ];
 const WEEKDAYS_SV = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'];
 
+// Antal nätter mellan in- och utcheckning. Incheckning 10/3 → utcheckning
+// 11/3 = 1 natt (inte 2). Tidigare fanns ett "+1" här som räknade en natt
+// för mycket.
 const nightsBetween = (start: string, end: string) =>
-  Math.max(1, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86400000) + 1);
+  Math.max(1, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 86400000));
 
 const fmtKr = (n: number) => `${Math.round(n).toLocaleString('sv-SE')} kr`;
 
@@ -112,6 +115,11 @@ type MiniCalendarProps = {
   onPickEnd: (d: string) => void;
   /** Callback to warn about soft-limit before confirming a date. */
   onSoftWarn?: (iso: string, confirm: () => void) => void;
+  /** Callback to warn that dagis is normally closed on weekends. */
+  onWeekendWarn?: (iso: string, confirm: () => void) => void;
+  /** Vilken månad kalendern öppnas på (0-indexerad). Default = innevarande. */
+  initialYear?: number;
+  initialMonth?: number;
 };
 
 const CAP_DOT: Record<CapacityLevel, string> = {
@@ -120,10 +128,10 @@ const CAP_DOT: Record<CapacityLevel, string> = {
   full: 'bg-red-500',
 };
 
-function MiniCalendar({ kind, start, end, onPickStart, onPickEnd, onSoftWarn }: MiniCalendarProps) {
+function MiniCalendar({ kind, start, end, onPickStart, onPickEnd, onSoftWarn, onWeekendWarn, initialYear, initialMonth }: MiniCalendarProps) {
   const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth()); // 0-indexed
+  const [year, setYear] = useState(initialYear ?? today.getFullYear());
+  const [month, setMonth] = useState(initialMonth ?? today.getMonth()); // 0-indexed
   const [closures, setClosures] = useState<Set<string>>(new Set());
   const [capMap, setCapMap] = useState<Map<string, DayCapacity>>(new Map());
 
@@ -154,7 +162,7 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd, onSoftWarn }: 
   const lastDayNum = new Date(year, month + 1, 0).getDate();
   const firstWeekday = toMonFirst(new Date(year, month, 1).getDay());
 
-  const handleCellTap = (iso: string) => {
+  const handleCellTap = (iso: string, weekday: number) => {
     const cap = capMap.get(iso);
     const level = cap ? capacityLevel(cap) : 'free';
 
@@ -165,6 +173,11 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd, onSoftWarn }: 
         if (!start || (start && end)) {
           onPickStart(iso);
           onPickEnd('');
+        } else if (iso === start) {
+          // Tryck igen på incheckningsdagen → avmarkera. (Tidigare satte detta
+          // utcheckning = incheckning och gav en meningslös "1 natt" på en dag.)
+          onPickStart('');
+          onPickEnd('');
         } else if (iso < start) {
           onPickStart(iso);
           onPickEnd('');
@@ -174,7 +187,11 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd, onSoftWarn }: 
       }
     };
 
-    if (level === 'busy' && onSoftWarn) {
+    // Dagis (extra/enstaka dag) på helg: varna om att dagiset normalt är stängt.
+    // Pensionat (range) påverkas inte.
+    if (!range && isWeekend(weekday) && onWeekendWarn) {
+      onWeekendWarn(iso, doPickSingle);
+    } else if (level === 'busy' && onSoftWarn) {
       // Show warning, let callback confirm
       onSoftWarn(iso, doPickSingle);
     } else {
@@ -229,7 +246,10 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd, onSoftWarn }: 
           const iso = isoDate(year, month + 1, d);
           const weekday = toMonFirst(new Date(year, month, d).getDay());
           const isPast = iso < todayIso;
-          const isClosed = closures.has(iso) || isWeekend(weekday);
+          // Helger spärras inte längre hårt: pensionat går alltid att boka, och
+          // dagis (extra/enstaka dag) går att boka mot en varning (se
+          // onWeekendWarn). Endast admin-satta stängningar spärrar dagen.
+          const isClosed = closures.has(iso);
           const isStart = iso === start;
           const isEnd = iso === end;
           const inRange = isInRange(iso);
@@ -264,7 +284,7 @@ function MiniCalendar({ kind, start, end, onPickStart, onPickEnd, onSoftWarn }: 
           return (
             <button
               key={iso}
-              onClick={() => !disabled && handleCellTap(iso)}
+              onClick={() => !disabled && handleCellTap(iso, weekday)}
               disabled={disabled}
               className={cellClass}
               title={fullTitle}
@@ -328,18 +348,25 @@ type Props = {
   onSuccess?: () => void;
   /** Om satt hoppas steg 1 (typ-val) över och wizarden börjar på steg 2. */
   initialType?: BookingTypeKind;
+  /** Vilken månad datumväljaren ska öppnas på (matchar kalendervyn). */
+  initialYear?: number;
+  initialMonth?: number;
 };
 
-export default function BookingWizardSheet({ open, onClose, dog, onSuccess, initialType }: Props) {
+export default function BookingWizardSheet({ open, onClose, dog, onSuccess, initialType, initialYear, initialMonth }: Props) {
   const [step, setStep] = useState<WizardStep>(initialType ? 2 : 1);
   const [selectedKind, setSelectedKind] = useState<BookingTypeKind | null>(initialType ?? null);
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   // Soft-limit warning modal
   const [softWarnDate, setSoftWarnDate] = useState<string | null>(null);
   const [softWarnConfirm, setSoftWarnConfirm] = useState<(() => void) | null>(null);
+  // Helg-varning (dagis normalt stängt) modal
+  const [weekendWarnDate, setWeekendWarnDate] = useState<string | null>(null);
+  const [weekendWarnConfirm, setWeekendWarnConfirm] = useState<(() => void) | null>(null);
 
   // Load customer ID once.
   useEffect(() => {
@@ -356,6 +383,7 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
         setStartDate(null);
         setEndDate(null);
         setNote('');
+        setSubmitError(null);
       }, 300);
       return () => clearTimeout(t);
     }
@@ -385,10 +413,6 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
     return calcBookingPrice(selectedKind, days, dog.type);
   }, [selectedKind, days, dog.type]);
 
-  const isInstantConfirm =
-    selectedKind === 'extra' &&
-    (dog.type === 'fulltime' || dog.type === 'parttime-3' || dog.type === 'parttime-2');
-
   // Validation for step 2 → 3 advance.
   const canProceedToSummary = (() => {
     if (!selectedKind || !startDate) return false;
@@ -397,27 +421,52 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
   })();
 
   const handleSubmit = async () => {
-    if (!selectedKind || !startDate || !customerId) {
-      throw new Error('Saknar obligatoriska fält');
+    setSubmitError(null);
+    try {
+      if (!selectedKind || !startDate) {
+        throw new Error('Välj typ och datum först.');
+      }
+      // Lös kund-id vid submit om det inte hunnit laddas (annars kunde knappen
+      // se "död" ut och inget hände — "fastnar"-buggen).
+      let cid = customerId;
+      if (!cid) {
+        cid = (await getCustomerForUser())?.id ?? null;
+        setCustomerId(cid);
+      }
+      if (!cid) {
+        throw new Error('Hittade ingen kundkoppling till ditt konto. Kontakta personalen.');
+      }
+
+      const endDateFinal = isRangeType(selectedKind) ? (endDate || startDate) : startDate;
+      if (endDateFinal < startDate) throw new Error('Slutdatum måste vara på eller efter startdatum.');
+
+      // Alla förfrågningar via guiden ska godkännas av personalen.
+      const status = 'pending';
+
+      const booking = await upsertBooking({
+        dog_id: dog.id,
+        customer_id: cid,
+        start_date: startDate,
+        end_date: endDateFinal,
+        booking_type: selectedKind,
+        status,
+        notes: note.trim() || undefined,
+      });
+
+      sendNotification({ kind: 'booking_request', booking_id: booking.id });
+      onSuccess?.();
+      onClose();
+    } catch (e) {
+      // Visa felet för användaren — SaveButton sväljer annars meddelandet och
+      // det ser ut som att ingenting händer. Supabase-fel är inte Error-
+      // instanser utan objekt med .message, så hantera båda.
+      const msg =
+        e instanceof Error ? e.message
+        : (e && typeof e === 'object' && 'message' in e) ? String((e as { message: unknown }).message)
+        : 'Kunde inte skicka förfrågan.';
+      setSubmitError(msg);
+      throw e; // låt SaveButton gå till sitt error-läge ("Försök igen")
     }
-    const endDateFinal = isRangeType(selectedKind) ? (endDate || startDate) : startDate;
-    if (endDateFinal < startDate) throw new Error('Slutdatum måste vara på eller efter startdatum');
-
-    const status = isInstantConfirm ? 'confirmed' : 'pending';
-
-    const booking = await upsertBooking({
-      dog_id: dog.id,
-      customer_id: customerId,
-      start_date: startDate,
-      end_date: endDateFinal,
-      booking_type: selectedKind,
-      status,
-      notes: note.trim() || undefined,
-    });
-
-    sendNotification({ kind: 'booking_request', booking_id: booking.id });
-    onSuccess?.();
-    onClose();
   };
 
   // -------------------------------------------------------------------------
@@ -484,6 +533,21 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
     closeSoftWarn();
   };
 
+  const handleWeekendWarn = (iso: string, confirm: () => void) => {
+    setWeekendWarnDate(iso);
+    setWeekendWarnConfirm(() => confirm);
+  };
+
+  const closeWeekendWarn = () => {
+    setWeekendWarnDate(null);
+    setWeekendWarnConfirm(null);
+  };
+
+  const confirmWeekendWarn = () => {
+    if (weekendWarnConfirm) weekendWarnConfirm();
+    closeWeekendWarn();
+  };
+
   const renderStep2 = () => (
     <div className="px-5 pb-5">
       <MiniCalendar
@@ -493,6 +557,9 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
         onPickStart={setStartDate}
         onPickEnd={setEndDate}
         onSoftWarn={handleSoftWarn}
+        onWeekendWarn={handleWeekendWarn}
+        initialYear={initialYear}
+        initialMonth={initialMonth}
       />
 
       <div className="flex gap-2 mt-5">
@@ -553,14 +620,11 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
           </div>
         )}
 
-        {/* Response time — visas bara när det inte är auto-bekräftat extra-dag.
-            Auto-bekräftade extra-dagar behöver ingen "väntar på svar"-info. */}
-        {!isInstantConfirm && (
-          <div className="rounded-xl px-3 py-2.5 text-sm flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800">
-            <span className="w-2 h-2 rounded-full shrink-0 bg-blue-400" />
-            Personalen svarar inom 24 h — du ser svaret i appen.
-          </div>
-        )}
+        {/* Alla bokningar via guiden måste godkännas av personalen. */}
+        <div className="rounded-xl px-3 py-2.5 text-sm flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-800">
+          <span className="w-2 h-2 rounded-full shrink-0 bg-blue-400" />
+          Personalen svarar inom 24 h — du ser svaret i appen.
+        </div>
 
         {/* Note */}
         <div>
@@ -580,6 +644,12 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
           />
         </div>
 
+        {submitError && (
+          <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2.5 text-sm text-red-800">
+            {submitError}
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2 pt-1">
           <button
@@ -590,7 +660,6 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
           </button>
           <SaveButton
             onSave={handleSubmit}
-            disabled={!customerId}
             className="flex-1"
           >
             Skicka förfrågan
@@ -609,6 +678,12 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
 
   const softWarnDateFmt = softWarnDate
     ? new Date(softWarnDate + 'T00:00:00').toLocaleDateString('sv-SE', {
+        weekday: 'long', day: 'numeric', month: 'long',
+      })
+    : '';
+
+  const weekendWarnDateFmt = weekendWarnDate
+    ? new Date(weekendWarnDate + 'T00:00:00').toLocaleDateString('sv-SE', {
         weekday: 'long', day: 'numeric', month: 'long',
       })
     : '';
@@ -655,6 +730,38 @@ export default function BookingWizardSheet({ open, onClose, dog, onSuccess, init
               className={`${BTN.primary} flex-1`}
             >
               Boka ändå
+            </button>
+          </div>
+        </div>
+      </Sheet>
+
+      {/* Helg-varning: dagis normalt stängt */}
+      <Sheet
+        open={!!weekendWarnDate}
+        onClose={closeWeekendWarn}
+        title="Dagiset är normalt stängt"
+      >
+        <div className="px-5 py-5 space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl">
+            ⚠️
+          </div>
+          <p className="text-sm text-gray-700 text-center">
+            Hunddagiset är normalt <span className="font-semibold">stängt på helger</span>.
+            Du kan ändå skicka en förfrågan för <span className="font-semibold">{weekendWarnDateFmt}</span> —
+            personalen återkommer med besked om det går att lösa.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={closeWeekendWarn}
+              className={`${BTN.secondary} flex-1`}
+            >
+              Välj annan dag
+            </button>
+            <button
+              onClick={confirmWeekendWarn}
+              className={`${BTN.primary} flex-1`}
+            >
+              Skicka ändå
             </button>
           </div>
         </div>

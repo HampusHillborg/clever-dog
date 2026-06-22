@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { FaImage, FaTimes } from 'react-icons/fa';
 import { getAllMessageThreads, sendStaffMessage } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import { sendNotification } from '../../lib/notifications';
+import { pickPhoto } from '../../lib/photoPicker';
 import { dayLabel, fmtHm, isLastOwnInSequence } from '../../lib/messageGrouping';
 
 type Msg = {
@@ -11,6 +13,7 @@ type Msg = {
   sender_role: string;
   sender_name: string | null;
   body: string;
+  image_url: string | null;
   is_read: boolean | null;
   read_at: string | null;
   created_at: string | null;
@@ -36,6 +39,9 @@ export default function MessagesAdminTab() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState('');
+  const [pendingImage, setPendingImage] = useState<File | null>(null);
+  const [pendingPreview, setPendingPreview] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const [allMessages, setAllMessages] = useState<Msg[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +94,20 @@ export default function MessagesAdminTab() {
     return () => { client.removeChannel(channel); };
   }, []);
 
+  // Fallback för live-uppdatering om Realtime tappar anslutningen: polla var
+  // 5:e sekund och hämta om när fliken kommer i förgrunden.
+  useEffect(() => {
+    const interval = setInterval(() => { loadRef.current(); }, 5000);
+    const onVisible = () => { if (document.visibilityState === 'visible') loadRef.current(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, []);
+
   useEffect(() => {
     if (!selectedId) return;
     const conversation = allMessages.filter(m => m.customer_id === selectedId);
@@ -117,12 +137,32 @@ export default function MessagesAdminTab() {
     return () => { cancelAnimationFrame(raf); clearTimeout(t); };
   }, [selectedId, messages.length]);
 
+  const pickImage = async () => {
+    const picked = await pickPhoto();
+    if (!picked) return;
+    setPendingImage(picked.file);
+    setPendingPreview(URL.createObjectURL(picked.file));
+  };
+
+  const clearPendingImage = () => {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+    setPendingImage(null);
+    setPendingPreview(null);
+  };
+
   const send = async () => {
-    if (!selectedId || !text.trim()) return;
-    const created = await sendStaffMessage({ customer_id: selectedId, body: text });
-    sendNotification({ kind: 'staff_message', message_id: created.id });
-    setText('');
-    load();
+    if (!selectedId || (!text.trim() && !pendingImage)) return;
+    setSending(true);
+    try {
+      const created = await sendStaffMessage({ customer_id: selectedId, body: text, file: pendingImage });
+      sendNotification({ kind: 'staff_message', message_id: created.id });
+      setText('');
+      clearPendingImage();
+      load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Kunde inte skicka');
+    }
+    setSending(false);
   };
 
   return (
@@ -187,9 +227,14 @@ export default function MessagesAdminTab() {
                               </p>
                             )}
 
-                            <div className={`rounded-2xl px-4 py-2 ${isStaff ? 'bg-primary text-white' : 'bg-gray-100'}`}>
-                              <p className="text-sm whitespace-pre-wrap">{m.body}</p>
-                              <p className="text-xs opacity-60 mt-1">
+                            <div className={`rounded-2xl ${m.image_url ? 'p-1.5' : 'px-4 py-2'} ${isStaff ? 'bg-primary text-white' : 'bg-gray-100'}`}>
+                              {m.image_url && (
+                                <a href={m.image_url} target="_blank" rel="noreferrer">
+                                  <img src={m.image_url} alt="Bifogad bild" className="rounded-xl max-h-64 max-w-[260px] object-cover" loading="lazy" />
+                                </a>
+                              )}
+                              {m.body && <p className={`text-sm whitespace-pre-wrap ${m.image_url ? 'px-2.5 pt-1.5' : ''}`}>{m.body}</p>}
+                              <p className={`text-xs opacity-60 mt-1 ${m.image_url ? 'px-2.5 pb-1' : ''}`}>
                                 {isStaff && m.sender_name ? `${firstNameOf(m.sender_name)} · ` : ''}
                                 {m.created_at ? fmtHm(m.created_at) : ''}
                               </p>
@@ -210,19 +255,41 @@ export default function MessagesAdminTab() {
                   });
                 })()}
               </div>
-              <div className="border-t p-3 flex gap-2 shrink-0">
-                <input value={text} onChange={e => setText(e.target.value)}
-                       onKeyDown={e => {
-                         if (e.key === 'Enter' && !e.shiftKey) {
-                           e.preventDefault();
-                           send();
-                         }
-                       }}
-                       placeholder="Svara…" className="flex-1 rounded-lg border-gray-300" />
-                <button onClick={send} disabled={!text.trim()}
-                        className="bg-primary text-white px-4 py-2 rounded-lg disabled:opacity-50">
-                  Skicka
-                </button>
+              <div className="border-t p-3 shrink-0">
+                {pendingPreview && (
+                  <div className="mb-2 flex items-center gap-2">
+                    <div className="relative">
+                      <img src={pendingPreview} alt="Förhandsvisning" className="h-16 w-16 rounded-lg object-cover" />
+                      <button
+                        onClick={clearPendingImage}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-700 text-white flex items-center justify-center shadow"
+                        aria-label="Ta bort bild"
+                      >
+                        <FaTimes className="text-[10px]" />
+                      </button>
+                    </div>
+                    <span className="text-xs text-gray-500">Bild bifogad</span>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={pickImage} disabled={sending}
+                          className="bg-gray-100 text-gray-600 w-10 h-10 rounded-lg flex items-center justify-center hover:bg-gray-200 disabled:opacity-50 shrink-0"
+                          aria-label="Bifoga bild">
+                    <FaImage />
+                  </button>
+                  <input value={text} onChange={e => setText(e.target.value)}
+                         onKeyDown={e => {
+                           if (e.key === 'Enter' && !e.shiftKey) {
+                             e.preventDefault();
+                             send();
+                           }
+                         }}
+                         placeholder="Svara…" className="flex-1 rounded-lg border-gray-300" />
+                  <button onClick={send} disabled={sending || (!text.trim() && !pendingImage)}
+                          className="bg-primary text-white px-4 py-2 rounded-lg disabled:opacity-50">
+                    Skicka
+                  </button>
+                </div>
               </div>
             </>
           ) : (
