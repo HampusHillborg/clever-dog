@@ -101,7 +101,22 @@ export async function sendPushToTokens(
           'content-type': 'application/json',
         },
         body: JSON.stringify({
-          message: { token, notification: { title, body }, data },
+          message: {
+            token,
+            notification: { title, body },
+            data,
+            // Hög prioritet + hög-importance-kanal → heads-up-banner på Android,
+            // inte bara en tyst rad i notisfältet. channel_id måste matcha den
+            // kanal appen skapar (PUSH_CHANNEL_ID = 'cleverdog_default').
+            android: {
+              priority: 'HIGH',
+              notification: {
+                channel_id: 'cleverdog_default',
+                default_sound: true,
+                notification_priority: 'PRIORITY_MAX',
+              },
+            },
+          },
         }),
       });
       if (!res.ok) {

@@ -100,19 +100,23 @@ async function threadRecipientAuthUserIds(
   customerId: string | null,
 ): Promise<string[]> {
   if (!customerId) return [];
-  const { data: rpcData } = await (admin.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: Array<{ chat_thread_customers: string }> | null; error: unknown }>)(
-    'chat_thread_customers',
-    { p_customer_id: customerId },
-  );
-  const customerIds = (rpcData ?? []).map(r => r.chat_thread_customers).filter(Boolean);
-  if (customerIds.length === 0) return [];
+  // Tråden = kunden själv + alla som delar minst en hund med hen. Beräknas med
+  // direkta service-role-frågor istället för chat_thread_customers-RPC:n —
+  // PostgREST returnerar SETOF uuid som rena strängar, inte objekt, vilket
+  // tidigare gjorde mottagarlistan tom så att push aldrig skickades.
+  const customerIds = new Set<string>([customerId]);
+  const { data: myDogs } = await admin
+    .from('customer_dogs').select('dog_id').eq('customer_id', customerId);
+  const dogIds = ((myDogs ?? []) as Array<{ dog_id: string }>).map(r => r.dog_id);
+  if (dogIds.length > 0) {
+    const { data: coRows } = await admin
+      .from('customer_dogs').select('customer_id').in('dog_id', dogIds);
+    for (const r of ((coRows ?? []) as Array<{ customer_id: string }>)) customerIds.add(r.customer_id);
+  }
   const { data: custs } = await admin
     .from('customers')
     .select('auth_user_id')
-    .in('id', customerIds);
+    .in('id', Array.from(customerIds));
   const rows = (custs ?? []) as Array<{ auth_user_id: string | null }>;
   return rows.map(r => r.auth_user_id).filter((u): u is string => !!u);
 }

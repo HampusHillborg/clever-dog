@@ -5,6 +5,10 @@ import { showToast } from '../components/customer/NotificationToast';
 
 let initialized = false;
 
+// Notiskanal med hög importance (heads-up). Måste matcha channel_id som
+// edge-funktionen skickar i FCM-payloaden.
+export const PUSH_CHANNEL_ID = 'cleverdog_default';
+
 export const initPushNotifications = async (): Promise<void> => {
   if (!isNativeApp() || !isPushEnabled() || !supabase || initialized) return;
   initialized = true;
@@ -20,6 +24,25 @@ export const initPushNotifications = async (): Promise<void> => {
     }
 
     await PushNotifications.register();
+
+    // Skapa en hög-importance-kanal (Android) så notiser visas som heads-up-
+    // banner, inte bara tyst i notisfältet. Edge-funktionen skickar med samma
+    // channel_id. iOS saknar kanaler → hoppa över.
+    if (platform() === 'android') {
+      try {
+        await PushNotifications.createChannel({
+          id: PUSH_CHANNEL_ID,
+          name: 'Meddelanden & bokningar',
+          description: 'Notiser om nya meddelanden och bokningsbesked',
+          importance: 5, // MAX → heads-up + ljud
+          visibility: 1, // public
+          vibration: true,
+          lights: true,
+        });
+      } catch (e) {
+        console.warn('[push] createChannel failed', e);
+      }
+    }
   } catch (e) {
     // FCM not configured (missing google-services.json) or any other
     // native-side failure — log and continue so the app stays usable.
