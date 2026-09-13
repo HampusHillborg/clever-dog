@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaTimes, FaInstagram, FaMapMarkerAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LanguageSwitcher from '../LanguageSwitcher';
@@ -13,6 +13,9 @@ const StaffanstorpNavbar: React.FC = () => {
   const { openBookingForm } = useBooking();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showMoveBanner, setShowMoveBanner] = useState(
+    () => localStorage.getItem('clever-dog-move-banner-dismissed') !== 'true'
+  );
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -20,6 +23,11 @@ const StaffanstorpNavbar: React.FC = () => {
 
   const goToHomepage = () => {
     navigate('/');
+  };
+
+  const dismissMoveBanner = () => {
+    localStorage.setItem('clever-dog-move-banner-dismissed', 'true');
+    setShowMoveBanner(false);
   };
 
   return (
@@ -86,6 +94,44 @@ const StaffanstorpNavbar: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {showMoveBanner && (
+        <aside className="bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-sm" aria-label={t('moveBanner.ariaLabel')}>
+          <div className="container flex items-center gap-3 py-2.5 text-sm sm:text-base">
+            <FaMapMarkerAlt className="shrink-0" aria-hidden="true" />
+            <p className="flex-1 leading-snug">
+              <strong>{t('moveBanner.title')}</strong>{' '}
+              {t('moveBanner.message')}
+            </p>
+            <a
+              href="https://www.instagram.com/cleverdog_hunddagis/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex shrink-0 items-center gap-1.5 font-semibold underline underline-offset-2 hover:text-orange-50"
+            >
+              {t('moveBanner.instagram')}
+              <FaInstagram aria-hidden="true" />
+            </a>
+            <button
+              type="button"
+              onClick={dismissMoveBanner}
+              className="shrink-0 rounded p-1 hover:bg-white/20"
+              aria-label={t('moveBanner.close')}
+            >
+              <FaTimes aria-hidden="true" />
+            </button>
+          </div>
+          <a
+            href="https://www.instagram.com/cleverdog_hunddagis/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="container flex sm:hidden items-center gap-1.5 pb-2.5 text-sm font-semibold underline underline-offset-2"
+          >
+            {t('moveBanner.instagram')}
+            <FaInstagram aria-hidden="true" />
+          </a>
+        </aside>
+      )}
 
       {/* Mobile Menu */}
       {isMenuOpen && (

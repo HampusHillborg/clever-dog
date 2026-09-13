@@ -4,6 +4,13 @@
     "heroDescription": "Przedszkole dla psów w Staffanstorp, koncentrujące się na bezpieczeństwie, radości i rozwoju",
     "cta": "Dowiedz się więcej",
     "bookCta": "Zarezerwuj miejsce",
+    "moveBanner": {
+      "ariaLabel": "Informacja o naszej przeprowadzce",
+      "title": "Przenosimy się!",
+      "message": "Przy Johan Anders väg w Staffanstorp, blisko Stora Bernstorp, powstaje nowe, większe przedszkole dla psów.",
+      "instagram": "Śledź budowę na Instagramie",
+      "close": "Zamknij informację o przeprowadzce"
+    },
     "malmoCta": "Nowe Przedszkole dla Psów w Malmö Videdal - Zarejestruj Zainteresowanie",
     "infoSection": {
       "title": "Informacja",
@@ -73,6 +80,8 @@
       "singleDay": "Wizyta Dzienna",
       "walkOnly": "Spacer Socjalizacyjny",
       "boarding": "Hotel dla Psów",
+      "inskolning": "Okres adaptacyjny",
+      "inskolningDesc": "Obowiązkowy przy nowym abonamencie",
       "fiveDaysWeek": "5 dni w tygodniu",
       "threeDaysWeek": "3 dni w tygodniu",
       "twoDaysWeek": "2 dni w tygodniu",
@@ -84,6 +93,7 @@
       "singleTitle": "Usługi Indywidualne",
       "perMonth": "miesięcznie",
       "perOccasion": "za okazję",
+      "oneTimeFee": "opłata jednorazowa",
       "per24h": "za 24 godziny",
       "holidayRate": "Stawka Świąteczna",
       "holidayDescription": "Boże Narodzenie, Sylwester, Wielkanoc i inne główne święta",
@@ -174,6 +184,15 @@
     "importantInfo": {
       "title": "Ważne informacje",
       "subtitle": "Informacje o naszych rutynach, wymaganiach i codziennej działalności",
+      "move": {
+        "title": "Przenosimy się do większego przedszkola dla psów",
+        "content": "Budujemy nowe, większe przedszkole dla psów przy Johan Anders väg w Staffanstorp, blisko Stora Bernstorp.",
+        "instagramLabel": "Śledź budowę na Instagramie"
+      },
+      "inskolning": {
+        "title": "Okres adaptacyjny dla nowych abonamentów",
+        "content": "Okres adaptacyjny jest obowiązkowy dla każdego nowego psa rozpoczynającego abonament i kosztuje 800 SEK za psa. Trwa jeden tydzień, aby zapewnić psu spokojny, bezpieczny i pozytywny start w przedszkolu.\n\nPies zaczyna w małej grupie 2–4 psów i przez cały tydzień pozostaje z tą samą grupą oraz personelem. Dobieramy grupy według wieku, poziomu energii i wielkości, aby pies stopniowo przyzwyczaił się do spacerów grupowych, odpoczynku i zabawy z innymi psami."
+      },
       "vaccination": {
         "title": "Szczepienia",
         "content": "Wymagamy, aby wszyscy nasi goście przedszkola byli szczepieni corocznie. Ma to na celu zmniejszenie rozprzestrzeniania się chorób i jako środek zapobiegawczy łagodzenie ewentualnej infekcji. Szczepienia są sprawdzane podczas zapisu, gdy prowadzimy dokumentację, gdy pies zaczyna przedszkole u nas. Szczepionka przeciwko kaszlowi kenelowemu powinna być podawana corocznie i doceniamy, gdy wszyscy właściciele psów informują personel o nowym szczepieniu."
@@ -454,4 +473,4 @@
       }
     }
   }
-} 
+}

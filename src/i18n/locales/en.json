@@ -4,6 +4,13 @@
     "heroDescription": "Dog daycare in Staffanstorp focusing on safety, joy, and development",
     "cta": "Learn more",
     "bookCta": "Book a spot",
+    "moveBanner": {
+      "ariaLabel": "Information about our move",
+      "title": "We are moving!",
+      "message": "A new, larger dog daycare is being built on Johan Anders väg in Staffanstorp, near Stora Bernstorp.",
+      "instagram": "Follow the build on Instagram",
+      "close": "Close move information"
+    },
     "malmoCta": "New Dog Daycare in Malmö Videdal - Register Interest",
     "infoSection": {
       "title": "Information",
@@ -73,6 +80,8 @@
       "singleDay": "Day Visit",
       "walkOnly": "Social Walk",
       "boarding": "Boarding",
+      "inskolning": "Introduction period",
+      "inskolningDesc": "Required with a new subscription",
       "fiveDaysWeek": "5 days per week",
       "threeDaysWeek": "3 days per week",
       "twoDaysWeek": "2 days per week",
@@ -84,6 +93,7 @@
       "singleTitle": "Individual Services",
       "perMonth": "per month",
       "perOccasion": "per occasion",
+      "oneTimeFee": "one-time fee",
       "per24h": "per 24 hours",
       "holidayRate": "Holiday Rate",
       "holidayDescription": "Christmas, New Year's Eve, Easter and other major holidays",
@@ -174,6 +184,15 @@
     "importantInfo": {
       "title": "Important information",
       "subtitle": "Information about our routines, requirements and daily operations",
+      "move": {
+        "title": "We are moving to a larger dog daycare",
+        "content": "We are building a new, larger dog daycare on Johan Anders väg in Staffanstorp, near Stora Bernstorp.",
+        "instagramLabel": "Follow the build on Instagram"
+      },
+      "inskolning": {
+        "title": "Introduction period for new subscriptions",
+        "content": "The introduction period is mandatory for every new dog starting a subscription and costs 800 SEK per dog. It lasts one week, giving your dog a calm, safe and positive start at daycare.\n\nYour dog begins in a small group of 2–4 dogs and stays with the same group and staff during the week. We match groups by age, energy level and size, so each dog can gradually get used to group walks, rest and play with other dogs."
+      },
       "vaccination": {
         "title": "Vaccination",
         "content": "We require that all our daycare guests are vaccinated annually. This is to reduce the spread of disease and as a preventive measure to alleviate any potential infection. Vaccination is checked during enrollment, when we keep records when the dog starts at daycare with us. Kennel cough vaccine should be given annually and we appreciate that all dog owners inform the staff when new vaccination has been done."
@@ -459,4 +478,4 @@
       }
     }
   }
-} 
+}

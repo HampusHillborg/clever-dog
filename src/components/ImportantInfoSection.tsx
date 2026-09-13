@@ -1,15 +1,34 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { FaShieldAlt, FaHome, FaHeart, FaCertificate } from 'react-icons/fa';
+import { FaShieldAlt, FaHome, FaHeart, FaCertificate, FaPaw, FaMapMarkerAlt, FaInstagram } from 'react-icons/fa';
+import { IconType } from 'react-icons';
 import { motion } from 'framer-motion';
 import FloatingPaws from './shared/FloatingPaws';
 
 const cardHoverSpring = { type: 'spring' as const, stiffness: 300, damping: 20 };
 
+interface InfoSection {
+  icon: IconType;
+  title: string;
+  content: string;
+  instagramLabel?: string;
+}
+
 const ImportantInfoSection: React.FC = () => {
   const { t } = useTranslation();
 
-  const infoSections = [
+  const infoSections: InfoSection[] = [
+    {
+      icon: FaMapMarkerAlt,
+      title: t('importantInfo.move.title'),
+      content: t('importantInfo.move.content'),
+      instagramLabel: t('importantInfo.move.instagramLabel')
+    },
+    {
+      icon: FaPaw,
+      title: t('importantInfo.inskolning.title'),
+      content: t('importantInfo.inskolning.content')
+    },
     {
       icon: FaShieldAlt,
       title: t('importantInfo.vaccination.title'),
@@ -68,6 +87,17 @@ const ImportantInfoSection: React.FC = () => {
                     <div className="text-gray-700 leading-relaxed whitespace-pre-line">
                       {section.content}
                     </div>
+                    {section.instagramLabel && (
+                      <a
+                        href="https://www.instagram.com/cleverdog_hunddagis/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 mt-4 font-medium text-orange-600 hover:text-orange-700 hover:underline"
+                      >
+                        <FaInstagram aria-hidden="true" />
+                        {section.instagramLabel}
+                      </a>
+                    )}
                   </div>
                 </div>
               </motion.div>

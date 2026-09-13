@@ -4,6 +4,13 @@
     "heroDescription": "Hunddagis och hundpensionat i Malmö och Staffanstorp - Professionell hundpassning med fokus på trygghet, glädje och utveckling",
     "cta": "Läs mer",
     "bookCta": "Boka plats",
+    "moveBanner": {
+      "ariaLabel": "Information om vår flytt",
+      "title": "Vi flyttar!",
+      "message": "Nytt större hunddagis byggs på Johan Anders väg i Staffanstorp, nära Stora Bernstorp.",
+      "instagram": "Följ bygget på Instagram",
+      "close": "Stäng flyttinformation"
+    },
     "malmoCta": "Nytt hunddagis i Malmö Videdal - Anmäl intresse",
     "infoSection": {
       "title": "Information",
@@ -73,6 +80,8 @@
       "singleDay": "Dagisvistelse",
       "walkOnly": "Social Promenad",
       "boarding": "Pensionat",
+      "inskolning": "Inskolning",
+      "inskolningDesc": "Obligatorisk vid nytt abonnemang",
       "fiveDaysWeek": "5 dagar i veckan",
       "threeDaysWeek": "3 dagar i veckan",
       "twoDaysWeek": "2 dagar i veckan",
@@ -84,6 +93,7 @@
       "singleTitle": "Enstaka tillfällen",
       "perMonth": "per månad",
       "perOccasion": "per tillfälle",
+      "oneTimeFee": "engångsavgift",
       "per24h": "per 24 timmar",
       "holidayRate": "Holiday Rate",
       "holidayDescription": "Julafton, nyårsafton, påsk och andra storhelger",
@@ -174,6 +184,15 @@
     "importantInfo": {
       "title": "Viktig information",
       "subtitle": "Information om våra rutiner, krav och dagliga verksamhet",
+      "move": {
+        "title": "Vi flyttar till ett större hunddagis",
+        "content": "Vi håller på att bygga ett nytt, större hunddagis på Johan Anders väg i Staffanstorp, nära Stora Bernstorp.",
+        "instagramLabel": "Följ bygget på Instagram"
+      },
+      "inskolning": {
+        "title": "Inskolning för nya abonnemang",
+        "content": "Inskolning är obligatorisk för alla nya hundar som börjar på ett abonnemang och kostar 800 kr per hund. Inskolningen pågår i en vecka för att ge hunden en lugn, trygg och positiv start på dagis.\n\nHunden börjar i en liten grupp med 2–4 hundar och får under veckan vara med samma grupp och personal. Vi matchar grupperna efter ålder, energinivå och storlek, så att hunden i trygg takt får lära sig grupppromenader, vila och lek med andra hundar."
+      },
       "vaccination": {
         "title": "Vaccination",
         "content": "Vi kräver att alla våra dagisgäster vaccineras årligen. Detta för att minska smittspridning och i förebyggande syfte lindra en eventuell smitta. Vaccination kontrolleras i samband med inskrivning, då vi för journal när hunden börjar på dagis hos oss. Vaccin mot kennelhosta ska ges årligen och vi uppskattar att alla hundägare informerar personalen när ny vaccinering gjorts."
@@ -474,4 +493,4 @@
       }
     }
   }
-} 
+}
