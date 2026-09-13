@@ -1,0 +1,23 @@
+/login
+  X-Robots-Tag: noindex, nofollow
+
+/login/*
+  X-Robots-Tag: noindex, nofollow
+
+/kund
+  X-Robots-Tag: noindex, nofollow
+
+/kund/*
+  X-Robots-Tag: noindex, nofollow
+
+/admin
+  X-Robots-Tag: noindex, nofollow
+
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+
+/radera-konto
+  X-Robots-Tag: noindex, nofollow
+
+/delete-account
+  X-Robots-Tag: noindex, nofollow

@@ -26,10 +26,10 @@ const preloadHeroImages = () => {
 };
 
 const StaffanstorpPage: React.FC = () => {
-  // Set SEO meta tags for Staffanstorp page
+  // Keep client-side metadata aligned with the canonical homepage.
   useEffect(() => {
     // Update page title
-    document.title = 'Hunddagis Staffanstorp, Malmö & Lund - Clever Dog | Godkänt Hundpensionat';
+    document.title = 'Hunddagis i Staffanstorp nära Malmö & Lund | Clever Dog';
 
     // Update or create meta description
     let metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
@@ -38,7 +38,7 @@ const StaffanstorpPage: React.FC = () => {
       metaDescription.name = 'description';
       document.head.appendChild(metaDescription);
     }
-    metaDescription.content = 'Professionellt hunddagis och hundpensionat i Staffanstorp. Betjänar Malmö (15 min), Lund (10 min) och hela sydvästra Skåne. Godkänd av Länsstyrelsen. Boka plats!';
+    metaDescription.content = 'Tryggt hunddagis och hundpensionat i Staffanstorp, nära Malmö och Lund. Godkänt av Länsstyrelsen. Se priser och boka plats hos Clever Dog.';
 
     // Update canonical URL
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
@@ -47,7 +47,7 @@ const StaffanstorpPage: React.FC = () => {
       canonical.rel = 'canonical';
       document.head.appendChild(canonical);
     }
-    canonical.href = 'https://cleverdog.se/staffanstorp';
+    canonical.href = 'https://cleverdog.se/';
 
     // Update Open Graph tags
     const updateOGTag = (property: string, content: string) => {
@@ -60,9 +60,10 @@ const StaffanstorpPage: React.FC = () => {
       ogTag.content = content;
     };
 
-    updateOGTag('og:title', 'Hunddagis Staffanstorp, Malmö & Lund - Clever Dog | Godkänt Hundpensionat');
-    updateOGTag('og:description', 'Professionellt hunddagis och hundpensionat i Staffanstorp. Betjänar Malmö (15 min), Lund (10 min) och hela sydvästra Skåne. Godkänd av Länsstyrelsen.');
-    updateOGTag('og:url', 'https://cleverdog.se/staffanstorp');
+    updateOGTag('og:title', 'Hunddagis i Staffanstorp nära Malmö & Lund | Clever Dog');
+    updateOGTag('og:description', 'Tryggt hunddagis och hundpensionat i Staffanstorp, nära Malmö och Lund. Godkänt av Länsstyrelsen.');
+    updateOGTag('og:url', 'https://cleverdog.se/');
+    updateOGTag('og:image', 'https://cleverdog.se/images/clever-dog-social-share.png');
 
     // Update Twitter tags
     const updateTwitterTag = (name: string, content: string) => {
@@ -76,9 +77,9 @@ const StaffanstorpPage: React.FC = () => {
     };
 
     updateTwitterTag('twitter:card', 'summary_large_image');
-    updateTwitterTag('twitter:title', 'Hunddagis Staffanstorp, Malmö & Lund - Clever Dog | Godkänt Hundpensionat');
-    updateTwitterTag('twitter:description', 'Professionellt hunddagis och hundpensionat i Staffanstorp. Betjänar Malmö (15 min), Lund (10 min) och hela sydvästra Skåne. Godkänd av Länsstyrelsen.');
-    updateTwitterTag('twitter:image', 'https://cleverdog.se/favicon.png');
+    updateTwitterTag('twitter:title', 'Hunddagis i Staffanstorp nära Malmö & Lund | Clever Dog');
+    updateTwitterTag('twitter:description', 'Tryggt hunddagis och hundpensionat i Staffanstorp, nära Malmö och Lund. Godkänt av Länsstyrelsen.');
+    updateTwitterTag('twitter:image', 'https://cleverdog.se/images/clever-dog-social-share.png');
   }, []);
 
   // Preload hero images immediately

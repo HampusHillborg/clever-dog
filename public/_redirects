@@ -8,5 +8,8 @@
 /api/*                /.netlify/functions/:splat   200
 /.netlify/functions/* /.netlify/functions/:splat   200
 
+# The homepage is the single canonical public page.
+/staffanstorp         /                              301!
+
 # Catch-all → index.html so react-router handles /login, /kund, /admin, etc.
 /*                    /index.html                  200

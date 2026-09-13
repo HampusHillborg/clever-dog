@@ -28,7 +28,7 @@ BookingButton.displayName = 'BookingButton';
 const ContentSection = memo(({ t, openBookingForm }: { t: any, openBookingForm: () => void }) => (
   <>
     <h1 className="text-3xl md:text-6xl font-bold text-white mb-4 md:mb-6">
-      {t('welcome')} - Staffanstorp
+      {t('heroTitle')}
     </h1>
     <p className="text-lg md:text-xl text-white mb-6 md:mb-8 max-w-2xl mx-auto">
       {t('locationSelector.staffanstorp.description')}
