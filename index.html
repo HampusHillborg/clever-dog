@@ -55,7 +55,7 @@
         "streetAddress": "Malmövägen 7",
         "addressLocality": "Staffanstorp",
         "addressRegion": "Skåne",
-        "postalCode": "245 38",
+        "postalCode": "245 31",
         "addressCountry": "SE"
       },
       "geo": {
@@ -276,6 +276,30 @@
       .items-center { align-items: center; }
       .justify-center { justify-content: center; }
       .text-white { color: white; }
+
+      /* Useful, crawlable content while the React application starts. */
+      .initial-content {
+        min-height: 100vh;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.25rem;
+        color: #1f2937;
+        background: linear-gradient(145deg, #fff7ed 0%, #ffffff 55%, #eff6ff 100%);
+      }
+      .initial-content__inner { width: 100%; max-width: 54rem; }
+      .initial-content h1 {
+        margin: 0 0 1rem;
+        color: #111827;
+        font-size: clamp(2rem, 7vw, 4rem);
+        line-height: 1.05;
+      }
+      .initial-content h2 { margin: 2rem 0 .5rem; color: #111827; }
+      .initial-content p,
+      .initial-content address { max-width: 46rem; font-size: 1.1rem; line-height: 1.7; }
+      .initial-content address { font-style: normal; }
+      .initial-content a { color: #9a3412; font-weight: 700; }
     </style>
     
     <!-- DNS Preconnect for critical third-party resources -->
@@ -319,7 +343,33 @@
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!--
+        Build-time HTML fallback: search engines and visitors receive useful
+        content immediately. React replaces this markup when the application
+        has loaded, so it is never duplicated in the interactive page.
+      -->
+      <main class="initial-content">
+        <div class="initial-content__inner">
+          <h1>Hunddagis i Staffanstorp nära Malmö och Lund</h1>
+          <p>
+            Clever Dog erbjuder ett tryggt och professionellt hunddagis och
+            hundpensionat i Staffanstorp. Verksamheten är godkänd av
+            Länsstyrelsen och drivs med fokus på hundarnas trygghet,
+            aktivering och individuella behov.
+          </p>
+          <h2>Hundomsorg med närhet till Malmö och Lund</h2>
+          <p>
+            Hos oss finns heltids- och deltidsplatser, enstaka dagisdagar och
+            hundpensionat. På webbplatsen kan du läsa om priser, vardagen på
+            hunddagiset och skicka en intresseanmälan.
+          </p>
+          <h2>Besök Clever Dog</h2>
+          <address>Malmövägen 7, 245 31 Staffanstorp</address>
+          <p><a href="mailto:info@cleverdog.se">Kontakta Clever Dog</a></p>
+        </div>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

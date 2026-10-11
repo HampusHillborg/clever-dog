@@ -1,7 +1,5 @@
-# SPA fallback: every client-side route (e.g. /login, /kund, /admin) maps
-# back to index.html so react-router can take over. This file takes
-# precedence over netlify.toml redirects and is the canonical Netlify SPA
-# routing config.
+# Known client-side routes map back to index.html so React Router can take
+# over. Unknown paths fall through to the 404 response at the end.
 #
 # Netlify Functions are explicitly served first, then everything else.
 
@@ -11,5 +9,17 @@
 # The homepage is the single canonical public page.
 /staffanstorp         /                              301!
 
-# Catch-all → index.html so react-router handles /login, /kund, /admin, etc.
-/*                    /index.html                  200
+# React application routes.
+/login                /index.html                  200
+/login/*              /index.html                  200
+/kund                 /index.html                  200
+/kund/*               /index.html                  200
+/admin                /index.html                  200
+/admin/*              /index.html                  200
+/privacy              /index.html                  200
+/integritetspolicy    /index.html                  200
+/radera-konto         /index.html                  200
+/delete-account       /index.html                  200
+
+# Unknown URLs must return a real 404 rather than a soft 404.
+/*                    /404.html                    404
