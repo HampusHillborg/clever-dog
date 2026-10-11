@@ -25,9 +25,9 @@ renderer deliberately does not manufacture a new lastmod date on every deploy.
 
 Known app routes rewrite to a separate noindex `app-shell.html`, not public
 marketing HTML. The existing React authentication logic is unchanged. Unknown
-paths still return 404. Public trailing-slash aliases redirect to their canonical routes. The .html
-rewrite targets retain canonical tags instead of forced redirects, which would
-loop when Netlify reprocesses the rewrite target.
+paths still return 404. Public .html and trailing-slash aliases use canonical tags rather than forced
+redirects. Netlify normalizes trailing slashes for redirect matching; forcing
+/page/ to /page would create a self-redirect even on the extensionless URL.
 
 Verification: `npm run test:seo` checks all generated public pages, unique
 titles/descriptions, H1s, canonicals, links, assets, JSON-LD, compressed copies,

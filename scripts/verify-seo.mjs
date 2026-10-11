@@ -43,6 +43,9 @@ for (const page of pages) assert.ok(sitemap.includes(`<loc>https://cleverdog.se/
 const redirects = await readFile('dist/_redirects','utf8');
 const rules = redirects.split('\n').filter(line=>line.trim() && !line.trim().startsWith('#')).map(line=>line.trim().split(/\s+/));
 for (const [from,to,status] of rules) {
+  if (/^30[12]/.test(status)) {
+    assert.notEqual(from.replace(/\/$/,''),to.replace(/\/$/,''),`${from}: Netlify ignores trailing slashes when matching redirects`);
+  }
   if (status === '200' && from !== '/api/*') {
     assert.ok(!rules.some(([redirectFrom,,redirectStatus])=>redirectFrom===to && /^30[12]!$/.test(redirectStatus)),`${from}: rewrite target must not force a redirect loop`);
   }

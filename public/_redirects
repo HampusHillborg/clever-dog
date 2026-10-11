@@ -8,13 +8,8 @@
 # Canonical homepage alias.
 /staffanstorp         /                              301!
 
-# Normalize trailing-slash aliases before the rewrites.
-# Do not force redirects on .html rewrite targets: Netlify reprocesses them.
-# Their canonical tags identify the extensionless public URL.
-/hunddagis/              /hunddagis              301!
-/hundpensionat/          /hundpensionat          301!
-/priser/                 /priser                 301!
-/vanliga-fragor/         /vanliga-fragor         301!
+# Public HTML and slash aliases use canonical tags. Netlify normalizes
+# trailing slashes in redirect matching; do not redirect /page/ to /page.
 
 # Prerendered public service pages.
 /hunddagis            /hunddagis.html               200
