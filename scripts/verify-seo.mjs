@@ -15,6 +15,7 @@ for (const page of pages) {
   assert.equal((html.match(/<h1(?:\s|>)/g)||[]).length,1,`${page}: exactly one H1`);
   assert.ok(html.includes(`href="${url}"`),`${page}: self canonical`);
   assert.ok(html.includes('data-prerendered="true"'),`${page}: generated content`);
+  assert.ok(!html.includes('[style*="opacity:0"]'),`${page}: preserve decorative fractional opacity`);
   assert.ok(!/name="robots"[^>]*noindex/.test(html),`${page}: indexable`);
   assert.ok(!html.includes('/src/assets/'),`${page}: no development assets`);
   assert.ok(!html.includes('The server did not finish this Suspense boundary'),`${page}: completed lazy rendering`);

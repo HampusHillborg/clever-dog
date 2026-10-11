@@ -76,7 +76,7 @@ try {
     let html = metadata(template,{...page,url}).replace(rootPattern,`<div id="root" data-prerendered="true">${body}</div>`);
     // Framer Motion's initial opacity is normally hidden until JS observes
     // visibility. Keep the built page usable when JS is disabled/slow.
-    html = html.replace('</head>', '<style>#root[data-prerendered] [style*="opacity:0"]{opacity:1!important;transform:none!important}</style></head>');
+    html = html.replace('</head>', '<style>#root[data-prerendered] [style*="opacity:0;"],#root[data-prerendered] [style$="opacity:0"]{opacity:1!important;transform:none!important}</style></head>');
     html = html.replace('<html lang="sv"', '<html lang="sv" data-seo-build="static-v1"');
     if (page.path !== '/') {
       const breadcrumb = { '@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[
