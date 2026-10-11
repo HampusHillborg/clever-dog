@@ -14,7 +14,7 @@ const StaffanstorpNavbar: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showMoveBanner, setShowMoveBanner] = useState(
-    () => localStorage.getItem('clever-dog-move-banner-dismissed') !== 'true'
+    () => typeof localStorage === 'undefined' || localStorage.getItem('clever-dog-move-banner-dismissed') !== 'true'
   );
 
   const toggleMenu = () => {

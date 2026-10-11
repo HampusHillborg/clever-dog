@@ -1,6 +1,7 @@
 import React, { useEffect, lazy, Suspense } from 'react';
 import '../i18n';  // Import i18n configuration
 import StaffanstorpNavbar from '../components/staffanstorp/StaffanstorpNavbar';
+import ServiceLinks from '../seo/ServiceLinks';
 import WaveDivider from '../components/shared/WaveDivider';
 // Staffanstorp-specific components
 import StaffanstorpHeroSection from '../components/staffanstorp/StaffanstorpHeroSection';
@@ -116,6 +117,7 @@ const StaffanstorpPage: React.FC = () => {
       <main>
         <StaffanstorpHeroSection />
         <StaffanstorpAboutSection />
+        <ServiceLinks />
         <WaveDivider topColor="#ffffff" bottomColor="#FFF7ED" variant="wave2" />
         <StaffanstorpPricingSection />
 

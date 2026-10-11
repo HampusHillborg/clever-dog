@@ -13,6 +13,8 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const AccountDeletionPage = lazy(() => import('./pages/AccountDeletionPage'))
 import { BookingProvider } from './components/BookingContext'
 import './App.css'
+import { servicePages } from './seo/pages'
+const ServicePage = lazy(() => import('./pages/ServicePage'))
 
 const Loading = () => <div className="h-screen flex items-center justify-center">Loading...</div>
 
@@ -22,6 +24,7 @@ function App() {
       <div className="min-h-screen bg-light">
         <BrowserRouter>
           <Routes>
+            {servicePages.map(page => <Route key={page.path} path={page.path} element={<Suspense fallback={<Loading />}><ServicePage page={page} /></Suspense>} />)}
             <Route path="/" element={
               <Suspense fallback={<Loading />}><StaffanstorpPage /></Suspense>
             } />

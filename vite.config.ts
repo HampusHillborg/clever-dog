@@ -40,6 +40,7 @@ export default defineConfig({
   ],
   build: {
     cssCodeSplit: true,
+    manifest: !isAppBuild,
     reportCompressedSize: true,
     sourcemap: false,
     assetsInlineLimit: 0, // Don't inline any assets as base64

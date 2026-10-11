@@ -1,4 +1,5 @@
 import React from 'react'
+import PrerenderReady from './seo/PrerenderReady'
 import { createRoot } from 'react-dom/client'
 import './i18n'  // Import i18n configuration before App
 import { isAppTarget } from './lib/platform'
@@ -48,7 +49,7 @@ async function boot() {
   const root = createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <Root />
+      <PrerenderReady><Root /></PrerenderReady>
     </React.StrictMode>
   );
   markFCP();

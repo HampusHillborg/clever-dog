@@ -6,8 +6,9 @@ import svTranslations from './locales/sv.json';
 import enTranslations from './locales/en.json';
 import plTranslations from './locales/pl.json';
 
+if (!import.meta.env.SSR) i18n.use(LanguageDetector);
+
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
@@ -16,6 +17,7 @@ i18n
       pl: plTranslations,
     },
     fallbackLng: 'sv',
+    lng: import.meta.env.SSR ? 'sv' : undefined,
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],

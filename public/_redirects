@@ -5,20 +5,36 @@
 
 /api/*                /.netlify/functions/:splat   200
 
-# The homepage is the single canonical public page.
+# Canonical homepage alias.
 /staffanstorp         /                              301!
 
+# Normalize public page aliases before the rewrites.
+/hunddagis.html          /hunddagis              301!
+/hunddagis/              /hunddagis              301!
+/hundpensionat.html      /hundpensionat          301!
+/hundpensionat/          /hundpensionat          301!
+/priser.html             /priser                 301!
+/priser/                 /priser                 301!
+/vanliga-fragor.html     /vanliga-fragor         301!
+/vanliga-fragor/         /vanliga-fragor         301!
+
+# Prerendered public service pages.
+/hunddagis            /hunddagis.html               200
+/hundpensionat        /hundpensionat.html           200
+/priser               /priser.html                  200
+/vanliga-fragor       /vanliga-fragor.html           200
+
 # React application routes.
-/login                /index.html                  200
-/login/*              /index.html                  200
-/kund                 /index.html                  200
-/kund/*               /index.html                  200
-/admin                /index.html                  200
-/admin/*              /index.html                  200
-/privacy              /index.html                  200
-/integritetspolicy    /index.html                  200
-/radera-konto         /index.html                  200
-/delete-account       /index.html                  200
+/login                /app-shell.html                  200
+/login/*              /app-shell.html                  200
+/kund                 /app-shell.html                  200
+/kund/*               /app-shell.html                  200
+/admin                /app-shell.html                  200
+/admin/*              /app-shell.html                  200
+/privacy              /app-shell.html                  200
+/integritetspolicy    /app-shell.html                  200
+/radera-konto         /app-shell.html                  200
+/delete-account       /app-shell.html                  200
 
 # Unknown URLs must return a real 404 rather than a soft 404.
 /*                    /404.html                    404

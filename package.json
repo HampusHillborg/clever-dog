@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/prerender.mjs && node scripts/verify-seo.mjs",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "netlify-dev": "npx --yes netlify-cli@20.0.0 dev",
@@ -16,7 +16,8 @@
     "app:build": "cross-env VITE_APP_TARGET=app tsc -b && cross-env VITE_APP_TARGET=app vite build",
     "app:sync": "npm run app:build && cap sync",
     "app:android": "npm run app:sync && cap open android",
-    "app:ios": "npm run app:sync && cap open ios"
+    "app:ios": "npm run app:sync && cap open ios",
+    "test:seo": "node scripts/verify-seo.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
