@@ -41,6 +41,12 @@ const sitemap = await readFile('dist/sitemap.xml','utf8');
 assert.equal((sitemap.match(/<loc>/g)||[]).length,5,'Five public sitemap pages');
 for (const page of pages) assert.ok(sitemap.includes(`<loc>https://cleverdog.se/${page}</loc>`));
 const redirects = await readFile('dist/_redirects','utf8');
+const rules = redirects.split('\n').filter(line=>line.trim() && !line.trim().startsWith('#')).map(line=>line.trim().split(/\s+/));
+for (const [from,to,status] of rules) {
+  if (status === '200' && from !== '/api/*') {
+    assert.ok(!rules.some(([redirectFrom,,redirectStatus])=>redirectFrom===to && /^30[12]!$/.test(redirectStatus)),`${from}: rewrite target must not force a redirect loop`);
+  }
+}
 assert.ok(redirects.includes('/app-shell.html'),'Private route rewrites retained');
 assert.ok(/\/\*\s+\/404.html\s+404/.test(redirects),'Unknown paths retain real 404');
 console.log('SEO build verification complete.');
