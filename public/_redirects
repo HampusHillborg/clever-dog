@@ -4,7 +4,6 @@
 # Netlify Functions are explicitly served first, then everything else.
 
 /api/*                /.netlify/functions/:splat   200
-/.netlify/functions/* /.netlify/functions/:splat   200
 
 # The homepage is the single canonical public page.
 /staffanstorp         /                              301!
